@@ -142,6 +142,26 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [password, setPassword] = useState("");
 
+  function handleClientLogin() {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      setError("Введите email для клиентского профиля");
+      return;
+    }
+
+    const clientSession: ClientSession = {
+      companyName: normalizedEmail.split("@")[0] ?? "",
+      createdAt: new Date().toISOString(),
+      email: normalizedEmail,
+      phone: "",
+      role: "client",
+    };
+
+    writeClientSession(clientSession);
+    onLogin(clientSession);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
@@ -181,16 +201,9 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
         return;
       }
 
-      const clientSession: ClientSession = {
-        companyName: normalizedEmail.split("@")[0] ?? "",
-        createdAt: new Date().toISOString(),
-        email: normalizedEmail,
-        phone: "",
-        role: "client",
-      };
-
-      writeClientSession(clientSession);
-      onLogin(clientSession);
+      setError(
+        "Админ-вход не прошел. Проверьте email, пароль и что пользователь создан в Supabase Authentication.",
+      );
     } catch {
       setError("Не удалось войти. Проверьте соединение и попробуйте снова");
     } finally {
@@ -272,6 +285,15 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
 
         <Button type="submit" disabled={isSubmitting} className="mt-7 w-full">
           {isSubmitting ? "Проверяем..." : "Войти в профиль"}
+        </Button>
+        <Button
+          type="button"
+          disabled={isSubmitting}
+          variant="outline"
+          className="mt-3 w-full"
+          onClick={handleClientLogin}
+        >
+          Открыть клиентский профиль
         </Button>
       </form>
     </section>

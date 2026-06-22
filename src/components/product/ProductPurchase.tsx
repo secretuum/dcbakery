@@ -1,0 +1,62 @@
+"use client";
+
+import { useState } from "react";
+import { Button } from "@/src/components/ui/Button";
+import { useCart } from "@/src/contexts/CartContext";
+import { useToast } from "@/src/contexts/ToastContext";
+import { formatProductPrice } from "@/src/lib/format";
+import type { Product } from "@/src/types";
+import { QuantitySelector } from "./QuantitySelector";
+
+type ProductPurchaseProps = {
+  product: Product;
+};
+
+export function ProductPurchase({ product }: ProductPurchaseProps) {
+  const [qty, setQty] = useState(product.min_qty);
+  const { add } = useCart();
+  const { showToast } = useToast();
+  const isInStock = product.stock_qty > 0;
+  const totalAmount = product.price * qty;
+  const totalText = product.price > 0 ? formatProductPrice(totalAmount) : "Цена уточняется";
+
+  function handleAddToCart() {
+    add(product, qty);
+    showToast("Товар добавлен в корзину", "success");
+  }
+
+  return (
+    <div className="rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)] sm:p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-black uppercase text-muted">Количество</p>
+          <p className="mt-1 text-sm font-semibold text-muted">
+            Минимум {product.min_qty} {product.unit}, шаг {product.step_qty} {product.unit}
+          </p>
+        </div>
+        <p className="rounded-badge bg-coral-light px-3 py-1 text-xs font-black text-coral">
+          {product.stock_qty} {product.unit} в наличии
+        </p>
+      </div>
+
+      <QuantitySelector
+        className="mt-5"
+        disabled={!isInStock}
+        minQty={product.min_qty}
+        onChange={setQty}
+        stepQty={product.step_qty}
+        unit={product.unit}
+        value={qty}
+      />
+
+      <div className="mt-5 flex items-end justify-between gap-4 rounded-btn bg-cream px-4 py-3">
+        <span className="text-sm font-bold text-muted">Итого</span>
+        <span className="text-3xl font-black text-dark">{totalText}</span>
+      </div>
+
+      <Button onClick={handleAddToCart} disabled={!isInStock} className="mt-5 w-full">
+        + В корзину
+      </Button>
+    </div>
+  );
+}

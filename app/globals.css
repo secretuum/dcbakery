@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  --dc-coral: #f47b6f;
+  --dc-coral-hover: #e05a4e;
+  --dc-coral-light: #fde8e6;
+  --dc-burgundy: #8b1a4a;
+  --dc-raspberry: #c4395a;
+  --dc-cream: #fff8f6;
+  --dc-dark: #1c1c1c;
+  --dc-muted: #7a7a7a;
+  --radius-card: 20px;
+  --radius-btn: 14px;
+  --radius-badge: 20px;
+  --background: var(--dc-cream);
+  --foreground: var(--dc-dark);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-coral: var(--dc-coral);
+  --color-coral-hover: var(--dc-coral-hover);
+  --color-coral-light: var(--dc-coral-light);
+  --color-burgundy: var(--dc-burgundy);
+  --color-raspberry: var(--dc-raspberry);
+  --color-cream: var(--dc-cream);
+  --color-dark: var(--dc-dark);
+  --color-muted: var(--dc-muted);
+  --radius-card: var(--radius-card);
+  --radius-btn: var(--radius-btn);
+  --radius-badge: var(--radius-badge);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}

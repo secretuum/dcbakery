@@ -1,3 +1,4 @@
+import "server-only";
 import type { OrderItem } from "@/src/types";
 
 export type ResponsibleRole = "manager" | "dessertLead" | "semiFinishedLead" | "meatLead";
@@ -8,7 +9,6 @@ export type ResponsiblePerson = {
   phone?: string;
   role: ResponsibleRole;
   title: string;
-  whatsappMentionId?: string;
 };
 
 type ResponsiblePersonConfig = {
@@ -16,7 +16,6 @@ type ResponsiblePersonConfig = {
   nameEnv: string;
   phoneEnv: string;
   title: string;
-  whatsappMentionIdEnv: string;
 };
 
 const categoryLabels: Record<ResponsibleCategory, string> = {
@@ -31,35 +30,30 @@ const responsiblePeopleConfig: Record<ResponsibleRole, ResponsiblePersonConfig> 
     nameEnv: "DC_RESPONSIBLE_MANAGER_NAME",
     phoneEnv: "DC_RESPONSIBLE_MANAGER_PHONE",
     title: "Менеджер",
-    whatsappMentionIdEnv: "DC_RESPONSIBLE_MANAGER_WHATSAPP_ID",
   },
   dessertLead: {
     fallbackName: "Руководитель десертного цеха",
     nameEnv: "DC_RESPONSIBLE_DESSERT_LEAD_NAME",
     phoneEnv: "DC_RESPONSIBLE_DESSERT_LEAD_PHONE",
     title: "Десертный цех",
-    whatsappMentionIdEnv: "DC_RESPONSIBLE_DESSERT_LEAD_WHATSAPP_ID",
   },
   semiFinishedLead: {
     fallbackName: "Руководитель полуфабрикатного цеха",
     nameEnv: "DC_RESPONSIBLE_SEMI_FINISHED_LEAD_NAME",
     phoneEnv: "DC_RESPONSIBLE_SEMI_FINISHED_LEAD_PHONE",
     title: "Полуфабрикаты",
-    whatsappMentionIdEnv: "DC_RESPONSIBLE_SEMI_FINISHED_LEAD_WHATSAPP_ID",
   },
   meatLead: {
     fallbackName: "Ответственный за мясное направление",
     nameEnv: "DC_RESPONSIBLE_MEAT_LEAD_NAME",
     phoneEnv: "DC_RESPONSIBLE_MEAT_LEAD_PHONE",
     title: "Мясо",
-    whatsappMentionIdEnv: "DC_RESPONSIBLE_MEAT_LEAD_WHATSAPP_ID",
   },
 };
 
 const defaultResponsibleEnv = {
   name: "DC_RESPONSIBLE_DEFAULT_NAME",
   phone: "DC_RESPONSIBLE_DEFAULT_PHONE",
-  whatsappMentionId: "DC_RESPONSIBLE_DEFAULT_WHATSAPP_ID",
 };
 
 export const responsibleRules: Record<ResponsibleCategory, ResponsibleRole[]> = {
@@ -80,8 +74,6 @@ function getResponsiblePerson(role: ResponsibleRole): ResponsiblePerson {
     phone: getEnvValue(config.phoneEnv) ?? getEnvValue(defaultResponsibleEnv.phone),
     role,
     title: config.title,
-    whatsappMentionId:
-      getEnvValue(config.whatsappMentionIdEnv) ?? getEnvValue(defaultResponsibleEnv.whatsappMentionId),
   };
 }
 
@@ -90,7 +82,7 @@ function getPhoneDigits(phone?: string) {
 }
 
 function getResponsibleKey(person: ResponsiblePerson) {
-  return getPhoneDigits(person.phone) || person.whatsappMentionId || person.name;
+  return getPhoneDigits(person.phone) || person.name;
 }
 
 function mergeResponsiblePeople(people: ResponsiblePerson[]) {

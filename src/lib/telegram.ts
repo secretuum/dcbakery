@@ -1,3 +1,4 @@
+import "server-only";
 import type { Order, OrderItem } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
 

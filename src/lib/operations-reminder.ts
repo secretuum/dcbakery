@@ -1,3 +1,4 @@
+import "server-only";
 import { fetchProducts } from "@/src/lib/catalog";
 import {
   formatResponsiblePersonLine,

@@ -1,3 +1,4 @@
+import "server-only";
 import type { Order, OrderItem } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
@@ -85,10 +86,6 @@ function getResponsibleChatIds(items: OrderItem[]) {
   return Array.from(
     new Set(
       getOrderResponsibleContext(items).people.flatMap((person) => {
-        if (person.whatsappMentionId?.endsWith("@c.us")) {
-          return [person.whatsappMentionId];
-        }
-
         if (person.phone) {
           const chatId = getWhatsAppChatIdFromPhone(person.phone);
           return chatId ? [chatId] : [];

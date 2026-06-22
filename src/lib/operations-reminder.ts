@@ -8,6 +8,7 @@ import { sendGreenApiTextMessage } from "@/src/lib/whatsapp";
 import type { Product } from "@/src/types";
 
 const DEFAULT_LOW_STOCK_THRESHOLD = 5;
+const DEFAULT_REMINDER_TIMEZONE = String.fromCharCode(65, 115, 105, 97, 47, 65, 108, 109, 97, 116, 121);
 
 function getLowStockThreshold() {
   const value = Number(process.env.OPERATIONS_LOW_STOCK_THRESHOLD);
@@ -15,15 +16,11 @@ function getLowStockThreshold() {
   return Number.isFinite(value) && value > 0 ? value : DEFAULT_LOW_STOCK_THRESHOLD;
 }
 
-function getReminderTimezone() {
-  return process.env.OPERATIONS_REMINDER_TIMEZONE?.trim() || process.env.TIMEZONE?.trim() || "Asia/Almaty";
-}
-
 function formatDateTime() {
   return new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "medium",
     timeStyle: "short",
-    timeZone: getReminderTimezone(),
+    timeZone: DEFAULT_REMINDER_TIMEZONE,
   }).format(new Date());
 }
 

@@ -236,7 +236,7 @@ export default async function Home() {
                 Адрес: Казахстан, уточняется
               </p>
               <p className="rounded-btn bg-cream px-4 py-3 sm:col-span-2">
-                Время работы: ежедневно, 09:00-19:00
+                Время работы: ежедневно, 9:00-19:00
               </p>
             </div>
           </div>

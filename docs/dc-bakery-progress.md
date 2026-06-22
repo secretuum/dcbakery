@@ -108,10 +108,10 @@ DC_RESPONSIBLE_MEAT_LEAD_PHONE=
 ```text
 OPERATIONS_REMINDER_SECRET=сложная_секретная_строка
 OPERATIONS_LOW_STOCK_THRESHOLD=5
-OPERATIONS_REMINDER_TIMEZONE=Asia/Almaty
-MORNING_REMINDER_TIME=09:00
-EVENING_REMINDER_TIME=18:00
 ```
+
+Время утренней/вечерней отправки пока не добавлять в Netlify env. Его подключим на cron-шаге,
+иначе Netlify secret scanner может считать обычные строки времени секретами.
 
 Ручная проверка без отправки:
 

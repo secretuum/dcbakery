@@ -117,7 +117,7 @@ function getPaymentOrigin(request: Request) {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin).replace(/\/$/, "");
 }
 
-async function forwardWebhookPayload(payload: unknown) {
+async function forwardWebhookPayload(payload: unknown, request: Request) {
   const forwardUrl = process.env.GREEN_API_FORWARD_WEBHOOK_URL?.trim();
 
   if (!forwardUrl) {
@@ -126,13 +126,19 @@ async function forwardWebhookPayload(payload: unknown) {
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 5000);
+  const authorizationHeader = request.headers.get("authorization");
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+
+  if (authorizationHeader) {
+    headers.authorization = authorizationHeader;
+  }
 
   try {
     const response = await fetch(forwardUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
@@ -237,7 +243,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const forwarded = await forwardWebhookPayload(payload);
+  const forwarded = await forwardWebhookPayload(payload, request);
 
   const typeWebhook = readNestedString(payload, ["typeWebhook"]);
 

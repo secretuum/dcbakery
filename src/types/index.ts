@@ -118,3 +118,15 @@ export type OrderItem = {
   price: number;
   total_amount: number;
 };
+
+export type ClientOrderSummary = {
+  id: string;
+  order_number: string;
+  company_name: string;
+  status: OrderStatus;
+  payment_status?: PaymentStatus | null;
+  total_amount: number;
+  delivery_date?: string | null;
+  payment_url?: string | null;
+  created_at: string;
+};

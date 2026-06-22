@@ -1,5 +1,12 @@
 import "server-only";
-import type { Order, OrderItem, OrderStatus, PaymentProvider, PaymentStatus } from "@/src/types";
+import type {
+  ClientOrderSummary,
+  Order,
+  OrderItem,
+  OrderStatus,
+  PaymentProvider,
+  PaymentStatus,
+} from "@/src/types";
 
 type SupabaseOrderPayload = Omit<Order, "updated_at"> & {
   telegram_message_id?: string | null;
@@ -316,6 +323,40 @@ export async function fetchAdminOrders(status?: OrderStatus) {
   }
 
   return supabaseGet<Order[]>("orders", params.toString());
+}
+
+export async function fetchClientOrderSummaries({
+  email,
+  phone,
+}: {
+  email?: string;
+  phone?: string;
+}) {
+  const params = new URLSearchParams({
+    select:
+      "id,order_number,company_name,status,payment_status,total_amount,delivery_date,payment_url,created_at",
+    order: "created_at.desc",
+    limit: "20",
+  });
+  const filters: string[] = [];
+
+  if (email) {
+    filters.push(`customer_email.eq.${email}`);
+  }
+
+  if (phone) {
+    filters.push(`customer_phone.eq.${phone}`);
+  }
+
+  if (filters.length > 1) {
+    params.set("or", `(${filters.join(",")})`);
+  } else if (email) {
+    params.set("customer_email", `eq.${email}`);
+  } else if (phone) {
+    params.set("customer_phone", `eq.${phone}`);
+  }
+
+  return supabaseGet<ClientOrderSummary[]>("orders", params.toString());
 }
 
 export async function fetchAdminOrder(orderId: string) {

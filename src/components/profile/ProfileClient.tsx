@@ -6,6 +6,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
+import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
+import type { ClientOrderSummary } from "@/src/types";
 
 const PROFILE_STORAGE_KEY = "dc_bakery_client_profile";
 
@@ -36,6 +38,16 @@ function formatCurrency(value: number) {
     style: "currency",
     currency: "KZT",
   }).format(value);
+}
+
+function formatDate(value?: string | null) {
+  if (!value) {
+    return "не указано";
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    dateStyle: "medium",
+  }).format(new Date(value));
 }
 
 function readClientSession(): ClientSession | null {
@@ -371,6 +383,54 @@ function AdminDashboard({
   );
 }
 
+function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
+  const orderStatus = orderStatusLabels[order.status] ?? order.status;
+  const paymentStatus = order.payment_status
+    ? paymentStatusLabels[order.payment_status]
+    : "не указано";
+
+  return (
+    <article className="rounded-card border border-black/10 bg-white p-5 shadow-[0_14px_40px_rgba(120,51,38,0.06)]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-black uppercase text-raspberry">{order.order_number}</p>
+          <h3 className="mt-2 text-xl font-black tracking-tight">{order.company_name}</h3>
+          <p className="mt-2 text-sm font-semibold text-muted">
+            Создан: {formatDate(order.created_at)}
+          </p>
+        </div>
+        <p className="text-2xl font-black text-dark">{formatCurrency(order.total_amount)}</p>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-btn bg-cream px-4 py-3">
+          <p className="text-xs font-black uppercase text-muted">Заявка</p>
+          <p className="mt-1 text-sm font-black text-dark">{orderStatus}</p>
+        </div>
+        <div className="rounded-btn bg-cream px-4 py-3">
+          <p className="text-xs font-black uppercase text-muted">Оплата</p>
+          <p className="mt-1 text-sm font-black text-dark">{paymentStatus}</p>
+        </div>
+        <div className="rounded-btn bg-cream px-4 py-3">
+          <p className="text-xs font-black uppercase text-muted">Доставка</p>
+          <p className="mt-1 text-sm font-black text-dark">{formatDate(order.delivery_date)}</p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        {order.payment_url ? (
+          <Button href={order.payment_url} className="min-h-10 px-4 py-2">
+            Оплата
+          </Button>
+        ) : null}
+        <Button href="/catalog" variant="outline" className="min-h-10 px-4 py-2">
+          Повторить закупку
+        </Button>
+      </div>
+    </article>
+  );
+}
+
 function ClientDashboard({
   session,
   onLogout,
@@ -381,8 +441,65 @@ function ClientDashboard({
   onUpdate: (session: ClientSession) => void;
 }) {
   const [companyName, setCompanyName] = useState(session.companyName);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [orders, setOrders] = useState<ClientOrderSummary[]>([]);
+  const [ordersError, setOrdersError] = useState("");
   const [phone, setPhone] = useState(session.phone);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadOrders() {
+      setIsLoadingOrders(true);
+      setOrdersError("");
+
+      try {
+        const response = await fetch("/api/profile/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: session.email,
+            phone: session.phone,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to load orders");
+        }
+
+        const data = (await response.json()) as { orders?: ClientOrderSummary[] };
+
+        if (isMounted) {
+          setOrders(data.orders ?? []);
+        }
+      } catch {
+        if (isMounted) {
+          setOrders([]);
+          setOrdersError("Не удалось загрузить историю заказов");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingOrders(false);
+        }
+      }
+    }
+
+    void loadOrders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session.email, session.phone]);
+
+  const activeOrders = orders.filter(
+    (order) => !["completed", "canceled", "cancelled"].includes(order.status),
+  ).length;
+  const paidAmount = orders
+    .filter((order) => order.status === "paid" || order.payment_status === "paid")
+    .reduce((sum, order) => sum + order.total_amount, 0);
 
   function handleSave() {
     const nextSession: ClientSession = {
@@ -419,10 +536,14 @@ function ClientDashboard({
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="История заказов" value="0" tone="coral" />
+        <MetricCard
+          label="История заказов"
+          value={isLoadingOrders ? "..." : String(orders.length)}
+          tone="coral"
+        />
         <MetricCard label="Минимальный заказ" value={formatCurrency(MIN_ORDER_AMOUNT)} />
-        <MetricCard label="Повтор закупки" value="Скоро" />
-        <MetricCard label="Документы" value="Скоро" />
+        <MetricCard label="Активные заявки" value={isLoadingOrders ? "..." : String(activeOrders)} />
+        <MetricCard label="Оплачено" value={formatCurrency(paidAmount)} />
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
@@ -433,19 +554,38 @@ function ClientDashboard({
               <h2 className="mt-2 text-2xl font-black tracking-tight">Заказы</h2>
             </div>
             <span className="w-fit rounded-badge bg-coral-light px-4 py-2 text-xs font-black text-burgundy">
-              MVP без базы клиентов
+              MVP по email/телефону
             </span>
           </div>
-          <div className="mt-6 rounded-card border border-dashed border-coral/40 bg-cream p-6">
-            <h3 className="text-xl font-black tracking-tight">История заказов появится здесь</h3>
-            <p className="mt-3 text-sm font-semibold leading-6 text-muted">
-              После подключения клиентских аккаунтов сюда попадут прошлые заявки, повтор заказа,
-              статусы оплаты и документы.
-            </p>
-            <Button href="/catalog" className="mt-5">
-              Собрать первый заказ
-            </Button>
-          </div>
+          {isLoadingOrders ? (
+            <div className="mt-6 rounded-card bg-cream p-6">
+              <div className="h-28 animate-pulse rounded-card bg-white" />
+            </div>
+          ) : ordersError ? (
+            <div className="mt-6 rounded-card border border-coral/30 bg-coral-light p-6">
+              <h3 className="text-xl font-black tracking-tight">Не удалось загрузить заказы</h3>
+              <p className="mt-3 text-sm font-semibold leading-6 text-burgundy/75">
+                {ordersError}
+              </p>
+            </div>
+          ) : orders.length > 0 ? (
+            <div className="mt-6 space-y-4">
+              {orders.map((order) => (
+                <ClientOrderCard key={order.id} order={order} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-card border border-dashed border-coral/40 bg-cream p-6">
+              <h3 className="text-xl font-black tracking-tight">Заказы пока не найдены</h3>
+              <p className="mt-3 text-sm font-semibold leading-6 text-muted">
+                История подтягивается по email и телефону из профиля. Если заказ оформлялся на другой
+                контакт, обновите настройки профиля или соберите новую заявку.
+              </p>
+              <Button href="/catalog" className="mt-5">
+                Собрать первый заказ
+              </Button>
+            </div>
+          )}
         </section>
 
         <section className="rounded-card bg-white p-6 shadow-[0_18px_48px_rgba(120,51,38,0.08)]">

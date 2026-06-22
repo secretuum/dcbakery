@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   confirmAdminOrder,
   fetchAdminOrderByNumber,
+  fetchAdminOrderByWhatsAppMessageId,
   markOrderPaid,
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
@@ -16,7 +17,7 @@ type WhatsAppCommand = "confirm" | "mark_paid" | "status";
 
 type ParsedCommand = {
   action: WhatsAppCommand;
-  orderNumber: string;
+  orderNumber?: string;
 };
 
 const orderNumberPattern = /\bDCB-\d{4}-\d{4,10}\b/i;
@@ -76,13 +77,20 @@ function extractText(payload: unknown) {
   );
 }
 
+function extractRelatedMessageIds(payload: unknown) {
+  return [
+    readNestedString(payload, ["messageData", "extendedTextMessageData", "stanzaId"]),
+    readNestedString(payload, ["messageData", "extendedTextMessageData", "quotedMessageId"]),
+    readNestedString(payload, ["messageData", "textMessageData", "stanzaId"]),
+    readNestedString(payload, ["messageData", "quotedMessage", "stanzaId"]),
+    readNestedString(payload, ["quotedMessage", "stanzaId"]),
+    readNestedString(payload, ["stanzaId"]),
+  ].filter(Boolean);
+}
+
 function parseCommand(text: string): ParsedCommand | null {
   const orderNumber = text.match(orderNumberPattern)?.[0]?.toUpperCase();
   const normalizedText = text.toLowerCase();
-
-  if (!orderNumber) {
-    return null;
-  }
 
   if (normalizedText.includes("подтверд") || normalizedText.includes("confirm")) {
     return {
@@ -108,6 +116,22 @@ function parseCommand(text: string): ParsedCommand | null {
       action: "status",
       orderNumber,
     };
+  }
+
+  return null;
+}
+
+async function resolveOrderForCommand(command: ParsedCommand, relatedMessageIds: string[]) {
+  if (command.orderNumber) {
+    return fetchAdminOrderByNumber(command.orderNumber);
+  }
+
+  for (const messageId of relatedMessageIds) {
+    const order = await fetchAdminOrderByWhatsAppMessageId(messageId);
+
+    if (order) {
+      return order;
+    }
   }
 
   return null;
@@ -263,16 +287,23 @@ export async function POST(request: Request) {
   }
 
   const text = extractText(payload);
+  const relatedMessageIds = extractRelatedMessageIds(payload);
   const command = parseCommand(text);
 
   if (!command) {
     return NextResponse.json({ forwarded, ignored: true, reason: "No command" });
   }
 
-  const order = await fetchAdminOrderByNumber(command.orderNumber);
+  const order = await resolveOrderForCommand(command, relatedMessageIds);
 
   if (!order) {
-    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    return NextResponse.json(
+      {
+        error: "Order not found",
+        hint: "Send order number with command or reply to the order message",
+      },
+      { status: 404 },
+    );
   }
 
   if (command.action === "confirm") {

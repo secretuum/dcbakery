@@ -340,6 +340,17 @@ export async function fetchAdminOrderByNumber(orderNumber: string) {
   return orders[0] ?? null;
 }
 
+export async function fetchAdminOrderByWhatsAppMessageId(whatsappMessageId: string) {
+  const params = new URLSearchParams({
+    select: "*",
+    whatsapp_message_id: `eq.${whatsappMessageId}`,
+    limit: "1",
+  });
+  const orders = await supabaseGet<Order[]>("orders", params.toString());
+
+  return orders[0] ?? null;
+}
+
 export async function fetchOrderByPaymentId(paymentId: string) {
   const params = new URLSearchParams({
     select: "*",

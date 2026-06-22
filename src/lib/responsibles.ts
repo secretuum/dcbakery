@@ -56,6 +56,12 @@ const responsiblePeopleConfig: Record<ResponsibleRole, ResponsiblePersonConfig> 
   },
 };
 
+const defaultResponsibleEnv = {
+  name: "DC_RESPONSIBLE_DEFAULT_NAME",
+  phone: "DC_RESPONSIBLE_DEFAULT_PHONE",
+  whatsappMentionId: "DC_RESPONSIBLE_DEFAULT_WHATSAPP_ID",
+};
+
 export const responsibleRules: Record<ResponsibleCategory, ResponsibleRole[]> = {
   desserts: ["manager", "dessertLead"],
   semiFinished: ["manager", "semiFinishedLead"],
@@ -70,11 +76,12 @@ function getResponsiblePerson(role: ResponsibleRole): ResponsiblePerson {
   const config = responsiblePeopleConfig[role];
 
   return {
-    name: getEnvValue(config.nameEnv) ?? config.fallbackName,
-    phone: getEnvValue(config.phoneEnv),
+    name: getEnvValue(config.nameEnv) ?? getEnvValue(defaultResponsibleEnv.name) ?? config.fallbackName,
+    phone: getEnvValue(config.phoneEnv) ?? getEnvValue(defaultResponsibleEnv.phone),
     role,
     title: config.title,
-    whatsappMentionId: getEnvValue(config.whatsappMentionIdEnv),
+    whatsappMentionId:
+      getEnvValue(config.whatsappMentionIdEnv) ?? getEnvValue(defaultResponsibleEnv.whatsappMentionId),
   };
 }
 

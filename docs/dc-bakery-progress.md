@@ -55,6 +55,34 @@
 
 ## Env-переменные для ответственных
 
+Пока ответственный один, достаточно заполнить только общие переменные:
+
+```text
+DC_RESPONSIBLE_DEFAULT_NAME=Ответственный DC Bakery
+DC_RESPONSIBLE_DEFAULT_PHONE=+7XXXXXXXXXX
+DC_RESPONSIBLE_DEFAULT_WHATSAPP_ID=7XXXXXXXXXX@c.us
+```
+
+Где это указать на Netlify:
+
+```text
+Netlify -> нужный сайт -> Site configuration -> Environment variables -> Add variable
+```
+
+WhatsApp ID для личного номера обычно выглядит так:
+
+```text
+номер без плюса + @c.us
+```
+
+Для номера `+7XXXXXXXXXX` это:
+
+```text
+7XXXXXXXXXX@c.us
+```
+
+Когда появятся разные ответственные по направлениям, можно заполнить отдельные переменные:
+
 ```text
 DC_RESPONSIBLE_MANAGER_NAME=
 DC_RESPONSIBLE_MANAGER_PHONE=

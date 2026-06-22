@@ -141,6 +141,14 @@ function uniqueRoles(roles: ResponsibleRole[]) {
   return Array.from(new Set(roles));
 }
 
+export function getAllResponsiblePeople() {
+  return mergeResponsiblePeople(
+    (["manager", "dessertLead", "semiFinishedLead", "meatLead"] satisfies ResponsibleRole[]).map(
+      getResponsiblePerson,
+    ),
+  );
+}
+
 export function getOrderResponsibleContext(items: OrderItem[]) {
   const categories = Array.from(
     new Set(

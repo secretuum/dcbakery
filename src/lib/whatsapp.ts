@@ -135,7 +135,7 @@ export function formatWhatsAppOrderStatusNotification(order: Order) {
   ].join("\n");
 }
 
-async function sendGreenApiMessage(chatId: string, message: string) {
+export async function sendGreenApiTextMessage(chatId: string, message: string) {
   const config = getGreenApiConfig();
 
   if (!config || !chatId) {
@@ -164,7 +164,7 @@ async function sendGreenApiMessage(chatId: string, message: string) {
     const data = (await response.json()) as GreenApiSendResponse;
     return data.idMessage ?? null;
   } catch (error) {
-    console.error("[whatsapp] sendGreenApiMessage failed:", error);
+    console.error("[whatsapp] sendGreenApiTextMessage failed:", error);
     return null;
   }
 }
@@ -209,12 +209,12 @@ export async function sendWhatsAppNotification(order: Order, items: OrderItem[])
     return null;
   }
 
-  const managerMessageId = await sendGreenApiMessage(chatId, formatWhatsAppNotification(order, items));
+  const managerMessageId = await sendGreenApiTextMessage(chatId, formatWhatsAppNotification(order, items));
   const directMessage = formatResponsibleDirectNotification(order, items);
 
   await Promise.all(
     getResponsibleChatIds(items).map((responsibleChatId) =>
-      sendGreenApiMessage(responsibleChatId, directMessage).catch(() => null),
+      sendGreenApiTextMessage(responsibleChatId, directMessage).catch(() => null),
     ),
   );
 
@@ -228,7 +228,7 @@ export async function replaceWhatsAppOrderMessage(order: Order, previousMessageI
     return null;
   }
 
-  const nextMessageId = await sendGreenApiMessage(chatId, formatWhatsAppOrderStatusNotification(order));
+  const nextMessageId = await sendGreenApiTextMessage(chatId, formatWhatsAppOrderStatusNotification(order));
 
   if (nextMessageId && previousMessageId && previousMessageId !== nextMessageId) {
     await deleteGreenApiMessage(chatId, previousMessageId).catch(() => false);
@@ -270,5 +270,5 @@ export async function sendCustomerPaymentLinkNotification(order: Order, paymentU
     return null;
   }
 
-  return sendGreenApiMessage(chatId, formatPaymentLinkNotification(order, paymentUrl));
+  return sendGreenApiTextMessage(chatId, formatPaymentLinkNotification(order, paymentUrl));
 }

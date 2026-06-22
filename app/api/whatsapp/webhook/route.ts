@@ -117,6 +117,40 @@ function getPaymentOrigin(request: Request) {
   return (process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin).replace(/\/$/, "");
 }
 
+async function forwardWebhookPayload(payload: unknown) {
+  const forwardUrl = process.env.GREEN_API_FORWARD_WEBHOOK_URL?.trim();
+
+  if (!forwardUrl) {
+    return false;
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await fetch(forwardUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      console.error("[whatsapp] Forward webhook error:", response.status, await response.text());
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("[whatsapp] Forward webhook failed:", error);
+    return false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 async function publishManagerUpdate(order: Order, previousMessageId?: string | null) {
   const managerMessageId = await replaceWhatsAppOrderMessage(order, previousMessageId).catch(
     () => null,
@@ -203,10 +237,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  const forwarded = await forwardWebhookPayload(payload);
+
   const typeWebhook = readNestedString(payload, ["typeWebhook"]);
 
   if (typeWebhook && typeWebhook !== "incomingMessageReceived") {
-    return NextResponse.json({ ignored: true, reason: "Unsupported webhook type" });
+    return NextResponse.json({ forwarded, ignored: true, reason: "Unsupported webhook type" });
   }
 
   const chatId = extractChatId(payload);
@@ -224,7 +260,7 @@ export async function POST(request: Request) {
   const command = parseCommand(text);
 
   if (!command) {
-    return NextResponse.json({ ignored: true, reason: "No command" });
+    return NextResponse.json({ forwarded, ignored: true, reason: "No command" });
   }
 
   const order = await fetchAdminOrderByNumber(command.orderNumber);

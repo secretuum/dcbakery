@@ -85,6 +85,34 @@ function getResponsiblePerson(role: ResponsibleRole): ResponsiblePerson {
   };
 }
 
+function getPhoneDigits(phone?: string) {
+  return phone?.replace(/\D/g, "") ?? "";
+}
+
+function getResponsibleKey(person: ResponsiblePerson) {
+  return person.whatsappMentionId ?? getPhoneDigits(person.phone) ?? person.name;
+}
+
+function mergeResponsiblePeople(people: ResponsiblePerson[]) {
+  const peopleByKey = new Map<string, ResponsiblePerson>();
+
+  for (const person of people) {
+    const key = getResponsibleKey(person);
+    const existingPerson = peopleByKey.get(key);
+
+    if (!existingPerson) {
+      peopleByKey.set(key, person);
+      continue;
+    }
+
+    if (!existingPerson.title.includes(person.title)) {
+      existingPerson.title = `${existingPerson.title}, ${person.title}`;
+    }
+  }
+
+  return Array.from(peopleByKey.values());
+}
+
 function normalizeText(value?: string | null) {
   return value?.toLocaleLowerCase("ru-RU").trim() ?? "";
 }
@@ -129,15 +157,17 @@ export function getOrderResponsibleContext(items: OrderItem[]) {
   return {
     categories,
     categoryLabels: categories.map((category) => categoryLabels[category]),
-    people: roles.map(getResponsiblePerson),
+    people: mergeResponsiblePeople(roles.map(getResponsiblePerson)),
   };
 }
 
 export function formatResponsiblePersonLine(person: ResponsiblePerson) {
+  const phoneDigits = getPhoneDigits(person.phone);
+  const mentionText = phoneDigits ? `@${phoneDigits}` : `@${person.name}`;
   const phone = person.phone ? `, ${person.phone}` : "";
   const mentionId = person.whatsappMentionId ? `, id: ${person.whatsappMentionId}` : "";
 
-  return `- @${person.name} (${person.title}${phone}${mentionId})`;
+  return `- ${mentionText} — ${person.name} (${person.title}${phone}${mentionId})`;
 }
 
 export function formatResponsibleBlock(items: OrderItem[]) {

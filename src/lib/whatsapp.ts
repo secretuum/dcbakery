@@ -1,7 +1,7 @@
 import type { Order, OrderItem } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
-import { formatResponsibleBlock } from "@/src/lib/responsibles";
+import { formatResponsibleBlock, getOrderResponsibleContext } from "@/src/lib/responsibles";
 
 type GreenApiSendResponse = {
   idMessage?: string;
@@ -79,6 +79,46 @@ export function formatWhatsAppNotification(order: Order, items: OrderItem[]) {
   ]
     .filter(Boolean)
     .join("\n");
+}
+
+function getResponsibleChatIds(items: OrderItem[]) {
+  return Array.from(
+    new Set(
+      getOrderResponsibleContext(items).people.flatMap((person) => {
+        if (person.whatsappMentionId?.endsWith("@c.us")) {
+          return [person.whatsappMentionId];
+        }
+
+        if (person.phone) {
+          const chatId = getWhatsAppChatIdFromPhone(person.phone);
+          return chatId ? [chatId] : [];
+        }
+
+        return [];
+      }),
+    ),
+  );
+}
+
+export function formatResponsibleDirectNotification(order: Order, items: OrderItem[]) {
+  const itemLines = items.map(formatOrderLine).join("\n");
+
+  return [
+    `DC Bakery: вы указаны ответственным по заявке ${order.order_number}`,
+    "",
+    formatStatusBlock(order),
+    "",
+    `Компания: ${order.company_name}`,
+    `Контакт: ${order.customer_name} / ${order.customer_phone}`,
+    `Итого: *${formatPrice(order.total_amount)}*`,
+    "--------------------",
+    itemLines,
+    "--------------------",
+    "Команды можно писать в рабочем WhatsApp-чате:",
+    `${order.order_number} подтвердить`,
+    `${order.order_number} оплачено`,
+    `${order.order_number} статус`,
+  ].join("\n");
 }
 
 export function formatWhatsAppOrderStatusNotification(order: Order) {
@@ -169,7 +209,16 @@ export async function sendWhatsAppNotification(order: Order, items: OrderItem[])
     return null;
   }
 
-  return sendGreenApiMessage(chatId, formatWhatsAppNotification(order, items));
+  const managerMessageId = await sendGreenApiMessage(chatId, formatWhatsAppNotification(order, items));
+  const directMessage = formatResponsibleDirectNotification(order, items);
+
+  await Promise.all(
+    getResponsibleChatIds(items).map((responsibleChatId) =>
+      sendGreenApiMessage(responsibleChatId, directMessage).catch(() => null),
+    ),
+  );
+
+  return managerMessageId;
 }
 
 export async function replaceWhatsAppOrderMessage(order: Order, previousMessageId?: string | null) {

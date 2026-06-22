@@ -90,7 +90,7 @@ function getPhoneDigits(phone?: string) {
 }
 
 function getResponsibleKey(person: ResponsiblePerson) {
-  return person.whatsappMentionId ?? getPhoneDigits(person.phone) ?? person.name;
+  return getPhoneDigits(person.phone) || person.whatsappMentionId || person.name;
 }
 
 function mergeResponsiblePeople(people: ResponsiblePerson[]) {
@@ -165,9 +165,8 @@ export function formatResponsiblePersonLine(person: ResponsiblePerson) {
   const phoneDigits = getPhoneDigits(person.phone);
   const mentionText = phoneDigits ? `@${phoneDigits}` : `@${person.name}`;
   const phone = person.phone ? `, ${person.phone}` : "";
-  const mentionId = person.whatsappMentionId ? `, id: ${person.whatsappMentionId}` : "";
 
-  return `- ${mentionText} — ${person.name} (${person.title}${phone}${mentionId})`;
+  return `- ${mentionText} — ${person.name} (${person.title}${phone})`;
 }
 
 export function formatResponsibleBlock(items: OrderItem[]) {

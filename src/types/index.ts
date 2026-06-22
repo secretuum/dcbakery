@@ -109,6 +109,7 @@ export type Order = {
 };
 
 export type OrderItem = {
+  category?: string | null;
   id: string;
   order_id: string;
   product_id: string;

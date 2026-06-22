@@ -1,6 +1,7 @@
 import type { Order, OrderItem } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
+import { formatResponsibleBlock } from "@/src/lib/responsibles";
 
 type GreenApiSendResponse = {
   idMessage?: string;
@@ -67,6 +68,8 @@ export function formatWhatsAppNotification(order: Order, items: OrderItem[]) {
     `Дата: ${optional(order.delivery_date)} | Время: ${optional(order.delivery_time)}`,
     "--------------------",
     itemLines,
+    "--------------------",
+    formatResponsibleBlock(items),
     "--------------------",
     `Итого: *${formatPrice(order.total_amount)}*`,
     `Оплата: ${optional(order.payment_method)}`,

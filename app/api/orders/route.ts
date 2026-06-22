@@ -207,6 +207,7 @@ export async function POST(request: Request) {
   const orderNumber = generateOrderNumber();
   const orderItems = (body.items ?? []).map((item) => ({
     id: crypto.randomUUID(),
+    category: productMap.get(item.product_id)?.category?.name ?? null,
     order_id: orderId,
     product_id: item.product_id,
     product_name: item.product_name ?? item.product_id,

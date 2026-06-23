@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { upsertCatalogProductOverride } from "@/src/lib/supabase/admin";
 
 function getString(formData: FormData, key: string) {
@@ -20,6 +21,82 @@ function getBoolean(formData: FormData, key: string) {
   return getString(formData, key) === "true";
 }
 
+function slugify(value: string) {
+  const map: Record<string, string> = {
+    а: "a",
+    б: "b",
+    в: "v",
+    г: "g",
+    д: "d",
+    е: "e",
+    ё: "e",
+    ж: "zh",
+    з: "z",
+    и: "i",
+    й: "y",
+    к: "k",
+    л: "l",
+    м: "m",
+    н: "n",
+    о: "o",
+    п: "p",
+    р: "r",
+    с: "s",
+    т: "t",
+    у: "u",
+    ф: "f",
+    х: "h",
+    ц: "ts",
+    ч: "ch",
+    ш: "sh",
+    щ: "sch",
+    ъ: "",
+    ы: "y",
+    ь: "",
+    э: "e",
+    ю: "yu",
+    я: "ya",
+  };
+
+  return value
+    .toLowerCase()
+    .split("")
+    .map((char) => map[char] ?? char)
+    .join("")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+}
+
+function getCatalogProductPatch(formData: FormData) {
+  return {
+    category_slug: getString(formData, "category_slug"),
+    composition: getString(formData, "composition"),
+    composition_kz: getString(formData, "composition_kz"),
+    description: getString(formData, "description"),
+    image: getString(formData, "image"),
+    is_active: getBoolean(formData, "is_active"),
+    is_archived: getBoolean(formData, "is_archived"),
+    is_halal: getBoolean(formData, "is_halal"),
+    is_new: getBoolean(formData, "is_new"),
+    is_popular: getBoolean(formData, "is_popular"),
+    is_promo: getBoolean(formData, "is_promo"),
+    min_qty: getNumber(formData, "min_qty"),
+    name: getString(formData, "name"),
+    package_type: getString(formData, "package_type"),
+    price: getNumber(formData, "price"),
+    shelf_life: getString(formData, "shelf_life"),
+    slug: getString(formData, "slug") || slugify(getString(formData, "name")),
+    step_qty: getNumber(formData, "step_qty"),
+    stock_qty: getNumber(formData, "stock_qty"),
+    storage: getString(formData, "storage"),
+    subcategory: getString(formData, "subcategory"),
+    unit: getString(formData, "unit") || "шт",
+    weight_grams: getNumber(formData, "weight_grams"),
+    weight_label: getString(formData, "weight_label"),
+  };
+}
+
 export async function updateCatalogProductAction(formData: FormData) {
   const productId = getString(formData, "product_id");
   const action = getString(formData, "_action") || "save";
@@ -31,34 +108,30 @@ export async function updateCatalogProductAction(formData: FormData) {
   const isArchived = action === "archive" ? true : action === "restore" ? false : getBoolean(formData, "is_archived");
 
   await upsertCatalogProductOverride(productId, {
-    category_slug: getString(formData, "category_slug"),
-    composition: getString(formData, "composition"),
-    composition_kz: getString(formData, "composition_kz"),
-    description: getString(formData, "description"),
-    image: getString(formData, "image"),
-    is_active: getBoolean(formData, "is_active"),
+    ...getCatalogProductPatch(formData),
     is_archived: isArchived,
-    is_halal: getBoolean(formData, "is_halal"),
-    is_new: getBoolean(formData, "is_new"),
-    is_popular: getBoolean(formData, "is_popular"),
-    is_promo: getBoolean(formData, "is_promo"),
-    min_qty: getNumber(formData, "min_qty"),
-    name: getString(formData, "name"),
-    package_type: getString(formData, "package_type"),
-    price: getNumber(formData, "price"),
-    shelf_life: getString(formData, "shelf_life"),
-    slug: getString(formData, "slug"),
-    step_qty: getNumber(formData, "step_qty"),
-    stock_qty: getNumber(formData, "stock_qty"),
-    storage: getString(formData, "storage"),
-    subcategory: getString(formData, "subcategory"),
-    unit: getString(formData, "unit"),
-    weight_grams: getNumber(formData, "weight_grams"),
-    weight_label: getString(formData, "weight_label"),
   });
 
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
+}
+
+export async function createCatalogProductAction(formData: FormData) {
+  const patch = getCatalogProductPatch(formData);
+
+  if (!patch.name || !patch.slug || !patch.category_slug) {
+    throw new Error("Name, slug and category are required");
+  }
+
+  await upsertCatalogProductOverride(`custom-${crypto.randomUUID()}`, {
+    ...patch,
+    is_active: true,
+    is_archived: false,
+  });
+
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/products");
+  redirect("/admin/products");
 }
 
 export async function bulkUpdateCatalogProductsAction(formData: FormData) {

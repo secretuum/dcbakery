@@ -159,6 +159,59 @@ function applyOverride(
   };
 }
 
+function toCustomProduct(
+  override: CatalogProductOverride,
+  index: number,
+  categories: Category[],
+): Product | null {
+  if (!override.name || !override.slug) {
+    return null;
+  }
+
+  const category =
+    categories.find((item) => item.slug === override.category_slug) ??
+    categories[0];
+
+  if (!category) {
+    return null;
+  }
+
+  const image = override.image?.trim();
+
+  return {
+    category,
+    category_id: category.id,
+    composition: override.composition ?? undefined,
+    compositionKz: override.composition_kz ?? undefined,
+    description: override.description ?? "",
+    id: override.product_id,
+    images: [image || "/product-placeholder.png"],
+    is_active: override.is_active ?? true,
+    isArchived: override.is_archived ?? false,
+    isHalal: override.is_halal ?? false,
+    isNew: override.is_new ?? false,
+    isPopular: override.is_popular ?? false,
+    isPromo: override.is_promo ?? false,
+    min_qty: parseOverrideNumber(override.min_qty, 1),
+    name: override.name,
+    packageType: override.package_type ?? undefined,
+    price: parseOverrideNumber(override.price, 0),
+    shelfLife: override.shelf_life ?? undefined,
+    slug: override.slug,
+    sort_order: sourceProducts.length + index + 1,
+    source: "admin",
+    step_qty: parseOverrideNumber(override.step_qty, 1),
+    stock_qty: parseOverrideNumber(override.stock_qty, 0),
+    storage: override.storage ?? undefined,
+    subcategory: override.subcategory ?? undefined,
+    unit: override.unit ?? "шт",
+    updated_at: override.updated_at ?? undefined,
+    weight: override.weight_label ?? undefined,
+    weightGrams: parseOverrideOptionalNumber(override.weight_grams),
+    weightLabel: override.weight_label ?? undefined,
+  };
+}
+
 function getActiveCategories() {
   return productCategories.map(toCategory).filter((category) => category.is_active).sort(bySortOrder);
 }
@@ -188,9 +241,20 @@ async function getCatalogProducts({
   const overridesByProductId = new Map(
     overrides.map((override) => [override.product_id, override]),
   );
+  const sourceProductIds = new Set(sourceCatalog.map((product) => product.id));
+  const customProducts = overrides
+    .filter((override) => !sourceProductIds.has(override.product_id))
+    .map((override, index) => toCustomProduct(override, index, categories))
+    .filter((product): product is Product => Boolean(product));
 
-  return sourceCatalog
-    .map((product) => applyOverride(product, overridesByProductId.get(product.id), categories))
+  const products = [
+    ...sourceCatalog.map((product) =>
+      applyOverride(product, overridesByProductId.get(product.id), categories),
+    ),
+    ...customProducts,
+  ];
+
+  return products
     .filter((product) => {
       if (!includeArchived && product.isArchived) {
         return false;

@@ -101,12 +101,20 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
             остаток, название и статус здесь синхронизируются с сайтом и WhatsApp.
           </p>
         </div>
-        <Link
-          href="/catalog"
-          className="inline-flex min-h-11 items-center justify-center rounded-btn bg-white px-4 py-2 text-sm font-black text-muted shadow-sm transition hover:bg-coral-light hover:text-dark"
-        >
-          Открыть каталог
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/admin/products/new"
+            className="inline-flex min-h-11 items-center justify-center rounded-btn bg-coral px-4 py-2 text-sm font-black text-white shadow-sm transition hover:bg-coral-hover"
+          >
+            Добавить товар
+          </Link>
+          <Link
+            href="/catalog"
+            className="inline-flex min-h-11 items-center justify-center rounded-btn bg-white px-4 py-2 text-sm font-black text-muted shadow-sm transition hover:bg-coral-light hover:text-dark"
+          >
+            Открыть каталог
+          </Link>
+        </div>
       </div>
 
       <section className="mt-7 grid gap-3 sm:grid-cols-3">

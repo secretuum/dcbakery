@@ -91,6 +91,20 @@ function isAuthorized(request: Request) {
   );
 }
 
+function formatChatForLog(chatId: string) {
+  if (!chatId) {
+    return "missing";
+  }
+
+  const [leftPart, rightPart] = chatId.split("@");
+
+  if (!leftPart || !rightPart) {
+    return "malformed";
+  }
+
+  return `${leftPart.slice(0, 3)}***${leftPart.slice(-3)}@${rightPart}`;
+}
+
 function extractChatId(payload: unknown) {
   return (
     readNestedString(payload, ["senderData", "chatId"]) ||
@@ -348,6 +362,12 @@ async function markPaidFromWhatsApp(order: Order) {
 
 export async function POST(request: Request) {
   if (!isAuthorized(request)) {
+    console.warn("[whatsapp:webhook] unauthorized", {
+      hasAuthorization: Boolean(request.headers.get("authorization")),
+      hasQuerySecret: Boolean(new URL(request.url).searchParams.get("secret")),
+      hasWebhookSecret: Boolean(process.env.WHATSAPP_WEBHOOK_SECRET),
+    });
+
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -368,19 +388,27 @@ export async function POST(request: Request) {
     });
 
   const typeWebhook = readNestedString(payload, ["typeWebhook"]);
+  const chatId = extractChatId(payload);
+  const expectedChatId = process.env.GREEN_API_CHAT_ID;
+  const text = extractText(payload);
+
+  console.info("[whatsapp:webhook] received", {
+    chat: formatChatForLog(chatId),
+    hasText: Boolean(text),
+    isCustomerChat: isCustomerWhatsAppChat(chatId),
+    isManagerChat: chatId === expectedChatId,
+    typeWebhook: typeWebhook || "missing",
+  });
 
   if (typeWebhook && typeWebhook !== "incomingMessageReceived") {
     return respondWithIgnored("Unsupported webhook type");
   }
 
-  const chatId = extractChatId(payload);
-  const expectedChatId = process.env.GREEN_API_CHAT_ID;
-
   if (!expectedChatId) {
+    console.error("[whatsapp:webhook] GREEN_API_CHAT_ID is not configured");
+
     return NextResponse.json({ error: "GREEN_API_CHAT_ID is not configured" }, { status: 503 });
   }
-
-  const text = extractText(payload);
 
   if (!chatId) {
     return respondWithIgnored("Missing chatId");

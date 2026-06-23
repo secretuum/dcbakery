@@ -22,6 +22,26 @@ type ParsedOrderItem = {
   qty: number;
 };
 
+type CustomerSession =
+  | {
+      mode: "catalog";
+      categorySlugs: string[];
+    }
+  | {
+      categorySlug: string;
+      mode: "category";
+      productSlugs: string[];
+    }
+  | {
+      categorySlug?: string;
+      mode: "product";
+      productSlug: string;
+      productSlugs?: string[];
+    };
+
+const MAX_CATEGORY_PRODUCTS = 12;
+const customerSessions = new Map<string, CustomerSession>();
+
 const categoryAliases: Record<string, string> = {
   deserty: "deserty",
   десерт: "deserty",
@@ -69,35 +89,66 @@ function formatProductPrice(product: Product) {
   return product.price > 0 ? formatPrice(product.price) : "Цена уточняется";
 }
 
-function formatProductLine(product: Product) {
+function formatProductLine(product: Product, index?: number) {
   const weight = product.weightLabel ? `, ${product.weightLabel}` : "";
+  const prefix = typeof index === "number" ? `${index + 1}. ` : "- ";
 
-  return `- ${product.slug}: ${product.name}${weight} — ${formatProductPrice(product)}`;
+  return `${prefix}${product.slug}: ${product.name}${weight} — ${formatProductPrice(product)}`;
 }
 
-async function formatCatalogIntro() {
-  const categories = await fetchCategories();
-  const categoryLines = categories.map((category) => `- ${category.name}: ${category.slug}`);
+function parseStrictPositiveNumber(value: string) {
+  const normalizedValue = value.replace(",", ".").trim();
+  const number = Number(normalizedValue);
+
+  return Number.isFinite(number) && number > 0 ? number : null;
+}
+
+function parseNumberOnlyCommand(value: string) {
+  const match = value.match(/^\d+$/);
+
+  return match ? Number(match[0]) : null;
+}
+
+function getProductBySlug(products: Product[], slug?: string) {
+  return slug ? products.find((product) => product.slug === slug || product.id === slug) ?? null : null;
+}
+
+function findSessionProductByNumber(
+  session: CustomerSession | undefined,
+  products: Product[],
+  optionNumber: number,
+) {
+  if (session?.mode !== "category" || optionNumber < 1) {
+    return null;
+  }
+
+  return getProductBySlug(products, session.productSlugs[optionNumber - 1]);
+}
+
+function formatCatalogIntro(categories: Awaited<ReturnType<typeof fetchCategories>>) {
+  const categoryLines = categories.map((category, index) => `${index + 1}. ${category.name}`);
 
   return [
     "*DC Bakery B2B каталог*",
     "",
-    "Напишите категорию, чтобы получить товары:",
+    "Выберите категорию цифрой или напишите название:",
     ...categoryLines,
     "",
+    "0. Позвать менеджера",
+    "",
     "Команды:",
-    "каталог — показать категории",
+    "1 / 2 / 3 — открыть категорию",
     "товар slug — карточка товара",
     "заказ slug 10 — оформить заявку",
     "менеджер — позвать менеджера",
     "",
     "Пример:",
-    "заказ napoleon 19",
+    "заказ napoleon 10",
   ].join("\n");
 }
 
 function formatCategoryMessage(categoryName: string, products: Product[]) {
-  const visibleProducts = products.slice(0, 12);
+  const visibleProducts = products.slice(0, MAX_CATEGORY_PRODUCTS);
   const hiddenCount = Math.max(0, products.length - visibleProducts.length);
 
   return [
@@ -106,11 +157,13 @@ function formatCategoryMessage(categoryName: string, products: Product[]) {
     ...visibleProducts.map(formatProductLine),
     hiddenCount > 0 ? `\nЕще ${hiddenCount} позиций есть на сайте.` : null,
     "",
-    "Чтобы оформить заявку:",
-    "заказ slug количество",
+    "Что дальше:",
+    "1 / 2 / 3 — открыть товар",
+    "заказ 1 10 — заказать товар №1 в количестве 10",
+    "0 — назад в каталог",
     "",
     "Например:",
-    visibleProducts[0] ? `заказ ${visibleProducts[0].slug} 10` : "заказ napoleon 10",
+    visibleProducts[0] ? "заказ 1 10" : "каталог",
   ]
     .filter(Boolean)
     .join("\n");
@@ -130,7 +183,11 @@ function formatProductDetails(product: Product) {
     "",
     product.description,
     "",
-    `Заказать: заказ ${product.slug} 10`,
+    "Чтобы заказать, напишите количество цифрой, например:",
+    "10",
+    "",
+    `Или командой: заказ ${product.slug} 10`,
+    "0 — назад к списку",
   ]
     .filter(Boolean)
     .join("\n");
@@ -166,7 +223,44 @@ function parseDate(value?: string | null) {
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
-function parseOrderItems(text: string, products: Product[]) {
+function resolveProductFromOrderSegment(
+  segment: string,
+  products: Product[],
+  session?: CustomerSession,
+) {
+  const productBySlug = products.find((candidate) => {
+    const slugPattern = new RegExp(`(^|\\s)${escapeRegExp(candidate.slug)}($|\\s)`, "u");
+    const idPattern = new RegExp(`(^|\\s)${escapeRegExp(candidate.id)}($|\\s)`, "u");
+
+    return slugPattern.test(segment) || idPattern.test(segment);
+  });
+
+  if (productBySlug) {
+    return productBySlug;
+  }
+
+  const optionMatch = segment.match(/^\s*(\d+)(?:\s|$)/);
+
+  if (optionMatch) {
+    return findSessionProductByNumber(session, products, Number(optionMatch[1]));
+  }
+
+  if (session?.mode === "product") {
+    return getProductBySlug(products, session.productSlug);
+  }
+
+  return null;
+}
+
+function resolveQtyFromOrderSegment(segment: string, hasNumericProductReference: boolean) {
+  const matches = Array.from(segment.matchAll(/\d+(?:[.,]\d+)?/g));
+  const qtyMatch = hasNumericProductReference ? matches[1] : matches[0];
+  const qty = qtyMatch ? Number(qtyMatch[0].replace(",", ".")) : 1;
+
+  return Number.isFinite(qty) && qty > 0 ? qty : null;
+}
+
+function parseOrderItems(text: string, products: Product[], session?: CustomerSession) {
   const normalizedText = normalizeText(text);
   const segments = normalizedText
     .replace(/^(заказ|заказать|order)\b/u, "")
@@ -176,21 +270,17 @@ function parseOrderItems(text: string, products: Product[]) {
   const parsedItems: ParsedOrderItem[] = [];
 
   for (const segment of segments) {
-    const product = products.find((candidate) => {
-      const slugPattern = new RegExp(`(^|\\s)${escapeRegExp(candidate.slug)}($|\\s)`, "u");
-      const idPattern = new RegExp(`(^|\\s)${escapeRegExp(candidate.id)}($|\\s)`, "u");
-
-      return slugPattern.test(segment) || idPattern.test(segment);
-    });
+    const product = resolveProductFromOrderSegment(segment, products, session);
 
     if (!product) {
       continue;
     }
 
-    const qtyMatch = segment.match(/(?:x|х|\*)?\s*(\d+(?:[.,]\d+)?)/u);
-    const qty = qtyMatch ? Number(qtyMatch[1].replace(",", ".")) : 1;
+    const hasNumericProductReference =
+      session?.mode === "category" && Boolean(segment.match(/^\s*\d+(?:\s|$)/));
+    const qty = resolveQtyFromOrderSegment(segment, hasNumericProductReference);
 
-    if (Number.isFinite(qty) && qty > 0) {
+    if (qty) {
       parsedItems.push({ product, qty });
     }
   }
@@ -318,6 +408,48 @@ function formatCustomerOrderSuccess(order: Order, items: OrderItem[]) {
   ].join("\n");
 }
 
+async function submitCustomerOrder({
+  chatId,
+  items,
+  senderName,
+  text,
+}: {
+  chatId: string;
+  items: ParsedOrderItem[];
+  senderName?: string;
+  text: string;
+}) {
+  const totalAmount = items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
+  const hasUnknownPrice = items.some((item) => item.product.price <= 0);
+
+  if (!hasUnknownPrice && totalAmount < MIN_ORDER_AMOUNT) {
+    const messageId = await sendGreenApiTextMessage(chatId, formatMinimumOrderMessage(totalAmount));
+
+    return { action: "order_error", messageId, ok: false, reason: "Minimum order" };
+  }
+
+  const { order, orderItems, telegramMessageId, whatsappMessageId } = await createWhatsAppOrder({
+    chatId,
+    items,
+    senderName,
+    text,
+  });
+  const messageId = await sendGreenApiTextMessage(
+    chatId,
+    formatCustomerOrderSuccess(order, orderItems),
+  );
+
+  return {
+    action: "order_created",
+    messageId,
+    ok: true,
+    orderId: order.id,
+    orderNumber: order.order_number,
+    telegramMessageId,
+    whatsappMessageId,
+  };
+}
+
 async function notifyManagerRequested(chatId: string, senderName: string | undefined, text: string) {
   const managerChatId = process.env.GREEN_API_CHAT_ID;
 
@@ -351,7 +483,53 @@ export async function handleWhatsAppCustomerMessage({
   text,
 }: CustomerMessageInput) {
   const normalizedText = normalizeText(text);
+  const categories = await fetchCategories();
   const products = await fetchProducts();
+  const session = customerSessions.get(chatId);
+
+  async function sendCatalog() {
+    customerSessions.set(chatId, {
+      categorySlugs: categories.map((category) => category.slug),
+      mode: "catalog",
+    });
+
+    const messageId = await sendGreenApiTextMessage(chatId, formatCatalogIntro(categories));
+
+    return { action: "catalog", messageId, ok: true };
+  }
+
+  async function sendCategory(categorySlug: string) {
+    const categoryProducts = products
+      .filter((product) => product.category?.slug === categorySlug)
+      .slice(0, MAX_CATEGORY_PRODUCTS);
+    const categoryName = categoryProducts[0]?.category?.name ?? categorySlug;
+
+    customerSessions.set(chatId, {
+      categorySlug,
+      mode: "category",
+      productSlugs: categoryProducts.map((product) => product.slug),
+    });
+
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      formatCategoryMessage(categoryName, categoryProducts),
+    );
+
+    return { action: "category", messageId, ok: true };
+  }
+
+  async function sendProduct(product: Product, productSlugs?: string[]) {
+    customerSessions.set(chatId, {
+      categorySlug: product.category?.slug,
+      mode: "product",
+      productSlug: product.slug,
+      productSlugs,
+    });
+
+    const messageId = await sendGreenApiTextMessage(chatId, formatProductDetails(product));
+
+    return { action: "product", messageId, ok: true };
+  }
 
   if (
     !normalizedText ||
@@ -360,10 +538,15 @@ export async function handleWhatsAppCustomerMessage({
     normalizedText === "каталог" ||
     normalizedText === "catalog"
   ) {
-    const message = await formatCatalogIntro();
-    const messageId = await sendGreenApiTextMessage(chatId, message);
+    return sendCatalog();
+  }
 
-    return { action: "catalog", messageId, ok: true };
+  if (normalizedText === "назад" || normalizedText === "back") {
+    if (session?.mode === "product" && session.categorySlug) {
+      return sendCategory(session.categorySlug);
+    }
+
+    return sendCatalog();
   }
 
   if (normalizedText.includes("менеджер") || normalizedText.includes("manager")) {
@@ -376,15 +559,61 @@ export async function handleWhatsAppCustomerMessage({
     return { action: "manager_requested", managerMessageId, messageId, ok: true };
   }
 
+  const numberCommand = parseNumberOnlyCommand(normalizedText);
+
+  if (numberCommand === 0) {
+    const managerMessageId = await notifyManagerRequested(chatId, senderName, text);
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      "Менеджера позвали. Если хотите вернуться в каталог, напишите: каталог",
+    );
+
+    return { action: "manager_requested", managerMessageId, messageId, ok: true };
+  }
+
+  if (numberCommand !== null) {
+    if (session?.mode === "catalog") {
+      const categorySlug = session.categorySlugs[numberCommand - 1];
+
+      if (categorySlug) {
+        return sendCategory(categorySlug);
+      }
+    }
+
+    if (session?.mode === "category") {
+      const product = findSessionProductByNumber(session, products, numberCommand);
+
+      if (product) {
+        return sendProduct(product, session.productSlugs);
+      }
+    }
+
+    if (session?.mode === "product") {
+      const product = getProductBySlug(products, session.productSlug);
+      const qty = parseStrictPositiveNumber(normalizedText);
+
+      if (product && qty) {
+        return submitCustomerOrder({
+          chatId,
+          items: [{ product, qty }],
+          senderName,
+          text,
+        });
+      }
+    }
+
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      "Не нашел такой пункт. Напишите каталог, чтобы начать заново.",
+    );
+
+    return { action: "unknown_number", messageId, ok: true };
+  }
+
   const categorySlug = categoryAliases[normalizedText];
 
   if (categorySlug) {
-    const categoryProducts = products.filter((product) => product.category?.slug === categorySlug);
-    const categoryName = categoryProducts[0]?.category?.name ?? normalizedText;
-    const message = formatCategoryMessage(categoryName, categoryProducts);
-    const messageId = await sendGreenApiTextMessage(chatId, message);
-
-    return { action: "category", messageId, ok: true };
+    return sendCategory(categorySlug);
   }
 
   const productSlug = normalizedText.replace(/^товар\s+/u, "").trim();
@@ -393,13 +622,11 @@ export async function handleWhatsAppCustomerMessage({
   );
 
   if (product) {
-    const messageId = await sendGreenApiTextMessage(chatId, formatProductDetails(product));
-
-    return { action: "product", messageId, ok: true };
+    return sendProduct(product);
   }
 
   if (/^(заказ|заказать|order)\b/u.test(normalizedText)) {
-    const items = parseOrderItems(text, products);
+    const items = parseOrderItems(text, products, session);
 
     if (items.length === 0) {
       const messageId = await sendGreenApiTextMessage(chatId, formatOrderSyntaxError(products));
@@ -407,35 +634,12 @@ export async function handleWhatsAppCustomerMessage({
       return { action: "order_error", messageId, ok: false, reason: "No items" };
     }
 
-    const totalAmount = items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
-    const hasUnknownPrice = items.some((item) => item.product.price <= 0);
-
-    if (!hasUnknownPrice && totalAmount < MIN_ORDER_AMOUNT) {
-      const messageId = await sendGreenApiTextMessage(chatId, formatMinimumOrderMessage(totalAmount));
-
-      return { action: "order_error", messageId, ok: false, reason: "Minimum order" };
-    }
-
-    const { order, orderItems, telegramMessageId, whatsappMessageId } = await createWhatsAppOrder({
+    return submitCustomerOrder({
       chatId,
       items,
       senderName,
       text,
     });
-    const messageId = await sendGreenApiTextMessage(
-      chatId,
-      formatCustomerOrderSuccess(order, orderItems),
-    );
-
-    return {
-      action: "order_created",
-      messageId,
-      ok: true,
-      orderId: order.id,
-      orderNumber: order.order_number,
-      telegramMessageId,
-      whatsappMessageId,
-    };
   }
 
   const messageId = await sendGreenApiTextMessage(

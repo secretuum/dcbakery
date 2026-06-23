@@ -41,6 +41,25 @@ type PaymentEventPayload = {
   status?: PaymentStatus | null;
 };
 
+export type CatalogProductOverride = {
+  category_slug?: string | null;
+  description?: string | null;
+  image?: string | null;
+  is_active?: boolean | null;
+  is_new?: boolean | null;
+  is_popular?: boolean | null;
+  is_promo?: boolean | null;
+  name?: string | null;
+  price?: number | string | null;
+  product_id: string;
+  slug?: string | null;
+  stock_qty?: number | string | null;
+  subcategory?: string | null;
+  unit?: string | null;
+  updated_at?: string | null;
+  weight_label?: string | null;
+};
+
 type OrderCancellationActor = "client" | "manager";
 
 type OrderRevisionItemInput = {
@@ -122,6 +141,31 @@ async function supabaseRequest<T>(table: string, body: unknown) {
   return (await response.json()) as T;
 }
 
+async function supabaseUpsert<T>(table: string, body: unknown, onConflict: string) {
+  const url = getSupabaseRestUrl(table);
+
+  if (!url || !serviceRoleKey) {
+    throw new Error(getSupabaseAdminConfigError() ?? "Supabase is not configured");
+  }
+
+  const response = await fetch(`${url}?on_conflict=${encodeURIComponent(onConflict)}`, {
+    method: "POST",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=representation",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseSupabaseError(response));
+  }
+
+  return (await response.json()) as T;
+}
+
 function isPaymentFlowMigrationMissing(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
 
@@ -132,6 +176,12 @@ function isPaymentFlowMigrationMissing(error: unknown) {
     message.includes("payment_status") ||
     message.includes("source")
   );
+}
+
+function isCatalogOverridesMigrationMissing(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return message.includes("catalog_product_overrides") || message.includes("Could not find");
 }
 
 async function supabaseGet<T>(table: string, query: string) {
@@ -265,6 +315,50 @@ export async function updateOrderWhatsAppMessageId(orderId: string, whatsappMess
   if (!response.ok) {
     console.error("[whatsapp] Failed to update whatsapp_message_id:", await parseSupabaseError(response));
   }
+}
+
+export async function fetchCatalogProductOverrides() {
+  if (getSupabaseAdminConfigError()) {
+    return [];
+  }
+
+  const params = new URLSearchParams({
+    select: "*",
+    order: "updated_at.desc",
+  });
+
+  try {
+    return await supabaseGet<CatalogProductOverride[]>(
+      "catalog_product_overrides",
+      params.toString(),
+    );
+  } catch (error) {
+    if (isCatalogOverridesMigrationMissing(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+export async function upsertCatalogProductOverride(
+  productId: string,
+  patch: Omit<Partial<CatalogProductOverride>, "product_id" | "updated_at">,
+) {
+  const cleanPatch = Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined),
+  );
+  const [override] = await supabaseUpsert<CatalogProductOverride[]>(
+    "catalog_product_overrides",
+    {
+      ...cleanPatch,
+      product_id: productId,
+      updated_at: new Date().toISOString(),
+    },
+    "product_id",
+  );
+
+  return override ?? null;
 }
 
 export async function insertOrderWithItems(order: Order, items: OrderItem[]) {

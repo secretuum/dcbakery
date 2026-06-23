@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { updateCatalogProductAction } from "@/app/admin/products/actions";
 import { Badge } from "@/src/components/ui/Badge";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
-import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
+import { fetchAdminProducts, fetchCategories } from "@/src/lib/catalog";
 import { formatProductPrice } from "@/src/lib/format";
 import type { Product } from "@/src/types";
 
@@ -67,7 +68,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
   const [{ category, q }, categories, products] = await Promise.all([
     searchParams,
     fetchCategories(),
-    fetchProducts(),
+    fetchAdminProducts(),
   ]);
   const selectedCategory = getParam(category);
   const query = getParam(q);
@@ -82,8 +83,8 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
           <p className="text-sm font-black uppercase text-raspberry">Админка</p>
           <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">Товары</h1>
           <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-muted">
-            Каталог сейчас работает на локальном файле products.ts. Этот экран показывает текущую
-            витрину и помогает быстро проверить цены, остатки и категории.
+            Каталог работает на стартовом products.ts и Supabase-правках из админки. Цена,
+            остаток, название и статус здесь синхронизируются с сайтом и WhatsApp.
           </p>
         </div>
         <Link
@@ -156,7 +157,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
       <div className="mt-6 overflow-hidden rounded-card bg-white shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
         {filteredProducts.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-[960px] w-full border-collapse text-left">
+            <table className="min-w-[1160px] w-full border-collapse text-left">
               <thead className="bg-coral-light text-xs font-black uppercase text-burgundy">
                 <tr>
                   <th className="px-5 py-4">Товар</th>
@@ -165,52 +166,111 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                   <th className="px-5 py-4">Вес</th>
                   <th className="px-5 py-4">Остаток</th>
                   <th className="px-5 py-4">Статус</th>
+                  <th className="px-5 py-4">Действие</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/10 text-sm font-semibold">
-                {filteredProducts.map((product) => (
-                  <tr key={product.id} className="transition hover:bg-cream">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative size-16 shrink-0 overflow-hidden rounded-btn bg-coral-light">
-                          <FallbackImage
-                            alt={product.name}
-                            className="object-cover"
-                            fill
-                            sizes="64px"
-                            src={product.images[0]}
-                          />
+                {filteredProducts.map((product) => {
+                  const formId = `product-${product.id}`;
+
+                  return (
+                    <tr key={product.id} className="transition hover:bg-cream">
+                      <td className="px-5 py-4">
+                        <form action={updateCatalogProductAction} id={formId}>
+                          <input name="product_id" type="hidden" value={product.id} />
+                        </form>
+                        <div className="flex items-center gap-3">
+                          <div className="relative size-16 shrink-0 overflow-hidden rounded-btn bg-coral-light">
+                            <FallbackImage
+                              alt={product.name}
+                              className="object-cover"
+                              fill
+                              sizes="64px"
+                              src={product.images[0]}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <input
+                              className="w-full min-w-64 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                              defaultValue={product.name}
+                              form={formId}
+                              name="name"
+                            />
+                            <Link
+                              className="mt-1 block text-xs font-black text-raspberry transition hover:text-burgundy"
+                              href={`/product/${product.slug}`}
+                            >
+                              /product/{product.slug}
+                            </Link>
+                            <p className="mt-1 line-clamp-1 max-w-md text-xs text-muted">
+                              {product.description}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <Link
-                            className="font-black text-dark transition hover:text-raspberry"
-                            href={`/product/${product.slug}`}
+                      </td>
+                      <td className="px-5 py-4">
+                        <Badge variant="burgundy">{product.category?.name ?? "Без категории"}</Badge>
+                      </td>
+                      <td className="px-5 py-4">
+                        <input
+                          className="w-32 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-raspberry outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                          defaultValue={product.price}
+                          form={formId}
+                          min="0"
+                          name="price"
+                          step="0.01"
+                          type="number"
+                        />
+                        <p className="mt-1 text-xs font-bold text-muted">
+                          {formatProductPrice(product.price)}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4 text-muted">{product.weightLabel ?? "не указано"}</td>
+                      <td className={`px-5 py-4 font-black ${getStockTone(product.stock_qty)}`}>
+                        <input
+                          className="w-28 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                          defaultValue={product.stock_qty}
+                          form={formId}
+                          min="0"
+                          name="stock_qty"
+                          step="0.001"
+                          type="number"
+                        />
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="grid gap-2">
+                          <select
+                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={String(product.is_active)}
+                            form={formId}
+                            name="is_active"
                           >
-                            {product.name}
-                          </Link>
-                          <p className="mt-1 line-clamp-1 max-w-md text-xs text-muted">
-                            {product.description}
-                          </p>
+                            <option value="true">Активен</option>
+                            <option value="false">Скрыт</option>
+                          </select>
+                          <select
+                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={String(Boolean(product.isPopular))}
+                            form={formId}
+                            name="is_popular"
+                          >
+                            <option value="false">Обычный</option>
+                            <option value="true">Популярный</option>
+                          </select>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <Badge variant="burgundy">{product.category?.name ?? "Без категории"}</Badge>
-                    </td>
-                    <td className="px-5 py-4 font-black text-raspberry">
-                      {formatProductPrice(product.price)}
-                    </td>
-                    <td className="px-5 py-4 text-muted">{product.weightLabel ?? "не указано"}</td>
-                    <td className={`px-5 py-4 font-black ${getStockTone(product.stock_qty)}`}>
-                      {product.stock_qty}
-                    </td>
-                    <td className="px-5 py-4">
-                      <Badge variant={product.is_active ? "coral" : "dark"}>
-                        {product.is_active ? "Активен" : "Скрыт"}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-5 py-4">
+                        <button
+                          className="min-h-10 rounded-btn bg-coral px-4 py-2 text-sm font-black text-white transition hover:bg-coral-hover"
+                          form={formId}
+                          type="submit"
+                        >
+                          Сохранить
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

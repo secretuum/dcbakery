@@ -4,6 +4,10 @@ import {
   type Product as SourceProduct,
   type ProductCategory as SourceProductCategory,
 } from "@/src/data/products";
+import {
+  fetchCatalogProductOverrides,
+  type CatalogProductOverride,
+} from "@/src/lib/supabase/admin";
 import type { Category, Product } from "@/src/types";
 
 function bySortOrder<T extends { sort_order: number }>(a: T, b: T) {
@@ -84,16 +88,80 @@ function toProduct(sourceProduct: SourceProduct, index: number): Product {
   };
 }
 
+function parseOverrideNumber(value: CatalogProductOverride[keyof CatalogProductOverride], fallback: number) {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function applyOverride(
+  product: Product,
+  override: CatalogProductOverride | undefined,
+  categories: Category[],
+): Product {
+  if (!override) {
+    return product;
+  }
+
+  const category =
+    override.category_slug && categories.find((item) => item.slug === override.category_slug)
+      ? categories.find((item) => item.slug === override.category_slug)
+      : product.category;
+  const image = override.image?.trim();
+
+  return {
+    ...product,
+    category,
+    category_id: category?.id ?? product.category_id,
+    description: override.description ?? product.description,
+    images: image ? [image] : product.images,
+    is_active: override.is_active ?? product.is_active,
+    isNew: override.is_new ?? product.isNew,
+    isPopular: override.is_popular ?? product.isPopular,
+    isPromo: override.is_promo ?? product.isPromo,
+    name: override.name ?? product.name,
+    price: parseOverrideNumber(override.price, product.price),
+    slug: override.slug ?? product.slug,
+    stock_qty: parseOverrideNumber(override.stock_qty, product.stock_qty),
+    subcategory: override.subcategory ?? product.subcategory,
+    unit: override.unit ?? product.unit,
+    weight: override.weight_label ?? product.weight,
+    weightLabel: override.weight_label ?? product.weightLabel,
+    updated_at: override.updated_at ?? product.updated_at,
+  };
+}
+
 function getActiveCategories() {
   return productCategories.map(toCategory).filter((category) => category.is_active).sort(bySortOrder);
 }
 
-function getActiveProducts() {
-  const activeCategoryIds = new Set(getActiveCategories().map((category) => category.id));
+function getSourceProducts() {
+  return sourceProducts.map(toProduct);
+}
 
-  return sourceProducts
-    .map(toProduct)
-    .filter((product) => product.is_active && activeCategoryIds.has(product.category_id))
+async function getCatalogProducts({ includeInactive = false } = {}) {
+  const categories = getActiveCategories();
+  const activeCategoryIds = new Set(categories.map((category) => category.id));
+  const sourceCatalog = getSourceProducts();
+  let overrides: CatalogProductOverride[] = [];
+
+  try {
+    overrides = await fetchCatalogProductOverrides();
+  } catch (error) {
+    console.warn("[catalog] Failed to fetch product overrides, using static catalog:", error);
+  }
+
+  const overridesByProductId = new Map(
+    overrides.map((override) => [override.product_id, override]),
+  );
+
+  return sourceCatalog
+    .map((product) => applyOverride(product, overridesByProductId.get(product.id), categories))
+    .filter((product) => includeInactive || (product.is_active && activeCategoryIds.has(product.category_id)))
     .sort(bySortOrder);
 }
 
@@ -106,11 +174,15 @@ export async function fetchCategoryBySlug(slug: string): Promise<Category | null
 }
 
 export async function fetchProducts(): Promise<Product[]> {
-  return getActiveProducts();
+  return getCatalogProducts();
+}
+
+export async function fetchAdminProducts(): Promise<Product[]> {
+  return getCatalogProducts({ includeInactive: true });
 }
 
 export async function fetchPopularProducts(limit = 4): Promise<Product[]> {
-  const activeProducts = getActiveProducts();
+  const activeProducts = await getCatalogProducts();
   const popularProducts = activeProducts.filter((product) => product.isPopular);
 
   return (popularProducts.length > 0 ? popularProducts : activeProducts).slice(0, limit);
@@ -123,11 +195,15 @@ export async function fetchProductsByCategory(categorySlug: string): Promise<Pro
     return [];
   }
 
-  return getActiveProducts().filter((product) => product.category_id === category.id);
+  const products = await getCatalogProducts();
+
+  return products.filter((product) => product.category_id === category.id);
 }
 
 export async function fetchProductBySlug(slug: string): Promise<Product | null> {
-  return getActiveProducts().find((product) => product.slug === slug) ?? null;
+  const products = await getCatalogProducts();
+
+  return products.find((product) => product.slug === slug) ?? null;
 }
 
 export async function fetchCategorySlugs() {
@@ -135,5 +211,7 @@ export async function fetchCategorySlugs() {
 }
 
 export async function fetchProductSlugs() {
-  return getActiveProducts().map((product) => ({ slug: product.slug }));
+  const products = await getCatalogProducts();
+
+  return products.map((product) => ({ slug: product.slug }));
 }

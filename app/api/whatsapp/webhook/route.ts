@@ -74,6 +74,7 @@ function readNestedString(value: unknown, path: string[]) {
 
 function isAuthorized(request: Request) {
   const webhookSecret = process.env.WHATSAPP_WEBHOOK_SECRET;
+  const authorizationHeader = request.headers.get("authorization")?.trim();
   const incomingSecret =
     request.headers.get("x-whatsapp-webhook-secret") ??
     request.headers.get("x-webhook-secret") ??
@@ -83,7 +84,11 @@ function isAuthorized(request: Request) {
     return false;
   }
 
-  return incomingSecret === webhookSecret;
+  return (
+    incomingSecret === webhookSecret ||
+    authorizationHeader === webhookSecret ||
+    authorizationHeader === `Bearer ${webhookSecret}`
+  );
 }
 
 function extractChatId(payload: unknown) {

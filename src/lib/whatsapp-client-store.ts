@@ -1,5 +1,11 @@
 import "server-only";
 
+export type WhatsAppClientAddress = {
+  label?: string | null;
+  address: string;
+  comment?: string | null;
+};
+
 export type WhatsAppClientProfile = {
   chatId: string;
   customerPhone?: string | null;
@@ -12,6 +18,8 @@ export type WhatsAppClientProfile = {
   deliveryTime?: string | null;
   paymentMethod?: string | null;
   comment?: string | null;
+  addresses?: WhatsAppClientAddress[];
+  primaryAddressIndex?: number | null;
   lastOrderId?: string | null;
 };
 
@@ -27,6 +35,8 @@ type WhatsAppClientRow = {
   delivery_time?: string | null;
   payment_method?: string | null;
   comment?: string | null;
+  addresses?: unknown;
+  primary_address_index?: number | null;
   last_order_id?: string | null;
 };
 
@@ -51,6 +61,8 @@ async function parseSupabaseError(response: Response) {
 }
 
 function toProfile(row: WhatsAppClientRow): WhatsAppClientProfile {
+  const addresses = normalizeAddresses(row.addresses);
+
   return {
     chatId: row.chat_id,
     companyName: row.company_name ?? null,
@@ -63,8 +75,63 @@ function toProfile(row: WhatsAppClientRow): WhatsAppClientProfile {
     deliveryTime: row.delivery_time ?? null,
     paymentMethod: row.payment_method ?? null,
     comment: row.comment ?? null,
+    addresses,
+    primaryAddressIndex: row.primary_address_index ?? 0,
     lastOrderId: row.last_order_id ?? null,
   };
+}
+
+export function normalizeAddresses(value: unknown): WhatsAppClientAddress[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const addresses: WhatsAppClientAddress[] = [];
+
+  for (const item of value) {
+    if (typeof item === "string") {
+      if (item.trim()) {
+        addresses.push({ address: item.trim() });
+      }
+
+      continue;
+    }
+
+    if (typeof item !== "object" || item === null) {
+      continue;
+    }
+
+    const address = "address" in item ? item.address : null;
+    const label = "label" in item ? item.label : null;
+    const comment = "comment" in item ? item.comment : null;
+
+    if (typeof address === "string" && address.trim()) {
+      addresses.push({
+        address: address.trim(),
+        comment: typeof comment === "string" && comment.trim() ? comment.trim() : null,
+        label: typeof label === "string" && label.trim() ? label.trim() : null,
+      });
+    }
+  }
+
+  return addresses;
+}
+
+export function mergeClientAddressList(
+  current: WhatsAppClientAddress[] = [],
+  address?: string | null,
+) {
+  const nextAddress = address?.trim();
+
+  if (!nextAddress) {
+    return current;
+  }
+
+  const exists = current.some(
+    (item) => item.address.trim().toLowerCase() === nextAddress.toLowerCase(),
+  );
+
+  return exists ? current : [...current, { address: nextAddress }];
 }
 
 function setIfDefined(
@@ -106,6 +173,35 @@ export async function fetchWhatsAppClientByChatId(chatId: string) {
   return rows[0] ? toProfile(rows[0]) : null;
 }
 
+export async function fetchWhatsAppClients() {
+  const url = getSupabaseRestUrl("whatsapp_clients");
+
+  if (!url || !serviceRoleKey) {
+    throw new Error("Supabase is not configured");
+  }
+
+  const params = new URLSearchParams({
+    order: "updated_at.desc",
+    select: "*",
+    limit: "200",
+  });
+  const response = await fetch(`${url}?${params.toString()}`, {
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseSupabaseError(response));
+  }
+
+  const rows = (await response.json()) as WhatsAppClientRow[];
+
+  return rows.map(toProfile);
+}
+
 export async function saveWhatsAppClientProfile(profile: WhatsAppClientProfile) {
   const url = getSupabaseRestUrl("whatsapp_clients");
 
@@ -128,6 +224,14 @@ export async function saveWhatsAppClientProfile(profile: WhatsAppClientProfile) 
   setIfDefined(body, "payment_method", profile.paymentMethod);
   setIfDefined(body, "comment", profile.comment);
   setIfDefined(body, "last_order_id", profile.lastOrderId);
+
+  if (profile.addresses !== undefined) {
+    body.addresses = profile.addresses;
+  }
+
+  if (profile.primaryAddressIndex !== undefined) {
+    body.primary_address_index = profile.primaryAddressIndex;
+  }
 
   const response = await fetch(`${url}?on_conflict=chat_id`, {
     method: "POST",

@@ -1,0 +1,5 @@
+ALTER TABLE IF EXISTS whatsapp_clients
+  ADD COLUMN IF NOT EXISTS addresses JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+ALTER TABLE IF EXISTS whatsapp_clients
+  ADD COLUMN IF NOT EXISTS primary_address_index INTEGER NOT NULL DEFAULT 0;

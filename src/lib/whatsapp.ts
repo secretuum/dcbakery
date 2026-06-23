@@ -204,6 +204,40 @@ async function deleteGreenApiMessage(chatId: string, idMessage: string) {
   }
 }
 
+async function editGreenApiMessage(chatId: string, idMessage: string, message: string) {
+  const config = getGreenApiConfig();
+
+  if (!config || !chatId || !idMessage) {
+    return false;
+  }
+
+  const url = `https://api.green-api.com/waInstance${config.instanceId}/editMessage/${config.apiToken}`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chatId,
+        idMessage,
+        message,
+      }),
+    });
+
+    if (!response.ok) {
+      console.warn("[whatsapp] editMessage skipped:", response.status, await response.text());
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.warn("[whatsapp] editGreenApiMessage failed:", error);
+    return false;
+  }
+}
+
 export async function sendWhatsAppNotification(order: Order, items: OrderItem[]) {
   const chatId = process.env.GREEN_API_CHAT_ID;
 
@@ -230,7 +264,17 @@ export async function replaceWhatsAppOrderMessage(order: Order, previousMessageI
     return null;
   }
 
-  const nextMessageId = await sendGreenApiTextMessage(chatId, formatWhatsAppOrderStatusNotification(order));
+  const message = formatWhatsAppOrderStatusNotification(order);
+
+  if (previousMessageId) {
+    const edited = await editGreenApiMessage(chatId, previousMessageId, message);
+
+    if (edited) {
+      return previousMessageId;
+    }
+  }
+
+  const nextMessageId = await sendGreenApiTextMessage(chatId, message);
 
   if (nextMessageId && previousMessageId && previousMessageId !== nextMessageId) {
     await deleteGreenApiMessage(chatId, previousMessageId).catch(() => false);

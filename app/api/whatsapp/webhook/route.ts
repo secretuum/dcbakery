@@ -25,6 +25,9 @@ type ParsedCommand = {
   orderNumber?: string;
 };
 
+const recentMissingOrderFeedback = new Map<string, number>();
+const missingOrderFeedbackTtlMs = 5 * 60 * 1000;
+
 const orderNumberPattern = /\bDCB-\d{4}-\d{4,10}\b/i;
 const confirmCommandAliases = [
   "+",
@@ -148,6 +151,25 @@ function escapeRegExp(value: string) {
 
 function normalizeCommandText(text: string) {
   return text.toLowerCase().replace(/ё/g, "е").replace(orderNumberPattern, " ").trim();
+}
+
+function shouldSendMissingOrderFeedback(chatId: string, text: string) {
+  const now = Date.now();
+  const key = `${chatId}:${normalizeCommandText(text)}`;
+  const lastSentAt = recentMissingOrderFeedback.get(key);
+
+  for (const [feedbackKey, sentAt] of recentMissingOrderFeedback.entries()) {
+    if (now - sentAt > missingOrderFeedbackTtlMs) {
+      recentMissingOrderFeedback.delete(feedbackKey);
+    }
+  }
+
+  if (lastSentAt && now - lastSentAt < missingOrderFeedbackTtlMs) {
+    return false;
+  }
+
+  recentMissingOrderFeedback.set(key, now);
+  return true;
 }
 
 function hasCommandAlias(text: string, aliases: readonly string[]) {
@@ -458,10 +480,11 @@ export async function POST(request: Request) {
   const order = await resolveOrderForCommand(command, relatedMessageIds);
 
   if (!order) {
-    const feedbackMessageId = await sendGreenApiTextMessage(
-      chatId,
-      formatOrderNotFoundMessage(command.orderNumber),
-    ).catch(() => null);
+    const feedbackMessageId = shouldSendMissingOrderFeedback(chatId, text)
+      ? await sendGreenApiTextMessage(chatId, formatOrderNotFoundMessage(command.orderNumber)).catch(
+          () => null,
+        )
+      : null;
 
     return NextResponse.json(
       {
@@ -469,7 +492,6 @@ export async function POST(request: Request) {
         feedbackMessageId,
         hint: "Send order number with command or reply to the order message",
       },
-      { status: 404 },
     );
   }
 

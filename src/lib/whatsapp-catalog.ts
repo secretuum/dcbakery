@@ -11,7 +11,9 @@ import {
 } from "@/src/lib/supabase/admin";
 import {
   fetchWhatsAppClientByChatId,
+  mergeClientAddressList,
   saveWhatsAppClientProfile,
+  type WhatsAppClientAddress,
   type WhatsAppClientProfile,
 } from "@/src/lib/whatsapp-client-store";
 import { sendTelegramNotification } from "@/src/lib/telegram";
@@ -36,7 +38,9 @@ type ParsedOrderItem = {
   qty: number;
 };
 
-type ParsedCustomerDetails = Omit<WhatsAppClientProfile, "chatId" | "customerPhone" | "lastOrderId">;
+type ParsedCustomerDetails = Omit<WhatsAppClientProfile, "chatId" | "customerPhone" | "lastOrderId"> & {
+  issues?: string[];
+};
 
 type CustomerSession =
   | {
@@ -53,6 +57,10 @@ type CustomerSession =
       mode: "product";
       productSlug: string;
       productSlugs?: string[];
+    }
+  | {
+      addresses: WhatsAppClientAddress[];
+      mode: "checkout_address";
     };
 
 const MAX_CATEGORY_PRODUCTS = 12;
@@ -106,11 +114,15 @@ function formatProductPrice(product: Product) {
   return product.price > 0 ? formatPrice(product.price) : "Цена уточняется";
 }
 
+function getOrderUnit(product: Product) {
+  return product.unit === "кг" ? "кг" : "шт.";
+}
+
 function formatProductLine(product: Product, index?: number) {
   const weight = product.weightLabel ? `, ${product.weightLabel}` : "";
   const prefix = typeof index === "number" ? `${index + 1}. ` : "- ";
 
-  return `${prefix}${product.slug}: ${product.name}${weight} — ${formatProductPrice(product)}`;
+  return `${prefix}${product.name}${weight} — ${formatProductPrice(product)}`;
 }
 
 function parseStrictPositiveNumber(value: string) {
@@ -124,6 +136,26 @@ function parseNumberOnlyCommand(value: string) {
   const match = value.match(/^\d+$/);
 
   return match ? Number(match[0]) : null;
+}
+
+function normalizeSearchText(value: string) {
+  return normalizeText(value)
+    .replace(/[^\p{L}\p{N}\s-]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getSearchTokens(value: string) {
+  return normalizeSearchText(value)
+    .split(/\s+/)
+    .map((token) => token.trim())
+    .filter((token) => token.length >= 4);
+}
+
+function normalizeSearchToken(value: string) {
+  return value
+    .replace(/(ами|ями|ого|ему|ыми|ими|ов|ев|ей|ам|ям|ах|ях|ом|ем|ой|ый|ий|ая|яя|ые|ие|а|я|ы|и|е)$/u, "")
+    .trim();
 }
 
 function getProductBySlug(products: Product[], slug?: string) {
@@ -189,15 +221,15 @@ function formatCatalogIntro(categories: Awaited<ReturnType<typeof fetchCategorie
     "",
     "Команды:",
     "1 / 2 / 3 — открыть категорию",
-    "товар slug — карточка товара",
-    "заказ slug 10 — добавить в корзину",
+    "заказ 10 наполеонов — добавить в корзину",
     "корзина — посмотреть корзину",
     "оформить — отправить заявку",
     "профиль — посмотреть сохраненные данные",
+    "адреса — посмотреть адреса",
     "менеджер — позвать менеджера",
     "",
     "Пример:",
-    "заказ napoleon 10",
+    "хочу заказать 10 наполеонов",
   ].join("\n");
 }
 
@@ -227,11 +259,10 @@ function formatProductDetails(product: Product) {
   return [
     `*${product.name}*`,
     "",
-    `Код: ${product.slug}`,
     `Категория: ${product.category?.name ?? "не указано"}`,
     product.weightLabel ? `Вес: ${product.weightLabel}` : null,
     `Цена: ${formatProductPrice(product)}`,
-    `Остаток: ${product.stock_qty} ${product.unit}`,
+    `Остаток: ${product.stock_qty} ${getOrderUnit(product)}`,
     product.shelfLife ? `Срок годности: ${product.shelfLife}` : null,
     product.storage ? `Хранение: ${product.storage}` : null,
     "",
@@ -240,7 +271,7 @@ function formatProductDetails(product: Product) {
     "Чтобы добавить в корзину, напишите количество цифрой, например:",
     "10",
     "",
-    `Или командой: заказ ${product.slug} 10`,
+    `Или командой: заказ 10 ${product.name}`,
     "0 — назад к списку",
   ]
     .filter(Boolean)
@@ -263,7 +294,7 @@ function parseDate(value?: string | null) {
   const isoMatch = value.match(/\b(20\d{2})-(\d{2})-(\d{2})\b/);
 
   if (isoMatch) {
-    return isoMatch[0];
+    return normalizeDeliveryDate(isoMatch[1], isoMatch[2], isoMatch[3]);
   }
 
   const dottedMatch = value.match(/\b(\d{1,2})\.(\d{1,2})\.(20\d{2})\b/);
@@ -271,7 +302,15 @@ function parseDate(value?: string | null) {
   if (dottedMatch) {
     const [, day, month, year] = dottedMatch;
 
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    return normalizeDeliveryDate(year, month, day);
+  }
+
+  const shortYearMatch = value.match(/\b(\d{1,2})\.(\d{1,2})\.(\d{2})\b/);
+
+  if (shortYearMatch) {
+    const [, day, month, year] = shortYearMatch;
+
+    return normalizeDeliveryDate(`20${year}`, month, day);
   }
 
   const shortDottedMatch = value.match(/\b(\d{1,2})\.(\d{1,2})\b/);
@@ -283,31 +322,106 @@ function parseDate(value?: string | null) {
   const [, day, month] = shortDottedMatch;
   const year = String(new Date().getFullYear());
 
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  return normalizeDeliveryDate(year, month, day);
+}
+
+function normalizeDeliveryDate(year: string, month: string, day: string) {
+  const iso = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  const date = new Date(`${iso}T00:00:00`);
+
+  if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== iso) {
+    return null;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (date < today) {
+    return null;
+  }
+
+  return iso;
+}
+
+function normalizeDeliveryTime(value?: string | null) {
+  const text = optional(value);
+
+  if (!text) {
+    return null;
+  }
+
+  const normalized = normalizeText(text);
+
+  if (
+    normalized.includes("договор") ||
+    normalized.includes("утро") ||
+    normalized.includes("день") ||
+    normalized.includes("вечер")
+  ) {
+    return text;
+  }
+
+  const rangeMatch = normalized.match(/\b([01]?\d|2[0-3])\s*[-–—]\s*([01]?\d|2[0-3])\b/);
+
+  if (rangeMatch) {
+    return `${rangeMatch[1].padStart(2, "0")}:00-${rangeMatch[2].padStart(2, "0")}:00`;
+  }
+
+  const timeMatch = normalized.match(/\b([01]?\d|2[0-3])(?::([0-5]\d))?\b/);
+
+  if (timeMatch) {
+    return `${timeMatch[1].padStart(2, "0")}:${timeMatch[2] ?? "00"}`;
+  }
+
+  return null;
 }
 
 function parseCustomerDetails(text: string): ParsedCustomerDetails {
+  const rawDeliveryDate = readField(text, ["дата доставки", "дата", "delivery_date", "delivery date"]);
+  const rawDeliveryTime = readField(text, ["время доставки", "время", "delivery time", "time"]);
+  const deliveryDate = parseDate(rawDeliveryDate);
+  const deliveryTime = normalizeDeliveryTime(rawDeliveryTime);
+  const issues = [
+    rawDeliveryDate && !deliveryDate
+      ? "Дата доставки не распознана или уже прошла. Напишите, например: 25.06 или 2026-06-25."
+      : null,
+    rawDeliveryTime && !deliveryTime
+      ? "Время доставки не распознано. Напишите, например: 8-12, 12-18, 14:30 или договориться."
+      : null,
+  ].filter((issue): issue is string => Boolean(issue));
+
   return {
     companyName: readField(text, ["компания", "заведение", "company"]),
     customerBin: readField(text, ["бин/ип", "бин ип", "бин", "ип", "customer_bin", "bin", "iin"]),
     customerName: readField(text, ["контактное лицо", "контакт", "имя", "name"]),
     customerEmail: readField(text, ["email", "e-mail", "почта"]),
     deliveryAddress: readField(text, ["адрес доставки", "адрес", "address"]),
-    deliveryDate: parseDate(
-      readField(text, ["дата доставки", "дата", "delivery_date", "delivery date"]),
-    ),
-    deliveryTime: readField(text, ["время доставки", "время", "delivery time", "time"]),
+    deliveryDate,
+    deliveryTime,
     paymentMethod: readField(text, ["способ оплаты", "оплата", "payment"]),
     comment: readField(text, ["комментарий", "примечание", "comment"]),
+    issues,
   };
 }
 
 function hasCustomerDetails(details: ParsedCustomerDetails) {
-  return Object.values(details).some((value) => optional(value));
+  return Object.entries(details).some(
+    ([key, value]) => key !== "issues" && typeof value === "string" && optional(value),
+  );
 }
 
 function formatProfileLine(label: string, value?: string | null) {
   return `${label}: ${optional(value) ?? "не указано"}`;
+}
+
+function formatAddressList(addresses: WhatsAppClientAddress[] = []) {
+  if (addresses.length === 0) {
+    return "Адреса пока не сохранены.";
+  }
+
+  return addresses
+    .map((item, index) => `${index + 1}. ${item.label ? `${item.label}: ` : ""}${item.address}`)
+    .join("\n");
 }
 
 function formatCustomerProfileMessage(profile: WhatsAppClientProfile | null) {
@@ -328,6 +442,10 @@ function formatCustomerProfileMessage(profile: WhatsAppClientProfile | null) {
     formatProfileLine("Email", profile.customerEmail),
     formatProfileLine("Телефон", profile.customerPhone),
     formatProfileLine("Адрес доставки", profile.deliveryAddress),
+    "",
+    "*Адреса:*",
+    formatAddressList(profile.addresses),
+    "",
     formatProfileLine("Дата доставки", profile.deliveryDate),
     formatProfileLine("Время доставки", profile.deliveryTime),
     formatProfileLine("Оплата", profile.paymentMethod),
@@ -341,6 +459,9 @@ function formatCustomerProfileMessage(profile: WhatsAppClientProfile | null) {
     "Дата доставки:",
     "Время доставки:",
     "Оплата:",
+    "",
+    "Добавить адрес можно так:",
+    "адрес добавить Самал, ул. Абая 10",
   ].join("\n");
 }
 
@@ -368,6 +489,18 @@ function formatCustomerDetailsSavedMessage({
     orderNumber
       ? "Менеджер увидит обновление в заявке. Позже здесь появятся история и повтор последнего заказа."
       : "Заявку по этому номеру пока не нашел. Данные сохранены в профиль, менеджер сможет связать их вручную.",
+  ].join("\n");
+}
+
+function formatCustomerDetailsIssuesMessage(issues: string[]) {
+  return [
+    "*Нужно уточнить данные*",
+    "",
+    ...issues.map((issue) => `- ${issue}`),
+    "",
+    "Отправьте исправленное поле отдельным сообщением, например:",
+    "Дата доставки: 25.06",
+    "Время доставки: 8-12",
   ].join("\n");
 }
 
@@ -399,6 +532,99 @@ function formatManagerCustomerDetailsMessage({
     .join("\n");
 }
 
+function formatCustomerAddressesMessage(profile: WhatsAppClientProfile | null) {
+  const addresses = profile?.addresses ?? [];
+
+  return [
+    "*Адреса доставки*",
+    "",
+    formatAddressList(addresses),
+    "",
+    "Команды:",
+    "адрес добавить Самал, ул. Абая 10",
+    "адрес 2 — выбрать адрес по умолчанию",
+    "",
+    addresses.length > 1 ? "При оформлении заказа бот предложит выбрать адрес цифрой." : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function formatCheckoutAddressChoiceMessage(addresses: WhatsAppClientAddress[]) {
+  return [
+    "*Выберите адрес доставки*",
+    "",
+    formatAddressList(addresses),
+    "",
+    "Ответьте цифрой адреса, например: 1",
+    "Или отправьте новый адрес так:",
+    "Адрес доставки: Самал, ул. Абая 10",
+  ].join("\n");
+}
+
+function parseAddAddressCommand(normalizedText: string, originalText: string) {
+  if (!normalizedText.startsWith("адрес добавить ")) {
+    return null;
+  }
+
+  return optional(originalText.replace(/^адрес\s+добавить\s+/i, ""));
+}
+
+function parseSelectAddressCommand(normalizedText: string) {
+  const match = normalizedText.match(/^адрес\s+(\d+)$/u);
+
+  return match ? Number(match[1]) - 1 : null;
+}
+
+function getProductSearchScore(product: Product, segment: string) {
+  const segmentTokens = new Set(getSearchTokens(segment).map(normalizeSearchToken).filter(Boolean));
+
+  if (segmentTokens.size === 0) {
+    return 0;
+  }
+
+  const productTokens = getSearchTokens(
+    `${product.name} ${product.subcategory ?? ""} ${product.weightLabel ?? ""}`,
+  )
+    .map(normalizeSearchToken)
+    .filter(Boolean);
+  let score = 0;
+
+  for (const token of productTokens) {
+    if (segmentTokens.has(token)) {
+      score += token.length;
+    }
+  }
+
+  const normalizedSegment = normalizeSearchText(segment);
+  const productName = normalizeSearchText(product.name);
+  const segmentMentionsCake = /\bторт\w*\b/u.test(normalizedSegment);
+  const productIsCake = productName.startsWith("торт ") || product.subcategory === "Торты";
+
+  if (normalizedSegment.includes(productName)) {
+    score += 20;
+  }
+
+  if (segmentMentionsCake && productIsCake) {
+    score += 8;
+  }
+
+  if (!segmentMentionsCake && productIsCake) {
+    score -= 8;
+  }
+
+  return score;
+}
+
+function resolveProductFromNaturalText(segment: string, products: Product[]) {
+  const matches = products
+    .map((product) => ({ product, score: getProductSearchScore(product, segment) }))
+    .filter((match) => match.score > 0)
+    .sort((a, b) => b.score - a.score || a.product.name.length - b.product.name.length);
+
+  return matches[0]?.product ?? null;
+}
+
 function resolveProductFromOrderSegment(
   segment: string,
   products: Product[],
@@ -425,7 +651,7 @@ function resolveProductFromOrderSegment(
     return getProductBySlug(products, session.productSlug);
   }
 
-  return null;
+  return resolveProductFromNaturalText(segment, products);
 }
 
 function resolveQtyFromOrderSegment(segment: string, hasNumericProductReference: boolean) {
@@ -464,6 +690,15 @@ function parseOrderItems(text: string, products: Product[], session?: CustomerSe
   return parsedItems;
 }
 
+function looksLikeNaturalOrder(text: string) {
+  const normalizedText = normalizeText(text);
+
+  return (
+    /\d/.test(normalizedText) &&
+    /(заказ|заказать|возьм|нужн|хочу|добав|полож|можно|надо)/u.test(normalizedText)
+  );
+}
+
 function formatOrderSyntaxError(products: Product[]) {
   const exampleProduct = products[0];
 
@@ -471,10 +706,10 @@ function formatOrderSyntaxError(products: Product[]) {
     "*Не понял заказ*",
     "",
     "Напишите так:",
-    `заказ ${exampleProduct?.slug ?? "napoleon"} 10`,
+    `заказ 10 ${exampleProduct?.name ?? "Наполеон"}`,
     "",
     "Можно несколько позиций:",
-    `заказ ${exampleProduct?.slug ?? "napoleon"} 10, ${products[1]?.slug ?? "eclair"} 5`,
+    `заказ 10 ${exampleProduct?.name ?? "Наполеон"}, 5 ${products[1]?.name ?? "эклеров"}`,
     "",
     "Чтобы посмотреть товары, напишите: каталог",
     "Чтобы позвать человека, напишите: менеджер",
@@ -519,7 +754,7 @@ function formatCartMessage(cartItems: ParsedOrderItem[]) {
   const itemLines = cartItems.map(({ product, qty }, index) => {
     const total = product.price > 0 ? formatPrice(product.price * qty) : "Цена уточняется";
 
-    return `${index + 1}. ${product.name} x ${qty} ${product.unit} = ${total}`;
+    return `${index + 1}. ${product.name} x ${qty} ${getOrderUnit(product)} = ${total}`;
   });
   const totalAmount = getCartTotal(cartItems);
   const hasUnknownPrice = cartItems.some((item) => item.product.price <= 0);
@@ -579,13 +814,33 @@ async function addItemsToCart({
     [
       "*Добавлено в корзину*",
       "",
-      ...items.map((item) => `- ${item.product.name} x ${item.qty} ${item.product.unit}`),
+      ...items.map((item) => `- ${item.product.name} x ${item.qty} ${getOrderUnit(item.product)}`),
       "",
       formatCartMessage(resolvedItems),
     ].join("\n"),
   );
 
   return { action: "cart_updated", messageId, ok: true };
+}
+
+async function getPreferredDeliveryAddress(chatId: string, explicitAddress?: string | null) {
+  if (explicitAddress) {
+    return explicitAddress;
+  }
+
+  const savedProfile = await fetchWhatsAppClientByChatId(chatId).catch(() => null);
+  const addresses = savedProfile?.addresses ?? [];
+
+  if (addresses.length === 0) {
+    return savedProfile?.deliveryAddress ?? null;
+  }
+
+  const index = Math.min(
+    Math.max(savedProfile?.primaryAddressIndex ?? 0, 0),
+    addresses.length - 1,
+  );
+
+  return addresses[index]?.address ?? savedProfile?.deliveryAddress ?? null;
 }
 
 async function createWhatsAppOrder({
@@ -613,7 +868,7 @@ async function createWhatsAppOrder({
     "WhatsApp клиент";
   const customerEmail = details.customerEmail ?? savedProfile?.customerEmail ?? null;
   const deliveryDate = details.deliveryDate ?? getTomorrowDate();
-  const deliveryAddress = details.deliveryAddress ?? savedProfile?.deliveryAddress ?? null;
+  const deliveryAddress = await getPreferredDeliveryAddress(chatId, details.deliveryAddress);
   const deliveryTime =
     details.deliveryTime ?? savedProfile?.deliveryTime ?? "Договориться с менеджером";
   const paymentMethod =
@@ -625,7 +880,7 @@ async function createWhatsAppOrder({
     order_id: orderId,
     product_id: product.id,
     product_name: product.name,
-    unit: product.unit,
+    unit: getOrderUnit(product),
     qty,
     price: product.price,
     total_amount: product.price * qty,
@@ -669,6 +924,7 @@ async function createWhatsAppOrder({
     deliveryTime,
     paymentMethod,
     comment: details.comment,
+    addresses: mergeClientAddressList(savedProfile?.addresses, deliveryAddress),
     lastOrderId: orderId,
   }).catch((error) => {
     console.warn("[whatsapp:client] Failed to save profile after order:", error);
@@ -762,7 +1018,22 @@ async function handleCustomerDetailsSubmission({
   chatId: string;
   details: ParsedCustomerDetails;
 }) {
+  if (details.issues && details.issues.length > 0) {
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      formatCustomerDetailsIssuesMessage(details.issues),
+    );
+
+    return {
+      action: "customer_details_invalid",
+      messageId,
+      ok: false,
+      reason: "Invalid customer details",
+    };
+  }
+
   const customerPhone = getPhoneFromChatId(chatId);
+  const currentProfile = await fetchWhatsAppClientByChatId(chatId).catch(() => null);
   const order = await fetchLatestWhatsAppOrderByPhone(customerPhone).catch((error) => {
     console.warn("[whatsapp:client] Failed to fetch latest order:", error);
     return null;
@@ -815,6 +1086,7 @@ async function handleCustomerDetailsSubmission({
       deliveryTime: detailValue(details.deliveryTime),
       paymentMethod: detailValue(details.paymentMethod),
       comment: detailValue(details.comment),
+      addresses: mergeClientAddressList(currentProfile?.addresses, details.deliveryAddress),
       lastOrderId: updatedOrder?.id ?? order?.id ?? undefined,
     });
   } catch (error) {
@@ -933,6 +1205,70 @@ export async function handleWhatsAppCustomerMessage({
     return { action: "product", messageId, ok: true };
   }
 
+  const addedAddress = parseAddAddressCommand(normalizedText, text);
+
+  if (addedAddress) {
+    const profile = await fetchWhatsAppClientByChatId(chatId).catch(() => null);
+    const savedProfile = await saveWhatsAppClientProfile({
+      chatId,
+      customerPhone: getPhoneFromChatId(chatId),
+      deliveryAddress: profile?.deliveryAddress ?? addedAddress,
+      addresses: mergeClientAddressList(profile?.addresses, addedAddress),
+      primaryAddressIndex: profile?.primaryAddressIndex ?? 0,
+    }).catch((error) => {
+      console.warn("[whatsapp:client] Failed to add address:", error);
+      return null;
+    });
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      savedProfile
+        ? ["Адрес добавлен.", "", formatCustomerAddressesMessage(savedProfile)].join("\n")
+        : "Не смог сохранить адрес. Попробуйте позже или напишите менеджер.",
+    );
+
+    return { action: "address_added", messageId, ok: Boolean(savedProfile) };
+  }
+
+  if (normalizedText === "адреса" || normalizedText === "addresses") {
+    const profile = await fetchWhatsAppClientByChatId(chatId).catch(() => null);
+    const messageId = await sendGreenApiTextMessage(chatId, formatCustomerAddressesMessage(profile));
+
+    return { action: "addresses", messageId, ok: true };
+  }
+
+  const selectedAddressIndex = parseSelectAddressCommand(normalizedText);
+
+  if (selectedAddressIndex !== null) {
+    const profile = await fetchWhatsAppClientByChatId(chatId).catch(() => null);
+    const selectedAddress = profile?.addresses?.[selectedAddressIndex];
+
+    if (!profile || !selectedAddress) {
+      const messageId = await sendGreenApiTextMessage(
+        chatId,
+        "Не нашел такой адрес. Напишите: адреса",
+      );
+
+      return { action: "address_not_found", messageId, ok: false };
+    }
+
+    const savedProfile = await saveWhatsAppClientProfile({
+      chatId,
+      deliveryAddress: selectedAddress.address,
+      primaryAddressIndex: selectedAddressIndex,
+    }).catch((error) => {
+      console.warn("[whatsapp:client] Failed to select address:", error);
+      return null;
+    });
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      savedProfile
+        ? `Адрес по умолчанию: ${selectedAddress.address}`
+        : "Не смог выбрать адрес. Попробуйте позже.",
+    );
+
+    return { action: "address_selected", messageId, ok: Boolean(savedProfile) };
+  }
+
   if (normalizedText === "профиль" || normalizedText === "profile") {
     const profile = await fetchWhatsAppClientByChatId(chatId).catch((error) => {
       console.warn("[whatsapp:client] Failed to fetch profile:", error);
@@ -995,6 +1331,33 @@ export async function handleWhatsAppCustomerMessage({
       return { action: "cart_empty", messageId, ok: false };
     }
 
+    const details = parseCustomerDetails(text);
+
+    if (details.issues && details.issues.length > 0) {
+      const messageId = await sendGreenApiTextMessage(
+        chatId,
+        formatCustomerDetailsIssuesMessage(details.issues),
+      );
+
+      return { action: "checkout_details_invalid", messageId, ok: false };
+    }
+
+    const profile = await fetchWhatsAppClientByChatId(chatId).catch(() => null);
+
+    if (!details.deliveryAddress && (profile?.addresses?.length ?? 0) > 1) {
+      customerSessions.set(chatId, {
+        addresses: profile?.addresses ?? [],
+        mode: "checkout_address",
+      });
+
+      const messageId = await sendGreenApiTextMessage(
+        chatId,
+        formatCheckoutAddressChoiceMessage(profile?.addresses ?? []),
+      );
+
+      return { action: "checkout_address_required", messageId, ok: false };
+    }
+
     const result = await submitCustomerOrder({
       chatId,
       items,
@@ -1040,6 +1403,51 @@ export async function handleWhatsAppCustomerMessage({
   }
 
   if (numberCommand !== null) {
+    if (session?.mode === "checkout_address") {
+      const selectedAddress = session.addresses[numberCommand - 1];
+
+      if (!selectedAddress) {
+        const messageId = await sendGreenApiTextMessage(
+          chatId,
+          ["Не нашел такой адрес.", "", formatCheckoutAddressChoiceMessage(session.addresses)].join(
+            "\n",
+          ),
+        );
+
+        return { action: "checkout_address_not_found", messageId, ok: false };
+      }
+
+      const cart = await loadCart(chatId);
+      const items = resolveCartItems(cart.items, products);
+
+      if (items.length === 0) {
+        customerSessions.delete(chatId);
+        const messageId = await sendGreenApiTextMessage(chatId, formatCartMessage([]));
+
+        return { action: "cart_empty", messageId, ok: false };
+      }
+
+      await saveWhatsAppClientProfile({
+        chatId,
+        deliveryAddress: selectedAddress.address,
+        primaryAddressIndex: numberCommand - 1,
+      }).catch(() => null);
+
+      const result = await submitCustomerOrder({
+        chatId,
+        items,
+        senderName,
+        text: `${text}\nАдрес доставки: ${selectedAddress.address}`,
+      });
+
+      if (result.ok) {
+        customerSessions.delete(chatId);
+        await removeCart(chatId);
+      }
+
+      return result;
+    }
+
     if (session?.mode === "catalog") {
       const categorySlug = session.categorySlugs[numberCommand - 1];
 
@@ -1093,7 +1501,7 @@ export async function handleWhatsAppCustomerMessage({
     return sendProduct(product);
   }
 
-  if (/^(заказ|заказать|order)\b/u.test(normalizedText)) {
+  if (/^(заказ|заказать|order)\b/u.test(normalizedText) || looksLikeNaturalOrder(text)) {
     const items = parseOrderItems(text, products, session);
 
     if (items.length === 0) {

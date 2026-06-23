@@ -7,6 +7,7 @@ import { AdminLogoutButton } from "@/src/components/admin/AdminLogoutButton";
 
 const adminNavItems = [
   { href: "/admin/orders", label: "Заказы" },
+  { href: "/admin/clients", label: "Клиенты" },
   { href: "/admin/products", label: "Товары" },
   { href: "/admin/settings", label: "Настройки" },
 ];

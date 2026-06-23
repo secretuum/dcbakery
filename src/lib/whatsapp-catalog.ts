@@ -8,6 +8,13 @@ import {
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
 import { sendTelegramNotification } from "@/src/lib/telegram";
+import {
+  clearWhatsAppCart,
+  fetchWhatsAppCart,
+  saveWhatsAppCart,
+  type WhatsAppCart,
+  type WhatsAppCartItem,
+} from "@/src/lib/whatsapp-cart-store";
 import { sendGreenApiTextMessage, sendWhatsAppNotification } from "@/src/lib/whatsapp";
 import type { Order, OrderItem, Product } from "@/src/types";
 
@@ -41,6 +48,7 @@ type CustomerSession =
 
 const MAX_CATEGORY_PRODUCTS = 12;
 const customerSessions = new Map<string, CustomerSession>();
+const fallbackCarts = new Map<string, WhatsAppCart>();
 
 const categoryAliases: Record<string, string> = {
   deserty: "deserty",
@@ -113,6 +121,40 @@ function getProductBySlug(products: Product[], slug?: string) {
   return slug ? products.find((product) => product.slug === slug || product.id === slug) ?? null : null;
 }
 
+function getFallbackCart(chatId: string) {
+  return fallbackCarts.get(chatId) ?? { chatId, items: [] };
+}
+
+async function loadCart(chatId: string) {
+  try {
+    return await fetchWhatsAppCart(chatId);
+  } catch (error) {
+    console.warn("[whatsapp:cart] Using in-memory cart fallback:", error);
+    return getFallbackCart(chatId);
+  }
+}
+
+async function persistCart(cart: WhatsAppCart) {
+  fallbackCarts.set(cart.chatId, cart);
+
+  try {
+    return await saveWhatsAppCart(cart);
+  } catch (error) {
+    console.warn("[whatsapp:cart] Failed to persist cart, kept in memory:", error);
+    return cart;
+  }
+}
+
+async function removeCart(chatId: string) {
+  fallbackCarts.delete(chatId);
+
+  try {
+    await clearWhatsAppCart(chatId);
+  } catch (error) {
+    console.warn("[whatsapp:cart] Failed to clear persisted cart:", error);
+  }
+}
+
 function findSessionProductByNumber(
   session: CustomerSession | undefined,
   products: Product[],
@@ -139,7 +181,9 @@ function formatCatalogIntro(categories: Awaited<ReturnType<typeof fetchCategorie
     "Команды:",
     "1 / 2 / 3 — открыть категорию",
     "товар slug — карточка товара",
-    "заказ slug 10 — оформить заявку",
+    "заказ slug 10 — добавить в корзину",
+    "корзина — посмотреть корзину",
+    "оформить — отправить заявку",
     "менеджер — позвать менеджера",
     "",
     "Пример:",
@@ -159,7 +203,7 @@ function formatCategoryMessage(categoryName: string, products: Product[]) {
     "",
     "Что дальше:",
     "1 / 2 / 3 — открыть товар",
-    "заказ 1 10 — заказать товар №1 в количестве 10",
+    "заказ 1 10 — добавить товар №1 в корзину",
     "0 — назад в каталог",
     "",
     "Например:",
@@ -183,7 +227,7 @@ function formatProductDetails(product: Product) {
     "",
     product.description,
     "",
-    "Чтобы заказать, напишите количество цифрой, например:",
+    "Чтобы добавить в корзину, напишите количество цифрой, например:",
     "10",
     "",
     `Или командой: заказ ${product.slug} 10`,
@@ -317,6 +361,99 @@ function formatMinimumOrderMessage(totalAmount: number) {
     "",
     "Можно добавить еще позиции или написать: менеджер",
   ].join("\n");
+}
+
+function resolveCartItems(cartItems: WhatsAppCartItem[], products: Product[]): ParsedOrderItem[] {
+  return cartItems.flatMap((item) => {
+    const product = getProductBySlug(products, item.productId);
+
+    return product ? [{ product, qty: item.qty }] : [];
+  });
+}
+
+function getCartTotal(items: ParsedOrderItem[]) {
+  return items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
+}
+
+function formatCartMessage(cartItems: ParsedOrderItem[]) {
+  if (cartItems.length === 0) {
+    return [
+      "*Корзина пустая*",
+      "",
+      "Напишите каталог, выберите товар и укажите количество.",
+    ].join("\n");
+  }
+
+  const itemLines = cartItems.map(({ product, qty }, index) => {
+    const total = product.price > 0 ? formatPrice(product.price * qty) : "Цена уточняется";
+
+    return `${index + 1}. ${product.name} x ${qty} ${product.unit} = ${total}`;
+  });
+  const totalAmount = getCartTotal(cartItems);
+  const hasUnknownPrice = cartItems.some((item) => item.product.price <= 0);
+
+  return [
+    "*Ваша корзина*",
+    "",
+    ...itemLines,
+    "",
+    `Итого: ${hasUnknownPrice ? "часть цен уточняется" : formatPrice(totalAmount)}`,
+    !hasUnknownPrice && totalAmount < MIN_ORDER_AMOUNT
+      ? `До минимума ${formatPrice(MIN_ORDER_AMOUNT)} осталось ${formatPrice(MIN_ORDER_AMOUNT - totalAmount)}`
+      : null,
+    "",
+    "Команды:",
+    "оформить — отправить заявку",
+    "очистить — очистить корзину",
+    "каталог — добавить еще товары",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function mergeCartItems(currentItems: WhatsAppCartItem[], nextItems: ParsedOrderItem[]) {
+  const nextItemMap = new Map(currentItems.map((item) => [item.productId, item.qty]));
+
+  for (const item of nextItems) {
+    nextItemMap.set(item.product.id, (nextItemMap.get(item.product.id) ?? 0) + item.qty);
+  }
+
+  return Array.from(nextItemMap.entries())
+    .map(([productId, qty]) => ({ productId, qty }))
+    .filter((item) => item.qty > 0);
+}
+
+async function addItemsToCart({
+  chatId,
+  items,
+  products,
+  senderName,
+}: {
+  chatId: string;
+  items: ParsedOrderItem[];
+  products: Product[];
+  senderName?: string;
+}) {
+  const cart = await loadCart(chatId);
+  const savedCart = await persistCart({
+    chatId,
+    customerPhone: getPhoneFromChatId(chatId),
+    items: mergeCartItems(cart.items, items),
+    senderName: optional(senderName) ?? cart.senderName ?? null,
+  });
+  const resolvedItems = resolveCartItems(savedCart.items, products);
+  const messageId = await sendGreenApiTextMessage(
+    chatId,
+    [
+      "*Добавлено в корзину*",
+      "",
+      ...items.map((item) => `- ${item.product.name} x ${item.qty} ${item.product.unit}`),
+      "",
+      formatCartMessage(resolvedItems),
+    ].join("\n"),
+  );
+
+  return { action: "cart_updated", messageId, ok: true };
 }
 
 async function createWhatsAppOrder({
@@ -549,6 +686,54 @@ export async function handleWhatsAppCustomerMessage({
     return sendCatalog();
   }
 
+  if (normalizedText === "корзина" || normalizedText === "cart") {
+    const cart = await loadCart(chatId);
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      formatCartMessage(resolveCartItems(cart.items, products)),
+    );
+
+    return { action: "cart", messageId, ok: true };
+  }
+
+  if (normalizedText === "очистить" || normalizedText === "clear") {
+    await removeCart(chatId);
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      "Корзину очистил. Чтобы выбрать товары заново, напишите: каталог",
+    );
+
+    return { action: "cart_cleared", messageId, ok: true };
+  }
+
+  if (
+    normalizedText === "оформить" ||
+    normalizedText === "checkout" ||
+    normalizedText === "отправить"
+  ) {
+    const cart = await loadCart(chatId);
+    const items = resolveCartItems(cart.items, products);
+
+    if (items.length === 0) {
+      const messageId = await sendGreenApiTextMessage(chatId, formatCartMessage([]));
+
+      return { action: "cart_empty", messageId, ok: false };
+    }
+
+    const result = await submitCustomerOrder({
+      chatId,
+      items,
+      senderName,
+      text,
+    });
+
+    if (result.ok) {
+      await removeCart(chatId);
+    }
+
+    return result;
+  }
+
   if (normalizedText.includes("менеджер") || normalizedText.includes("manager")) {
     const managerMessageId = await notifyManagerRequested(chatId, senderName, text);
     const messageId = await sendGreenApiTextMessage(
@@ -562,6 +747,14 @@ export async function handleWhatsAppCustomerMessage({
   const numberCommand = parseNumberOnlyCommand(normalizedText);
 
   if (numberCommand === 0) {
+    if (session?.mode === "product" && session.categorySlug) {
+      return sendCategory(session.categorySlug);
+    }
+
+    if (session?.mode === "category") {
+      return sendCatalog();
+    }
+
     const managerMessageId = await notifyManagerRequested(chatId, senderName, text);
     const messageId = await sendGreenApiTextMessage(
       chatId,
@@ -593,11 +786,11 @@ export async function handleWhatsAppCustomerMessage({
       const qty = parseStrictPositiveNumber(normalizedText);
 
       if (product && qty) {
-        return submitCustomerOrder({
+        return addItemsToCart({
           chatId,
           items: [{ product, qty }],
+          products,
           senderName,
-          text,
         });
       }
     }
@@ -634,11 +827,11 @@ export async function handleWhatsAppCustomerMessage({
       return { action: "order_error", messageId, ok: false, reason: "No items" };
     }
 
-    return submitCustomerOrder({
+    return addItemsToCart({
       chatId,
       items,
+      products,
       senderName,
-      text,
     });
   }
 
@@ -650,6 +843,8 @@ export async function handleWhatsAppCustomerMessage({
       "десерты / полуфабрикаты / мясо",
       "товар slug",
       "заказ slug количество",
+      "корзина",
+      "оформить",
       "менеджер",
     ].join("\n"),
   );

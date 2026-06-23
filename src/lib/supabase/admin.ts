@@ -41,6 +41,17 @@ type PaymentEventPayload = {
   status?: PaymentStatus | null;
 };
 
+type OrderCancellationActor = "client" | "manager";
+
+type OrderRevisionItemInput = {
+  category?: string | null;
+  price: number;
+  product_id: string;
+  product_name: string;
+  qty: number;
+  unit: string;
+};
+
 type OrderCustomerDetailsPatch = {
   company_name?: string | null;
   customer_bin?: string | null;
@@ -51,6 +62,7 @@ type OrderCustomerDetailsPatch = {
   delivery_time?: string | null;
   payment_method?: string | null;
   comment?: string | null;
+  revision_note?: string | null;
 };
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -183,6 +195,26 @@ async function deleteSupabaseOrder(orderId: string) {
       Authorization: `Bearer ${serviceRoleKey}`,
     },
   });
+}
+
+async function deleteSupabaseOrderItems(orderId: string) {
+  const url = getSupabaseRestUrl("order_items");
+
+  if (!url || !serviceRoleKey) {
+    throw new Error(getSupabaseAdminConfigError() ?? "Supabase is not configured");
+  }
+
+  const response = await fetch(`${url}?order_id=eq.${encodeURIComponent(orderId)}`, {
+    method: "DELETE",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseSupabaseError(response));
+  }
 }
 
 export async function updateOrderTelegramMessageId(orderId: string, telegramMessageId: string) {
@@ -346,7 +378,7 @@ export async function fetchClientOrderSummaries({
 }) {
   const params = new URLSearchParams({
     select:
-      "id,order_number,company_name,status,payment_status,total_amount,delivery_date,payment_url,created_at",
+      "id,order_number,company_name,status,payment_status,revision_note,total_amount,delivery_date,payment_url,created_at",
     order: "created_at.desc",
     limit: "20",
   });
@@ -481,6 +513,97 @@ export async function updateAdminOrderStatus(orderId: string, status: OrderStatu
   const [order] = await supabasePatch<Order[]>("orders", params.toString(), { status });
 
   return order ?? null;
+}
+
+export async function cancelOrder(
+  orderId: string,
+  actor: OrderCancellationActor,
+  reason?: string | null,
+) {
+  const params = new URLSearchParams({
+    id: `eq.${orderId}`,
+  });
+  const now = new Date().toISOString();
+  const [order] = await supabasePatch<Order[]>("orders", params.toString(), {
+    canceled_at: now,
+    cancellation_actor: actor,
+    cancellation_reason: reason ?? null,
+    status: "canceled",
+  });
+
+  return order ?? null;
+}
+
+export async function acceptOrderRevision(orderId: string) {
+  const params = new URLSearchParams({
+    id: `eq.${orderId}`,
+  });
+  const [order] = await supabasePatch<Order[]>("orders", params.toString(), {
+    client_response_at: new Date().toISOString(),
+    status: "pending_manager_confirmation",
+  });
+
+  return order ?? null;
+}
+
+export async function replaceAdminOrderItems({
+  items,
+  note,
+  orderId,
+}: {
+  items: OrderRevisionItemInput[];
+  note?: string | null;
+  orderId: string;
+}) {
+  const cleanItems = items.filter((item) => Number.isFinite(item.qty) && item.qty > 0);
+
+  if (cleanItems.length === 0) {
+    throw new Error("Order must contain at least one item");
+  }
+
+  await deleteSupabaseOrderItems(orderId);
+
+  const orderItems = await supabaseRequest<OrderItem[]>(
+    "order_items",
+    cleanItems.map((item) => ({
+      id: crypto.randomUUID(),
+      order_id: orderId,
+      product_id: item.product_id,
+      product_name: item.product_name,
+      unit: item.unit,
+      qty: item.qty,
+      price: item.price,
+      total_amount: item.price * item.qty,
+    })),
+  );
+  const totalAmount = orderItems.reduce((sum, item) => sum + item.total_amount, 0);
+  const params = new URLSearchParams({
+    id: `eq.${orderId}`,
+  });
+  const [order] = await supabasePatch<Order[]>("orders", params.toString(), {
+    payment_status: "unpaid",
+    payment_url: null,
+    revision_note: note ?? null,
+    revision_payload: {
+      items: orderItems.map((item) => ({
+        price: item.price,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        qty: item.qty,
+        total_amount: item.total_amount,
+        unit: item.unit,
+      })),
+      note: note ?? null,
+    },
+    revision_requested_at: new Date().toISOString(),
+    status: "change_proposed",
+    total_amount: totalAmount,
+  });
+
+  return {
+    items: orderItems,
+    order: order ?? null,
+  };
 }
 
 export async function confirmAdminOrder(orderId: string, patch: OrderConfirmationPatch) {

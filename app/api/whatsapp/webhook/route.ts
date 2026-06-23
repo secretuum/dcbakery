@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  cancelOrder,
   confirmAdminOrder,
   fetchAdminOrderByNumber,
   fetchAdminOrderByWhatsAppMessageId,
@@ -15,10 +16,11 @@ import {
   replaceWhatsAppOrderMessage,
   sendGreenApiTextMessage,
   sendCustomerDetailsRequestNotification,
+  sendCustomerOrderCanceledNotification,
 } from "@/src/lib/whatsapp";
 import type { Order } from "@/src/types";
 
-type WhatsAppCommand = "confirm" | "help" | "mark_paid" | "status";
+type WhatsAppCommand = "cancel" | "confirm" | "help" | "mark_paid" | "status";
 
 type ParsedCommand = {
   action: WhatsAppCommand;
@@ -51,6 +53,7 @@ const markPaidCommandAliases = [
   "платеж пришел",
 ] as const;
 const statusCommandAliases = ["status", "обновить", "статус"] as const;
+const cancelCommandAliases = ["cancel", "отмена", "отменить", "отмени"] as const;
 const helpCommandAliases = ["help", "commands", "команды", "помощь"] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -207,6 +210,13 @@ function parseCommand(text: string): ParsedCommand | null {
     };
   }
 
+  if (hasCommandAlias(normalizedText, cancelCommandAliases)) {
+    return {
+      action: "cancel",
+      orderNumber,
+    };
+  }
+
   if (hasCommandAlias(normalizedText, statusCommandAliases)) {
     return {
       action: "status",
@@ -224,6 +234,7 @@ function formatCommandHelpMessage(orderNumber = "DCB-2026-123456") {
     "Можно писать команду с номером заявки:",
     `${orderNumber} подтвердить`,
     `${orderNumber} оплачено`,
+    `${orderNumber} отменить причина`,
     `${orderNumber} статус`,
     "",
     "Или ответить на сообщение заявки одним словом:",
@@ -382,6 +393,44 @@ async function markPaidFromWhatsApp(order: Order) {
   };
 }
 
+function extractCancelReason(text: string, orderNumber?: string) {
+  return normalizeCommandText(text)
+    .replace(orderNumber ? normalizeCommandText(orderNumber) : "", "")
+    .replace(/cancel|отмена|отменить|отмени/giu, "")
+    .trim();
+}
+
+async function cancelOrderFromWhatsApp(order: Order, text: string) {
+  if (order.payment_status === "paid" || order.status === "paid") {
+    const managerMessageId = await publishManagerUpdate(order, order.whatsapp_message_id);
+    return { action: "cancel", managerMessageId, order, skipped: true };
+  }
+
+  if (order.status === "canceled" || order.status === "cancelled" || order.status === "completed") {
+    const managerMessageId = await publishManagerUpdate(order, order.whatsapp_message_id);
+    return { action: "cancel", managerMessageId, order, skipped: true };
+  }
+
+  const canceledOrder = await cancelOrder(
+    order.id,
+    "manager",
+    extractCancelReason(text, order.order_number) || null,
+  );
+  const managerMessageId = canceledOrder
+    ? await publishManagerUpdate(canceledOrder, order.whatsapp_message_id)
+    : null;
+
+  if (canceledOrder) {
+    await sendCustomerOrderCanceledNotification(canceledOrder).catch(() => null);
+  }
+
+  return {
+    action: "cancel",
+    managerMessageId,
+    order: canceledOrder,
+  };
+}
+
 export async function POST(request: Request) {
   if (!isAuthorized(request)) {
     console.warn("[whatsapp:webhook] unauthorized", {
@@ -502,6 +551,11 @@ export async function POST(request: Request) {
 
   if (command.action === "mark_paid") {
     const result = await markPaidFromWhatsApp(order);
+    return NextResponse.json({ ok: true, ...result });
+  }
+
+  if (command.action === "cancel") {
+    const result = await cancelOrderFromWhatsApp(order, text);
     return NextResponse.json({ ok: true, ...result });
   }
 

@@ -3,8 +3,11 @@ import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { formatPrice } from "@/src/lib/format";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import {
+  acceptOrderRevision,
+  cancelOrder,
   fetchLatestWhatsAppOrderByPhone,
   insertOrderWithItems,
+  updateAdminOrderStatus,
   updateOrderCustomerDetails,
   updateOrderTelegramMessageId,
   updateOrderWhatsAppMessageId,
@@ -24,7 +27,12 @@ import {
   type WhatsAppCart,
   type WhatsAppCartItem,
 } from "@/src/lib/whatsapp-cart-store";
-import { sendGreenApiTextMessage, sendWhatsAppNotification } from "@/src/lib/whatsapp";
+import {
+  replaceWhatsAppOrderMessage,
+  sendCustomerOrderCanceledNotification,
+  sendGreenApiTextMessage,
+  sendWhatsAppNotification,
+} from "@/src/lib/whatsapp";
 import type { Order, OrderItem, Product } from "@/src/types";
 
 type CustomerMessageInput = {
@@ -111,6 +119,22 @@ function getPhoneFromChatId(chatId: string) {
   const digits = chatId.split("@")[0]?.replace(/\D/g, "") ?? "";
 
   return digits ? `+${digits}` : chatId;
+}
+
+function appendComment(currentComment: string | null | undefined, nextComment: string) {
+  return [currentComment, nextComment].filter(Boolean).join("\n");
+}
+
+async function publishManagerOrderUpdate(order: Order, previousMessageId?: string | null) {
+  const managerMessageId = await replaceWhatsAppOrderMessage(order, previousMessageId).catch(
+    () => null,
+  );
+
+  if (managerMessageId) {
+    await updateOrderWhatsAppMessageId(order.id, managerMessageId).catch(() => undefined);
+  }
+
+  return managerMessageId;
 }
 
 function formatProductPrice(product: Product) {
@@ -1211,6 +1235,124 @@ async function handleCustomerDetailsSubmission({
   };
 }
 
+function isAcceptRevisionCommand(text: string) {
+  const normalizedText = normalizeText(text);
+
+  return /^(принять|согласен|согласна|ок|да)$/u.test(normalizedText);
+}
+
+function isCancelOrderCommand(text: string) {
+  const normalizedText = normalizeText(text);
+
+  return /^(отменить|отмена|отмени|cancel)(\s|$)/u.test(normalizedText) ||
+    normalizedText.includes("отменить заявку");
+}
+
+function getChangeRequestComment(text: string) {
+  const normalizedText = normalizeText(text);
+
+  if (!/^(изменить|правка|поменять|измени)(\s|$)/u.test(normalizedText)) {
+    return null;
+  }
+
+  return optional(text.replace(/^(изменить|правка|поменять|измени)\s*/i, ""));
+}
+
+async function handleClientOrderResponse({
+  chatId,
+  text,
+}: {
+  chatId: string;
+  text: string;
+}) {
+  const customerPhone = getPhoneFromChatId(chatId);
+  const order = await fetchLatestWhatsAppOrderByPhone(customerPhone).catch(() => null);
+
+  if (!order || order.status === "completed" || order.status === "canceled" || order.status === "cancelled") {
+    return null;
+  }
+
+  if (order.payment_status === "paid" || order.status === "paid") {
+    return null;
+  }
+
+  if (isAcceptRevisionCommand(text)) {
+    if (order.status !== "change_proposed") {
+      return null;
+    }
+
+    const acceptedOrder = await acceptOrderRevision(order.id);
+
+    if (!acceptedOrder) {
+      return null;
+    }
+
+    const managerMessageId = await publishManagerOrderUpdate(acceptedOrder, order.whatsapp_message_id);
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      `Измененная заявка ${order.order_number} принята. Менеджер подтвердит заказ и отправит оплату.`,
+    );
+
+    return {
+      action: "revision_accepted",
+      managerMessageId,
+      messageId,
+      ok: true,
+      orderId: acceptedOrder.id,
+    };
+  }
+
+  if (isCancelOrderCommand(text)) {
+    const reason = optional(text.replace(/^(отменить|отмена|отмени|cancel)\s*/i, ""));
+    const canceledOrder = await cancelOrder(order.id, "client", reason);
+
+    if (!canceledOrder) {
+      return null;
+    }
+
+    const managerMessageId = await publishManagerOrderUpdate(canceledOrder, order.whatsapp_message_id);
+    const messageId = await sendCustomerOrderCanceledNotification(canceledOrder);
+
+    return {
+      action: "order_canceled_by_client",
+      managerMessageId,
+      messageId,
+      ok: true,
+      orderId: canceledOrder.id,
+    };
+  }
+
+  const changeComment = getChangeRequestComment(text);
+
+  if (changeComment) {
+    await updateOrderCustomerDetails(order.id, {
+      comment: appendComment(order.comment, `Клиент просит изменить заявку: ${changeComment}`),
+      revision_note: `Клиент просит изменить: ${changeComment}`,
+    });
+    const updatedOrder = await updateAdminOrderStatus(order.id, "pending_manager_confirmation");
+
+    if (!updatedOrder) {
+      return null;
+    }
+
+    const managerMessageId = await publishManagerOrderUpdate(updatedOrder, order.whatsapp_message_id);
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      "Передал пожелание менеджеру. Он проверит остатки и отправит обновленную заявку.",
+    );
+
+    return {
+      action: "revision_change_requested",
+      managerMessageId,
+      messageId,
+      ok: true,
+      orderId: updatedOrder.id,
+    };
+  }
+
+  return null;
+}
+
 async function notifyManagerRequested(chatId: string, senderName: string | undefined, text: string) {
   const managerChatId = process.env.GREEN_API_CHAT_ID;
 
@@ -1290,6 +1432,12 @@ export async function handleWhatsAppCustomerMessage({
     const messageId = await sendGreenApiTextMessage(chatId, formatProductDetails(product));
 
     return { action: "product", messageId, ok: true };
+  }
+
+  const orderResponse = await handleClientOrderResponse({ chatId, text });
+
+  if (orderResponse) {
+    return orderResponse;
   }
 
   const addedAddress = parseAddAddressCommand(normalizedText, text);

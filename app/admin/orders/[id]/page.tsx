@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { CancelOrderForm } from "@/src/components/admin/CancelOrderForm";
 import Link from "next/link";
 import { ConfirmOrderButton } from "@/src/components/admin/ConfirmOrderButton";
 import { MarkOrderPaidButton } from "@/src/components/admin/MarkOrderPaidButton";
 import { notFound } from "next/navigation";
 import { OrderStatusBadge } from "@/src/components/admin/OrderStatusBadge";
 import { OrderStatusSelect } from "@/src/components/admin/OrderStatusSelect";
+import { OrderRevisionForm } from "@/src/components/admin/OrderRevisionForm";
 import { PaymentStatusBadge } from "@/src/components/admin/PaymentStatusBadge";
+import { fetchProducts } from "@/src/lib/catalog";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
 
@@ -41,11 +44,22 @@ export async function generateMetadata({ params }: AdminOrderPageProps): Promise
 
 export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
   const { id } = await params;
-  const [order, items] = await Promise.all([fetchAdminOrder(id), fetchAdminOrderItems(id)]);
+  const [order, items, products] = await Promise.all([
+    fetchAdminOrder(id),
+    fetchAdminOrderItems(id),
+    fetchProducts(),
+  ]);
 
   if (!order) {
     notFound();
   }
+
+  const isLocked =
+    order.payment_status === "paid" ||
+    order.status === "paid" ||
+    order.status === "completed" ||
+    order.status === "canceled" ||
+    order.status === "cancelled";
 
   return (
     <div>
@@ -135,6 +149,13 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
               </table>
             </div>
           </section>
+
+          <OrderRevisionForm
+            disabled={isLocked}
+            items={items}
+            orderId={order.id}
+            products={products}
+          />
         </div>
 
         <aside className="rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)] xl:sticky xl:top-8">
@@ -145,6 +166,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
             paymentStatus={order.payment_status}
             status={order.status}
           />
+          <CancelOrderForm disabled={isLocked} orderId={order.id} />
 
           <div className="mt-6 rounded-btn bg-coral-light px-4 py-3">
             <p className="text-xs font-black uppercase text-muted">Оплата</p>

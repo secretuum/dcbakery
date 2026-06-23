@@ -388,6 +388,33 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   const paymentStatus = order.payment_status
     ? paymentStatusLabels[order.payment_status]
     : "не указано";
+  const [actionStatus, setActionStatus] = useState<"error" | "idle" | "loading">("idle");
+  const canCancel =
+    order.payment_status !== "paid" &&
+    !["paid", "completed", "canceled", "cancelled"].includes(order.status);
+  const canAcceptRevision = order.status === "change_proposed";
+
+  async function sendClientAction(
+    action: "accept_revision" | "cancel" | "request_change",
+    comment?: string,
+  ) {
+    setActionStatus("loading");
+
+    const response = await fetch(`/api/orders/${order.id}/client-action`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action, comment }),
+    });
+
+    if (!response.ok) {
+      setActionStatus("error");
+      return;
+    }
+
+    window.location.reload();
+  }
 
   return (
     <article className="rounded-card border border-black/10 bg-white p-5 shadow-[0_14px_40px_rgba(120,51,38,0.06)]">
@@ -418,6 +445,47 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3">
+        {canAcceptRevision ? (
+          <Button
+            type="button"
+            className="min-h-10 px-4 py-2"
+            disabled={actionStatus === "loading"}
+            onClick={() => sendClientAction("accept_revision")}
+          >
+            Принять изменения
+          </Button>
+        ) : null}
+        {canAcceptRevision ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-10 px-4 py-2"
+            disabled={actionStatus === "loading"}
+            onClick={() => {
+              const comment = window.prompt("Что нужно изменить в заявке?");
+
+              if (comment?.trim()) {
+                void sendClientAction("request_change", comment);
+              }
+            }}
+          >
+            Изменить
+          </Button>
+        ) : null}
+        {canCancel ? (
+          <Button
+            type="button"
+            variant="ghost"
+            className="min-h-10 px-4 py-2 text-burgundy"
+            disabled={actionStatus === "loading"}
+            onClick={() => {
+              const comment = window.prompt("Причина отмены");
+              void sendClientAction("cancel", comment ?? "");
+            }}
+          >
+            Отменить
+          </Button>
+        ) : null}
         {order.payment_url ? (
           <Button href={order.payment_url} className="min-h-10 px-4 py-2">
             Оплата
@@ -427,6 +495,14 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
           Повторить закупку
         </Button>
       </div>
+      {order.revision_note ? (
+        <p className="mt-3 rounded-btn bg-coral-light px-4 py-3 text-sm font-bold text-burgundy">
+          {order.revision_note}
+        </p>
+      ) : null}
+      {actionStatus === "error" ? (
+        <p className="mt-3 text-sm font-bold text-red-600">Не удалось выполнить действие</p>
+      ) : null}
     </article>
   );
 }

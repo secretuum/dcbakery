@@ -357,3 +357,67 @@ export async function sendCustomerDetailsRequestNotification(order: Order, payme
     formatCustomerDetailsRequestNotification(order, paymentUrl),
   );
 }
+
+export function formatCustomerOrderCanceledNotification(order: Order) {
+  return [
+    "DC Bakery",
+    "",
+    `Заявка ${order.order_number} отменена.`,
+    order.cancellation_reason ? `Причина: ${order.cancellation_reason}` : null,
+    "",
+    "Если нужно собрать новую заявку, напишите: каталог",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export async function sendCustomerOrderCanceledNotification(order: Order) {
+  const chatId = getWhatsAppChatIdFromPhone(order.customer_phone);
+
+  if (!chatId) {
+    return null;
+  }
+
+  return sendGreenApiTextMessage(chatId, formatCustomerOrderCanceledNotification(order));
+}
+
+export function formatCustomerRevisionProposalNotification(
+  order: Order,
+  items: OrderItem[],
+  note?: string | null,
+) {
+  return [
+    "DC Bakery",
+    "",
+    `Менеджер предложил изменить заявку ${order.order_number}.`,
+    note ? `Комментарий: ${note}` : null,
+    "",
+    ...items.map(formatOrderLine),
+    "",
+    `Итого: ${formatPrice(order.total_amount)}`,
+    "",
+    "Ответьте:",
+    "принять — согласиться с измененной заявкой",
+    "изменить <комментарий> — попросить другую правку",
+    "отменить — отменить заявку",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export async function sendCustomerRevisionProposalNotification(
+  order: Order,
+  items: OrderItem[],
+  note?: string | null,
+) {
+  const chatId = getWhatsAppChatIdFromPhone(order.customer_phone);
+
+  if (!chatId) {
+    return null;
+  }
+
+  return sendGreenApiTextMessage(
+    chatId,
+    formatCustomerRevisionProposalNotification(order, items, note),
+  );
+}

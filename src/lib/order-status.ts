@@ -2,6 +2,7 @@ import type { OrderStatus, PaymentStatus } from "@/src/types";
 
 export const canonicalOrderStatuses = [
   "pending_manager_confirmation",
+  "change_proposed",
   "confirmed_waiting_payment",
   "paid",
   "in_progress",
@@ -12,6 +13,7 @@ export const canonicalOrderStatuses = [
 
 export const orderStatusLabels: Record<OrderStatus, string> = {
   pending_manager_confirmation: "Ждет подтверждения",
+  change_proposed: "На согласовании",
   confirmed_waiting_payment: "Ждет оплаты",
   paid: "Оплачен",
   in_progress: "В работе",
@@ -27,6 +29,7 @@ export const orderStatusLabels: Record<OrderStatus, string> = {
 
 export const orderStatusVariants: Record<OrderStatus, "coral" | "burgundy" | "dark" | "neutral"> = {
   pending_manager_confirmation: "coral",
+  change_proposed: "burgundy",
   confirmed_waiting_payment: "burgundy",
   paid: "neutral",
   in_progress: "dark",

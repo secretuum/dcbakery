@@ -52,6 +52,7 @@ export type CartItem = {
 
 export type OrderStatus =
   | "pending_manager_confirmation"
+  | "change_proposed"
   | "confirmed_waiting_payment"
   | "paid"
   | "delivering"
@@ -92,6 +93,12 @@ export type Order = {
   delivery_time?: string | null;
   payment_method?: string | null;
   comment?: string | null;
+  cancellation_actor?: string | null;
+  cancellation_reason?: string | null;
+  revision_note?: string | null;
+  revision_payload?: unknown;
+  revision_requested_at?: string | null;
+  client_response_at?: string | null;
   status: OrderStatus;
   total_amount: number;
   payment_status?: PaymentStatus | null;
@@ -126,6 +133,7 @@ export type ClientOrderSummary = {
   company_name: string;
   status: OrderStatus;
   payment_status?: PaymentStatus | null;
+  revision_note?: string | null;
   total_amount: number;
   delivery_date?: string | null;
   payment_url?: string | null;

@@ -8,6 +8,10 @@ import {
 } from "@/src/lib/supabase/admin";
 import { createPaymentLink } from "@/src/lib/payments";
 import {
+  handleWhatsAppCustomerMessage,
+  isCustomerWhatsAppChat,
+} from "@/src/lib/whatsapp-catalog";
+import {
   replaceWhatsAppOrderMessage,
   sendGreenApiTextMessage,
   sendCustomerPaymentLinkNotification,
@@ -98,6 +102,13 @@ function extractText(payload: unknown) {
     readNestedString(payload, ["textMessage"]) ||
     readNestedString(payload, ["message"]) ||
     readNestedString(payload, ["text"])
+  );
+}
+
+function extractSenderName(payload: unknown) {
+  return (
+    readNestedString(payload, ["senderData", "senderName"]) ||
+    readNestedString(payload, ["senderName"])
   );
 }
 
@@ -358,11 +369,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "GREEN_API_CHAT_ID is not configured" }, { status: 503 });
   }
 
+  const text = extractText(payload);
+
   if (chatId !== expectedChatId) {
+    if (!isCustomerWhatsAppChat(chatId)) {
+      return NextResponse.json({ error: "Forbidden chat" }, { status: 403 });
+    }
+
+    const result = await handleWhatsAppCustomerMessage({
+      chatId,
+      senderName: extractSenderName(payload),
+      text,
+    });
+
+    return NextResponse.json({ forwarded, ...result });
+  }
+
+  if (!chatId) {
     return NextResponse.json({ error: "Forbidden chat" }, { status: 403 });
   }
 
-  const text = extractText(payload);
   const relatedMessageIds = extractRelatedMessageIds(payload);
   const command = parseCommand(text);
 

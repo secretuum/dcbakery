@@ -9,11 +9,12 @@ import {
 import { createPaymentLink } from "@/src/lib/payments";
 import {
   replaceWhatsAppOrderMessage,
+  sendGreenApiTextMessage,
   sendCustomerPaymentLinkNotification,
 } from "@/src/lib/whatsapp";
 import type { Order } from "@/src/types";
 
-type WhatsAppCommand = "confirm" | "mark_paid" | "status";
+type WhatsAppCommand = "confirm" | "help" | "mark_paid" | "status";
 
 type ParsedCommand = {
   action: WhatsAppCommand;
@@ -21,6 +22,29 @@ type ParsedCommand = {
 };
 
 const orderNumberPattern = /\bDCB-\d{4}-\d{4,10}\b/i;
+const confirmCommandAliases = [
+  "+",
+  "confirm",
+  "ok",
+  "подтвердить",
+  "подтверждаю",
+  "подтвержден",
+  "подтверждено",
+  "ок",
+] as const;
+const markPaidCommandAliases = [
+  "mark paid",
+  "paid",
+  "оплатил",
+  "оплатила",
+  "оплатили",
+  "оплачено",
+  "оплачен",
+  "оплата пришла",
+  "платеж пришел",
+] as const;
+const statusCommandAliases = ["status", "обновить", "статус"] as const;
+const helpCommandAliases = ["help", "commands", "команды", "помощь"] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -88,30 +112,50 @@ function extractRelatedMessageIds(payload: unknown) {
   ].filter(Boolean);
 }
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeCommandText(text: string) {
+  return text.toLowerCase().replace(/ё/g, "е").replace(orderNumberPattern, " ").trim();
+}
+
+function hasCommandAlias(text: string, aliases: readonly string[]) {
+  return aliases.some((alias) => {
+    const normalizedAlias = normalizeCommandText(alias);
+    const escapedAlias = escapeRegExp(normalizedAlias);
+    const pattern = new RegExp(`(^|[^\\p{L}\\p{N}])${escapedAlias}($|[^\\p{L}\\p{N}])`, "u");
+
+    return pattern.test(text);
+  });
+}
+
 function parseCommand(text: string): ParsedCommand | null {
   const orderNumber = text.match(orderNumberPattern)?.[0]?.toUpperCase();
-  const normalizedText = text.toLowerCase();
+  const normalizedText = normalizeCommandText(text);
 
-  if (normalizedText.includes("подтверд") || normalizedText.includes("confirm")) {
+  if (hasCommandAlias(normalizedText, helpCommandAliases)) {
+    return {
+      action: "help",
+      orderNumber,
+    };
+  }
+
+  if (hasCommandAlias(normalizedText, confirmCommandAliases)) {
     return {
       action: "confirm",
       orderNumber,
     };
   }
 
-  if (
-    normalizedText.includes("оплачено") ||
-    normalizedText.includes("оплачен") ||
-    normalizedText.includes("оплатил") ||
-    normalizedText.includes("paid")
-  ) {
+  if (hasCommandAlias(normalizedText, markPaidCommandAliases)) {
     return {
       action: "mark_paid",
       orderNumber,
     };
   }
 
-  if (normalizedText.includes("статус") || normalizedText.includes("status")) {
+  if (hasCommandAlias(normalizedText, statusCommandAliases)) {
     return {
       action: "status",
       orderNumber,
@@ -119,6 +163,38 @@ function parseCommand(text: string): ParsedCommand | null {
   }
 
   return null;
+}
+
+function formatCommandHelpMessage(orderNumber = "DCB-2026-123456") {
+  return [
+    "*DC Bakery: команды менеджера*",
+    "",
+    "Можно писать команду с номером заявки:",
+    `${orderNumber} подтвердить`,
+    `${orderNumber} оплачено`,
+    `${orderNumber} статус`,
+    "",
+    "Или ответить на сообщение заявки одним словом:",
+    "подтвердить / оплачено / статус",
+    "",
+    "Короткие варианты:",
+    "ок или + = подтвердить",
+    "paid = отметить оплату",
+    "help / помощь / команды = эта подсказка",
+  ].join("\n");
+}
+
+function formatOrderNotFoundMessage(orderNumber?: string) {
+  return [
+    "*DC Bakery: заявку не нашел*",
+    "",
+    orderNumber ? `Номер из команды: ${orderNumber}` : "В команде нет номера заявки.",
+    "",
+    "Напишите команду вместе с номером заявки:",
+    "DCB-2026-123456 статус",
+    "",
+    "Или ответьте командой прямо на сообщение нужной заявки.",
+  ].join("\n");
 }
 
 async function resolveOrderForCommand(command: ParsedCommand, relatedMessageIds: string[]) {
@@ -294,12 +370,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ forwarded, ignored: true, reason: "No command" });
   }
 
+  if (command.action === "help") {
+    const helpMessageId = await sendGreenApiTextMessage(
+      chatId,
+      formatCommandHelpMessage(command.orderNumber),
+    ).catch(() => null);
+
+    return NextResponse.json({ action: "help", forwarded, helpMessageId, ok: true });
+  }
+
   const order = await resolveOrderForCommand(command, relatedMessageIds);
 
   if (!order) {
+    const feedbackMessageId = await sendGreenApiTextMessage(
+      chatId,
+      formatOrderNotFoundMessage(command.orderNumber),
+    ).catch(() => null);
+
     return NextResponse.json(
       {
         error: "Order not found",
+        feedbackMessageId,
         hint: "Send order number with command or reply to the order message",
       },
       { status: 404 },

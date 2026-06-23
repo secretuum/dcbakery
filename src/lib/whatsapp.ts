@@ -37,6 +37,10 @@ function getManagerCommandBlock(order: Order) {
     `${order.order_number} подтвердить`,
     `${order.order_number} оплачено`,
     `${order.order_number} статус`,
+    "",
+    "Или ответьте на сообщение заявки:",
+    "подтвердить / оплачено / статус",
+    "помощь = показать команды",
   ].join("\n");
 }
 
@@ -115,6 +119,7 @@ export function formatResponsibleDirectNotification(order: Order, items: OrderIt
     `${order.order_number} подтвердить`,
     `${order.order_number} оплачено`,
     `${order.order_number} статус`,
+    "Или ответом на сообщение заявки: подтвердить / оплачено / статус",
   ].join("\n");
 }
 

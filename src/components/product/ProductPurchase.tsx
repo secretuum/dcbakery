@@ -31,7 +31,7 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
         <div>
           <p className="text-sm font-black uppercase text-muted">Количество</p>
           <p className="mt-1 text-sm font-semibold text-muted">
-            Минимум {product.min_qty} {product.unit}, шаг {product.step_qty} {product.unit}
+            Минимум {product.min_qty} {product.unit}
           </p>
         </div>
         <p className="rounded-badge bg-coral-light px-3 py-1 text-xs font-black text-coral">

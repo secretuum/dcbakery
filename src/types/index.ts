@@ -140,3 +140,16 @@ export type ClientOrderSummary = {
   payment_url?: string | null;
   created_at: string;
 };
+
+export type ProductStopEvent = {
+  id: string;
+  product_id: string;
+  product_name: string;
+  reason?: string | null;
+  source?: string | null;
+  reported_by_chat_id?: string | null;
+  started_at: string;
+  ended_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};

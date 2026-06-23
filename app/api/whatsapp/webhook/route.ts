@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import {
   cancelOrder,
+  clearProductStop,
   confirmAdminOrder,
   fetchAppSettings,
   fetchAdminOrderByNumber,
   fetchAdminOrderByWhatsAppMessageId,
   markOrderPaid,
+  putProductOnStop,
   upsertCatalogProductOverride,
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
@@ -29,6 +31,12 @@ type WhatsAppCommand = "cancel" | "confirm" | "help" | "mark_paid" | "status";
 type StockUpdateCommand = {
   productText: string;
   stockQty: number;
+};
+
+type StopListCommand = {
+  action: "clear" | "put";
+  productText: string;
+  reason?: string | null;
 };
 
 type ParsedCommand = {
@@ -368,6 +376,119 @@ async function handleStockUpdateFromWhatsApp(chatId: string, text: string) {
   };
 }
 
+function parseStopListCommand(text: string): StopListCommand | null {
+  const normalizedText = normalizeCommandText(text);
+
+  if (/(снять|убрать|вернуть|снова|доступн|в продаже)/u.test(normalizedText) && /стоп/u.test(normalizedText)) {
+    const productText = normalizedText
+      .replace(/стоп[\s-]?лист/u, " ")
+      .replace(/(снять|убрать|вернуть|со стопа|из стопа|стоп|снова в продаже|в продаже|доступно|доступен|доступна)/gu, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return productText ? { action: "clear", productText } : null;
+  }
+
+  if (!/(стоп[\s-]?лист|стопе|на стоп|стопнуть|стоп)/u.test(normalizedText)) {
+    return null;
+  }
+
+  const productText = normalizedText
+    .replace(/^(обновление|обновить|добавить|добавь|позиция|товар)\s+/u, "")
+    .replace(/стоп[\s-]?лист/u, " ")
+    .replace(/(на стопе|на стоп|стопнуть|стоп)/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!productText) {
+    return null;
+  }
+
+  return {
+    action: "put",
+    productText,
+    reason: text,
+  };
+}
+
+async function handleStopListFromWhatsApp(chatId: string, text: string) {
+  const command = parseStopListCommand(text);
+
+  if (!command) {
+    return null;
+  }
+
+  const products = await fetchAdminProducts();
+  const product = resolveWhatsAppProductFromText(command.productText, products);
+
+  if (!product) {
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      [
+        "*DC Bakery: товар для стоп-листа не найден*",
+        "",
+        `Не распознал: ${command.productText}`,
+        "",
+        "Примеры:",
+        "Наполеон на стопе",
+        "снять стоп Наполеон",
+      ].join("\n"),
+    ).catch(() => null);
+
+    return {
+      action: "stop_list_not_found",
+      messageId,
+      ok: false,
+    };
+  }
+
+  if (command.action === "clear") {
+    await clearProductStop(product.id);
+
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      [
+        "*DC Bakery: стоп снят*",
+        "",
+        `${product.name} снова доступен в каталоге.`,
+      ].join("\n"),
+    ).catch(() => null);
+
+    return {
+      action: "stop_list_cleared",
+      messageId,
+      ok: true,
+      productId: product.id,
+    };
+  }
+
+  await putProductOnStop({
+    productId: product.id,
+    productName: product.name,
+    reason: command.reason,
+    reportedByChatId: chatId,
+    source: "whatsapp",
+  });
+
+  const messageId = await sendGreenApiTextMessage(
+    chatId,
+    [
+      "*DC Bakery: товар поставлен на стоп*",
+      "",
+      `${product.name} скрыт с сайта и WhatsApp-каталога.`,
+      "",
+      "Чтобы вернуть: снять стоп " + product.name,
+    ].join("\n"),
+  ).catch(() => null);
+
+  return {
+    action: "stop_list_put",
+    messageId,
+    ok: true,
+    productId: product.id,
+  };
+}
+
 function formatCommandHelpMessage(orderNumber = "DCB-2026-123456") {
   return [
     "*DC Bakery: команды менеджера*",
@@ -388,6 +509,10 @@ function formatCommandHelpMessage(orderNumber = "DCB-2026-123456") {
     "Остатки:",
     "Шу с персиком остаток 10",
     "Остаток Наполеон 25",
+    "",
+    "Стоп-лист:",
+    "Наполеон на стопе",
+    "снять стоп Наполеон",
     "",
     "Временное отключение:",
     "WHATSAPP_BOT_ENABLED=false отключит нашу логику, но webhook продолжит отвечать.",
@@ -669,6 +794,12 @@ export async function POST(request: Request) {
 
   if (!featureFlags.managerCommandsEnabled) {
     return respondWithIgnored("WhatsApp manager commands disabled");
+  }
+
+  const stopListResult = await handleStopListFromWhatsApp(chatId, text);
+
+  if (stopListResult) {
+    return NextResponse.json({ forwarded, ...stopListResult });
   }
 
   const stockUpdateResult = await handleStockUpdateFromWhatsApp(chatId, text);

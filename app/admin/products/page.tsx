@@ -223,7 +223,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
               </button>
             </form>
             <div className="overflow-x-auto">
-            <table className="min-w-[1380px] w-full border-collapse text-left">
+            <table className="min-w-[1260px] w-full border-collapse text-left">
               <thead className="bg-coral-light text-xs font-black uppercase text-burgundy">
                 <tr>
                   <th className="px-5 py-4">Выбор</th>
@@ -232,7 +232,6 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                   <th className="px-5 py-4">Цена</th>
                   <th className="px-5 py-4">Вес</th>
                   <th className="px-5 py-4">Остаток</th>
-                  <th className="px-5 py-4">Шаг</th>
                   <th className="px-5 py-4">Статус</th>
                   <th className="px-5 py-4">Действие</th>
                 </tr>
@@ -380,13 +379,9 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             step="0.001"
                             type="number"
                           />
-                          <input
-                            className="w-36 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-                            defaultValue={product.unit}
-                            form={formId}
-                            name="unit"
-                            placeholder="unit"
-                          />
+                          <p className="rounded-badge bg-coral-light px-3 py-2 text-xs font-black text-coral">
+                            Единица: шт
+                          </p>
                         </div>
                       </td>
                       <td className={`px-5 py-4 font-black ${getStockTone(product.stock_qty)}`}>
@@ -399,30 +394,6 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           step="0.001"
                           type="number"
                         />
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="grid gap-2">
-                          <input
-                            className="w-28 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-                            defaultValue={product.min_qty}
-                            form={formId}
-                            min="0"
-                            name="min_qty"
-                            placeholder="min"
-                            step="0.001"
-                            type="number"
-                          />
-                          <input
-                            className="w-28 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-                            defaultValue={product.step_qty}
-                            form={formId}
-                            min="0"
-                            name="step_qty"
-                            placeholder="step"
-                            step="0.001"
-                            type="number"
-                          />
-                        </div>
                       </td>
                       <td className="px-5 py-4">
                         <div className="grid gap-2">
@@ -461,15 +432,6 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           >
                             <option value="false">Не акция</option>
                             <option value="true">Акция</option>
-                          </select>
-                          <select
-                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-                            defaultValue={String(Boolean(product.isHalal))}
-                            form={formId}
-                            name="is_halal"
-                          >
-                            <option value="false">Без halal</option>
-                            <option value="true">Halal</option>
                           </select>
                           <details className="rounded-xl bg-cream p-3">
                             <summary className="cursor-pointer text-xs font-black text-burgundy">

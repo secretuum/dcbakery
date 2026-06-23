@@ -111,14 +111,6 @@ export default async function NewProductPage() {
             />
           </label>
           <label className="grid gap-2 text-sm font-black text-dark">
-            Единица
-            <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-              defaultValue="шт"
-              name="unit"
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
             Картинка
             <input
               className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
@@ -145,29 +137,7 @@ export default async function NewProductPage() {
           </label>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-4">
-          <label className="grid gap-2 text-sm font-black text-dark">
-            Min qty
-            <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-              defaultValue="1"
-              min="0"
-              name="min_qty"
-              step="0.001"
-              type="number"
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
-            Step qty
-            <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-              defaultValue="1"
-              min="0"
-              name="step_qty"
-              step="0.001"
-              type="number"
-            />
-          </label>
+        <div className="grid gap-4 lg:grid-cols-2">
           <label className="grid gap-2 text-sm font-black text-dark">
             Популярность
             <select
@@ -178,16 +148,9 @@ export default async function NewProductPage() {
               <option value="true">Популярный</option>
             </select>
           </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
-            Halal
-            <select
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-              name="is_halal"
-            >
-              <option value="false">Нет</option>
-              <option value="true">Да</option>
-            </select>
-          </label>
+          <div className="rounded-xl bg-coral-light px-4 py-3 text-sm font-black text-coral">
+            Единица заказа: шт. Вес задается отдельно для каждого товара.
+          </div>
         </div>
 
         <button

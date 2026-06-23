@@ -6,6 +6,7 @@ import type {
   OrderStatus,
   PaymentProvider,
   PaymentStatus,
+  ProductStopEvent,
 } from "@/src/types";
 
 type SupabaseOrderPayload = Omit<Order, "updated_at"> & {
@@ -204,6 +205,12 @@ function isAppSettingsMigrationMissing(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
 
   return message.includes("app_settings") || message.includes("Could not find");
+}
+
+function isStopEventsMigrationMissing(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return message.includes("product_stop_events") || message.includes("Could not find");
 }
 
 async function supabaseGet<T>(table: string, query: string) {
@@ -411,6 +418,91 @@ export async function upsertCatalogProductOverride(
   );
 
   return override ?? null;
+}
+
+export async function fetchProductStopEvents({ activeOnly = false } = {}) {
+  if (getSupabaseAdminConfigError()) {
+    return [];
+  }
+
+  const params = new URLSearchParams({
+    select: "*",
+    order: "started_at.desc",
+    limit: "100",
+  });
+
+  if (activeOnly) {
+    params.set("ended_at", "is.null");
+  }
+
+  try {
+    return await supabaseGet<ProductStopEvent[]>("product_stop_events", params.toString());
+  } catch (error) {
+    if (isStopEventsMigrationMissing(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+export async function putProductOnStop({
+  productId,
+  productName,
+  reason,
+  reportedByChatId,
+  source = "admin",
+}: {
+  productId: string;
+  productName: string;
+  reason?: string | null;
+  reportedByChatId?: string | null;
+  source?: string;
+}) {
+  const activeEvents = await fetchProductStopEvents({ activeOnly: true });
+  const existingEvent = activeEvents.find((event) => event.product_id === productId);
+
+  if (existingEvent) {
+    await upsertCatalogProductOverride(productId, {
+      is_active: false,
+    });
+
+    return existingEvent;
+  }
+
+  const [event] = await supabaseRequest<ProductStopEvent[]>("product_stop_events", {
+    product_id: productId,
+    product_name: productName,
+    reason: reason ?? null,
+    reported_by_chat_id: reportedByChatId ?? null,
+    source,
+  });
+
+  await upsertCatalogProductOverride(productId, {
+    is_active: false,
+  });
+
+  return event ?? null;
+}
+
+export async function clearProductStop(productId: string) {
+  const params = new URLSearchParams({
+    ended_at: "is.null",
+    product_id: `eq.${productId}`,
+  });
+  const events = await supabasePatch<ProductStopEvent[]>(
+    "product_stop_events",
+    params.toString(),
+    {
+      ended_at: new Date().toISOString(),
+    },
+  );
+
+  await upsertCatalogProductOverride(productId, {
+    is_active: true,
+  });
+
+  return events;
 }
 
 export async function insertOrderWithItems(order: Order, items: OrderItem[]) {

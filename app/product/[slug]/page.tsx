@@ -49,7 +49,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ["Цена", priceText],
     ["Подкатегория", product.subcategory ?? "уточняется"],
     ["Минимум", `${product.min_qty} ${product.unit}`],
-    ["Шаг заказа", `${product.step_qty} ${product.unit}`],
     ["Остаток", `${product.stock_qty} ${product.unit}`],
     ["Вес / фасовка", product.weightLabel ?? "уточняется"],
     ["Срок годности", product.shelfLife ?? "уточняется"],

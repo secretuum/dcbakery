@@ -41,6 +41,18 @@ type PaymentEventPayload = {
   status?: PaymentStatus | null;
 };
 
+type OrderCustomerDetailsPatch = {
+  company_name?: string | null;
+  customer_bin?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  delivery_address?: string | null;
+  delivery_date?: string | null;
+  delivery_time?: string | null;
+  payment_method?: string | null;
+  comment?: string | null;
+};
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -368,6 +380,55 @@ export async function fetchAdminOrder(orderId: string) {
   const orders = await supabaseGet<Order[]>("orders", params.toString());
 
   return orders[0] ?? null;
+}
+
+export async function fetchLatestWhatsAppOrderByPhone(phone: string) {
+  const params = new URLSearchParams({
+    select: "*",
+    customer_phone: `eq.${phone}`,
+    source: "eq.whatsapp",
+    order: "created_at.desc",
+    limit: "1",
+  });
+
+  try {
+    const orders = await supabaseGet<Order[]>("orders", params.toString());
+    return orders[0] ?? null;
+  } catch (error) {
+    if (!isPaymentFlowMigrationMissing(error)) {
+      throw error;
+    }
+  }
+
+  const fallbackParams = new URLSearchParams({
+    select: "*",
+    customer_phone: `eq.${phone}`,
+    order: "created_at.desc",
+    limit: "1",
+  });
+  const orders = await supabaseGet<Order[]>("orders", fallbackParams.toString());
+
+  return orders[0] ?? null;
+}
+
+export async function updateOrderCustomerDetails(
+  orderId: string,
+  patch: OrderCustomerDetailsPatch,
+) {
+  const body = Object.fromEntries(
+    Object.entries(patch).filter(([, value]) => value !== undefined),
+  );
+
+  if (Object.keys(body).length === 0) {
+    return fetchAdminOrder(orderId);
+  }
+
+  const params = new URLSearchParams({
+    id: `eq.${orderId}`,
+  });
+  const [order] = await supabasePatch<Order[]>("orders", params.toString(), body);
+
+  return order ?? null;
 }
 
 export async function fetchAdminOrderByNumber(orderNumber: string) {

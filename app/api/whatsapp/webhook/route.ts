@@ -14,7 +14,7 @@ import {
 import {
   replaceWhatsAppOrderMessage,
   sendGreenApiTextMessage,
-  sendCustomerPaymentLinkNotification,
+  sendCustomerDetailsRequestNotification,
 } from "@/src/lib/whatsapp";
 import type { Order } from "@/src/types";
 
@@ -311,7 +311,7 @@ async function confirmOrderFromWhatsApp(order: Order, request: Request) {
   }
 
   const paymentLink = createPaymentLink(order, "manual", getPaymentOrigin(request));
-  const customerMessageId = await sendCustomerPaymentLinkNotification(
+  const customerMessageId = await sendCustomerDetailsRequestNotification(
     order,
     paymentLink.paymentUrl,
   ).catch(() => null);

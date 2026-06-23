@@ -7,7 +7,7 @@ import {
 import { createPaymentLink } from "@/src/lib/payments";
 import {
   replaceWhatsAppOrderMessage,
-  sendCustomerPaymentLinkNotification,
+  sendCustomerDetailsRequestNotification,
 } from "@/src/lib/whatsapp";
 
 type ConfirmRouteProps = {
@@ -31,7 +31,7 @@ export async function POST(request: Request, { params }: ConfirmRouteProps) {
   try {
     const origin = new URL(request.url).origin;
     const paymentLink = createPaymentLink(order, "manual", origin);
-    const whatsappMessageId = await sendCustomerPaymentLinkNotification(
+    const whatsappMessageId = await sendCustomerDetailsRequestNotification(
       order,
       paymentLink.paymentUrl,
     ).catch(() => null);

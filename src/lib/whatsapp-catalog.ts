@@ -3,10 +3,17 @@ import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { formatPrice } from "@/src/lib/format";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import {
+  fetchLatestWhatsAppOrderByPhone,
   insertOrderWithItems,
+  updateOrderCustomerDetails,
   updateOrderTelegramMessageId,
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
+import {
+  fetchWhatsAppClientByChatId,
+  saveWhatsAppClientProfile,
+  type WhatsAppClientProfile,
+} from "@/src/lib/whatsapp-client-store";
 import { sendTelegramNotification } from "@/src/lib/telegram";
 import {
   clearWhatsAppCart,
@@ -28,6 +35,8 @@ type ParsedOrderItem = {
   product: Product;
   qty: number;
 };
+
+type ParsedCustomerDetails = Omit<WhatsAppClientProfile, "chatId" | "customerPhone" | "lastOrderId">;
 
 type CustomerSession =
   | {
@@ -184,6 +193,7 @@ function formatCatalogIntro(categories: Awaited<ReturnType<typeof fetchCategorie
     "заказ slug 10 — добавить в корзину",
     "корзина — посмотреть корзину",
     "оформить — отправить заявку",
+    "профиль — посмотреть сохраненные данные",
     "менеджер — позвать менеджера",
     "",
     "Пример:",
@@ -258,13 +268,135 @@ function parseDate(value?: string | null) {
 
   const dottedMatch = value.match(/\b(\d{1,2})\.(\d{1,2})\.(20\d{2})\b/);
 
-  if (!dottedMatch) {
+  if (dottedMatch) {
+    const [, day, month, year] = dottedMatch;
+
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+
+  const shortDottedMatch = value.match(/\b(\d{1,2})\.(\d{1,2})\b/);
+
+  if (!shortDottedMatch) {
     return null;
   }
 
-  const [, day, month, year] = dottedMatch;
+  const [, day, month] = shortDottedMatch;
+  const year = String(new Date().getFullYear());
 
   return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
+function parseCustomerDetails(text: string): ParsedCustomerDetails {
+  return {
+    companyName: readField(text, ["компания", "заведение", "company"]),
+    customerBin: readField(text, ["бин/ип", "бин ип", "бин", "ип", "customer_bin", "bin", "iin"]),
+    customerName: readField(text, ["контактное лицо", "контакт", "имя", "name"]),
+    customerEmail: readField(text, ["email", "e-mail", "почта"]),
+    deliveryAddress: readField(text, ["адрес доставки", "адрес", "address"]),
+    deliveryDate: parseDate(
+      readField(text, ["дата доставки", "дата", "delivery_date", "delivery date"]),
+    ),
+    deliveryTime: readField(text, ["время доставки", "время", "delivery time", "time"]),
+    paymentMethod: readField(text, ["способ оплаты", "оплата", "payment"]),
+    comment: readField(text, ["комментарий", "примечание", "comment"]),
+  };
+}
+
+function hasCustomerDetails(details: ParsedCustomerDetails) {
+  return Object.values(details).some((value) => optional(value));
+}
+
+function formatProfileLine(label: string, value?: string | null) {
+  return `${label}: ${optional(value) ?? "не указано"}`;
+}
+
+function formatCustomerProfileMessage(profile: WhatsAppClientProfile | null) {
+  if (!profile) {
+    return [
+      "*Профиль DC Bakery*",
+      "",
+      "Пока данных нет. После подтверждения заявки менеджером бот попросит реквизиты и адрес доставки.",
+    ].join("\n");
+  }
+
+  return [
+    "*Профиль DC Bakery*",
+    "",
+    formatProfileLine("Компания", profile.companyName),
+    formatProfileLine("БИН/ИП", profile.customerBin),
+    formatProfileLine("Контакт", profile.customerName),
+    formatProfileLine("Email", profile.customerEmail),
+    formatProfileLine("Телефон", profile.customerPhone),
+    formatProfileLine("Адрес доставки", profile.deliveryAddress),
+    formatProfileLine("Дата доставки", profile.deliveryDate),
+    formatProfileLine("Время доставки", profile.deliveryTime),
+    formatProfileLine("Оплата", profile.paymentMethod),
+    "",
+    "Чтобы обновить данные, отправьте их по шаблону:",
+    "Компания:",
+    "БИН/ИП:",
+    "Контакт:",
+    "Email:",
+    "Адрес доставки:",
+    "Дата доставки:",
+    "Время доставки:",
+    "Оплата:",
+  ].join("\n");
+}
+
+function formatCustomerDetailsSavedMessage({
+  orderNumber,
+  profile,
+}: {
+  orderNumber?: string;
+  profile: WhatsAppClientProfile;
+}) {
+  return [
+    orderNumber
+      ? `*Данные по заявке ${orderNumber} сохранены*`
+      : "*Данные клиента сохранены*",
+    "",
+    formatProfileLine("Компания", profile.companyName),
+    formatProfileLine("БИН/ИП", profile.customerBin),
+    formatProfileLine("Контакт", profile.customerName),
+    formatProfileLine("Email", profile.customerEmail),
+    formatProfileLine("Адрес доставки", profile.deliveryAddress),
+    formatProfileLine("Дата доставки", profile.deliveryDate),
+    formatProfileLine("Время доставки", profile.deliveryTime),
+    formatProfileLine("Оплата", profile.paymentMethod),
+    "",
+    orderNumber
+      ? "Менеджер увидит обновление в заявке. Позже здесь появятся история и повтор последнего заказа."
+      : "Заявку по этому номеру пока не нашел. Данные сохранены в профиль, менеджер сможет связать их вручную.",
+  ].join("\n");
+}
+
+function formatManagerCustomerDetailsMessage({
+  orderNumber,
+  phone,
+  profile,
+}: {
+  orderNumber?: string;
+  phone: string;
+  profile: WhatsAppClientProfile;
+}) {
+  return [
+    "*Клиент отправил данные для доставки*",
+    orderNumber ? `Заявка: ${orderNumber}` : null,
+    `Телефон: ${phone}`,
+    "",
+    formatProfileLine("Компания", profile.companyName),
+    formatProfileLine("БИН/ИП", profile.customerBin),
+    formatProfileLine("Контакт", profile.customerName),
+    formatProfileLine("Email", profile.customerEmail),
+    formatProfileLine("Адрес", profile.deliveryAddress),
+    formatProfileLine("Дата", profile.deliveryDate),
+    formatProfileLine("Время", profile.deliveryTime),
+    formatProfileLine("Оплата", profile.paymentMethod),
+    profile.comment ? `Комментарий: ${profile.comment}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function resolveProductFromOrderSegment(
@@ -470,12 +602,22 @@ async function createWhatsAppOrder({
   const orderId = crypto.randomUUID();
   const orderNumber = generateOrderNumber();
   const customerPhone = getPhoneFromChatId(chatId);
-  const companyName = readField(text, ["компания", "заведение", "company"]) ?? "WhatsApp клиент";
+  const savedProfile = await fetchWhatsAppClientByChatId(chatId).catch(() => null);
+  const details = parseCustomerDetails(text);
+  const companyName = details.companyName ?? savedProfile?.companyName ?? "WhatsApp клиент";
+  const customerBin = details.customerBin ?? savedProfile?.customerBin ?? null;
   const customerName =
-    readField(text, ["имя", "контакт", "name"]) ?? optional(senderName) ?? "WhatsApp клиент";
-  const deliveryDate = parseDate(readField(text, ["дата", "delivery_date"])) ?? getTomorrowDate();
-  const deliveryAddress = readField(text, ["адрес", "address"]);
-  const paymentMethod = readField(text, ["оплата", "payment"]) ?? "Договориться с менеджером";
+    details.customerName ??
+    savedProfile?.customerName ??
+    optional(senderName) ??
+    "WhatsApp клиент";
+  const customerEmail = details.customerEmail ?? savedProfile?.customerEmail ?? null;
+  const deliveryDate = details.deliveryDate ?? getTomorrowDate();
+  const deliveryAddress = details.deliveryAddress ?? savedProfile?.deliveryAddress ?? null;
+  const deliveryTime =
+    details.deliveryTime ?? savedProfile?.deliveryTime ?? "Договориться с менеджером";
+  const paymentMethod =
+    details.paymentMethod ?? savedProfile?.paymentMethod ?? "Договориться с менеджером";
   const totalAmount = items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
   const orderItems: OrderItem[] = items.map(({ product, qty }) => ({
     category: product.category?.name ?? null,
@@ -493,15 +635,20 @@ async function createWhatsAppOrder({
     order_number: orderNumber,
     source: "whatsapp",
     company_name: companyName,
-    customer_bin: null,
+    customer_bin: customerBin,
     customer_name: customerName,
     customer_phone: customerPhone,
-    customer_email: null,
+    customer_email: customerEmail,
     delivery_address: deliveryAddress,
     delivery_date: deliveryDate,
-    delivery_time: "Договориться с менеджером",
+    delivery_time: deliveryTime,
     payment_method: paymentMethod,
-    comment: `Заявка из WhatsApp. Чат клиента: ${chatId}`,
+    comment: [
+      `Заявка из WhatsApp. Чат клиента: ${chatId}`,
+      details.comment ? `Комментарий клиента: ${details.comment}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n"),
     status: "pending_manager_confirmation",
     total_amount: totalAmount,
     payment_status: "unpaid",
@@ -509,6 +656,23 @@ async function createWhatsAppOrder({
   };
 
   await insertOrderWithItems(order, orderItems);
+
+  await saveWhatsAppClientProfile({
+    chatId,
+    companyName,
+    customerBin,
+    customerEmail,
+    customerName,
+    customerPhone,
+    deliveryAddress,
+    deliveryDate: details.deliveryDate ?? undefined,
+    deliveryTime,
+    paymentMethod,
+    comment: details.comment,
+    lastOrderId: orderId,
+  }).catch((error) => {
+    console.warn("[whatsapp:client] Failed to save profile after order:", error);
+  });
 
   const [whatsappMessageId, telegramMessageId] = await Promise.all([
     sendWhatsAppNotification(order, orderItems).catch(() => null),
@@ -584,6 +748,107 @@ async function submitCustomerOrder({
     orderNumber: order.order_number,
     telegramMessageId,
     whatsappMessageId,
+  };
+}
+
+function detailValue(value?: string | null) {
+  return optional(value) ?? undefined;
+}
+
+async function handleCustomerDetailsSubmission({
+  chatId,
+  details,
+}: {
+  chatId: string;
+  details: ParsedCustomerDetails;
+}) {
+  const customerPhone = getPhoneFromChatId(chatId);
+  const order = await fetchLatestWhatsAppOrderByPhone(customerPhone).catch((error) => {
+    console.warn("[whatsapp:client] Failed to fetch latest order:", error);
+    return null;
+  });
+  const orderPatch = {
+    company_name: detailValue(details.companyName),
+    customer_bin: detailValue(details.customerBin),
+    customer_name: detailValue(details.customerName),
+    customer_email: detailValue(details.customerEmail),
+    delivery_address: detailValue(details.deliveryAddress),
+    delivery_date: detailValue(details.deliveryDate),
+    delivery_time: detailValue(details.deliveryTime),
+    payment_method: detailValue(details.paymentMethod),
+    comment:
+      order && details.comment
+        ? [order.comment, `Комментарий клиента: ${details.comment}`].filter(Boolean).join("\n")
+        : undefined,
+  };
+  const updatedOrder = order
+    ? await updateOrderCustomerDetails(order.id, orderPatch).catch((error) => {
+        console.warn("[whatsapp:client] Failed to update order details:", error);
+        return order;
+      })
+    : null;
+  let savedProfile: WhatsAppClientProfile = {
+    chatId,
+    companyName: details.companyName ?? null,
+    customerBin: details.customerBin ?? null,
+    customerEmail: details.customerEmail ?? null,
+    customerName: details.customerName ?? null,
+    customerPhone,
+    deliveryAddress: details.deliveryAddress ?? null,
+    deliveryDate: details.deliveryDate ?? null,
+    deliveryTime: details.deliveryTime ?? null,
+    paymentMethod: details.paymentMethod ?? null,
+    comment: details.comment ?? null,
+    lastOrderId: updatedOrder?.id ?? order?.id ?? null,
+  };
+
+  try {
+    savedProfile = await saveWhatsAppClientProfile({
+      chatId,
+      companyName: detailValue(details.companyName),
+      customerBin: detailValue(details.customerBin),
+      customerEmail: detailValue(details.customerEmail),
+      customerName: detailValue(details.customerName),
+      customerPhone,
+      deliveryAddress: detailValue(details.deliveryAddress),
+      deliveryDate: detailValue(details.deliveryDate),
+      deliveryTime: detailValue(details.deliveryTime),
+      paymentMethod: detailValue(details.paymentMethod),
+      comment: detailValue(details.comment),
+      lastOrderId: updatedOrder?.id ?? order?.id ?? undefined,
+    });
+  } catch (error) {
+    console.warn("[whatsapp:client] Failed to save profile details:", error);
+  }
+
+  const managerChatId = process.env.GREEN_API_CHAT_ID;
+  const orderNumber = updatedOrder?.order_number ?? order?.order_number;
+
+  if (managerChatId) {
+    await sendGreenApiTextMessage(
+      managerChatId,
+      formatManagerCustomerDetailsMessage({
+        orderNumber,
+        phone: customerPhone,
+        profile: savedProfile,
+      }),
+    ).catch(() => null);
+  }
+
+  const messageId = await sendGreenApiTextMessage(
+    chatId,
+    formatCustomerDetailsSavedMessage({
+      orderNumber,
+      profile: savedProfile,
+    }),
+  );
+
+  return {
+    action: "customer_details_saved",
+    messageId,
+    ok: true,
+    orderId: updatedOrder?.id ?? order?.id ?? null,
+    orderNumber: orderNumber ?? null,
   };
 }
 
@@ -666,6 +931,16 @@ export async function handleWhatsAppCustomerMessage({
     const messageId = await sendGreenApiTextMessage(chatId, formatProductDetails(product));
 
     return { action: "product", messageId, ok: true };
+  }
+
+  if (normalizedText === "профиль" || normalizedText === "profile") {
+    const profile = await fetchWhatsAppClientByChatId(chatId).catch((error) => {
+      console.warn("[whatsapp:client] Failed to fetch profile:", error);
+      return null;
+    });
+    const messageId = await sendGreenApiTextMessage(chatId, formatCustomerProfileMessage(profile));
+
+    return { action: "profile", messageId, ok: true };
   }
 
   if (
@@ -835,6 +1110,15 @@ export async function handleWhatsAppCustomerMessage({
     });
   }
 
+  const details = parseCustomerDetails(text);
+
+  if (hasCustomerDetails(details)) {
+    return handleCustomerDetailsSubmission({
+      chatId,
+      details,
+    });
+  }
+
   const messageId = await sendGreenApiTextMessage(
     chatId,
     [
@@ -845,6 +1129,7 @@ export async function handleWhatsAppCustomerMessage({
       "заказ slug количество",
       "корзина",
       "оформить",
+      "профиль",
       "менеджер",
     ].join("\n"),
   );

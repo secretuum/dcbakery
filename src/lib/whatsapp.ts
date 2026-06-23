@@ -274,3 +274,42 @@ export async function sendCustomerPaymentLinkNotification(order: Order, paymentU
 
   return sendGreenApiTextMessage(chatId, formatPaymentLinkNotification(order, paymentUrl));
 }
+
+export function formatCustomerDetailsRequestNotification(order: Order, paymentUrl: string) {
+  return [
+    "DC Bakery",
+    "",
+    `Ваша заявка ${order.order_number} подтверждена менеджером.`,
+    `Сумма к оплате: ${formatPrice(order.total_amount)}`,
+    "",
+    "Чтобы закрепить реквизиты и подготовить доставку, ответьте одним сообщением по шаблону:",
+    "",
+    "Компания:",
+    "БИН/ИП:",
+    "Контакт:",
+    "Email:",
+    "Адрес доставки:",
+    "Дата доставки:",
+    "Время доставки:",
+    "Оплата: Kaspi / Halyk / Freedom / Счет / Наличные",
+    "Комментарий:",
+    "",
+    "Ссылка на оплату/страницу заявки:",
+    paymentUrl,
+    "",
+    "Если часть данных уже отправляли, можно заполнить только то, что изменилось.",
+  ].join("\n");
+}
+
+export async function sendCustomerDetailsRequestNotification(order: Order, paymentUrl: string) {
+  const chatId = getWhatsAppChatIdFromPhone(order.customer_phone);
+
+  if (!chatId) {
+    return null;
+  }
+
+  return sendGreenApiTextMessage(
+    chatId,
+    formatCustomerDetailsRequestNotification(order, paymentUrl),
+  );
+}

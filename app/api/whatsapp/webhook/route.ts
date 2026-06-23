@@ -360,11 +360,17 @@ export async function POST(request: Request) {
   }
 
   const forwarded = await forwardWebhookPayload(payload, request);
+  const respondWithIgnored = (reason: string) =>
+    NextResponse.json({
+      forwarded,
+      ignored: true,
+      reason,
+    });
 
   const typeWebhook = readNestedString(payload, ["typeWebhook"]);
 
   if (typeWebhook && typeWebhook !== "incomingMessageReceived") {
-    return NextResponse.json({ forwarded, ignored: true, reason: "Unsupported webhook type" });
+    return respondWithIgnored("Unsupported webhook type");
   }
 
   const chatId = extractChatId(payload);
@@ -376,22 +382,33 @@ export async function POST(request: Request) {
 
   const text = extractText(payload);
 
-  if (chatId !== expectedChatId) {
-    if (!isCustomerWhatsAppChat(chatId)) {
-      return NextResponse.json({ error: "Forbidden chat" }, { status: 403 });
-    }
-
-    const result = await handleWhatsAppCustomerMessage({
-      chatId,
-      senderName: extractSenderName(payload),
-      text,
-    });
-
-    return NextResponse.json({ forwarded, ...result });
+  if (!chatId) {
+    return respondWithIgnored("Missing chatId");
   }
 
-  if (!chatId) {
-    return NextResponse.json({ error: "Forbidden chat" }, { status: 403 });
+  if (chatId !== expectedChatId) {
+    if (!isCustomerWhatsAppChat(chatId)) {
+      return respondWithIgnored("Not a manager or customer chat");
+    }
+
+    try {
+      const result = await handleWhatsAppCustomerMessage({
+        chatId,
+        senderName: extractSenderName(payload),
+        text,
+      });
+
+      return NextResponse.json({ forwarded, ...result });
+    } catch (error) {
+      console.error("[whatsapp] Customer webhook failed:", error);
+
+      return NextResponse.json({
+        forwarded,
+        ignored: false,
+        ok: false,
+        reason: "Customer webhook failed",
+      });
+    }
   }
 
   const relatedMessageIds = extractRelatedMessageIds(payload);

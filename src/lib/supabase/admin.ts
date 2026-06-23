@@ -43,20 +43,30 @@ type PaymentEventPayload = {
 
 export type CatalogProductOverride = {
   category_slug?: string | null;
+  composition?: string | null;
+  composition_kz?: string | null;
   description?: string | null;
   image?: string | null;
   is_active?: boolean | null;
+  is_archived?: boolean | null;
+  is_halal?: boolean | null;
   is_new?: boolean | null;
   is_popular?: boolean | null;
   is_promo?: boolean | null;
+  min_qty?: number | string | null;
   name?: string | null;
+  package_type?: string | null;
   price?: number | string | null;
   product_id: string;
+  shelf_life?: string | null;
   slug?: string | null;
+  step_qty?: number | string | null;
   stock_qty?: number | string | null;
+  storage?: string | null;
   subcategory?: string | null;
   unit?: string | null;
   updated_at?: string | null;
+  weight_grams?: number | string | null;
   weight_label?: string | null;
 };
 

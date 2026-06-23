@@ -30,6 +30,7 @@ export type Product = {
   storage?: string;
   packageType?: string;
   isHalal?: boolean;
+  isArchived?: boolean;
   isPopular?: boolean;
   isNew?: boolean;
   isPromo?: boolean;

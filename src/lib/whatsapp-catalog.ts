@@ -729,6 +729,10 @@ function resolveProductFromNaturalText(segment: string, products: Product[]) {
   return matches[0]?.product ?? null;
 }
 
+export function resolveWhatsAppProductFromText(segment: string, products: Product[]) {
+  return resolveProductFromNaturalText(segment, products);
+}
+
 function isCategoryProductReferenceSegment(segment: string, session?: CustomerSession) {
   return session?.mode === "category" && /^\s*\d+\s+\d+(?:[.,]\d+)?(?:\s|$)/u.test(segment);
 }

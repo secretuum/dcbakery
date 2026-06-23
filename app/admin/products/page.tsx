@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { updateCatalogProductAction } from "@/app/admin/products/actions";
+import {
+  bulkUpdateCatalogProductsAction,
+  updateCatalogProductAction,
+} from "@/app/admin/products/actions";
 import { Badge } from "@/src/components/ui/Badge";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { fetchAdminProducts, fetchCategories } from "@/src/lib/catalog";
@@ -11,6 +14,7 @@ type AdminProductsPageProps = {
   searchParams: Promise<{
     category?: string | string[];
     q?: string | string[];
+    view?: string | string[];
   }>;
 };
 
@@ -22,7 +26,7 @@ function getParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] ?? "" : value ?? "";
 }
 
-function buildProductsHref(params: { category?: string; q?: string }) {
+function buildProductsHref(params: { category?: string; q?: string; view?: string }) {
   const searchParams = new URLSearchParams();
 
   if (params.category) {
@@ -31,6 +35,10 @@ function buildProductsHref(params: { category?: string; q?: string }) {
 
   if (params.q) {
     searchParams.set("q", params.q);
+  }
+
+  if (params.view) {
+    searchParams.set("view", params.view);
   }
 
   const query = searchParams.toString();
@@ -65,16 +73,22 @@ function getStockTone(stockQty: number) {
 }
 
 export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
-  const [{ category, q }, categories, products] = await Promise.all([
+  const [{ category, q, view }, categories, products] = await Promise.all([
     searchParams,
     fetchCategories(),
     fetchAdminProducts(),
   ]);
   const selectedCategory = getParam(category);
   const query = getParam(q);
-  const filteredProducts = filterProducts(products, selectedCategory, query);
+  const selectedView = getParam(view);
+  const isArchiveView = selectedView === "archive";
+  const currentPoolProducts = products.filter((product) =>
+    isArchiveView ? product.isArchived : !product.isArchived,
+  );
+  const filteredProducts = filterProducts(currentPoolProducts, selectedCategory, query);
   const totalStock = products.reduce((sum, product) => sum + product.stock_qty, 0);
   const pricedProductsCount = products.filter((product) => product.price > 0).length;
+  const archivedProductsCount = products.filter((product) => product.isArchived).length;
 
   return (
     <div>
@@ -105,14 +119,16 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
           <p className="mt-2 text-3xl font-black">{pricedProductsCount}</p>
         </div>
         <div className="rounded-card bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase text-muted">Остаток всего</p>
-          <p className="mt-2 text-3xl font-black">{totalStock}</p>
+          <p className="text-xs font-black uppercase text-muted">Архив</p>
+          <p className="mt-2 text-3xl font-black">{archivedProductsCount}</p>
+          <p className="mt-1 text-xs font-bold text-muted">Остаток всего: {totalStock}</p>
         </div>
       </section>
 
       <section className="mt-6 rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
         <form className="grid gap-3 lg:grid-cols-[1fr_auto]" action="/admin/products">
           {selectedCategory ? <input type="hidden" name="category" value={selectedCategory} /> : null}
+          {isArchiveView ? <input type="hidden" name="view" value="archive" /> : null}
           <input
             className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold text-dark outline-none transition placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/25"
             defaultValue={query}
@@ -129,7 +145,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
 
         <nav className="mt-4 flex gap-2 overflow-x-auto pb-1" aria-label="Фильтр категорий">
           <Link
-            href={buildProductsHref({ q: query })}
+            href={buildProductsHref({ q: query, view: selectedView })}
             className={`shrink-0 rounded-btn px-4 py-2 text-sm font-black transition ${
               selectedCategory ? "bg-cream text-muted hover:bg-coral-light" : "bg-coral text-white"
             }`}
@@ -142,7 +158,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
             return (
               <Link
                 key={categoryItem.id}
-                href={buildProductsHref({ category: categoryItem.slug, q: query })}
+                href={buildProductsHref({ category: categoryItem.slug, q: query, view: selectedView })}
                 className={`shrink-0 rounded-btn px-4 py-2 text-sm font-black transition ${
                   isActive ? "bg-coral text-white" : "bg-cream text-muted hover:bg-coral-light"
                 }`}
@@ -151,20 +167,64 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
               </Link>
             );
           })}
+          <Link
+            href={buildProductsHref({ q: query, view: isArchiveView ? "" : "archive" })}
+            className={`shrink-0 rounded-btn px-4 py-2 text-sm font-black transition ${
+              isArchiveView ? "bg-dark text-white" : "bg-cream text-muted hover:bg-coral-light"
+            }`}
+          >
+            Архив
+          </Link>
         </nav>
       </section>
 
       <div className="mt-6 overflow-hidden rounded-card bg-white shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
         {filteredProducts.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-[1160px] w-full border-collapse text-left">
+          <>
+            <form
+              action={bulkUpdateCatalogProductsAction}
+              className="grid gap-3 border-b border-black/10 bg-cream p-4 lg:grid-cols-[1fr_auto_auto]"
+              id="bulk-products"
+            >
+              <select
+                className="min-h-11 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                name="bulk_action"
+              >
+                <option value="">Массовое действие</option>
+                <option value="archive">В архив</option>
+                <option value="restore">Вернуть из архива</option>
+                <option value="activate">Сделать активными</option>
+                <option value="hide">Скрыть</option>
+                <option value="popular">Сделать популярными</option>
+                <option value="not_popular">Убрать из популярных</option>
+                <option value="set_price">Поставить цену</option>
+              </select>
+              <input
+                className="min-h-11 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/25"
+                min="0"
+                name="bulk_price"
+                placeholder="Цена для выбранных"
+                step="0.01"
+                type="number"
+              />
+              <button
+                className="min-h-11 rounded-btn bg-dark px-5 py-2 text-sm font-black text-white transition hover:bg-burgundy"
+                type="submit"
+              >
+                Применить
+              </button>
+            </form>
+            <div className="overflow-x-auto">
+            <table className="min-w-[1380px] w-full border-collapse text-left">
               <thead className="bg-coral-light text-xs font-black uppercase text-burgundy">
                 <tr>
+                  <th className="px-5 py-4">Выбор</th>
                   <th className="px-5 py-4">Товар</th>
                   <th className="px-5 py-4">Категория</th>
                   <th className="px-5 py-4">Цена</th>
                   <th className="px-5 py-4">Вес</th>
                   <th className="px-5 py-4">Остаток</th>
+                  <th className="px-5 py-4">Шаг</th>
                   <th className="px-5 py-4">Статус</th>
                   <th className="px-5 py-4">Действие</th>
                 </tr>
@@ -176,8 +236,18 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                   return (
                     <tr key={product.id} className="transition hover:bg-cream">
                       <td className="px-5 py-4">
+                        <input
+                          className="size-5 rounded border-black/20 text-coral focus:ring-coral"
+                          form="bulk-products"
+                          name="product_id"
+                          type="checkbox"
+                          value={product.id}
+                        />
+                      </td>
+                      <td className="px-5 py-4">
                         <form action={updateCatalogProductAction} id={formId}>
                           <input name="product_id" type="hidden" value={product.id} />
+                          <input name="is_archived" type="hidden" value={String(Boolean(product.isArchived))} />
                         </form>
                         <div className="flex items-center gap-3">
                           <div className="relative size-16 shrink-0 overflow-hidden rounded-btn bg-coral-light">
@@ -202,14 +272,72 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             >
                               /product/{product.slug}
                             </Link>
-                            <p className="mt-1 line-clamp-1 max-w-md text-xs text-muted">
-                              {product.description}
-                            </p>
+                            <input
+                              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-muted outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                              defaultValue={product.slug}
+                              form={formId}
+                              name="slug"
+                              placeholder="slug"
+                            />
+                            <input
+                              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-muted outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                              defaultValue={product.images[0] ?? ""}
+                              form={formId}
+                              name="image"
+                              placeholder="/products/image.jpg"
+                            />
+                            <details className="mt-2 rounded-xl bg-cream p-3">
+                              <summary className="cursor-pointer text-xs font-black text-burgundy">
+                                Описание и состав
+                              </summary>
+                              <textarea
+                                className="mt-3 min-h-24 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                                defaultValue={product.description}
+                                form={formId}
+                                name="description"
+                                placeholder="Описание"
+                              />
+                              <textarea
+                                className="mt-2 min-h-20 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                                defaultValue={product.composition ?? ""}
+                                form={formId}
+                                name="composition"
+                                placeholder="Состав"
+                              />
+                              <textarea
+                                className="mt-2 min-h-20 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-semibold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                                defaultValue={product.compositionKz ?? ""}
+                                form={formId}
+                                name="composition_kz"
+                                placeholder="Состав KZ"
+                              />
+                            </details>
                           </div>
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <Badge variant="burgundy">{product.category?.name ?? "Без категории"}</Badge>
+                        <div className="grid gap-2">
+                          <select
+                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={product.category?.slug ?? ""}
+                            form={formId}
+                            name="category_slug"
+                          >
+                            {categories.map((categoryItem) => (
+                              <option key={categoryItem.id} value={categoryItem.slug}>
+                                {categoryItem.name}
+                              </option>
+                            ))}
+                          </select>
+                          <input
+                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-muted outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={product.subcategory ?? ""}
+                            form={formId}
+                            name="subcategory"
+                            placeholder="Подкатегория"
+                          />
+                          <Badge variant="burgundy">{product.category?.name ?? "Без категории"}</Badge>
+                        </div>
                       </td>
                       <td className="px-5 py-4">
                         <input
@@ -225,7 +353,34 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           {formatProductPrice(product.price)}
                         </p>
                       </td>
-                      <td className="px-5 py-4 text-muted">{product.weightLabel ?? "не указано"}</td>
+                      <td className="px-5 py-4">
+                        <div className="grid gap-2">
+                          <input
+                            className="w-36 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={product.weightLabel ?? ""}
+                            form={formId}
+                            name="weight_label"
+                            placeholder="Вес"
+                          />
+                          <input
+                            className="w-36 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={product.weightGrams ?? ""}
+                            form={formId}
+                            min="0"
+                            name="weight_grams"
+                            placeholder="Граммы"
+                            step="0.001"
+                            type="number"
+                          />
+                          <input
+                            className="w-36 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={product.unit}
+                            form={formId}
+                            name="unit"
+                            placeholder="unit"
+                          />
+                        </div>
+                      </td>
                       <td className={`px-5 py-4 font-black ${getStockTone(product.stock_qty)}`}>
                         <input
                           className="w-28 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
@@ -236,6 +391,30 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           step="0.001"
                           type="number"
                         />
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="grid gap-2">
+                          <input
+                            className="w-28 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={product.min_qty}
+                            form={formId}
+                            min="0"
+                            name="min_qty"
+                            placeholder="min"
+                            step="0.001"
+                            type="number"
+                          />
+                          <input
+                            className="w-28 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={product.step_qty}
+                            form={formId}
+                            min="0"
+                            name="step_qty"
+                            placeholder="step"
+                            step="0.001"
+                            type="number"
+                          />
+                        </div>
                       </td>
                       <td className="px-5 py-4">
                         <div className="grid gap-2">
@@ -257,23 +436,90 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             <option value="false">Обычный</option>
                             <option value="true">Популярный</option>
                           </select>
+                          <select
+                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={String(Boolean(product.isNew))}
+                            form={formId}
+                            name="is_new"
+                          >
+                            <option value="false">Не новинка</option>
+                            <option value="true">Новинка</option>
+                          </select>
+                          <select
+                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={String(Boolean(product.isPromo))}
+                            form={formId}
+                            name="is_promo"
+                          >
+                            <option value="false">Не акция</option>
+                            <option value="true">Акция</option>
+                          </select>
+                          <select
+                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            defaultValue={String(Boolean(product.isHalal))}
+                            form={formId}
+                            name="is_halal"
+                          >
+                            <option value="false">Без halal</option>
+                            <option value="true">Halal</option>
+                          </select>
+                          <details className="rounded-xl bg-cream p-3">
+                            <summary className="cursor-pointer text-xs font-black text-burgundy">
+                              Хранение
+                            </summary>
+                            <input
+                              className="mt-3 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                              defaultValue={product.shelfLife ?? ""}
+                              form={formId}
+                              name="shelf_life"
+                              placeholder="Срок годности"
+                            />
+                            <input
+                              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                              defaultValue={product.storage ?? ""}
+                              form={formId}
+                              name="storage"
+                              placeholder="Хранение"
+                            />
+                            <input
+                              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                              defaultValue={product.packageType ?? ""}
+                              form={formId}
+                              name="package_type"
+                              placeholder="Упаковка"
+                            />
+                          </details>
                         </div>
                       </td>
                       <td className="px-5 py-4">
-                        <button
-                          className="min-h-10 rounded-btn bg-coral px-4 py-2 text-sm font-black text-white transition hover:bg-coral-hover"
-                          form={formId}
-                          type="submit"
-                        >
-                          Сохранить
-                        </button>
+                        <div className="grid gap-2">
+                          <button
+                            className="min-h-10 rounded-btn bg-coral px-4 py-2 text-sm font-black text-white transition hover:bg-coral-hover"
+                            form={formId}
+                            name="_action"
+                            type="submit"
+                            value="save"
+                          >
+                            Сохранить
+                          </button>
+                          <button
+                            className="min-h-10 rounded-btn bg-dark px-4 py-2 text-sm font-black text-white transition hover:bg-burgundy"
+                            form={formId}
+                            name="_action"
+                            type="submit"
+                            value={product.isArchived ? "restore" : "archive"}
+                          >
+                            {product.isArchived ? "Вернуть" : "В архив"}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         ) : (
           <div className="p-8 text-center">
             <h2 className="text-3xl font-black">Ничего не найдено</h2>

@@ -5,12 +5,15 @@ import {
   fetchAdminOrderByNumber,
   fetchAdminOrderByWhatsAppMessageId,
   markOrderPaid,
+  upsertCatalogProductOverride,
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
+import { fetchAdminProducts } from "@/src/lib/catalog";
 import { createPaymentLink } from "@/src/lib/payments";
 import {
   handleWhatsAppCustomerMessage,
   isCustomerWhatsAppChat,
+  resolveWhatsAppProductFromText,
 } from "@/src/lib/whatsapp-catalog";
 import {
   replaceWhatsAppOrderMessage,
@@ -21,6 +24,11 @@ import {
 import type { Order } from "@/src/types";
 
 type WhatsAppCommand = "cancel" | "confirm" | "help" | "mark_paid" | "status";
+
+type StockUpdateCommand = {
+  productText: string;
+  stockQty: number;
+};
 
 type ParsedCommand = {
   action: WhatsAppCommand;
@@ -95,6 +103,16 @@ function isAuthorized(request: Request) {
     authorizationHeader === webhookSecret ||
     authorizationHeader === `Bearer ${webhookSecret}`
   );
+}
+
+function getBooleanEnv(name: string, defaultValue = true) {
+  const value = process.env[name]?.trim().toLowerCase();
+
+  if (!value) {
+    return defaultValue;
+  }
+
+  return !["0", "false", "off", "no", "нет", "выкл"].includes(value);
 }
 
 function formatChatForLog(chatId: string) {
@@ -227,6 +245,97 @@ function parseCommand(text: string): ParsedCommand | null {
   return null;
 }
 
+function parseStockUpdateCommand(text: string): StockUpdateCommand | null {
+  const normalizedText = normalizeCommandText(text);
+
+  if (!/(остат|осталось|наличие|в наличии)/u.test(normalizedText)) {
+    return null;
+  }
+
+  const patterns = [
+    /^\s*(?:поставь|поставить|обнови|обновить|измени|изменить)?\s*(?:остаток|остатки|остатка|наличие|в наличии)\s+(.+?)\s*(?:=|:)?\s+(\d+(?:[.,]\d+)?)(?:\s|$)/u,
+    /^\s*(.+?)\s+(?:остаток|остатки|остатка|осталось|наличие|в наличии)\s*(?:=|:)?\s*(\d+(?:[.,]\d+)?)(?:\s|$)/u,
+  ];
+
+  for (const pattern of patterns) {
+    const match = normalizedText.match(pattern);
+
+    if (!match) {
+      continue;
+    }
+
+    const stockQty = Number(match[2].replace(",", "."));
+    const productText = match[1]
+      .replace(/^(у|по|для|товар|позиция)\s+/u, "")
+      .replace(/\s+(шт|штук|кг|грамм|гр|ед)$/u, "")
+      .trim();
+
+    if (productText && Number.isFinite(stockQty) && stockQty >= 0) {
+      return {
+        productText,
+        stockQty,
+      };
+    }
+  }
+
+  return null;
+}
+
+async function handleStockUpdateFromWhatsApp(chatId: string, text: string) {
+  const stockUpdate = parseStockUpdateCommand(text);
+
+  if (!stockUpdate) {
+    return null;
+  }
+
+  const products = await fetchAdminProducts();
+  const product = resolveWhatsAppProductFromText(stockUpdate.productText, products);
+
+  if (!product) {
+    const messageId = await sendGreenApiTextMessage(
+      chatId,
+      [
+        "*DC Bakery: товар для остатка не найден*",
+        "",
+        `Не распознал: ${stockUpdate.productText}`,
+        "",
+        "Примеры:",
+        "Шу с персиком остаток 10",
+        "Остаток Наполеон 25",
+      ].join("\n"),
+    ).catch(() => null);
+
+    return {
+      action: "stock_update_not_found",
+      messageId,
+      ok: false,
+    };
+  }
+
+  await upsertCatalogProductOverride(product.id, {
+    stock_qty: stockUpdate.stockQty,
+  });
+
+  const messageId = await sendGreenApiTextMessage(
+    chatId,
+    [
+      "*DC Bakery: остаток обновлен*",
+      "",
+      `${product.name}: ${stockUpdate.stockQty} ${product.unit}`,
+      "",
+      "Это сразу влияет на сайт и WhatsApp-каталог.",
+    ].join("\n"),
+  ).catch(() => null);
+
+  return {
+    action: "stock_updated",
+    messageId,
+    ok: true,
+    productId: product.id,
+    stockQty: stockUpdate.stockQty,
+  };
+}
+
 function formatCommandHelpMessage(orderNumber = "DCB-2026-123456") {
   return [
     "*DC Bakery: команды менеджера*",
@@ -243,6 +352,13 @@ function formatCommandHelpMessage(orderNumber = "DCB-2026-123456") {
     "Короткие варианты:",
     "ок или + = подтвердить",
     "paid = отметить оплату",
+    "",
+    "Остатки:",
+    "Шу с персиком остаток 10",
+    "Остаток Наполеон 25",
+    "",
+    "Временное отключение:",
+    "WHATSAPP_BOT_ENABLED=false отключит нашу логику, но webhook продолжит отвечать.",
     "help / помощь / команды = эта подсказка",
   ].join("\n");
 }
@@ -485,9 +601,17 @@ export async function POST(request: Request) {
     return respondWithIgnored("Missing chatId");
   }
 
+  if (!getBooleanEnv("WHATSAPP_BOT_ENABLED", true)) {
+    return respondWithIgnored("WhatsApp bot disabled");
+  }
+
   if (chatId !== expectedChatId) {
     if (!isCustomerWhatsAppChat(chatId)) {
       return respondWithIgnored("Not a manager or customer chat");
+    }
+
+    if (!getBooleanEnv("WHATSAPP_CUSTOMER_BOT_ENABLED", true)) {
+      return respondWithIgnored("WhatsApp customer bot disabled");
     }
 
     try {
@@ -508,6 +632,16 @@ export async function POST(request: Request) {
         reason: "Customer webhook failed",
       });
     }
+  }
+
+  if (!getBooleanEnv("WHATSAPP_MANAGER_COMMANDS_ENABLED", true)) {
+    return respondWithIgnored("WhatsApp manager commands disabled");
+  }
+
+  const stockUpdateResult = await handleStockUpdateFromWhatsApp(chatId, text);
+
+  if (stockUpdateResult) {
+    return NextResponse.json({ forwarded, ...stockUpdateResult });
   }
 
   const relatedMessageIds = extractRelatedMessageIds(payload);

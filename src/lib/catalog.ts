@@ -74,6 +74,7 @@ function toProduct(sourceProduct: SourceProduct, index: number): Product {
     storage: sourceProduct.storage,
     packageType: sourceProduct.packageType,
     isHalal: sourceProduct.isHalal,
+    isArchived: false,
     isPopular: sourceProduct.isPopular,
     isNew: sourceProduct.isNew,
     isPromo: sourceProduct.isPromo,
@@ -89,6 +90,19 @@ function toProduct(sourceProduct: SourceProduct, index: number): Product {
 }
 
 function parseOverrideNumber(value: CatalogProductOverride[keyof CatalogProductOverride], fallback: number) {
+  if (value === null || value === undefined || value === "") {
+    return fallback;
+  }
+
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function parseOverrideOptionalNumber(
+  value: CatalogProductOverride[keyof CatalogProductOverride],
+  fallback?: number,
+) {
   if (value === null || value === undefined || value === "") {
     return fallback;
   }
@@ -117,19 +131,29 @@ function applyOverride(
     ...product,
     category,
     category_id: category?.id ?? product.category_id,
+    composition: override.composition ?? product.composition,
+    compositionKz: override.composition_kz ?? product.compositionKz,
     description: override.description ?? product.description,
     images: image ? [image] : product.images,
     is_active: override.is_active ?? product.is_active,
+    isArchived: override.is_archived ?? product.isArchived,
+    isHalal: override.is_halal ?? product.isHalal,
     isNew: override.is_new ?? product.isNew,
     isPopular: override.is_popular ?? product.isPopular,
     isPromo: override.is_promo ?? product.isPromo,
+    min_qty: parseOverrideNumber(override.min_qty, product.min_qty),
     name: override.name ?? product.name,
+    packageType: override.package_type ?? product.packageType,
     price: parseOverrideNumber(override.price, product.price),
+    shelfLife: override.shelf_life ?? product.shelfLife,
     slug: override.slug ?? product.slug,
+    step_qty: parseOverrideNumber(override.step_qty, product.step_qty),
     stock_qty: parseOverrideNumber(override.stock_qty, product.stock_qty),
+    storage: override.storage ?? product.storage,
     subcategory: override.subcategory ?? product.subcategory,
     unit: override.unit ?? product.unit,
     weight: override.weight_label ?? product.weight,
+    weightGrams: parseOverrideOptionalNumber(override.weight_grams, product.weightGrams),
     weightLabel: override.weight_label ?? product.weightLabel,
     updated_at: override.updated_at ?? product.updated_at,
   };
@@ -143,7 +167,13 @@ function getSourceProducts() {
   return sourceProducts.map(toProduct);
 }
 
-async function getCatalogProducts({ includeInactive = false } = {}) {
+async function getCatalogProducts({
+  includeArchived = false,
+  includeInactive = false,
+}: {
+  includeArchived?: boolean;
+  includeInactive?: boolean;
+} = {}) {
   const categories = getActiveCategories();
   const activeCategoryIds = new Set(categories.map((category) => category.id));
   const sourceCatalog = getSourceProducts();
@@ -161,7 +191,13 @@ async function getCatalogProducts({ includeInactive = false } = {}) {
 
   return sourceCatalog
     .map((product) => applyOverride(product, overridesByProductId.get(product.id), categories))
-    .filter((product) => includeInactive || (product.is_active && activeCategoryIds.has(product.category_id)))
+    .filter((product) => {
+      if (!includeArchived && product.isArchived) {
+        return false;
+      }
+
+      return includeInactive || (product.is_active && activeCategoryIds.has(product.category_id));
+    })
     .sort(bySortOrder);
 }
 
@@ -177,8 +213,12 @@ export async function fetchProducts(): Promise<Product[]> {
   return getCatalogProducts();
 }
 
-export async function fetchAdminProducts(): Promise<Product[]> {
-  return getCatalogProducts({ includeInactive: true });
+export async function fetchAdminProducts({
+  includeArchived = true,
+}: {
+  includeArchived?: boolean;
+} = {}): Promise<Product[]> {
+  return getCatalogProducts({ includeArchived, includeInactive: true });
 }
 
 export async function fetchPopularProducts(limit = 4): Promise<Product[]> {

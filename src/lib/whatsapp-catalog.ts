@@ -180,8 +180,14 @@ function getSearchTokens(value: string) {
 }
 
 function normalizeSearchToken(value: string) {
-  return value
-    .replace(/(ами|ями|ого|ему|ыми|ими|ов|ев|ей|ам|ям|ах|ях|ом|ем|ой|ый|ий|ая|яя|ые|ие|а|я|ы|и|е)$/u, "")
+  let token = value.replace(/-/g, "");
+
+  if (token.endsWith("аев")) {
+    token = `${token.slice(0, -3)}ай`;
+  }
+
+  return token
+    .replace(/(ами|ями|ого|ему|ыми|ими|аев|оев|иев|ов|ев|ей|ам|ям|ах|ях|ом|ем|ой|ый|ий|ая|яя|ые|ие|а|я|ы|и|е)$/u, "")
     .trim();
 }
 
@@ -620,24 +626,78 @@ function parseCategoryQuickAdd(text: string, session?: CustomerSession) {
   };
 }
 
-function getProductSearchScore(product: Product, segment: string) {
-  const segmentTokens = new Set(getSearchTokens(segment).map(normalizeSearchToken).filter(Boolean));
+function getEditDistance(a: string, b: string) {
+  const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
 
-  if (segmentTokens.size === 0) {
+  for (let i = 1; i <= a.length; i += 1) {
+    let diagonal = previous[0];
+    previous[0] = i;
+
+    for (let j = 1; j <= b.length; j += 1) {
+      const insertCost = previous[j] + 1;
+      const deleteCost = previous[j - 1] + 1;
+      const replaceCost = diagonal + (a[i - 1] === b[j - 1] ? 0 : 1);
+
+      diagonal = previous[j];
+      previous[j] = Math.min(insertCost, deleteCost, replaceCost);
+    }
+  }
+
+  return previous[b.length];
+}
+
+function getTokenMatchScore(productToken: string, segmentToken: string) {
+  if (!productToken || !segmentToken) {
+    return 0;
+  }
+
+  if (productToken === segmentToken) {
+    return productToken.length;
+  }
+
+  if (
+    productToken.length >= 4 &&
+    segmentToken.length >= 4 &&
+    (productToken.includes(segmentToken) || segmentToken.includes(productToken))
+  ) {
+    return Math.min(productToken.length, segmentToken.length) - 1;
+  }
+
+  const minLength = Math.min(productToken.length, segmentToken.length);
+  const maxLength = Math.max(productToken.length, segmentToken.length);
+  const allowedDistance = minLength >= 8 ? 4 : minLength >= 6 ? 2 : 1;
+
+  if (minLength < 5 || productToken[0] !== segmentToken[0] || maxLength - minLength > allowedDistance) {
+    return 0;
+  }
+
+  const distance = getEditDistance(productToken, segmentToken);
+
+  return distance <= allowedDistance ? Math.max(1, minLength - distance) : 0;
+}
+
+function getProductSearchScore(product: Product, segment: string) {
+  const segmentTokens = getSearchTokens(segment).map(normalizeSearchToken).filter(Boolean);
+
+  if (segmentTokens.length === 0) {
     return 0;
   }
 
   const productTokens = getSearchTokens(
-    `${product.name} ${product.subcategory ?? ""} ${product.weightLabel ?? ""}`,
+    `${product.name} ${product.slug} ${product.id} ${product.subcategory ?? ""} ${product.weightLabel ?? ""}`,
   )
     .map(normalizeSearchToken)
     .filter(Boolean);
   let score = 0;
 
   for (const token of productTokens) {
-    if (segmentTokens.has(token)) {
-      score += token.length;
+    let bestTokenScore = 0;
+
+    for (const segmentToken of segmentTokens) {
+      bestTokenScore = Math.max(bestTokenScore, getTokenMatchScore(token, segmentToken));
     }
+
+    score += bestTokenScore;
   }
 
   const normalizedSegment = normalizeSearchText(segment);
@@ -669,6 +729,10 @@ function resolveProductFromNaturalText(segment: string, products: Product[]) {
   return matches[0]?.product ?? null;
 }
 
+function isCategoryProductReferenceSegment(segment: string, session?: CustomerSession) {
+  return session?.mode === "category" && /^\s*\d+\s+\d+(?:[.,]\d+)?(?:\s|$)/u.test(segment);
+}
+
 function resolveProductFromOrderSegment(
   segment: string,
   products: Product[],
@@ -688,7 +752,7 @@ function resolveProductFromOrderSegment(
 
   const optionMatch = segment.match(/^\s*(\d+)(?:\s|$)/);
 
-  if (optionMatch) {
+  if (optionMatch && isCategoryProductReferenceSegment(segment, session)) {
     return findSessionProductByNumber(session, products, Number(optionMatch[1]));
   }
 
@@ -707,18 +771,51 @@ function resolveQtyFromOrderSegment(segment: string, hasNumericProductReference:
   return Number.isFinite(qty) && qty > 0 ? qty : null;
 }
 
+function normalizeNoisyQuantityText(text: string) {
+  return text.replace(/(\d)[^\d\s,.;:]+(?=\d)/gu, "$1");
+}
+
+function stripOrderCommandPrefix(text: string) {
+  return text
+    .replace(/^(заказ|заказать|order|хочу|нужно|надо|добавь|добавить|еще|ещё)\b/u, "")
+    .trim();
+}
+
+function trimOrderSegment(value: string) {
+  return value
+    .replace(/^(и|плюс|еще|ещё)\s+/u, "")
+    .replace(/\s+(и|плюс|еще|ещё)$/u, "")
+    .trim();
+}
+
+function getOrderSegments(text: string) {
+  const normalizedText = normalizeNoisyQuantityText(normalizeText(text));
+  const commandlessText = stripOrderCommandPrefix(normalizedText);
+  const quantitySegments = Array.from(
+    commandlessText.matchAll(
+      /(?:^|[\s,;]+)(\d+(?:[.,]\d+)?)\s+(.+?)(?=(?:[\s,;]+(?:и\s+|плюс\s+|еще\s+|ещё\s+)?\d+(?:[.,]\d+)?\s+)|$)/gu,
+    ),
+  )
+    .map((match) => `${match[1]} ${trimOrderSegment(match[2])}`.trim())
+    .filter((segment) => /\p{L}|\d+\s+\d/u.test(segment));
+
+  if (quantitySegments.length > 0) {
+    return quantitySegments;
+  }
+
+  return commandlessText
+    .split(/[\n,;]+/)
+    .map((segment) => trimOrderSegment(segment))
+    .filter(Boolean);
+}
+
 function parseOrderItems(
   text: string,
   products: Product[],
   session?: CustomerSession,
   fallbackProduct?: Product | null,
 ) {
-  const normalizedText = normalizeText(text);
-  const segments = normalizedText
-    .replace(/^(заказ|заказать|order|хочу|нужно|надо|добавь|добавить|еще|ещё)\b/u, "")
-    .split(/[\n,;]+/)
-    .map((segment) => segment.trim())
-    .filter(Boolean);
+  const segments = getOrderSegments(text);
   const parsedItems: ParsedOrderItem[] = [];
 
   for (const segment of segments) {
@@ -728,8 +825,7 @@ function parseOrderItems(
       continue;
     }
 
-    const hasNumericProductReference =
-      session?.mode === "category" && Boolean(segment.match(/^\s*\d+(?:\s|$)/));
+    const hasNumericProductReference = isCategoryProductReferenceSegment(segment, session);
     const qty = resolveQtyFromOrderSegment(segment, hasNumericProductReference);
 
     if (qty) {
@@ -741,7 +837,7 @@ function parseOrderItems(
 }
 
 function looksLikeNaturalOrder(text: string) {
-  const normalizedText = normalizeText(text);
+  const normalizedText = normalizeNoisyQuantityText(normalizeText(text));
 
   return (
     /\d/.test(normalizedText) &&
@@ -752,7 +848,7 @@ function looksLikeNaturalOrder(text: string) {
 }
 
 function looksLikeShortProductQty(text: string, session?: CustomerSession) {
-  const normalizedText = normalizeText(text);
+  const normalizedText = normalizeNoisyQuantityText(normalizeText(text));
 
   return /^\d+(?:[.,]\d+)?\s+[\p{L}\p{N}-]+/u.test(normalizedText) ||
     (session?.mode === "category" && /^\d+\s+\d+(?:[.,]\d+)?$/u.test(normalizedText));

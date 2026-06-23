@@ -41,6 +41,12 @@ type PaymentEventPayload = {
   status?: PaymentStatus | null;
 };
 
+export type AppSetting = {
+  key: string;
+  updated_at?: string | null;
+  value: string | null;
+};
+
 export type CatalogProductOverride = {
   category_slug?: string | null;
   composition?: string | null;
@@ -192,6 +198,12 @@ function isCatalogOverridesMigrationMissing(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
 
   return message.includes("catalog_product_overrides") || message.includes("Could not find");
+}
+
+function isAppSettingsMigrationMissing(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return message.includes("app_settings") || message.includes("Could not find");
 }
 
 async function supabaseGet<T>(table: string, query: string) {
@@ -349,6 +361,36 @@ export async function fetchCatalogProductOverrides() {
 
     throw error;
   }
+}
+
+export async function fetchAppSettings() {
+  if (getSupabaseAdminConfigError()) {
+    return [];
+  }
+
+  try {
+    return await supabaseGet<AppSetting[]>("app_settings", "select=*&order=key.asc");
+  } catch (error) {
+    if (isAppSettingsMigrationMissing(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+export async function upsertAppSetting(key: string, value: string) {
+  const [setting] = await supabaseUpsert<AppSetting[]>(
+    "app_settings",
+    {
+      key,
+      updated_at: new Date().toISOString(),
+      value,
+    },
+    "key",
+  );
+
+  return setting ?? null;
 }
 
 export async function upsertCatalogProductOverride(

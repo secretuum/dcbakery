@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   cancelOrder,
   confirmAdminOrder,
+  fetchAppSettings,
   fetchAdminOrderByNumber,
   fetchAdminOrderByWhatsAppMessageId,
   markOrderPaid,
@@ -113,6 +114,37 @@ function getBooleanEnv(name: string, defaultValue = true) {
   }
 
   return !["0", "false", "off", "no", "нет", "выкл"].includes(value);
+}
+
+function parseBooleanFlag(value: string | null | undefined, defaultValue = true) {
+  if (!value) {
+    return defaultValue;
+  }
+
+  return !["0", "false", "off", "no", "нет", "выкл"].includes(value.trim().toLowerCase());
+}
+
+async function getWhatsAppFeatureFlags() {
+  const settings = await fetchAppSettings().catch((error) => {
+    console.warn("[whatsapp:webhook] Failed to fetch runtime settings, using env:", error);
+    return [];
+  });
+  const values = new Map(settings.map((setting) => [setting.key, setting.value]));
+
+  return {
+    botEnabled: parseBooleanFlag(
+      values.get("whatsapp_bot_enabled"),
+      getBooleanEnv("WHATSAPP_BOT_ENABLED", true),
+    ),
+    customerBotEnabled: parseBooleanFlag(
+      values.get("whatsapp_customer_bot_enabled"),
+      getBooleanEnv("WHATSAPP_CUSTOMER_BOT_ENABLED", true),
+    ),
+    managerCommandsEnabled: parseBooleanFlag(
+      values.get("whatsapp_manager_commands_enabled"),
+      getBooleanEnv("WHATSAPP_MANAGER_COMMANDS_ENABLED", true),
+    ),
+  };
 }
 
 function formatChatForLog(chatId: string) {
@@ -578,6 +610,7 @@ export async function POST(request: Request) {
   const chatId = extractChatId(payload);
   const expectedChatId = process.env.GREEN_API_CHAT_ID;
   const text = extractText(payload);
+  const featureFlags = await getWhatsAppFeatureFlags();
 
   console.info("[whatsapp:webhook] received", {
     chat: formatChatForLog(chatId),
@@ -601,7 +634,7 @@ export async function POST(request: Request) {
     return respondWithIgnored("Missing chatId");
   }
 
-  if (!getBooleanEnv("WHATSAPP_BOT_ENABLED", true)) {
+  if (!featureFlags.botEnabled) {
     return respondWithIgnored("WhatsApp bot disabled");
   }
 
@@ -610,7 +643,7 @@ export async function POST(request: Request) {
       return respondWithIgnored("Not a manager or customer chat");
     }
 
-    if (!getBooleanEnv("WHATSAPP_CUSTOMER_BOT_ENABLED", true)) {
+    if (!featureFlags.customerBotEnabled) {
       return respondWithIgnored("WhatsApp customer bot disabled");
     }
 
@@ -634,7 +667,7 @@ export async function POST(request: Request) {
     }
   }
 
-  if (!getBooleanEnv("WHATSAPP_MANAGER_COMMANDS_ENABLED", true)) {
+  if (!featureFlags.managerCommandsEnabled) {
     return respondWithIgnored("WhatsApp manager commands disabled");
   }
 

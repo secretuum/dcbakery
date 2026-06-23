@@ -27,6 +27,12 @@ services:
         sync: false
       - key: GREEN_API_FORWARD_WEBHOOK_URL
         sync: false
+      - key: WHATSAPP_BOT_ENABLED
+        value: true
+      - key: WHATSAPP_CUSTOMER_BOT_ENABLED
+        value: true
+      - key: WHATSAPP_MANAGER_COMMANDS_ENABLED
+        value: true
       - key: PAYMENT_WEBHOOK_SECRET
         sync: false
       - key: WHATSAPP_WEBHOOK_SECRET

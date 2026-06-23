@@ -38,6 +38,8 @@ type ParsedOrderItem = {
   qty: number;
 };
 
+type CartOperation = "add" | "remove" | "set";
+
 type ParsedCustomerDetails = Omit<WhatsAppClientProfile, "chatId" | "customerPhone" | "lastOrderId"> & {
   issues?: string[];
 };
@@ -65,6 +67,7 @@ type CustomerSession =
 
 const MAX_CATEGORY_PRODUCTS = 12;
 const customerSessions = new Map<string, CustomerSession>();
+const customerLastProducts = new Map<string, string>();
 const fallbackCarts = new Map<string, WhatsAppCart>();
 
 const categoryAliases: Record<string, string> = {
@@ -576,6 +579,23 @@ function parseSelectAddressCommand(normalizedText: string) {
   return match ? Number(match[1]) - 1 : null;
 }
 
+function parseCategoryQuickAdd(text: string, session?: CustomerSession) {
+  if (session?.mode !== "category") {
+    return null;
+  }
+
+  const match = normalizeText(text).match(/^(\d+)\s+(\d+(?:[.,]\d+)?)$/u);
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    optionNumber: Number(match[1]),
+    qty: Number(match[2].replace(",", ".")),
+  };
+}
+
 function getProductSearchScore(product: Product, segment: string) {
   const segmentTokens = new Set(getSearchTokens(segment).map(normalizeSearchToken).filter(Boolean));
 
@@ -629,6 +649,7 @@ function resolveProductFromOrderSegment(
   segment: string,
   products: Product[],
   session?: CustomerSession,
+  fallbackProduct?: Product | null,
 ) {
   const productBySlug = products.find((candidate) => {
     const slugPattern = new RegExp(`(^|\\s)${escapeRegExp(candidate.slug)}($|\\s)`, "u");
@@ -651,7 +672,7 @@ function resolveProductFromOrderSegment(
     return getProductBySlug(products, session.productSlug);
   }
 
-  return resolveProductFromNaturalText(segment, products);
+  return resolveProductFromNaturalText(segment, products) ?? fallbackProduct ?? null;
 }
 
 function resolveQtyFromOrderSegment(segment: string, hasNumericProductReference: boolean) {
@@ -662,17 +683,22 @@ function resolveQtyFromOrderSegment(segment: string, hasNumericProductReference:
   return Number.isFinite(qty) && qty > 0 ? qty : null;
 }
 
-function parseOrderItems(text: string, products: Product[], session?: CustomerSession) {
+function parseOrderItems(
+  text: string,
+  products: Product[],
+  session?: CustomerSession,
+  fallbackProduct?: Product | null,
+) {
   const normalizedText = normalizeText(text);
   const segments = normalizedText
-    .replace(/^(заказ|заказать|order)\b/u, "")
+    .replace(/^(заказ|заказать|order|хочу|нужно|надо|добавь|добавить|еще|ещё)\b/u, "")
     .split(/[\n,;]+/)
     .map((segment) => segment.trim())
     .filter(Boolean);
   const parsedItems: ParsedOrderItem[] = [];
 
   for (const segment of segments) {
-    const product = resolveProductFromOrderSegment(segment, products, session);
+    const product = resolveProductFromOrderSegment(segment, products, session, fallbackProduct);
 
     if (!product) {
       continue;
@@ -695,8 +721,31 @@ function looksLikeNaturalOrder(text: string) {
 
   return (
     /\d/.test(normalizedText) &&
-    /(заказ|заказать|возьм|нужн|хочу|добав|полож|можно|надо)/u.test(normalizedText)
+    /(заказ|заказать|возьм|нужн|хочу|добав|полож|можно|надо|еще|ещё|убер|удал|минус|сделай|оставь|только)/u.test(
+      normalizedText,
+    )
   );
+}
+
+function looksLikeShortProductQty(text: string, session?: CustomerSession) {
+  const normalizedText = normalizeText(text);
+
+  return /^\d+(?:[.,]\d+)?\s+[\p{L}\p{N}-]+/u.test(normalizedText) ||
+    (session?.mode === "category" && /^\d+\s+\d+(?:[.,]\d+)?$/u.test(normalizedText));
+}
+
+function getCartOperation(text: string): CartOperation {
+  const normalizedText = normalizeText(text);
+
+  if (/(убер|убрать|удали|удалить|минус|вычти)/u.test(normalizedText)) {
+    return "remove";
+  }
+
+  if (/(только|сделай|оставь|пусть будет|измени|поменяй)/u.test(normalizedText)) {
+    return "set";
+  }
+
+  return "add";
 }
 
 function formatOrderSyntaxError(products: Product[]) {
@@ -736,6 +785,19 @@ function resolveCartItems(cartItems: WhatsAppCartItem[], products: Product[]): P
 
     return product ? [{ product, qty: item.qty }] : [];
   });
+}
+
+async function getFallbackProductForCartCommand(chatId: string, products: Product[]) {
+  const lastProduct = getProductBySlug(products, customerLastProducts.get(chatId));
+
+  if (lastProduct) {
+    return lastProduct;
+  }
+
+  const cart = await loadCart(chatId);
+  const resolvedItems = resolveCartItems(cart.items, products);
+
+  return resolvedItems.length === 1 ? resolvedItems[0].product : null;
 }
 
 function getCartTotal(items: ParsedOrderItem[]) {
@@ -778,11 +840,23 @@ function formatCartMessage(cartItems: ParsedOrderItem[]) {
     .join("\n");
 }
 
-function mergeCartItems(currentItems: WhatsAppCartItem[], nextItems: ParsedOrderItem[]) {
+function mergeCartItems(
+  currentItems: WhatsAppCartItem[],
+  nextItems: ParsedOrderItem[],
+  operation: CartOperation,
+) {
   const nextItemMap = new Map(currentItems.map((item) => [item.productId, item.qty]));
 
   for (const item of nextItems) {
-    nextItemMap.set(item.product.id, (nextItemMap.get(item.product.id) ?? 0) + item.qty);
+    const currentQty = nextItemMap.get(item.product.id) ?? 0;
+
+    if (operation === "set") {
+      nextItemMap.set(item.product.id, item.qty);
+    } else if (operation === "remove") {
+      nextItemMap.set(item.product.id, Math.max(0, currentQty - item.qty));
+    } else {
+      nextItemMap.set(item.product.id, currentQty + item.qty);
+    }
   }
 
   return Array.from(nextItemMap.entries())
@@ -793,11 +867,13 @@ function mergeCartItems(currentItems: WhatsAppCartItem[], nextItems: ParsedOrder
 async function addItemsToCart({
   chatId,
   items,
+  operation = "add",
   products,
   senderName,
 }: {
   chatId: string;
   items: ParsedOrderItem[];
+  operation?: CartOperation;
   products: Product[];
   senderName?: string;
 }) {
@@ -805,14 +881,25 @@ async function addItemsToCart({
   const savedCart = await persistCart({
     chatId,
     customerPhone: getPhoneFromChatId(chatId),
-    items: mergeCartItems(cart.items, items),
+    items: mergeCartItems(cart.items, items, operation),
     senderName: optional(senderName) ?? cart.senderName ?? null,
   });
   const resolvedItems = resolveCartItems(savedCart.items, products);
+  const title =
+    operation === "remove"
+      ? "*Убрано из корзины*"
+      : operation === "set"
+        ? "*Количество изменено*"
+        : "*Добавлено в корзину*";
+
+  for (const item of items) {
+    customerLastProducts.set(chatId, item.product.id);
+  }
+
   const messageId = await sendGreenApiTextMessage(
     chatId,
     [
-      "*Добавлено в корзину*",
+      title,
       "",
       ...items.map((item) => `- ${item.product.name} x ${item.qty} ${getOrderUnit(item.product)}`),
       "",
@@ -1331,6 +1418,15 @@ export async function handleWhatsAppCustomerMessage({
       return { action: "cart_empty", messageId, ok: false };
     }
 
+    const totalAmount = getCartTotal(items);
+    const hasUnknownPrice = items.some((item) => item.product.price <= 0);
+
+    if (!hasUnknownPrice && totalAmount < MIN_ORDER_AMOUNT) {
+      const messageId = await sendGreenApiTextMessage(chatId, formatMinimumOrderMessage(totalAmount));
+
+      return { action: "order_error", messageId, ok: false, reason: "Minimum order" };
+    }
+
     const details = parseCustomerDetails(text);
 
     if (details.issues && details.issues.length > 0) {
@@ -1380,6 +1476,21 @@ export async function handleWhatsAppCustomerMessage({
     );
 
     return { action: "manager_requested", managerMessageId, messageId, ok: true };
+  }
+
+  const categoryQuickAdd = parseCategoryQuickAdd(text, session);
+
+  if (categoryQuickAdd) {
+    const product = findSessionProductByNumber(session, products, categoryQuickAdd.optionNumber);
+
+    if (product && Number.isFinite(categoryQuickAdd.qty) && categoryQuickAdd.qty > 0) {
+      return addItemsToCart({
+        chatId,
+        items: [{ product, qty: categoryQuickAdd.qty }],
+        products,
+        senderName,
+      });
+    }
   }
 
   const numberCommand = parseNumberOnlyCommand(normalizedText);
@@ -1501,8 +1612,14 @@ export async function handleWhatsAppCustomerMessage({
     return sendProduct(product);
   }
 
-  if (/^(заказ|заказать|order)\b/u.test(normalizedText) || looksLikeNaturalOrder(text)) {
-    const items = parseOrderItems(text, products, session);
+  if (
+    /^(заказ|заказать|order)\b/u.test(normalizedText) ||
+    looksLikeNaturalOrder(text) ||
+    looksLikeShortProductQty(text, session)
+  ) {
+    const operation = getCartOperation(text);
+    const fallbackProduct = await getFallbackProductForCartCommand(chatId, products);
+    const items = parseOrderItems(text, products, session, fallbackProduct);
 
     if (items.length === 0) {
       const messageId = await sendGreenApiTextMessage(chatId, formatOrderSyntaxError(products));
@@ -1513,6 +1630,7 @@ export async function handleWhatsAppCustomerMessage({
     return addItemsToCart({
       chatId,
       items,
+      operation,
       products,
       senderName,
     });

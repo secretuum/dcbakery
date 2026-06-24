@@ -45,8 +45,8 @@ export const orderStatusVariants: Record<OrderStatus, "coral" | "burgundy" | "da
 
 export const paymentStatusLabels: Record<PaymentStatus, string> = {
   unpaid: "Не оплачен",
-  payment_link_created: "Ссылка создана",
-  payment_link_sent: "Ссылка отправлена",
+  payment_link_created: "Счет готов",
+  payment_link_sent: "Счет отправлен",
   paid: "Оплачен",
   failed: "Ошибка оплаты",
   expired: "Ссылка истекла",

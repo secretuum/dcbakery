@@ -195,6 +195,12 @@ function isPaymentFlowMigrationMissing(error: unknown) {
   );
 }
 
+function isOrderDocumentsMigrationMissing(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+
+  return message.includes("request_avr");
+}
+
 function isCatalogOverridesMigrationMissing(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
 
@@ -519,6 +525,7 @@ export async function insertOrderWithItems(order: Order, items: OrderItem[]) {
     delivery_date: order.delivery_date ?? null,
     delivery_time: order.delivery_time ?? null,
     payment_method: order.payment_method ?? null,
+    request_avr: order.request_avr ?? false,
     comment: order.comment ?? null,
     status: order.status,
     total_amount: order.total_amount,
@@ -558,11 +565,28 @@ export async function insertOrderWithItems(order: Order, items: OrderItem[]) {
   try {
     [insertedOrder] = await supabaseRequest<Order[]>("orders", nextOrderPayload);
   } catch (error) {
-    if (!isPaymentFlowMigrationMissing(error)) {
-      throw error;
-    }
+    if (isOrderDocumentsMigrationMissing(error)) {
+      const compatibleOrderPayload: Partial<SupabaseOrderPayload> = {
+        ...nextOrderPayload,
+      };
+      delete compatibleOrderPayload.request_avr;
 
-    [insertedOrder] = await supabaseRequest<Order[]>("orders", legacyOrderPayload);
+      try {
+        [insertedOrder] = await supabaseRequest<Order[]>("orders", compatibleOrderPayload);
+      } catch (compatibleError) {
+        if (!isPaymentFlowMigrationMissing(compatibleError)) {
+          throw compatibleError;
+        }
+
+        [insertedOrder] = await supabaseRequest<Order[]>("orders", legacyOrderPayload);
+      }
+    } else {
+      if (!isPaymentFlowMigrationMissing(error)) {
+        throw error;
+      }
+
+      [insertedOrder] = await supabaseRequest<Order[]>("orders", legacyOrderPayload);
+    }
   }
 
   try {
@@ -749,6 +773,17 @@ export async function updateAdminOrderStatus(orderId: string, status: OrderStatu
     id: `eq.${orderId}`,
   });
   const [order] = await supabasePatch<Order[]>("orders", params.toString(), { status });
+
+  return order ?? null;
+}
+
+export async function updateOrderAvrRequest(orderId: string, requestAvr: boolean) {
+  const params = new URLSearchParams({
+    id: `eq.${orderId}`,
+  });
+  const [order] = await supabasePatch<Order[]>("orders", params.toString(), {
+    request_avr: requestAvr,
+  });
 
   return order ?? null;
 }

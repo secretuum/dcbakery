@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MIN_ORDER_AMOUNT } from "@/app/constants";
+import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT } from "@/app/constants";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
 import { useCart } from "@/src/contexts/CartContext";
@@ -20,6 +20,7 @@ type CheckoutFormState = {
   delivery_date: string;
   delivery_time: string;
   payment_method: string;
+  request_avr: boolean;
   comment: string;
 };
 
@@ -127,7 +128,8 @@ export function CheckoutForm() {
     delivery_address: "",
     delivery_date: tomorrow,
     delivery_time: "День 12-18",
-    payment_method: "Перевод",
+    payment_method: "Выставить счет",
+    request_avr: false,
     comment: "",
   });
 
@@ -137,7 +139,10 @@ export function CheckoutForm() {
     }
   }, [isReady, items.length, router]);
 
-  function updateField(field: keyof CheckoutFormState, value: string) {
+  function updateField<Field extends keyof CheckoutFormState>(
+    field: Field,
+    value: CheckoutFormState[Field],
+  ) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
     setErrors((currentErrors) => ({ ...currentErrors, [field]: undefined }));
   }
@@ -352,10 +357,28 @@ export function CheckoutForm() {
                   value={form.payment_method}
                   onChange={(event) => updateField("payment_method", event.currentTarget.value)}
                 >
-                  <option>Наличные</option>
-                  <option>Перевод</option>
-                  <option>Счет на оплату</option>
+                  {B2B_PAYMENT_METHODS.map((paymentMethod) => (
+                    <option key={paymentMethod}>{paymentMethod}</option>
+                  ))}
                 </select>
+                <p className="mt-2 text-xs font-semibold leading-5 text-muted">
+                  После подтверждения заявки система подготовит страницу счета.
+                </p>
+              </label>
+
+              <label className="flex items-start gap-3 rounded-btn bg-cream px-4 py-3 sm:col-span-2">
+                <input
+                  checked={form.request_avr}
+                  className="mt-1 size-4 accent-coral"
+                  type="checkbox"
+                  onChange={(event) => updateField("request_avr", event.currentTarget.checked)}
+                />
+                <span>
+                  <span className="block text-sm font-black text-dark">Нужен АВР</span>
+                  <span className="mt-1 block text-xs font-semibold leading-5 text-muted">
+                    Акт выполненных работ станет доступен после завершения заказа.
+                  </span>
+                </span>
               </label>
 
               <label className="block sm:col-span-2">

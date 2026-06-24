@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { OrderStatusBadge, statusLabels } from "@/src/components/admin/OrderStatusBadge";
+import { statusLabels } from "@/src/components/admin/OrderStatusBadge";
+import { OrderSlaStatus } from "@/src/components/admin/OrderSlaStatus";
 import { PaymentStatusBadge } from "@/src/components/admin/PaymentStatusBadge";
 import { fetchAdminOrders } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
@@ -116,7 +117,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                     <td className="px-5 py-4 text-muted">{order.customer_phone}</td>
                     <td className="px-5 py-4 font-black">{formatPrice(order.total_amount)}</td>
                     <td className="px-5 py-4">
-                      <OrderStatusBadge status={order.status} />
+                      <OrderSlaStatus createdAt={order.created_at} status={order.status} />
                     </td>
                     <td className="px-5 py-4">
                       <PaymentStatusBadge status={order.payment_status} />

@@ -93,6 +93,7 @@ export type Order = {
   delivery_date?: string | null;
   delivery_time?: string | null;
   payment_method?: string | null;
+  request_avr?: boolean;
   comment?: string | null;
   cancellation_actor?: string | null;
   cancellation_reason?: string | null;

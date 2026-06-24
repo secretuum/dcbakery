@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { updateAppSettingAction } from "@/app/admin/settings/actions";
+import { WhatsAppSettingControl } from "@/src/components/admin/WhatsAppSettingControl";
 import { fetchAppSettings } from "@/src/lib/supabase/admin";
 
 type SettingControl = {
@@ -54,40 +54,13 @@ export default async function AdminSettingsPage() {
           const enabled = isEnabled(values.get(setting.key));
 
           return (
-            <form
-              action={updateAppSettingAction}
-              className="rounded-card bg-white p-5 shadow-sm"
+            <WhatsAppSettingControl
+              description={setting.description}
+              initialValue={enabled}
               key={setting.key}
-            >
-              <input name="key" type="hidden" value={setting.key} />
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                  <p className="text-xl font-black text-dark">{setting.label}</p>
-                  <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-muted">
-                    {setting.description}
-                  </p>
-                  <p className="mt-2 text-xs font-black uppercase text-muted">
-                    Ключ: {setting.key}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <select
-                    className="min-h-11 rounded-xl border border-black/10 bg-cream px-4 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-                    defaultValue={enabled ? "true" : "false"}
-                    name="value"
-                  >
-                    <option value="true">Включено</option>
-                    <option value="false">Выключено</option>
-                  </select>
-                  <button
-                    className="min-h-11 rounded-btn bg-coral px-5 py-2 text-sm font-black text-white transition hover:bg-coral-hover"
-                    type="submit"
-                  >
-                    Сохранить
-                  </button>
-                </div>
-              </div>
-            </form>
+              label={setting.label}
+              settingKey={setting.key}
+            />
           );
         })}
       </section>

@@ -36,8 +36,8 @@ export default async function OrderSuccessPage({ searchParams }: OrderSuccessPag
         <p className="mt-8 text-sm font-black uppercase text-raspberry">Заявка отправлена</p>
         <h1 className="mt-3 text-5xl font-black tracking-tight sm:text-6xl">{orderNumber}</h1>
         <p className="mx-auto mt-4 max-w-xl text-base font-semibold leading-7 text-muted">
-          Менеджер проверит наличие, сумму и доставку. После подтверждения мы отправим ссылку на
-          оплату в WhatsApp.
+          Менеджер проверит наличие, сумму и доставку. После подтверждения счет появится на странице
+          заказа и будет отправлен в WhatsApp.
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -48,7 +48,7 @@ export default async function OrderSuccessPage({ searchParams }: OrderSuccessPag
             Вернуться в каталог
           </Link>
           <a
-            href="https://wa.me/77000000000"
+            href="https://wa.me/77058865014"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex min-h-12 items-center justify-center rounded-btn bg-coral-light px-5 py-3 text-sm font-black text-burgundy transition hover:bg-white"

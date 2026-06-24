@@ -31,14 +31,20 @@ function normalizeQty(product: Product, qty: number) {
     return 0;
   }
 
-  const minQty = Math.max(product.min_qty, 1);
+  const stockQty = Math.max(0, Math.floor(product.stock_qty));
+
+  if (stockQty <= 0) {
+    return 0;
+  }
+
+  const minQty = Math.min(Math.max(product.min_qty, 1), stockQty);
   const stepQty = Math.max(product.step_qty, 1);
 
   if (qty <= minQty) {
     return minQty;
   }
 
-  return minQty + Math.ceil((qty - minQty) / stepQty) * stepQty;
+  return Math.min(minQty + Math.ceil((qty - minQty) / stepQty) * stepQty, stockQty);
 }
 
 function readStoredCart() {
@@ -48,7 +54,12 @@ function readStoredCart() {
 
   try {
     const raw = window.localStorage.getItem(CART_STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as CartItem[]) : [];
+    const storedItems = raw ? (JSON.parse(raw) as CartItem[]) : [];
+
+    return storedItems.flatMap((item) => {
+      const qty = normalizeQty(item.product, item.qty);
+      return qty > 0 ? [{ ...item, qty }] : [];
+    });
   } catch {
     return [];
   }
@@ -60,7 +71,29 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const timerId = window.setTimeout(() => {
-      setItems(readStoredCart());
+      const storedItems = readStoredCart();
+
+      setItems((currentItems) => {
+        if (currentItems.length === 0) {
+          return storedItems;
+        }
+
+        const mergedItems = new Map(storedItems.map((item) => [item.product.id, item]));
+
+        for (const currentItem of currentItems) {
+          const storedItem = mergedItems.get(currentItem.product.id);
+          const qty = normalizeQty(
+            currentItem.product,
+            currentItem.qty + (storedItem?.qty ?? 0),
+          );
+
+          if (qty > 0) {
+            mergedItems.set(currentItem.product.id, { ...currentItem, qty });
+          }
+        }
+
+        return Array.from(mergedItems.values());
+      });
       setIsReady(true);
     }, 0);
 

@@ -13,16 +13,30 @@ type ProductPurchaseProps = {
 };
 
 export function ProductPurchase({ product }: ProductPurchaseProps) {
-  const [qty, setQty] = useState(product.min_qty);
-  const { add } = useCart();
+  const [qty, setQty] = useState(Math.min(product.min_qty, product.stock_qty));
+  const { add, isReady, items } = useCart();
   const { showToast } = useToast();
-  const isInStock = product.stock_qty > 0;
+  const cartQty = items.find((item) => item.product.id === product.id)?.qty ?? 0;
+  const availableToAdd = Math.max(product.stock_qty - cartQty, 0);
+  const isInStock = isReady && product.stock_qty >= product.min_qty && availableToAdd > 0;
   const totalAmount = product.price * qty;
   const totalText = product.price > 0 ? formatProductPrice(totalAmount) : "Цена уточняется";
 
   function handleAddToCart() {
-    add(product, qty);
-    showToast("Товар добавлен в корзину", "success");
+    const nextQty = Math.min(qty, availableToAdd);
+
+    if (nextQty <= 0) {
+      showToast("В корзине уже весь доступный остаток", "info");
+      return;
+    }
+
+    add(product, nextQty);
+    showToast(
+      nextQty < qty
+        ? `Добавлено ${nextQty} шт. с учетом остатка`
+        : "Товар добавлен в корзину",
+      "success",
+    );
   }
 
   return (
@@ -42,6 +56,7 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
       <QuantitySelector
         className="mt-5"
         disabled={!isInStock}
+        maxQty={availableToAdd}
         minQty={product.min_qty}
         onChange={setQty}
         stepQty={product.step_qty}
@@ -53,6 +68,12 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
         <span className="text-sm font-bold text-muted">Итого</span>
         <span className="text-3xl font-black text-dark">{totalText}</span>
       </div>
+
+      {!isInStock && cartQty >= product.stock_qty ? (
+        <p className="mt-4 text-sm font-bold text-burgundy">
+          В корзине уже весь доступный остаток.
+        </p>
+      ) : null}
 
       <Button onClick={handleAddToCart} disabled={!isInStock} className="mt-5 w-full">
         + В корзину

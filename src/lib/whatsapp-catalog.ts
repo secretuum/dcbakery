@@ -1,5 +1,6 @@
 import "server-only";
 import { MIN_ORDER_AMOUNT } from "@/app/constants";
+import { normalizeB2BPaymentMethod } from "@/app/constants";
 import { formatPrice } from "@/src/lib/format";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import {
@@ -156,7 +157,7 @@ function parseStrictPositiveNumber(value: string) {
   const normalizedValue = value.replace(",", ".").trim();
   const number = Number(normalizedValue);
 
-  return Number.isFinite(number) && number > 0 ? number : null;
+  return Number.isInteger(number) && number > 0 ? number : null;
 }
 
 function parseNumberOnlyCommand(value: string) {
@@ -614,7 +615,7 @@ function parseCategoryQuickAdd(text: string, session?: CustomerSession) {
     return null;
   }
 
-  const match = normalizeText(text).match(/^(\d+)\s+(\d+(?:[.,]\d+)?)$/u);
+  const match = normalizeText(text).match(/^(\d+)\s+(\d+)$/u);
 
   if (!match) {
     return null;
@@ -622,7 +623,7 @@ function parseCategoryQuickAdd(text: string, session?: CustomerSession) {
 
   return {
     optionNumber: Number(match[1]),
-    qty: Number(match[2].replace(",", ".")),
+    qty: Number(match[2]),
   };
 }
 
@@ -772,7 +773,7 @@ function resolveQtyFromOrderSegment(segment: string, hasNumericProductReference:
   const qtyMatch = hasNumericProductReference ? matches[1] : matches[0];
   const qty = qtyMatch ? Number(qtyMatch[0].replace(",", ".")) : 1;
 
-  return Number.isFinite(qty) && qty > 0 ? qty : null;
+  return Number.isInteger(qty) && qty > 0 ? qty : null;
 }
 
 function normalizeNoisyQuantityText(text: string) {
@@ -928,6 +929,10 @@ function getCartTotal(items: ParsedOrderItem[]) {
   return items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
 }
 
+function getCartStockIssues(items: ParsedOrderItem[]) {
+  return items.filter(({ product, qty }) => qty > product.stock_qty);
+}
+
 function formatCartMessage(cartItems: ParsedOrderItem[]) {
   if (cartItems.length === 0) {
     return [
@@ -957,6 +962,7 @@ function formatCartMessage(cartItems: ParsedOrderItem[]) {
     "",
     "Команды:",
     "оформить — отправить заявку",
+    "оформить авр — отправить заявку и запросить АВР",
     "очистить — очистить корзину",
     "каталог — добавить еще товары",
   ]
@@ -964,28 +970,57 @@ function formatCartMessage(cartItems: ParsedOrderItem[]) {
     .join("\n");
 }
 
+function wantsAvr(text: string) {
+  return /\b(авр|акт выполненных работ)\b/u.test(normalizeText(text));
+}
+
 function mergeCartItems(
   currentItems: WhatsAppCartItem[],
   nextItems: ParsedOrderItem[],
   operation: CartOperation,
+  products: Product[],
 ) {
   const nextItemMap = new Map(currentItems.map((item) => [item.productId, item.qty]));
+  const productMap = new Map(products.map((product) => [product.id, product]));
+  const limitedProductNames = new Set<string>();
 
   for (const item of nextItems) {
     const currentQty = nextItemMap.get(item.product.id) ?? 0;
+    let requestedQty: number;
 
     if (operation === "set") {
-      nextItemMap.set(item.product.id, item.qty);
+      requestedQty = item.qty;
     } else if (operation === "remove") {
-      nextItemMap.set(item.product.id, Math.max(0, currentQty - item.qty));
+      requestedQty = Math.max(0, currentQty - item.qty);
     } else {
-      nextItemMap.set(item.product.id, currentQty + item.qty);
+      requestedQty = currentQty + item.qty;
     }
+
+    const stockQty = Math.max(0, Math.floor(item.product.stock_qty));
+    const nextQty = Math.min(requestedQty, stockQty);
+
+    if (requestedQty > stockQty) {
+      limitedProductNames.add(item.product.name);
+    }
+
+    nextItemMap.set(item.product.id, nextQty);
   }
 
-  return Array.from(nextItemMap.entries())
-    .map(([productId, qty]) => ({ productId, qty }))
-    .filter((item) => item.qty > 0);
+  return {
+    items: Array.from(nextItemMap.entries())
+      .map(([productId, qty]) => {
+        const product = productMap.get(productId);
+        const stockQty = product ? Math.max(0, Math.floor(product.stock_qty)) : 0;
+
+        if (product && qty > stockQty) {
+          limitedProductNames.add(product.name);
+        }
+
+        return { productId, qty: Math.min(qty, stockQty) };
+      })
+      .filter((item) => item.qty > 0),
+    limitedProductNames: Array.from(limitedProductNames),
+  };
 }
 
 async function addItemsToCart({
@@ -1002,10 +1037,11 @@ async function addItemsToCart({
   senderName?: string;
 }) {
   const cart = await loadCart(chatId);
+  const mergedCart = mergeCartItems(cart.items, items, operation, products);
   const savedCart = await persistCart({
     chatId,
     customerPhone: getPhoneFromChatId(chatId),
-    items: mergeCartItems(cart.items, items, operation),
+    items: mergedCart.items,
     senderName: optional(senderName) ?? cart.senderName ?? null,
   });
   const resolvedItems = resolveCartItems(savedCart.items, products);
@@ -1026,9 +1062,14 @@ async function addItemsToCart({
       title,
       "",
       ...items.map((item) => `- ${item.product.name} x ${item.qty} ${getOrderUnit(item.product)}`),
+      mergedCart.limitedProductNames.length > 0
+        ? `Количество ограничено остатком: ${mergedCart.limitedProductNames.join(", ")}`
+        : null,
       "",
       formatCartMessage(resolvedItems),
-    ].join("\n"),
+    ]
+      .filter(Boolean)
+      .join("\n"),
   );
 
   return { action: "cart_updated", messageId, ok: true };
@@ -1083,7 +1124,7 @@ async function createWhatsAppOrder({
   const deliveryTime =
     details.deliveryTime ?? savedProfile?.deliveryTime ?? "Договориться с менеджером";
   const paymentMethod =
-    details.paymentMethod ?? savedProfile?.paymentMethod ?? "Договориться с менеджером";
+    normalizeB2BPaymentMethod(details.paymentMethod ?? savedProfile?.paymentMethod);
   const totalAmount = items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
   const orderItems: OrderItem[] = items.map(({ product, qty }) => ({
     category: product.category?.name ?? null,
@@ -1109,6 +1150,7 @@ async function createWhatsAppOrder({
     delivery_date: deliveryDate,
     delivery_time: deliveryTime,
     payment_method: paymentMethod,
+    request_avr: wantsAvr(text),
     comment: [
       `Заявка из WhatsApp. Чат клиента: ${chatId}`,
       details.comment ? `Комментарий клиента: ${details.comment}` : null,
@@ -1654,6 +1696,7 @@ export async function handleWhatsAppCustomerMessage({
 
   if (
     normalizedText === "оформить" ||
+    normalizedText.startsWith("оформить ") ||
     normalizedText === "checkout" ||
     normalizedText === "отправить"
   ) {
@@ -1664,6 +1707,35 @@ export async function handleWhatsAppCustomerMessage({
       const messageId = await sendGreenApiTextMessage(chatId, formatCartMessage([]));
 
       return { action: "cart_empty", messageId, ok: false };
+    }
+
+    const stockIssues = getCartStockIssues(items);
+
+    if (stockIssues.length > 0) {
+      const correctedItems = items
+        .map(({ product, qty }) => ({
+          productId: product.id,
+          qty: Math.min(qty, Math.max(0, Math.floor(product.stock_qty))),
+        }))
+        .filter((item) => item.qty > 0);
+      await persistCart({
+        ...cart,
+        items: correctedItems,
+      });
+      const messageId = await sendGreenApiTextMessage(
+        chatId,
+        [
+          "*Остатки изменились*",
+          "",
+          ...stockIssues.map(
+            ({ product }) => `${product.name}: доступно ${product.stock_qty} ${getOrderUnit(product)}`,
+          ),
+          "",
+          "Корзина обновлена. Проверьте ее и отправьте команду «оформить» еще раз.",
+        ].join("\n"),
+      );
+
+      return { action: "stock_changed", messageId, ok: false };
     }
 
     const totalAmount = getCartTotal(items);
@@ -1784,6 +1856,28 @@ export async function handleWhatsAppCustomerMessage({
         const messageId = await sendGreenApiTextMessage(chatId, formatCartMessage([]));
 
         return { action: "cart_empty", messageId, ok: false };
+      }
+
+      const stockIssues = getCartStockIssues(items);
+
+      if (stockIssues.length > 0) {
+        customerSessions.delete(chatId);
+        const correctedItems = items
+          .map(({ product, qty }) => ({
+            productId: product.id,
+            qty: Math.min(qty, Math.max(0, Math.floor(product.stock_qty))),
+          }))
+          .filter((item) => item.qty > 0);
+        await persistCart({
+          ...cart,
+          items: correctedItems,
+        });
+        const messageId = await sendGreenApiTextMessage(
+          chatId,
+          "Остатки изменились. Корзина обновлена, проверьте ее командой «корзина».",
+        );
+
+        return { action: "stock_changed", messageId, ok: false };
       }
 
       await saveWhatsAppClientProfile({

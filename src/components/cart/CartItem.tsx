@@ -59,6 +59,7 @@ export function CartItem({ item }: CartItemProps) {
 
         <div className="mt-5 grid gap-4 md:grid-cols-[minmax(180px,240px)_1fr] md:items-end">
           <QuantitySelector
+            maxQty={product.stock_qty}
             minQty={product.min_qty}
             onChange={(nextQty) => updateQty(product.id, nextQty)}
             stepQty={product.step_qty}

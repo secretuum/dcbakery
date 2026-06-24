@@ -50,3 +50,32 @@ html {
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
+
+@keyframes sla-flame-pulse {
+  0%,
+  100% {
+    filter: saturate(1);
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    filter: saturate(1.25);
+    transform: translateY(-2px) scale(1.035);
+  }
+}
+
+.sla-flame {
+  animation: sla-flame-pulse 1.2s ease-in-out infinite;
+  clip-path: polygon(50% 0%, 68% 22%, 78% 11%, 86% 38%, 100% 58%, 88% 100%, 12% 100%, 0 58%, 18% 34%, 31% 48%);
+}
+
+@media print {
+  .print-hidden {
+    display: none !important;
+  }
+
+  .document-page {
+    display: block !important;
+    min-height: auto !important;
+    padding: 0 !important;
+  }
+}

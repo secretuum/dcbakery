@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  getCompanyDetails,
+  hasCompleteCompanyDetails,
+} from "@/src/lib/company-details";
 import { fetchAdminOrder } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
@@ -12,8 +16,8 @@ type PayPageProps = {
 };
 
 export const metadata: Metadata = {
-  title: "Оплата заказа | DC Bakery",
-  description: "Статус подтверждения и оплаты заказа DC Bakery.",
+  title: "Счет и документы | DC Bakery",
+  description: "Статус заказа, счет на оплату и документы DC Bakery.",
 };
 
 function isUuid(value: string) {
@@ -22,16 +26,16 @@ function isUuid(value: string) {
   );
 }
 
-function getPayState(status: string) {
+function getPayState(status: string, paymentStatus?: string | null) {
   if (status === "pending_manager_confirmation" || status === "new") {
     return {
       eyebrow: "Заказ на проверке",
-      title: "Оплата пока недоступна",
-      text: "Менеджер проверит наличие товаров, сумму и доставку. После подтверждения мы отправим ссылку на оплату в WhatsApp.",
+      title: "Счет пока недоступен",
+      text: "Менеджер проверит наличие товаров, сумму и доставку. После подтверждения здесь появится счет на оплату.",
     };
   }
 
-  if (status === "paid" || status === "in_progress" || status === "delivering" || status === "completed") {
+  if (status === "paid" || paymentStatus === "paid") {
     return {
       eyebrow: "Оплата получена",
       title: "Заказ уже оплачен",
@@ -47,10 +51,21 @@ function getPayState(status: string) {
     };
   }
 
+  if (status === "in_progress" || status === "delivering" || status === "completed") {
+    return {
+      eyebrow: status === "completed" ? "Заказ завершен" : "Заказ в работе",
+      title: "Документы по заказу",
+      text:
+        paymentStatus === "paid"
+          ? "Оплата получена. Здесь доступны документы по заказу."
+          : "Статус оплаты ведется отдельно. Если счет еще не оплачен, используйте банковские реквизиты из документа ниже.",
+    };
+  }
+
   return {
     eyebrow: "Ожидает оплаты",
     title: "Заказ подтвержден",
-    text: "Ссылка на оплату подготовлена. Если кнопка оплаты пока недоступна, менеджер отправит актуальный способ оплаты в WhatsApp.",
+    text: "Счет подготовлен. Оплатите его по банковским реквизитам, после поступления денег статус заказа обновится.",
   };
 }
 
@@ -67,13 +82,21 @@ export default async function PayPage({ params }: PayPageProps) {
     notFound();
   }
 
-  const state = getPayState(order.status);
+  const state = getPayState(order.status, order.payment_status);
+  const companyDetails = getCompanyDetails();
+  const hasCompanyDetails = hasCompleteCompanyDetails(companyDetails);
+  const invoiceAvailable =
+    hasCompanyDetails &&
+    !["pending_manager_confirmation", "new", "change_proposed", "canceled", "cancelled"].includes(
+      order.status,
+    );
+  const avrAvailable = order.request_avr === true && order.status === "completed";
   const isExternalPaymentUrl =
     Boolean(order.payment_url) && !order.payment_url?.includes(`/pay/${order.id}`);
 
   return (
     <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
-      <section className="mx-auto max-w-3xl rounded-card bg-white p-8 shadow-[0_24px_80px_rgba(120,51,38,0.12)] sm:p-10">
+      <section className="mx-auto max-w-4xl rounded-card bg-white p-8 shadow-[0_24px_80px_rgba(120,51,38,0.12)] sm:p-10">
         <p className="text-sm font-black uppercase text-raspberry">{state.eyebrow}</p>
         <h1 className="mt-3 text-5xl font-black tracking-tight sm:text-6xl">
           {order.order_number}
@@ -96,6 +119,47 @@ export default async function PayPage({ params }: PayPageProps) {
             </p>
           </div>
         </div>
+
+        <section className="mt-8 rounded-card bg-cream p-5">
+          <p className="text-xs font-black uppercase text-raspberry">Документы</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-btn bg-white p-4">
+              <p className="text-lg font-black">Счет на оплату</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+                Формируется автоматически после подтверждения менеджером.
+              </p>
+              {invoiceAvailable ? (
+                <Link
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn bg-coral px-4 py-2 text-sm font-black text-white"
+                  href={`/documents/invoice/${order.id}`}
+                >
+                  Открыть счет
+                </Link>
+              ) : (
+                <p className="mt-4 text-sm font-black text-burgundy">
+                  {hasCompanyDetails ? "Ждет подтверждения менеджера" : "Реквизиты поставщика настраиваются"}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-btn bg-white p-4">
+              <p className="text-lg font-black">АВР</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+                {order.request_avr
+                  ? "Запрошен при оформлении и будет доступен после завершения заказа."
+                  : "Не был запрошен при оформлении. Добавить его сможет менеджер."}
+              </p>
+              {avrAvailable ? (
+                <Link
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn bg-dark px-4 py-2 text-sm font-black text-white"
+                  href={`/documents/avr/${order.id}`}
+                >
+                  Открыть АВР
+                </Link>
+              ) : null}
+            </div>
+          </div>
+        </section>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           {isExternalPaymentUrl ? (

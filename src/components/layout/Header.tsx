@@ -55,7 +55,7 @@ export function Header() {
   const badgeText = totalItems > 99 ? "99+" : totalItems.toString();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-black/10 bg-cream/90 backdrop-blur-xl">
+    <header className="print-hidden sticky top-0 z-30 border-b border-black/10 bg-cream/90 backdrop-blur-xl">
       <nav className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <Link href="/" className="flex items-center gap-3" aria-label="DC Bakery">
           <span className="flex size-11 items-center justify-center rounded-card bg-coral text-sm font-black text-white shadow-[0_14px_30px_rgba(244,123,111,0.26)]">

@@ -1,15 +1,15 @@
 import Link from "next/link";
 
 const contactItems = [
-  { label: "Телефон", value: "+7 (700) 000-00-00", href: "tel:+77000000000" },
-  { label: "WhatsApp", value: "+7 (700) 000-00-00", href: "https://wa.me/77000000000" },
+  { label: "Телефон", value: "+7 (705) 886-50-14", href: "tel:+77058865014" },
+  { label: "WhatsApp", value: "+7 (705) 886-50-14", href: "https://wa.me/77058865014" },
   { label: "Адрес", value: "Адрес производства уточняется", href: null },
   { label: "Соцсети", value: "@dcbakery", href: null },
 ];
 
 export function Footer() {
   return (
-    <footer className="border-t border-black/10 bg-white">
+    <footer className="print-hidden border-t border-black/10 bg-white">
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[1.2fr_1.8fr] lg:px-8">
         <div>
           <Link href="/" className="inline-flex items-center gap-3" aria-label="DC Bakery">

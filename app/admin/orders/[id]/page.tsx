@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { CancelOrderForm } from "@/src/components/admin/CancelOrderForm";
+import { AvrRequestButton } from "@/src/components/admin/AvrRequestButton";
 import Link from "next/link";
 import { ConfirmOrderButton } from "@/src/components/admin/ConfirmOrderButton";
 import { MarkOrderPaidButton } from "@/src/components/admin/MarkOrderPaidButton";
 import { notFound } from "next/navigation";
-import { OrderStatusBadge } from "@/src/components/admin/OrderStatusBadge";
+import { OrderSlaStatus } from "@/src/components/admin/OrderSlaStatus";
 import { OrderStatusSelect } from "@/src/components/admin/OrderStatusSelect";
 import { OrderRevisionForm } from "@/src/components/admin/OrderRevisionForm";
 import { PaymentStatusBadge } from "@/src/components/admin/PaymentStatusBadge";
@@ -71,7 +72,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-sm font-black uppercase text-raspberry">Заказ</p>
-            <OrderStatusBadge status={order.status} />
+            <OrderSlaStatus createdAt={order.created_at} status={order.status} />
           </div>
           <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
             {order.order_number}
@@ -101,6 +102,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
                 ["Дата доставки", optional(order.delivery_date)],
                 ["Время", optional(order.delivery_time)],
                 ["Оплата", optional(order.payment_method)],
+                ["АВР", order.request_avr ? "запрошен" : "не требуется"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-btn bg-cream px-4 py-3">
                   <dt className="text-xs font-black uppercase text-muted">{label}</dt>
@@ -167,6 +169,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
             status={order.status}
           />
           <CancelOrderForm disabled={isLocked} orderId={order.id} />
+          <AvrRequestButton orderId={order.id} requested={order.request_avr === true} />
 
           <div className="mt-6 rounded-btn bg-coral-light px-4 py-3">
             <p className="text-xs font-black uppercase text-muted">Оплата</p>

@@ -14,13 +14,20 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { add } = useCart();
+  const { add, isReady, items } = useCart();
   const { showToast } = useToast();
   const imageSrc = product.images[0] ?? "/product-placeholder.png";
-  const isInStock = product.stock_qty > 0;
+  const isInStock = isReady && product.stock_qty > 0;
   const priceText = formatProductPrice(product.price);
 
   function handleAddToCart() {
+    const cartQty = items.find((item) => item.product.id === product.id)?.qty ?? 0;
+
+    if (cartQty >= product.stock_qty) {
+      showToast("В корзине уже весь доступный остаток", "info");
+      return;
+    }
+
     add(product);
     showToast("Товар добавлен в корзину", "success");
   }

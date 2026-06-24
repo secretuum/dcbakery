@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { MIN_ORDER_AMOUNT } from "@/app/constants";
+import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT } from "@/app/constants";
 import { fetchProducts } from "@/src/lib/catalog";
 import {
   getSupabaseAdminConfigError,
@@ -32,6 +32,7 @@ type IncomingOrderBody = {
   delivery_time?: string;
   items?: IncomingItem[];
   payment_method?: string;
+  request_avr?: boolean;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -101,6 +102,7 @@ function parseBody(value: unknown): IncomingOrderBody {
     delivery_time: asString(value.delivery_time),
     items: parseItems(value.items),
     payment_method: asString(value.payment_method),
+    request_avr: value.request_avr === true,
   };
 }
 
@@ -132,6 +134,15 @@ function validateOrder(body: IncomingOrderBody) {
     errors.push("items are required");
   }
 
+  if (
+    !body.payment_method ||
+    !B2B_PAYMENT_METHODS.includes(
+      body.payment_method as (typeof B2B_PAYMENT_METHODS)[number],
+    )
+  ) {
+    errors.push("payment_method is invalid");
+  }
+
   if (totalAmount < MIN_ORDER_AMOUNT) {
     errors.push("minimum order amount is not reached");
   }
@@ -148,6 +159,26 @@ async function resolveItemsFromServer(items: IncomingItem[]) {
 
     if (!product) {
       errors.push(`unknown product: ${item.product_id}`);
+      return [];
+    }
+
+    if (product.stock_qty <= 0) {
+      errors.push(`product is out of stock: ${product.name}`);
+      return [];
+    }
+
+    if (!Number.isInteger(item.qty)) {
+      errors.push(`quantity must be a whole number: ${product.name}`);
+      return [];
+    }
+
+    if (item.qty > product.stock_qty) {
+      errors.push(`requested quantity exceeds stock: ${product.name}`);
+      return [];
+    }
+
+    if (item.qty < product.min_qty) {
+      errors.push(`requested quantity is below minimum: ${product.name}`);
       return [];
     }
 
@@ -229,6 +260,7 @@ export async function POST(request: Request) {
     delivery_date: body.delivery_date || null,
     delivery_time: body.delivery_time || null,
     payment_method: body.payment_method || null,
+    request_avr: body.request_avr === true,
     comment: body.comment || null,
     status: "pending_manager_confirmation",
     total_amount: totalAmount,

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DemoPaymentButton } from "@/src/components/payment/DemoPaymentButton";
+import { PaymentStatusRefresh } from "@/src/components/payment/PaymentStatusRefresh";
 import {
   getCompanyDetails,
   hasCompleteCompanyDetails,
@@ -9,7 +10,10 @@ import {
 import { fetchAdminOrder } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
-import { isDemoPaymentMode } from "@/src/lib/payments";
+import {
+  createDemoPaymentToken,
+  isDemoPaymentMode,
+} from "@/src/lib/payments";
 
 type PayPageProps = {
   params: Promise<{
@@ -84,9 +88,20 @@ export default async function PayPage({ params }: PayPageProps) {
     notFound();
   }
 
-  const state = getPayState(order.status, order.payment_status);
   const companyDetails = getCompanyDetails();
   const isDemoMode = isDemoPaymentMode();
+  const baseState = getPayState(order.status, order.payment_status);
+  const state =
+    isDemoMode && order.status === "confirmed_waiting_payment"
+      ? {
+          ...baseState,
+          text: "Заказ подтвержден менеджером. Введите тестовые данные карты ниже: реальные деньги в демо-режиме не списываются.",
+        }
+      : baseState;
+  const demoPaymentToken =
+    isDemoMode && order.payment_id
+      ? await createDemoPaymentToken(order.id, order.payment_id)
+      : null;
   const hasCompanyDetails = hasCompleteCompanyDetails(companyDetails);
   const invoiceAvailable =
     hasCompanyDetails &&
@@ -100,6 +115,9 @@ export default async function PayPage({ params }: PayPageProps) {
   return (
     <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
       <section className="mx-auto max-w-4xl rounded-card bg-white p-8 shadow-[0_24px_80px_rgba(120,51,38,0.12)] sm:p-10">
+        {order.status === "pending_manager_confirmation" || order.status === "new" ? (
+          <PaymentStatusRefresh />
+        ) : null}
         <p className="text-sm font-black uppercase text-raspberry">{state.eyebrow}</p>
         <h1 className="mt-3 text-5xl font-black tracking-tight sm:text-6xl">
           {order.order_number}
@@ -172,10 +190,17 @@ export default async function PayPage({ params }: PayPageProps) {
 
         {isDemoMode &&
         order.status === "confirmed_waiting_payment" &&
-        order.payment_id?.startsWith("demo-") ? (
+        order.payment_id &&
+        demoPaymentToken ? (
           <div className="mt-6">
-            <DemoPaymentButton orderId={order.id} paymentId={order.payment_id} />
+            <DemoPaymentButton orderId={order.id} paymentToken={demoPaymentToken} />
           </div>
+        ) : null}
+
+        {order.payment_status === "failed" ? (
+          <p className="mt-6 rounded-btn bg-[#fee2e2] px-4 py-3 text-sm font-black text-[#991b1b]">
+            Последняя попытка оплаты не прошла. Деньги не списаны, попробуйте еще раз.
+          </p>
         ) : null}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">

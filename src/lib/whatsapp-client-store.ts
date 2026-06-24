@@ -23,6 +23,34 @@ export type WhatsAppClientProfile = {
   lastOrderId?: string | null;
 };
 
+function hasMeaningfulValue(value?: string | null) {
+  const normalizedValue = value?.trim().toLowerCase();
+
+  return Boolean(
+    normalizedValue &&
+      normalizedValue !== "null" &&
+      normalizedValue !== "не указано" &&
+      normalizedValue !== "whatsapp клиент",
+  );
+}
+
+export function isWhatsAppClientProfileComplete(
+  profile?: WhatsAppClientProfile | null,
+) {
+  if (!profile) {
+    return false;
+  }
+
+  return Boolean(
+    hasMeaningfulValue(profile.companyName) &&
+      hasMeaningfulValue(profile.customerBin) &&
+      hasMeaningfulValue(profile.customerName) &&
+      hasMeaningfulValue(profile.customerEmail) &&
+      ((profile.addresses?.length ?? 0) > 0 ||
+        hasMeaningfulValue(profile.deliveryAddress)),
+  );
+}
+
 type WhatsAppClientRow = {
   chat_id: string;
   customer_phone?: string | null;

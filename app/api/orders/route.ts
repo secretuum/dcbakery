@@ -8,7 +8,14 @@ import {
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
 import { sendTelegramNotification } from "@/src/lib/telegram";
-import { sendWhatsAppNotification } from "@/src/lib/whatsapp";
+import {
+  getWhatsAppChatIdFromPhone,
+  sendWhatsAppNotification,
+} from "@/src/lib/whatsapp";
+import {
+  mergeClientAddressList,
+  saveWhatsAppClientProfile,
+} from "@/src/lib/whatsapp-client-store";
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 import type { Order } from "@/src/types";
 
@@ -295,6 +302,27 @@ export async function POST(request: Request) {
       },
       { status: 500 },
     );
+  }
+
+  const customerChatId = getWhatsAppChatIdFromPhone(order.customer_phone);
+
+  if (customerChatId) {
+    await saveWhatsAppClientProfile({
+      chatId: customerChatId,
+      companyName: order.company_name,
+      customerBin: order.customer_bin,
+      customerEmail: order.customer_email,
+      customerName: order.customer_name,
+      customerPhone: order.customer_phone,
+      deliveryAddress: order.delivery_address,
+      deliveryDate: order.delivery_date,
+      deliveryTime: order.delivery_time,
+      paymentMethod: order.payment_method,
+      addresses: mergeClientAddressList([], order.delivery_address),
+      lastOrderId: order.id,
+    }).catch((error) => {
+      console.warn("[orders] Failed to save customer profile:", error);
+    });
   }
 
   const [whatsappMessageId, telegramMessageId] = await Promise.all([

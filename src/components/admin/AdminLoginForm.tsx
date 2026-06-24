@@ -29,7 +29,26 @@ export function AdminLoginForm() {
       });
 
       if (!response.ok) {
-        setError("Неверный email или пароль");
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+
+        if (response.status === 403) {
+          setError(
+            "Пользователь найден, но ему не выдан доступ администратора.",
+          );
+        } else if (response.status === 429) {
+          setError("Слишком много попыток входа. Подождите 15 минут.");
+        } else if (response.status === 503) {
+          setError("Supabase Auth не настроен на сервере.");
+        } else {
+          setError(
+            payload?.error === "Invalid email or password"
+              ? "Неверный email или пароль"
+              : "Не удалось войти. Проверьте данные и повторите попытку.",
+          );
+        }
+
         return;
       }
 

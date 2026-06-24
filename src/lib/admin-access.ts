@@ -25,11 +25,14 @@ export function isAdminIdentity(user: AdminIdentity | null | undefined) {
     return true;
   }
 
+  const adminEmails = getAdminEmails();
   const email = user.email?.trim().toLowerCase();
 
-  if (email && getAdminEmails().has(email)) {
+  if (email && adminEmails.has(email)) {
     return true;
   }
 
-  return process.env.PAYMENT_MODE?.trim().toLowerCase() === "demo";
+  // Backward compatibility for existing Supabase projects. Setting ADMIN_EMAILS
+  // or app_metadata.role=admin enables strict admin-only access.
+  return adminEmails.size === 0;
 }

@@ -5,9 +5,15 @@ import {
   updateOrderPaymentStatus,
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
-import { isDemoPaymentMode } from "@/src/lib/payments";
+import {
+  isDemoPaymentMode,
+  verifyDemoPaymentToken,
+} from "@/src/lib/payments";
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
-import { replaceWhatsAppOrderMessage } from "@/src/lib/whatsapp";
+import {
+  replaceWhatsAppOrderMessage,
+  sendCustomerPaymentStatusNotification,
+} from "@/src/lib/whatsapp";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -48,7 +54,9 @@ export async function POST(request: Request) {
   }
 
   const orderId = typeof payload.orderId === "string" ? payload.orderId : "";
-  const paymentId = typeof payload.paymentId === "string" ? payload.paymentId : "";
+  const outcome = payload.outcome === "failed" ? "failed" : "paid";
+  const paymentToken =
+    typeof payload.paymentToken === "string" ? payload.paymentToken : "";
   const order = orderId ? await fetchAdminOrder(orderId) : null;
 
   if (!order) {
@@ -56,9 +64,8 @@ export async function POST(request: Request) {
   }
 
   if (
-    !paymentId.startsWith("demo-") ||
-    order.payment_id !== paymentId ||
-    order.payment_provider !== "manual"
+    !order.payment_id ||
+    !(await verifyDemoPaymentToken(order.id, order.payment_id, paymentToken))
   ) {
     return NextResponse.json({ error: "Invalid demo payment" }, { status: 400 });
   }
@@ -75,23 +82,37 @@ export async function POST(request: Request) {
     amount: Number(order.total_amount),
     event_id: `demo-${crypto.randomUUID()}`,
     order_id: order.id,
-    payment_id: paymentId,
+    payment_id: order.payment_id,
     provider: "manual",
     raw_payload: {
       mode: "demo",
-      paymentId,
+      outcome,
+      paymentId: order.payment_id,
     },
-    status: "paid",
+    status: outcome,
   });
 
-  const paidOrder = await updateOrderPaymentStatus(order.id, "paid", "paid");
-  const managerMessageId = paidOrder
-    ? await replaceWhatsAppOrderMessage(paidOrder, order.whatsapp_message_id).catch(() => null)
-    : null;
+  const updatedOrder = await updateOrderPaymentStatus(
+    order.id,
+    outcome,
+    outcome === "paid" ? "paid" : undefined,
+  );
+  const [managerMessageId] = await Promise.all([
+    updatedOrder
+      ? replaceWhatsAppOrderMessage(updatedOrder, order.whatsapp_message_id).catch(() => null)
+      : null,
+    updatedOrder
+      ? sendCustomerPaymentStatusNotification(updatedOrder, outcome).catch(() => null)
+      : null,
+  ]);
 
-  if (paidOrder && managerMessageId) {
-    await updateOrderWhatsAppMessageId(paidOrder.id, managerMessageId).catch(() => undefined);
+  if (updatedOrder && managerMessageId) {
+    await updateOrderWhatsAppMessageId(updatedOrder.id, managerMessageId).catch(() => undefined);
   }
 
-  return NextResponse.json({ ok: true, order: paidOrder });
+  return NextResponse.json({
+    ok: outcome === "paid",
+    order: updatedOrder,
+    paymentStatus: outcome,
+  });
 }

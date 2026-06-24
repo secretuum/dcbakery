@@ -7,7 +7,7 @@ import {
 import { createPaymentLink } from "@/src/lib/payments";
 import {
   replaceWhatsAppOrderMessage,
-  sendCustomerDetailsRequestNotification,
+  sendCustomerOrderConfirmationNotification,
 } from "@/src/lib/whatsapp";
 
 type ConfirmRouteProps = {
@@ -31,10 +31,11 @@ export async function POST(request: Request, { params }: ConfirmRouteProps) {
   try {
     const origin = new URL(request.url).origin;
     const paymentLink = createPaymentLink(order, undefined, origin);
-    const whatsappMessageId = await sendCustomerDetailsRequestNotification(
+    const customerNotification = await sendCustomerOrderConfirmationNotification(
       order,
       paymentLink.paymentUrl,
-    ).catch(() => null);
+    ).catch(() => ({ messageId: null, registrationRequested: false }));
+    const whatsappMessageId = customerNotification.messageId;
     const now = new Date().toISOString();
     const confirmedOrder = await confirmAdminOrder(id, {
       confirmed_at: now,
@@ -57,6 +58,7 @@ export async function POST(request: Request, { params }: ConfirmRouteProps) {
       order: confirmedOrder,
       managerMessageId,
       paymentUrl: paymentLink.paymentUrl,
+      registrationRequested: customerNotification.registrationRequested,
       whatsappMessageId,
     });
   } catch (error) {

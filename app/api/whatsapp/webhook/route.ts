@@ -21,7 +21,7 @@ import {
 import {
   replaceWhatsAppOrderMessage,
   sendGreenApiTextMessage,
-  sendCustomerDetailsRequestNotification,
+  sendCustomerOrderConfirmationNotification,
   sendCustomerOrderCanceledNotification,
 } from "@/src/lib/whatsapp";
 import type { Order } from "@/src/types";
@@ -616,11 +616,12 @@ async function confirmOrderFromWhatsApp(order: Order, request: Request) {
     return { action: "confirm", managerMessageId, order, skipped: true };
   }
 
-  const paymentLink = createPaymentLink(order, "manual", getPaymentOrigin(request));
-  const customerMessageId = await sendCustomerDetailsRequestNotification(
+  const paymentLink = createPaymentLink(order, undefined, getPaymentOrigin(request));
+  const customerNotification = await sendCustomerOrderConfirmationNotification(
     order,
     paymentLink.paymentUrl,
-  ).catch(() => null);
+  ).catch(() => ({ messageId: null, registrationRequested: false }));
+  const customerMessageId = customerNotification.messageId;
   const now = new Date().toISOString();
   const confirmedOrder = await confirmAdminOrder(order.id, {
     confirmed_at: now,
@@ -640,6 +641,7 @@ async function confirmOrderFromWhatsApp(order: Order, request: Request) {
     customerMessageId,
     managerMessageId,
     order: confirmedOrder,
+    registrationRequested: customerNotification.registrationRequested,
   };
 }
 

@@ -4,7 +4,12 @@ import {
   fetchOrderByPaymentId,
   insertPaymentEvent,
   updateOrderPaymentStatus,
+  updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
+import {
+  replaceWhatsAppOrderMessage,
+  sendCustomerPaymentStatusNotification,
+} from "@/src/lib/whatsapp";
 import type { OrderStatus, PaymentProvider, PaymentStatus } from "@/src/types";
 
 type PaymentWebhookBody = {
@@ -152,7 +157,20 @@ export async function POST(request: Request) {
   });
 
   if (body.amount !== undefined && Number(order.total_amount) !== body.amount) {
-    await updateOrderPaymentStatus(order.id, "failed");
+    const failedOrder = await updateOrderPaymentStatus(order.id, "failed");
+    const [, managerMessageId] = await Promise.all([
+      failedOrder
+        ? sendCustomerPaymentStatusNotification(failedOrder, "failed").catch(() => null)
+        : null,
+      failedOrder
+        ? replaceWhatsAppOrderMessage(failedOrder, order.whatsapp_message_id).catch(() => null)
+        : null,
+    ]);
+    if (failedOrder && managerMessageId) {
+      await updateOrderWhatsAppMessageId(failedOrder.id, managerMessageId).catch(
+        () => undefined,
+      );
+    }
     return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
   }
 
@@ -161,6 +179,18 @@ export async function POST(request: Request) {
     paymentStatus,
     getOrderStatus(paymentStatus),
   );
+  const [managerMessageId] = await Promise.all([
+    updatedOrder
+      ? replaceWhatsAppOrderMessage(updatedOrder, order.whatsapp_message_id).catch(() => null)
+      : null,
+    updatedOrder
+      ? sendCustomerPaymentStatusNotification(updatedOrder, paymentStatus).catch(() => null)
+      : null,
+  ]);
+
+  if (updatedOrder && managerMessageId) {
+    await updateOrderWhatsAppMessageId(updatedOrder.id, managerMessageId).catch(() => undefined);
+  }
 
   return NextResponse.json({
     ok: true,

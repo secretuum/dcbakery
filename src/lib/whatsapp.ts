@@ -3,6 +3,11 @@ import type { Order, OrderItem } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
 import { formatResponsibleBlock, getOrderResponsibleContext } from "@/src/lib/responsibles";
+import {
+  fetchWhatsAppClientByChatId,
+  isWhatsAppClientProfileComplete,
+} from "@/src/lib/whatsapp-client-store";
+import type { PaymentStatus } from "@/src/types";
 
 type GreenApiSendResponse = {
   idMessage?: string;
@@ -302,11 +307,31 @@ export function formatPaymentLinkNotification(order: Order, paymentUrl: string) 
     "",
     `Сумма к оплате: ${formatPrice(order.total_amount)}`,
     "",
-    "Счет и документы доступны по ссылке:",
+    "Оплата, счет и документы доступны по ссылке:",
     paymentUrl,
     "",
-    "Оплатите счет по банковским реквизитам. После поступления оплаты заказ будет передан в работу.",
+    "После оплаты статус обновится автоматически.",
   ].join("\n");
+}
+
+export async function sendCustomerOrderConfirmationNotification(
+  order: Order,
+  paymentUrl: string,
+) {
+  const chatId = getWhatsAppChatIdFromPhone(order.customer_phone);
+
+  if (!chatId) {
+    return { messageId: null, registrationRequested: false };
+  }
+
+  const profile = await fetchWhatsAppClientByChatId(chatId).catch(() => null);
+  const registrationRequested = !isWhatsAppClientProfileComplete(profile);
+  const message = registrationRequested
+    ? formatCustomerDetailsRequestNotification(order, paymentUrl)
+    : formatPaymentLinkNotification(order, paymentUrl);
+  const messageId = await sendGreenApiTextMessage(chatId, message);
+
+  return { messageId, registrationRequested };
 }
 
 export async function sendCustomerPaymentLinkNotification(order: Order, paymentUrl: string) {
@@ -355,6 +380,71 @@ export async function sendCustomerDetailsRequestNotification(order: Order, payme
   return sendGreenApiTextMessage(
     chatId,
     formatCustomerDetailsRequestNotification(order, paymentUrl),
+  );
+}
+
+export function formatCustomerPaymentStatusNotification(
+  order: Order,
+  paymentStatus: PaymentStatus,
+) {
+  if (paymentStatus === "paid") {
+    return [
+      "DC Bakery",
+      "",
+      `Оплата по заказу ${order.order_number} успешно получена.`,
+      `Сумма: ${formatPrice(order.total_amount)}`,
+      "",
+      "Заказ передан в работу. Актуальный статус доступен на странице заказа:",
+      order.payment_url,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (paymentStatus === "failed") {
+    return [
+      "DC Bakery",
+      "",
+      `Оплата по заказу ${order.order_number} не прошла.`,
+      "Деньги не списаны. Откройте страницу заказа и попробуйте еще раз.",
+      order.payment_url,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  if (paymentStatus === "refunded") {
+    return [
+      "DC Bakery",
+      "",
+      `По заказу ${order.order_number} зарегистрирован возврат.`,
+      "Подробности уточнит менеджер.",
+    ].join("\n");
+  }
+
+  return [
+    "DC Bakery",
+    "",
+    `Статус оплаты заказа ${order.order_number}: ${paymentStatusLabels[paymentStatus]}.`,
+    order.payment_url,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+export async function sendCustomerPaymentStatusNotification(
+  order: Order,
+  paymentStatus: PaymentStatus,
+) {
+  const chatId = getWhatsAppChatIdFromPhone(order.customer_phone);
+
+  if (!chatId) {
+    return null;
+  }
+
+  return sendGreenApiTextMessage(
+    chatId,
+    formatCustomerPaymentStatusNotification(order, paymentStatus),
   );
 }
 

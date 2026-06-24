@@ -1,4 +1,5 @@
 import "server-only";
+import { isDemoPaymentMode } from "@/src/lib/payments";
 
 export type CompanyDetails = {
   address: string;
@@ -24,7 +25,7 @@ const demoCompanyDetails = {
 };
 
 export function getCompanyDetails(): CompanyDetails {
-  const isDemo = process.env.PAYMENT_MODE?.trim().toLowerCase() === "demo";
+  const isDemo = isDemoPaymentMode();
 
   return {
     address: process.env.DC_LEGAL_ADDRESS?.trim() || (isDemo ? demoCompanyDetails.address : ""),

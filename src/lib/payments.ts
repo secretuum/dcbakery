@@ -16,11 +16,44 @@ export function getPaymentMode(): PaymentMode {
     return mode;
   }
 
-  return "manual";
+  return "demo";
 }
 
 export function isDemoPaymentMode() {
   return getPaymentMode() === "demo";
+}
+
+function getDemoPaymentSecret() {
+  return (
+    process.env.DEMO_PAYMENT_SECRET ||
+    process.env.PAYMENT_WEBHOOK_SECRET ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    "dc-bakery-local-demo"
+  );
+}
+
+export async function createDemoPaymentToken(orderId: string, paymentId: string) {
+  const { createHmac } = await import("node:crypto");
+
+  return createHmac("sha256", getDemoPaymentSecret())
+    .update(`${orderId}:${paymentId}`)
+    .digest("hex");
+}
+
+export async function verifyDemoPaymentToken(
+  orderId: string,
+  paymentId: string,
+  token: string,
+) {
+  const { timingSafeEqual } = await import("node:crypto");
+  const expectedToken = await createDemoPaymentToken(orderId, paymentId);
+  const expectedBuffer = Buffer.from(expectedToken);
+  const tokenBuffer = Buffer.from(token);
+
+  return (
+    expectedBuffer.length === tokenBuffer.length &&
+    timingSafeEqual(expectedBuffer, tokenBuffer)
+  );
 }
 
 export function createPaymentLink(

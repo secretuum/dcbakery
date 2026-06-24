@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { DemoPaymentButton } from "@/src/components/payment/DemoPaymentButton";
 import {
   getCompanyDetails,
   hasCompleteCompanyDetails,
@@ -8,6 +9,7 @@ import {
 import { fetchAdminOrder } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
+import { isDemoPaymentMode } from "@/src/lib/payments";
 
 type PayPageProps = {
   params: Promise<{
@@ -84,6 +86,7 @@ export default async function PayPage({ params }: PayPageProps) {
 
   const state = getPayState(order.status, order.payment_status);
   const companyDetails = getCompanyDetails();
+  const isDemoMode = isDemoPaymentMode();
   const hasCompanyDetails = hasCompleteCompanyDetails(companyDetails);
   const invoiceAvailable =
     hasCompanyDetails &&
@@ -102,6 +105,12 @@ export default async function PayPage({ params }: PayPageProps) {
           {order.order_number}
         </h1>
         <p className="mt-4 text-base font-semibold leading-7 text-muted">{state.text}</p>
+
+        {isDemoMode ? (
+          <p className="mt-5 rounded-btn bg-[#fff1b8] px-4 py-3 text-sm font-black text-[#7a4b00]">
+            Демо-режим: реквизиты и платежи тестовые, реальные деньги не используются.
+          </p>
+        ) : null}
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           <div className="rounded-btn bg-cream px-4 py-3">
@@ -160,6 +169,14 @@ export default async function PayPage({ params }: PayPageProps) {
             </div>
           </div>
         </section>
+
+        {isDemoMode &&
+        order.status === "confirmed_waiting_payment" &&
+        order.payment_id?.startsWith("demo-") ? (
+          <div className="mt-6">
+            <DemoPaymentButton orderId={order.id} paymentId={order.payment_id} />
+          </div>
+        ) : null}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           {isExternalPaymentUrl ? (

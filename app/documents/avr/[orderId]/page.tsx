@@ -72,6 +72,12 @@ export default async function AvrPage({ params }: AvrPageProps) {
           <DocumentPrintButton />
         </div>
 
+        {company.isDemo ? (
+          <div className="mb-6 border-4 border-[#b91c1c] px-4 py-3 text-center text-2xl font-black uppercase text-[#b91c1c]">
+            Демо-документ
+          </div>
+        ) : null}
+
         <header className="border-b-2 border-dark pb-6 text-center">
           <h1 className="text-4xl font-black">Акт выполненных работ</h1>
           <p className="mt-2 text-sm font-bold">№ {order.order_number}</p>

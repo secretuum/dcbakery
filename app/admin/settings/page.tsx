@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { WhatsAppSettingControl } from "@/src/components/admin/WhatsAppSettingControl";
+import { getCompanyDetails, hasCompleteCompanyDetails } from "@/src/lib/company-details";
+import { getPaymentMode } from "@/src/lib/payments";
 import { fetchAppSettings } from "@/src/lib/supabase/admin";
 
 type SettingControl = {
@@ -37,6 +39,14 @@ function isEnabled(value: string | null | undefined) {
 export default async function AdminSettingsPage() {
   const settings = await fetchAppSettings();
   const values = new Map(settings.map((setting) => [setting.key, setting.value]));
+  const paymentMode = getPaymentMode();
+  const companyDetails = getCompanyDetails();
+  const paymentModeLabels = {
+    demo: "Демо-шлюз",
+    freedom: "Freedom Pay",
+    halyk: "Halyk",
+    manual: "Ручная обработка счета",
+  };
 
   return (
     <div>
@@ -63,6 +73,30 @@ export default async function AdminSettingsPage() {
             />
           );
         })}
+      </section>
+
+      <section className="mt-6 rounded-card bg-white p-6 shadow-sm">
+        <p className="text-sm font-black uppercase text-raspberry">Оплата и документы</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <div className="rounded-btn bg-cream p-4">
+            <p className="text-xs font-black uppercase text-muted">Режим</p>
+            <p className="mt-2 text-xl font-black">{paymentModeLabels[paymentMode]}</p>
+          </div>
+          <div className="rounded-btn bg-cream p-4">
+            <p className="text-xs font-black uppercase text-muted">Реквизиты</p>
+            <p className="mt-2 text-xl font-black">
+              {hasCompleteCompanyDetails(companyDetails) ? "Готовы" : "Не заполнены"}
+            </p>
+          </div>
+          <div className="rounded-btn bg-cream p-4">
+            <p className="text-xs font-black uppercase text-muted">Документы</p>
+            <p className="mt-2 text-xl font-black">Счет + АВР</p>
+          </div>
+        </div>
+        <p className="mt-4 text-sm font-semibold leading-6 text-muted">
+          Демо включается через <code>PAYMENT_MODE=demo</code>. Для рабочего запуска задаются
+          реальные реквизиты и режим провайдера, после чего выполняется redeploy.
+        </p>
       </section>
 
       <section className="mt-6 rounded-card bg-dark p-6 text-white shadow-sm">

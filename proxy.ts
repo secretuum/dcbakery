@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_ACCESS_COOKIE, ADMIN_REFRESH_COOKIE } from "@/src/lib/supabase/auth";
+import { isAdminIdentity, type AdminIdentity } from "@/src/lib/admin-access";
 
 type RefreshedAdminToken = {
   access_token: string;
@@ -53,7 +54,11 @@ async function isValidAdminToken(token: string) {
       cache: "no-store",
     });
 
-    return response.ok;
+    if (!response.ok) {
+      return false;
+    }
+
+    return isAdminIdentity((await response.json()) as AdminIdentity);
   } catch {
     return false;
   }
@@ -114,6 +119,20 @@ export async function proxy(request: NextRequest) {
 
   if ((!isAdminPage && !isAdminApi) || isPublicAdminRoute) {
     return NextResponse.next();
+  }
+
+  if (isAdminApi && !["GET", "HEAD", "OPTIONS"].includes(request.method)) {
+    const origin = request.headers.get("origin");
+
+    if (origin) {
+      try {
+        if (new URL(origin).host !== request.nextUrl.host) {
+          return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+        }
+      } catch {
+        return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
+      }
+    }
   }
 
   const token = request.cookies.get(ADMIN_ACCESS_COOKIE)?.value;

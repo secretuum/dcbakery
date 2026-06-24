@@ -8,19 +8,36 @@ export type CompanyDetails = {
   bin: string;
   directorName: string;
   legalName: string;
+  isDemo: boolean;
   taxNote: string;
 };
 
+const demoCompanyDetails = {
+  address: "г. Алматы, ул. Демо, 15",
+  bankBic: "DEMOKZKX",
+  bankIban: "KZ00DEMO000000000001",
+  bankName: "АО «Учебный банк»",
+  bin: "000000000000",
+  directorName: "Тестовый руководитель",
+  legalName: "ТОО «DC Bakery Demo»",
+  taxNote: "Без НДС. Демо-документ, не является основанием для оплаты.",
+};
+
 export function getCompanyDetails(): CompanyDetails {
+  const isDemo = process.env.PAYMENT_MODE?.trim().toLowerCase() === "demo";
+
   return {
-    address: process.env.DC_LEGAL_ADDRESS?.trim() ?? "",
-    bankBic: process.env.DC_BANK_BIC?.trim() ?? "",
-    bankIban: process.env.DC_BANK_IBAN?.trim() ?? "",
-    bankName: process.env.DC_BANK_NAME?.trim() ?? "",
-    bin: process.env.DC_LEGAL_BIN?.trim() ?? "",
-    directorName: process.env.DC_DIRECTOR_NAME?.trim() ?? "",
-    legalName: process.env.DC_LEGAL_NAME?.trim() ?? "",
-    taxNote: process.env.DC_TAX_NOTE?.trim() ?? "",
+    address: process.env.DC_LEGAL_ADDRESS?.trim() || (isDemo ? demoCompanyDetails.address : ""),
+    bankBic: process.env.DC_BANK_BIC?.trim() || (isDemo ? demoCompanyDetails.bankBic : ""),
+    bankIban: process.env.DC_BANK_IBAN?.trim() || (isDemo ? demoCompanyDetails.bankIban : ""),
+    bankName: process.env.DC_BANK_NAME?.trim() || (isDemo ? demoCompanyDetails.bankName : ""),
+    bin: process.env.DC_LEGAL_BIN?.trim() || (isDemo ? demoCompanyDetails.bin : ""),
+    directorName:
+      process.env.DC_DIRECTOR_NAME?.trim() || (isDemo ? demoCompanyDetails.directorName : ""),
+    legalName:
+      process.env.DC_LEGAL_NAME?.trim() || (isDemo ? demoCompanyDetails.legalName : ""),
+    isDemo,
+    taxNote: process.env.DC_TAX_NOTE?.trim() || (isDemo ? demoCompanyDetails.taxNote : ""),
   };
 }
 

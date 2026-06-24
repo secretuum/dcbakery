@@ -7,6 +7,9 @@ export type SupabasePasswordAuthResponse = {
   refresh_token?: string;
   token_type?: string;
   user?: {
+    app_metadata?: {
+      role?: string;
+    };
     email?: string;
     id: string;
   };

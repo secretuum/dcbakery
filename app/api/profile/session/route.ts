@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ADMIN_ACCESS_COOKIE, ADMIN_REFRESH_COOKIE } from "@/src/lib/supabase/auth";
+import { isAdminIdentity, type AdminIdentity } from "@/src/lib/admin-access";
 
 type RefreshedAdminToken = {
   access_token: string;
@@ -7,10 +8,7 @@ type RefreshedAdminToken = {
   refresh_token: string;
 };
 
-type SupabaseUser = {
-  email?: string;
-  id?: string;
-};
+type SupabaseUser = AdminIdentity & { id?: string };
 
 function getSupabaseAuthConfig() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -129,7 +127,7 @@ export async function GET(request: Request) {
   if (token) {
     const user = await getAdminUser(token);
 
-    if (user) {
+    if (user && isAdminIdentity(user)) {
       return NextResponse.json({
         authenticated: true,
         email: user.email ?? "",
@@ -144,7 +142,7 @@ export async function GET(request: Request) {
     if (refreshed) {
       const user = await getAdminUser(refreshed.access_token);
 
-      if (user) {
+      if (user && isAdminIdentity(user)) {
         const response = NextResponse.json({
           authenticated: true,
           email: user.email ?? "",

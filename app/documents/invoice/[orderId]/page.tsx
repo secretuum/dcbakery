@@ -77,6 +77,12 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
           <DocumentPrintButton />
         </div>
 
+        {company.isDemo ? (
+          <div className="mb-6 border-4 border-[#b91c1c] px-4 py-3 text-center text-2xl font-black uppercase text-[#b91c1c]">
+            Демо-документ. Не оплачивать
+          </div>
+        ) : null}
+
         <header className="border-b-2 border-dark pb-6">
           <p className="text-sm font-black uppercase text-muted">DC Bakery</p>
           <h1 className="mt-3 text-4xl font-black">Счет на оплату № {order.order_number}</h1>

@@ -30,7 +30,7 @@ export async function POST(request: Request, { params }: ConfirmRouteProps) {
 
   try {
     const origin = new URL(request.url).origin;
-    const paymentLink = createPaymentLink(order, "manual", origin);
+    const paymentLink = createPaymentLink(order, undefined, origin);
     const whatsappMessageId = await sendCustomerDetailsRequestNotification(
       order,
       paymentLink.paymentUrl,

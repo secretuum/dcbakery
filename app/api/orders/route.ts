@@ -9,6 +9,7 @@ import {
 } from "@/src/lib/supabase/admin";
 import { sendTelegramNotification } from "@/src/lib/telegram";
 import { sendWhatsAppNotification } from "@/src/lib/whatsapp";
+import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 import type { Order } from "@/src/types";
 
 type IncomingItem = {
@@ -194,6 +195,23 @@ async function resolveItemsFromServer(items: IncomingItem[]) {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit({
+    identifier: getRequestIdentifier(request),
+    limit: 10,
+    namespace: "orders:create",
+    windowMs: 10 * 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many order attempts" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
   const supabaseConfigError = getSupabaseAdminConfigError();
 
   if (supabaseConfigError) {

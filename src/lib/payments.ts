@@ -1,4 +1,7 @@
+import "server-only";
 import type { Order, PaymentProvider } from "@/src/types";
+
+export type PaymentMode = "demo" | "freedom" | "halyk" | "manual";
 
 export type PaymentLink = {
   paymentId: string;
@@ -6,23 +9,44 @@ export type PaymentLink = {
   paymentUrl: string;
 };
 
+export function getPaymentMode(): PaymentMode {
+  const mode = process.env.PAYMENT_MODE?.trim().toLowerCase();
+
+  if (mode === "demo" || mode === "freedom" || mode === "halyk") {
+    return mode;
+  }
+
+  return "manual";
+}
+
+export function isDemoPaymentMode() {
+  return getPaymentMode() === "demo";
+}
+
 export function createPaymentLink(
   order: Order,
-  provider: PaymentProvider = "manual",
+  provider?: PaymentProvider,
   origin = "",
 ): PaymentLink {
-  if (provider === "kaspi_later") {
+  const paymentMode = provider ?? getPaymentMode();
+
+  if (paymentMode === "kaspi_later") {
     throw new Error("Kaspi provider is reserved for a future integration");
   }
 
-  if (provider === "halyk" || provider === "freedom") {
-    throw new Error(`${provider} payment provider is not configured yet`);
+  if (paymentMode === "halyk" || paymentMode === "freedom") {
+    throw new Error(
+      `${paymentMode} payment provider is selected but its credentials and adapter are not configured`,
+    );
   }
 
   const normalizedOrigin = origin.replace(/\/$/, "");
+  const isDemo = paymentMode === "demo";
 
   return {
-    paymentId: `manual-${order.order_number}`,
+    paymentId: isDemo
+      ? `demo-${crypto.randomUUID()}`
+      : `manual-${order.order_number}`,
     paymentProvider: "manual",
     paymentUrl: `${normalizedOrigin}/pay/${order.id}`,
   };

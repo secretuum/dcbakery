@@ -6,6 +6,8 @@ import {
   getSupabaseAuthUrl,
   type SupabasePasswordAuthResponse,
 } from "@/src/lib/supabase/auth";
+import { isAdminIdentity } from "@/src/lib/admin-access";
+import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 
 type LoginBody = {
   email?: string;
@@ -41,6 +43,23 @@ function shouldUseSecureCookies(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit({
+    identifier: getRequestIdentifier(request),
+    limit: 8,
+    namespace: "admin:login",
+    windowMs: 15 * 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many login attempts" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
   const configError = getSupabaseAuthConfigError();
   const authUrl = getSupabaseAuthUrl("token?grant_type=password");
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -81,6 +100,10 @@ export async function POST(request: Request) {
 
   if (!payload.access_token || !payload.refresh_token) {
     return NextResponse.json({ error: "Auth response is incomplete" }, { status: 502 });
+  }
+
+  if (!isAdminIdentity(payload.user)) {
+    return NextResponse.json({ error: "Admin access is not allowed" }, { status: 403 });
   }
 
   const response = NextResponse.json({

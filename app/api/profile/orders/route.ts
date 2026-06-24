@@ -3,6 +3,7 @@ import {
   fetchClientOrderSummaries,
   getSupabaseAdminConfigError,
 } from "@/src/lib/supabase/admin";
+import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 
 type ProfileOrdersBody = {
   email?: string;
@@ -39,6 +40,23 @@ async function parseBody(request: Request): Promise<ProfileOrdersBody> {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit({
+    identifier: getRequestIdentifier(request),
+    limit: 8,
+    namespace: "profile:orders",
+    windowMs: 15 * 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many profile lookup attempts" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
   const supabaseConfigError = getSupabaseAdminConfigError();
 
   if (supabaseConfigError) {

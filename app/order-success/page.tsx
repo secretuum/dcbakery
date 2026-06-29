@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { WHATSAPP_SUPPORT_NUMBER } from "@/app/constants";
 
 type OrderSuccessPageProps = {
   searchParams: Promise<{

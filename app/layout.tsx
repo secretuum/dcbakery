@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { CartBottomBarClient } from "@/src/components/cart/CartBottomBarClient";
 import { Footer } from "@/src/components/layout/Footer";
 import { Header } from "@/src/components/layout/Header";
 import { CartProvider } from "@/src/contexts/CartContext";
@@ -37,6 +38,7 @@ export default function RootLayout({
             <Header />
             <div className="flex-1">{children}</div>
             <Footer />
+            <CartBottomBarClient />
           </ToastProvider>
         </CartProvider>
       </body>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CategoryCard } from "@/src/components/catalog/CategoryCard";
+import { CategoryNavBar } from "@/src/components/catalog/CategoryNavBar";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 
 export const metadata: Metadata = {
@@ -17,6 +18,8 @@ export default async function CatalogPage() {
 
   return (
     <main className="min-h-screen bg-cream text-dark">
+      <CategoryNavBar categories={categories} />
+
       <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -40,11 +43,12 @@ export default async function CatalogPage() {
 
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {categories.map((category) => (
-            <CategoryCard
-              key={category.id}
-              category={category}
-              eyebrow={`${countProducts(category.id)} товаров`}
-            />
+            <div key={category.id} id={`cat-${category.slug}`}>
+              <CategoryCard
+                category={category}
+                eyebrow={`${countProducts(category.id)} товаров`}
+              />
+            </div>
           ))}
         </div>
       </section>

@@ -470,8 +470,9 @@ export async function putProductOnStop({
 
   if (existingEvent) {
     await upsertCatalogProductOverride(productId, {
-      is_active: false,
-    });
+  is_active: true,   // товар остаётся виден
+  stock_qty: 0,      // но нельзя добавить в корзину
+});
 
     return existingEvent;
   }
@@ -485,8 +486,9 @@ export async function putProductOnStop({
   });
 
   await upsertCatalogProductOverride(productId, {
-    is_active: false,
-  });
+  is_active: true,   // товар остаётся виден
+  stock_qty: 0,      // но нельзя добавить в корзину
+});
 
   return event ?? null;
 }
@@ -505,8 +507,9 @@ export async function clearProductStop(productId: string) {
   );
 
   await upsertCatalogProductOverride(productId, {
-    is_active: true,
-  });
+  is_active: true,
+  stock_qty: null,  // null → вернёт original stock из статичного файла
+});
 
   return events;
 }
@@ -640,7 +643,7 @@ export async function fetchClientOrderSummaries({
 }) {
   const params = new URLSearchParams({
     select:
-      "id,order_number,company_name,status,payment_status,revision_note,total_amount,delivery_date,payment_url,created_at",
+      "id,order_number,company_name,status,payment_status,revision_note,total_amount,delivery_date,payment_url,created_at,order_items(id,product_name,unit,qty,price,total_amount)",
     order: "created_at.desc",
     limit: "20",
   });

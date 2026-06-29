@@ -6,9 +6,12 @@ import {
 } from "@/src/lib/supabase/admin";
 import { createPaymentLink } from "@/src/lib/payments";
 import {
+  getWhatsAppChatIdFromPhone,
   replaceWhatsAppOrderMessage,
   sendCustomerOrderConfirmationNotification,
+  sendGreenApiTextMessage,
 } from "@/src/lib/whatsapp";
+import { fetchWhatsAppClientByChatId } from "@/src/lib/whatsapp-client-store";
 
 type ConfirmRouteProps = {
   params: Promise<{
@@ -36,6 +39,20 @@ export async function POST(request: Request, { params }: ConfirmRouteProps) {
       paymentLink.paymentUrl,
     ).catch(() => ({ messageId: null, registrationRequested: false }));
     const whatsappMessageId = customerNotification.messageId;
+
+    const customerChatId = getWhatsAppChatIdFromPhone(order.customer_phone);
+    if (customerChatId) {
+      const clientProfile = await fetchWhatsAppClientByChatId(customerChatId).catch(() => null);
+      if (clientProfile?.accountantPhone) {
+        const accountantChatId = getWhatsAppChatIdFromPhone(clientProfile.accountantPhone);
+        if (accountantChatId) {
+          await sendGreenApiTextMessage(
+            accountantChatId,
+            `Счёт на оплату №${order.order_number} на сумму ${order.total_amount} ₸\n${origin}/documents/invoice/${order.id}`,
+          ).catch(() => null);
+        }
+      }
+    }
     const now = new Date().toISOString();
     const confirmedOrder = await confirmAdminOrder(id, {
       confirmed_at: now,

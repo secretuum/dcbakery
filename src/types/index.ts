@@ -129,6 +129,15 @@ export type OrderItem = {
   total_amount: number;
 };
 
+export type OrderItemSummary = {
+  id: string;
+  product_name: string;
+  unit: string;
+  qty: number;
+  price: number;
+  total_amount: number;
+};
+
 export type ClientOrderSummary = {
   id: string;
   order_number: string;
@@ -140,6 +149,7 @@ export type ClientOrderSummary = {
   delivery_date?: string | null;
   payment_url?: string | null;
   created_at: string;
+  order_items?: OrderItemSummary[];
 };
 
 export type ProductStopEvent = {

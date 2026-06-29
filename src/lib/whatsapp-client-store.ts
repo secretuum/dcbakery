@@ -21,6 +21,7 @@ export type WhatsAppClientProfile = {
   addresses?: WhatsAppClientAddress[];
   primaryAddressIndex?: number | null;
   lastOrderId?: string | null;
+  accountantPhone?: string | null;
 };
 
 function hasMeaningfulValue(value?: string | null) {
@@ -66,6 +67,7 @@ type WhatsAppClientRow = {
   addresses?: unknown;
   primary_address_index?: number | null;
   last_order_id?: string | null;
+  accountant_phone?: string | null;
 };
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -106,6 +108,7 @@ function toProfile(row: WhatsAppClientRow): WhatsAppClientProfile {
     addresses,
     primaryAddressIndex: row.primary_address_index ?? 0,
     lastOrderId: row.last_order_id ?? null,
+    accountantPhone: row.accountant_phone ?? null,
   };
 }
 

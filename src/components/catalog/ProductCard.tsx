@@ -14,22 +14,40 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { add, isReady, items } = useCart();
+  const { add, remove, updateQty, isReady, items } = useCart();
   const { showToast } = useToast();
   const imageSrc = product.images[0] ?? "/product-placeholder.png";
   const isInStock = isReady && product.stock_qty > 0;
   const priceText = formatProductPrice(product.price);
+  const cartItem = items.find((item) => item.product.id === product.id);
+  const cartQty = cartItem?.qty ?? 0;
+  const inCart = cartQty > 0;
+  const step = product.step_qty;
 
   function handleAddToCart() {
-    const cartQty = items.find((item) => item.product.id === product.id)?.qty ?? 0;
-
     if (cartQty >= product.stock_qty) {
       showToast("В корзине уже весь доступный остаток", "info");
       return;
     }
-
     add(product);
     showToast("Товар добавлен в корзину", "success");
+  }
+
+  function handleIncrease() {
+    if (cartQty >= product.stock_qty) {
+      showToast("В корзине уже весь доступный остаток", "info");
+      return;
+    }
+    updateQty(product.id, cartQty + step);
+  }
+
+  function handleDecrease() {
+    const next = cartQty - step;
+    if (next <= 0) {
+      remove(product.id);
+    } else {
+      updateQty(product.id, next);
+    }
   }
 
   return (
@@ -49,7 +67,9 @@ export function ProductCard({ product }: ProductCardProps) {
       <div className="p-4 sm:p-5">
         <div className="flex items-start justify-between gap-3">
           <Badge variant="burgundy">{product.category?.name ?? "Каталог"}</Badge>
-          <Badge variant={isInStock ? "neutral" : "dark"}>{isInStock ? "в наличии" : "нет"}</Badge>
+          <Badge variant={isInStock ? "neutral" : "dark"}>
+  {isInStock ? "в наличии" : "временно нет"}
+</Badge>
         </div>
 
         <Link href={`/product/${product.slug}`} className="mt-4 block">
@@ -82,14 +102,36 @@ export function ProductCard({ product }: ProductCardProps) {
           </span>
         </div>
 
-        <Button
-          onClick={handleAddToCart}
-          disabled={!isInStock}
-          className="mt-4 w-full"
-          aria-label={`Добавить в корзину: ${product.name}`}
-        >
-          + В корзину
-        </Button>
+        {inCart ? (
+          <div className="mt-4 flex items-center justify-between rounded-btn bg-green-50 px-2 py-1">
+            <button
+              onClick={handleDecrease}
+              className="flex h-9 w-9 items-center justify-center rounded-btn text-xl font-bold text-green-700 hover:bg-green-100 active:bg-green-200"
+              aria-label="Уменьшить количество"
+            >
+              −
+            </button>
+            <span className="text-sm font-bold text-green-800">
+              {cartQty} {product.unit}
+            </span>
+            <button
+              onClick={handleIncrease}
+              className="flex h-9 w-9 items-center justify-center rounded-btn text-xl font-bold text-green-700 hover:bg-green-100 active:bg-green-200"
+              aria-label="Увеличить количество"
+            >
+              +
+            </button>
+          </div>
+        ) : (
+          <Button
+            onClick={handleAddToCart}
+            disabled={!isInStock}
+            className="mt-4 w-full"
+            aria-label={`Добавить в корзину: ${product.name}`}
+          >
+            {isInStock ? "+ В корзину" : "Временно нет"}
+          </Button>
+        )}
       </div>
     </article>
   );

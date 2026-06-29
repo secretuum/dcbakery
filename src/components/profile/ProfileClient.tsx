@@ -7,7 +7,7 @@ import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
-import type { ClientOrderSummary } from "@/src/types";
+import type { ClientOrderSummary, OrderItemSummary } from "@/src/types";
 
 const PROFILE_STORAGE_KEY = "dc_bakery_client_profile";
 
@@ -21,6 +21,7 @@ type ClientSession = {
   createdAt: string;
   email: string;
   phone: string;
+  accountant_phone?: string;
   role: "client";
 };
 
@@ -69,6 +70,7 @@ function readClientSession(): ClientSession | null {
       createdAt: parsedSession.createdAt ?? new Date().toISOString(),
       email: parsedSession.email,
       phone: parsedSession.phone ?? "",
+      accountant_phone: parsedSession.accountant_phone ?? "",
       role: "client",
     };
   } catch {
@@ -383,12 +385,33 @@ function AdminDashboard({
   );
 }
 
+function OrderItemsList({ items }: { items: OrderItemSummary[] }) {
+  return (
+    <div className="mt-3 border-t border-black/10 pt-3">
+      <ul className="space-y-1.5">
+        {items.map((item) => (
+          <li key={item.id} className="flex items-baseline justify-between gap-2 text-sm">
+            <span className="font-semibold text-dark">
+              {item.product_name}{" "}
+              <span className="font-normal text-muted">
+                × {item.qty} {item.unit}
+              </span>
+            </span>
+            <span className="shrink-0 font-black text-dark">{formatCurrency(item.total_amount)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   const orderStatus = orderStatusLabels[order.status] ?? order.status;
   const paymentStatus = order.payment_status
     ? paymentStatusLabels[order.payment_status]
     : "не указано";
   const [actionStatus, setActionStatus] = useState<"error" | "idle" | "loading">("idle");
+  const [isExpanded, setIsExpanded] = useState(false);
   const canCancel =
     order.payment_status !== "paid" &&
     !["paid", "completed", "canceled", "cancelled"].includes(order.status);
@@ -418,7 +441,11 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
 
   return (
     <article className="rounded-card border border-black/10 bg-white p-5 shadow-[0_14px_40px_rgba(120,51,38,0.06)]">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <button
+        type="button"
+        className="flex w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:justify-between"
+        onClick={() => setIsExpanded((v) => !v)}
+      >
         <div>
           <p className="text-xs font-black uppercase text-raspberry">{order.order_number}</p>
           <h3 className="mt-2 text-xl font-black tracking-tight">{order.company_name}</h3>
@@ -426,8 +453,15 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
             Создан: {formatDate(order.created_at)}
           </p>
         </div>
-        <p className="text-2xl font-black text-dark">{formatCurrency(order.total_amount)}</p>
-      </div>
+        <div className="flex items-center gap-2">
+          <p className="text-2xl font-black text-dark">{formatCurrency(order.total_amount)}</p>
+          <span className="text-xs text-muted">{isExpanded ? "▲" : "▼"}</span>
+        </div>
+      </button>
+
+      {isExpanded && order.order_items && order.order_items.length > 0 ? (
+        <OrderItemsList items={order.order_items} />
+      ) : null}
 
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-btn bg-cream px-4 py-3">
@@ -516,6 +550,7 @@ function ClientDashboard({
   onLogout: () => void;
   onUpdate: (session: ClientSession) => void;
 }) {
+  const [accountantPhone, setAccountantPhone] = useState(session.accountant_phone ?? "");
   const [companyName, setCompanyName] = useState(session.companyName);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [orders, setOrders] = useState<ClientOrderSummary[]>([]);
@@ -582,6 +617,7 @@ function ClientDashboard({
       ...session,
       companyName,
       phone,
+      accountant_phone: accountantPhone,
     };
 
     writeClientSession(nextSession);
@@ -686,6 +722,17 @@ function ClientDashboard({
                 onChange={(event) => setPhone(event.currentTarget.value)}
                 placeholder="+7 (___) ___-__-__"
               />
+            </label>
+            <label className="block">
+              <span className="text-sm font-black text-dark">Телефон бухгалтера</span>
+              <Input
+                className="mt-2"
+                inputMode="tel"
+                value={accountantPhone}
+                onChange={(event) => setAccountantPhone(event.currentTarget.value)}
+                placeholder="+7 (___) ___-__-__"
+              />
+              <p className="mt-1 text-xs font-semibold text-muted">WhatsApp для получения счетов</p>
             </label>
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-3">

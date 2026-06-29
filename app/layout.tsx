@@ -36,7 +36,7 @@ export default function RootLayout({
         <CartProvider>
           <ToastProvider>
             <Header />
-            <div className="flex-1">{children}</div>
+            <div className="flex-1 pb-52">{children}</div>
             <Footer />
             <CartBottomBarClient />
           </ToastProvider>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createCatalogProductAction } from "@/app/admin/products/actions";
+import { createCatalogProductAction } from "@/app/(main)/admin/products/actions";
 import { fetchCategories } from "@/src/lib/catalog";
 
 export const metadata: Metadata = {

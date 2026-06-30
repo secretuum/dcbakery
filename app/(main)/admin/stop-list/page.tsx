@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { clearStopListItemAction } from "@/app/admin/stop-list/actions";
+import { clearStopListItemAction } from "@/app/(main)/admin/stop-list/actions";
 import { Badge } from "@/src/components/ui/Badge";
 import { fetchProductStopEvents } from "@/src/lib/supabase/admin";
 

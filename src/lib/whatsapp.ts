@@ -251,13 +251,6 @@ export async function sendWhatsAppNotification(order: Order, items: OrderItem[])
   }
 
   const managerMessageId = await sendGreenApiTextMessage(chatId, formatWhatsAppNotification(order, items));
-  const directMessage = formatResponsibleDirectNotification(order, items);
-
-  await Promise.all(
-    getResponsibleChatIds(items).map((responsibleChatId) =>
-      sendGreenApiTextMessage(responsibleChatId, directMessage).catch(() => null),
-    ),
-  );
 
   return managerMessageId;
 }

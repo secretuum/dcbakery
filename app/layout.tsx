@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { CartBottomBarClient } from "@/src/components/cart/CartBottomBarClient";
-import { Footer } from "@/src/components/layout/Footer";
-import { Header } from "@/src/components/layout/Header";
 import { CartProvider } from "@/src/contexts/CartContext";
 import { ToastProvider } from "@/src/contexts/ToastContext";
 import "./globals.css";
@@ -35,10 +32,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col">
         <CartProvider>
           <ToastProvider>
-            <Header />
-            <div className="flex-1 pb-52">{children}</div>
-            <Footer />
-            <CartBottomBarClient />
+            {children}
           </ToastProvider>
         </CartProvider>
       </body>

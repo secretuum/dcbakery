@@ -3,7 +3,7 @@ import Link from "next/link";
 import {
   bulkUpdateCatalogProductsAction,
   updateCatalogProductAction,
-} from "@/app/admin/products/actions";
+} from "@/app/(main)/admin/products/actions";
 import { Badge } from "@/src/components/ui/Badge";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { fetchAdminProducts, fetchCategories } from "@/src/lib/catalog";

@@ -59,6 +59,7 @@ export type CatalogProductOverride = {
   is_halal?: boolean | null;
   is_new?: boolean | null;
   is_popular?: boolean | null;
+  popularity_rank?: number | null;
   is_promo?: boolean | null;
   min_qty?: number | string | null;
   name?: string | null;

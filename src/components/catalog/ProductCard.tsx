@@ -111,9 +111,30 @@ export function ProductCard({ product }: ProductCardProps) {
             >
               −
             </button>
-            <span className="text-sm font-bold text-green-800">
-              {cartQty} {product.unit}
-            </span>
+            <label className="flex items-center gap-1">
+              <input
+                type="number"
+                min={step}
+                max={product.stock_qty}
+                step={step}
+                value={cartQty}
+                onChange={(e) => {
+                  const raw = Number(e.currentTarget.value);
+                  if (!Number.isFinite(raw) || raw <= 0) {
+                    remove(product.id);
+                    return;
+                  }
+                  const clamped = Math.min(
+                    step + Math.ceil((raw - step) / step) * step,
+                    product.stock_qty,
+                  );
+                  updateQty(product.id, Math.max(step, clamped));
+                }}
+                className="w-12 bg-transparent text-center text-sm font-bold text-green-800 outline-none"
+                aria-label={`Количество, ${product.unit}`}
+              />
+              <span className="text-sm font-bold text-green-800">{product.unit}</span>
+            </label>
             <button
               onClick={handleIncrease}
               className="flex h-9 w-9 items-center justify-center rounded-btn text-xl font-bold text-green-700 hover:bg-green-100 active:bg-green-200"

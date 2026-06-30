@@ -32,6 +32,7 @@ export type Product = {
   isHalal?: boolean;
   isArchived?: boolean;
   isPopular?: boolean;
+  popularity_rank?: number;
   isNew?: boolean;
   isPromo?: boolean;
   source?: string;

@@ -415,6 +415,19 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             <option value="false">Обычный</option>
                             <option value="true">Популярный</option>
                           </select>
+                          <label className="flex items-center gap-2">
+                            <span className="shrink-0 text-xs font-bold text-muted">Популярность (1–15)</span>
+                            <input
+                              className="w-16 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                              defaultValue={product.popularity_rank ?? ""}
+                              form={formId}
+                              max={15}
+                              min={1}
+                              name="popularity_rank"
+                              step={1}
+                              type="number"
+                            />
+                          </label>
                           <select
                             className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                             defaultValue={String(Boolean(product.isNew))}

@@ -80,6 +80,7 @@ function getCatalogProductPatch(formData: FormData) {
     is_halal: true,
     is_new: getBoolean(formData, "is_new"),
     is_popular: getBoolean(formData, "is_popular"),
+    popularity_rank: getNumber(formData, "popularity_rank"),
     is_promo: getBoolean(formData, "is_promo"),
     min_qty: getNumber(formData, "min_qty"),
     name: getString(formData, "name"),

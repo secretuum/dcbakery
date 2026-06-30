@@ -8,6 +8,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       <Header />
       <div className="flex-1 pb-52">{children}</div>
       <Footer />
+	<div className="h-52" />
       <CartBottomBarClient />
     </>
   );

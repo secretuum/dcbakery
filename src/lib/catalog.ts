@@ -225,9 +225,11 @@ function getSourceProducts() {
 async function getCatalogProducts({
   includeArchived = false,
   includeInactive = false,
+  includeZeroPrice = false,
 }: {
   includeArchived?: boolean;
   includeInactive?: boolean;
+  includeZeroPrice?: boolean;
 } = {}) {
   const categories = getActiveCategories();
   const activeCategoryIds = new Set(categories.map((category) => category.id));
@@ -262,6 +264,10 @@ async function getCatalogProducts({
         return false;
       }
 
+      if (!includeZeroPrice && !(product.price > 0)) {
+        return false;
+      }
+
       return includeInactive || (product.is_active && activeCategoryIds.has(product.category_id));
     })
     .sort(bySortOrder);
@@ -284,7 +290,7 @@ export async function fetchAdminProducts({
 }: {
   includeArchived?: boolean;
 } = {}): Promise<Product[]> {
-  return getCatalogProducts({ includeArchived, includeInactive: true });
+  return getCatalogProducts({ includeArchived, includeInactive: true, includeZeroPrice: true });
 }
 
 export async function fetchPopularProducts(limit = 4): Promise<Product[]> {

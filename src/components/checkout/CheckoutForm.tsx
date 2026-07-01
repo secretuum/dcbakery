@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT } from "@/app/constants";
@@ -119,6 +119,7 @@ export function CheckoutForm() {
   const canCheckout = totalAmount >= MIN_ORDER_AMOUNT;
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isNavigatingRef = useRef(false);
   const [form, setForm] = useState<CheckoutFormState>({
     company_name: "",
     customer_bin: "",
@@ -134,7 +135,7 @@ export function CheckoutForm() {
   });
 
   useEffect(() => {
-    if (isReady && items.length === 0) {
+    if (isReady && items.length === 0 && !isNavigatingRef.current) {
       router.replace("/catalog");
     }
   }, [isReady, items.length, router]);
@@ -193,6 +194,7 @@ export function CheckoutForm() {
       const orderNumber = result.orderNumber ?? "DCB";
       const orderIdParam = result.orderId ? `&id=${encodeURIComponent(result.orderId)}` : "";
 
+      isNavigatingRef.current = true;
       clear();
       showToast("Заявка отправлена", "success");
       router.push(`/order-success?n=${encodeURIComponent(orderNumber)}${orderIdParam}`);

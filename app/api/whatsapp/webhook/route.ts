@@ -707,6 +707,7 @@ async function cancelOrderFromWhatsApp(order: Order, text: string) {
 }
 
 export async function POST(request: Request) {
+  try {
   if (!isAuthorized(request)) {
     console.warn("[whatsapp:webhook] unauthorized", {
       hasAuthorization: Boolean(request.headers.get("authorization")),
@@ -867,4 +868,8 @@ export async function POST(request: Request) {
     ok: true,
     order,
   });
+  } catch (error) {
+    console.error("[whatsapp:webhook] unhandled error", error);
+    return NextResponse.json({ ok: false }, { status: 500 });
+  }
 }

@@ -108,8 +108,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   }, [isReady, items]);
 
-  const add = useCallback((product: Product, qty = product.min_qty) => {
-    const nextQty = normalizeQty(product, qty);
+  const add = useCallback((product: Product, qty?: number) => {
+    const initialQty = qty !== undefined ? Math.max(1, qty) : Math.max(1, product.min_qty ?? product.step_qty ?? 1);
+    const nextQty = normalizeQty(product, initialQty);
 
     if (nextQty <= 0) {
       return;

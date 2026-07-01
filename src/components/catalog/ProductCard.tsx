@@ -29,7 +29,7 @@ export function ProductCard({ product }: ProductCardProps) {
       showToast("В корзине уже весь доступный остаток", "info");
       return;
     }
-    add(product);
+    add(product, Math.max(1, product.min_qty ?? product.step_qty ?? 1));
     showToast("Товар добавлен в корзину", "success");
   }
 

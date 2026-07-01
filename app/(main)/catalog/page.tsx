@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { CategoryCard } from "@/src/components/catalog/CategoryCard";
 import { CategoryNavBar } from "@/src/components/catalog/CategoryNavBar";
+import { ProductCard } from "@/src/components/catalog/ProductCard";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 
 export const metadata: Metadata = {
@@ -12,42 +11,31 @@ export const metadata: Metadata = {
 export default async function CatalogPage() {
   const [categories, products] = await Promise.all([fetchCategories(), fetchProducts()]);
 
-  function countProducts(categoryId: string) {
-    return products.filter((product) => product.category_id === categoryId).length;
-  }
-
   return (
     <main className="min-h-screen bg-cream text-dark">
       <CategoryNavBar categories={categories} />
 
       <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-sm font-black uppercase text-raspberry">Каталог DC Bakery</p>
-            <h1 className="mt-3 text-5xl font-black leading-tight tracking-tight sm:text-6xl">
-              Выберите раздел
-            </h1>
-            <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-muted">
-            </p>
-          </div>
-
-          <Link
-            href="/#terms"
-            className="inline-flex min-h-12 items-center justify-center rounded-btn bg-white px-5 py-3 text-sm font-black text-dark shadow-sm transition hover:bg-coral-light"
-          >
-            Условия заказа
-          </Link>
-        </div>
-
-        <div className="mt-10 grid gap-5 md:grid-cols-3">
-          {categories.map((category) => (
-            <div key={category.id} id={`cat-${category.slug}`}>
-              <CategoryCard
-                category={category}
-                eyebrow={`${countProducts(category.id)} товаров`}
-              />
-            </div>
-          ))}
+        <div className="flex flex-col gap-14">
+          {categories.map((category) => {
+            const categoryProducts = products.filter((p) => p.category_id === category.id);
+            if (categoryProducts.length === 0) return null;
+            return (
+              <div key={category.id}>
+                <h2
+                  id={`cat-${category.slug}`}
+                  className="mb-6 text-3xl font-black tracking-tight text-dark"
+                >
+                  {category.name}
+                </h2>
+                <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {categoryProducts.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
     </main>

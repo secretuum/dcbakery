@@ -15,6 +15,7 @@ type AdminProductsPageProps = {
     category?: string | string[];
     q?: string | string[];
     view?: string | string[];
+    created?: string;
   }>;
 };
 
@@ -73,7 +74,7 @@ function getStockTone(stockQty: number) {
 }
 
 export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
-  const [{ category, q, view }, categories, products] = await Promise.all([
+  const [{ category, q, view, created }, categories, products] = await Promise.all([
     searchParams,
     fetchCategories(),
     fetchAdminProducts(),
@@ -92,6 +93,11 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
 
   return (
     <div>
+      {created === "1" && (
+        <div className="mb-4 rounded-xl bg-green-50 px-5 py-3 text-sm font-black text-green-700">
+          Товар создан
+        </div>
+      )}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-black uppercase text-raspberry">Админка</p>
@@ -392,7 +398,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           max={100}
                           min="0"
                           name="stock_qty"
-                          step="0.001"
+                          step="1"
                           type="number"
                         />
                       </td>

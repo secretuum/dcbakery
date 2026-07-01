@@ -79,7 +79,7 @@ export default async function NewProductPage() {
               max={10000}
               min="0"
               name="price"
-              step="0.01"
+              step="1"
               type="number"
             />
           </label>
@@ -90,7 +90,7 @@ export default async function NewProductPage() {
               max={100}
               min="0"
               name="stock_qty"
-              step="0.001"
+              step="1"
               type="number"
             />
           </label>
@@ -109,7 +109,7 @@ export default async function NewProductPage() {
               max={2000}
               min="0"
               name="weight_grams"
-              step="0.001"
+              step="1"
               type="number"
             />
           </label>

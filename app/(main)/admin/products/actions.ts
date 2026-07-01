@@ -131,7 +131,7 @@ export async function createCatalogProductAction(formData: FormData) {
 
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
-  redirect("/admin/products");
+  redirect("/admin/products?created=1");
 }
 
 export async function bulkUpdateCatalogProductsAction(formData: FormData) {

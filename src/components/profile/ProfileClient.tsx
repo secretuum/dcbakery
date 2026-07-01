@@ -406,7 +406,7 @@ function OrderItemsList({ items }: { items: OrderItemSummary[] }) {
   );
 }
 
-function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
+function ClientOrderCard({ order, clientPhone }: { order: ClientOrderSummary; clientPhone: string }) {
   const orderStatus = orderStatusLabels[order.status] ?? order.status;
   const paymentStatus = order.payment_status
     ? paymentStatusLabels[order.payment_status]
@@ -428,6 +428,7 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-client-phone": clientPhone,
       },
       body: JSON.stringify({ action, comment }),
     });
@@ -723,7 +724,7 @@ function ClientDashboard({
           ) : orders.length > 0 ? (
             <div className="mt-6 space-y-4">
               {orders.map((order) => (
-                <ClientOrderCard key={order.id} order={order} />
+                <ClientOrderCard key={order.id} order={order} clientPhone={session.phone} />
               ))}
             </div>
           ) : (

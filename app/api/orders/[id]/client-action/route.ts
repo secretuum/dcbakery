@@ -51,6 +51,13 @@ export async function POST(request: Request, { params }: ClientActionRouteProps)
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
+  const clientPhone = request.headers.get("x-client-phone");
+  const normalize = (p: string) => p.replace(/\D/g, "");
+
+  if (!clientPhone || normalize(clientPhone) !== normalize(order.customer_phone ?? "")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   if (order.payment_status === "paid" || order.status === "paid") {
     return NextResponse.json({ error: "Paid order requires manual handling" }, { status: 400 });
   }

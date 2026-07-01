@@ -46,7 +46,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 className={[
                   "shrink-0 rounded-btn px-4 py-3 text-sm font-black transition",
                   isActive
-                    ? "bg-coral text-white shadow-[0_14px_30px_rgba(244,123,111,0.22)]"
+                    ? "bg-coral text-dark shadow-[0_14px_30px_rgba(244,123,111,0.22)]"
                     : "text-muted hover:bg-coral-light hover:text-dark",
                 ].join(" ")}
               >

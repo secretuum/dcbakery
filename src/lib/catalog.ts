@@ -289,9 +289,20 @@ export async function fetchAdminProducts({
 
 export async function fetchPopularProducts(limit = 4): Promise<Product[]> {
   const activeProducts = await getCatalogProducts();
-  const popularProducts = activeProducts.filter((product) => product.isPopular);
+  const hasAnyRank = activeProducts.some((p) => p.popularity_rank != null);
 
-  return (popularProducts.length > 0 ? popularProducts : activeProducts).slice(0, limit);
+  if (!hasAnyRank) {
+    return activeProducts.slice(0, limit);
+  }
+
+  return [...activeProducts]
+    .sort((a, b) => {
+      if (a.popularity_rank == null && b.popularity_rank == null) return 0;
+      if (a.popularity_rank == null) return 1;
+      if (b.popularity_rank == null) return -1;
+      return b.popularity_rank - a.popularity_rank;
+    })
+    .slice(0, limit);
 }
 
 export async function fetchProductsByCategory(categorySlug: string): Promise<Product[]> {

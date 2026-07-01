@@ -28,8 +28,6 @@ export default async function CatalogPage() {
               Выберите раздел закупки
             </h1>
             <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-muted">
-              Пока каталог работает на локальных mock-данных. На следующем этапе эти helpers можно
-              заменить на Supabase без изменения карточек и страниц.
             </p>
           </div>
 

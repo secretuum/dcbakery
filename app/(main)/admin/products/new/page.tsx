@@ -76,6 +76,7 @@ export default async function NewProductPage() {
             Цена
             <input
               className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              max={10000}
               min="0"
               name="price"
               step="0.01"
@@ -86,6 +87,7 @@ export default async function NewProductPage() {
             Остаток
             <input
               className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              max={100}
               min="0"
               name="stock_qty"
               step="0.001"
@@ -104,6 +106,7 @@ export default async function NewProductPage() {
             Граммы
             <input
               className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              max={2000}
               min="0"
               name="weight_grams"
               step="0.001"

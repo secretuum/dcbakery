@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/src/components/ui/Badge";
+import { CartBottomBarClient } from "@/src/components/cart/CartBottomBarClient";
 import { ProductGallery } from "@/src/components/product/ProductGallery";
 import { ProductPurchase } from "@/src/components/product/ProductPurchase";
 import { fetchProductBySlug, fetchProductSlugs } from "@/src/lib/catalog";
@@ -57,7 +58,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   ];
 
   return (
-    <main className="min-h-screen bg-cream text-dark">
+    <>
+    <main className="min-h-screen bg-cream text-dark pb-52">
       <section className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
         <ProductGallery images={product.images} alt={product.name} />
 
@@ -94,5 +96,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       </section>
     </main>
+    <CartBottomBarClient />
+    </>
   );
 }

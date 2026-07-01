@@ -79,21 +79,20 @@ function getCatalogProductPatch(formData: FormData) {
     is_archived: getBoolean(formData, "is_archived"),
     is_halal: true,
     is_new: getBoolean(formData, "is_new"),
-    is_popular: getBoolean(formData, "is_popular"),
-    popularity_rank: getNumber(formData, "popularity_rank"),
+    popularity_rank: getNumber(formData, "popularity_rank") || null,
     is_promo: getBoolean(formData, "is_promo"),
     min_qty: getNumber(formData, "min_qty"),
     name: getString(formData, "name"),
     package_type: getString(formData, "package_type"),
-    price: getNumber(formData, "price"),
+    price: Math.min(getNumber(formData, "price") ?? 0, 10000),
     shelf_life: getString(formData, "shelf_life"),
     slug: getString(formData, "slug") || slugify(getString(formData, "name")),
     step_qty: 1,
-    stock_qty: getNumber(formData, "stock_qty"),
+    stock_qty: Math.min(getNumber(formData, "stock_qty") ?? 0, 100),
     storage: getString(formData, "storage"),
     subcategory: getString(formData, "subcategory"),
     unit: "шт",
-    weight_grams: getNumber(formData, "weight_grams"),
+    weight_grams: Math.min(getNumber(formData, "weight_grams") ?? 0, 2000),
     weight_label: getString(formData, "weight_label"),
   };
 }
@@ -171,18 +170,6 @@ export async function bulkUpdateCatalogProductsAction(formData: FormData) {
       if (action === "hide") {
         return upsertCatalogProductOverride(productId, {
           is_active: false,
-        });
-      }
-
-      if (action === "popular") {
-        return upsertCatalogProductOverride(productId, {
-          is_popular: true,
-        });
-      }
-
-      if (action === "not_popular") {
-        return upsertCatalogProductOverride(productId, {
-          is_popular: false,
         });
       }
 

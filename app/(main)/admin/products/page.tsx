@@ -203,8 +203,6 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                 <option value="restore">Вернуть из архива</option>
                 <option value="activate">Сделать активными</option>
                 <option value="hide">Скрыть</option>
-                <option value="popular">Сделать популярными</option>
-                <option value="not_popular">Убрать из популярных</option>
                 <option value="set_price">Поставить цену</option>
               </select>
               <input
@@ -351,6 +349,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           className="w-32 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-raspberry outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                           defaultValue={product.price}
                           form={formId}
+                          max={10000}
                           min="0"
                           name="price"
                           step="0.01"
@@ -373,6 +372,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             className="w-36 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                             defaultValue={product.weightGrams ?? ""}
                             form={formId}
+                            max={2000}
                             min="0"
                             name="weight_grams"
                             placeholder="Граммы"
@@ -389,6 +389,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           className="w-28 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                           defaultValue={product.stock_qty}
                           form={formId}
+                          max={100}
                           min="0"
                           name="stock_qty"
                           step="0.001"
@@ -405,15 +406,6 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           >
                             <option value="true">Активен</option>
                             <option value="false">Скрыт</option>
-                          </select>
-                          <select
-                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-                            defaultValue={String(Boolean(product.isPopular))}
-                            form={formId}
-                            name="is_popular"
-                          >
-                            <option value="false">Обычный</option>
-                            <option value="true">Популярный</option>
                           </select>
                           <label className="flex items-center gap-2">
                             <span className="shrink-0 text-xs font-bold text-muted">Популярность (1–15)</span>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { CategoryCard } from "@/src/components/catalog/CategoryCard";
 import { ProductCard } from "@/src/components/catalog/ProductCard";
+import { CartBottomBarClient } from "@/src/components/cart/CartBottomBarClient";
 import { fetchCategories, fetchPopularProducts, fetchProducts } from "@/src/lib/catalog";
 import { formatPrice } from "@/src/lib/format";
 import type { Category } from "@/src/types";
@@ -48,7 +49,8 @@ export default async function Home() {
   const homeCategories = [...categories, promoCategory];
 
   return (
-    <main className="overflow-hidden bg-cream text-dark">
+    <>
+    <main className="overflow-hidden bg-cream text-dark pb-52">
       <section className="relative px-5 pb-12 pt-8 lg:px-8 lg:pb-20 lg:pt-14">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_1px_1px,rgba(139,26,74,0.14)_1px,transparent_0)] bg-[length:26px_26px]" />
         <div className="absolute inset-x-0 top-0 -z-10 h-72 bg-[linear-gradient(135deg,rgba(244,123,111,0.24),rgba(196,57,90,0.10),transparent)]" />
@@ -259,5 +261,7 @@ export default async function Home() {
         </div>
       </section>
     </main>
+    <CartBottomBarClient />
+    </>
   );
 }

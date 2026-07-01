@@ -7,7 +7,8 @@ import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
-import type { ClientOrderSummary, OrderItemSummary } from "@/src/types";
+import { useCart } from "@/src/contexts/CartContext";
+import type { ClientOrderSummary, OrderItemSummary, Product } from "@/src/types";
 
 const PROFILE_STORAGE_KEY = "dc_bakery_client_profile";
 
@@ -541,14 +542,51 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   );
 }
 
+function PopularProductsSection({ products }: { products: Product[] }) {
+  const { add } = useCart();
+
+  if (products.length === 0) return null;
+
+  return (
+    <section className="mt-6 rounded-card bg-white p-6 shadow-[0_18px_48px_rgba(120,51,38,0.08)]">
+      <p className="text-xs font-black uppercase text-raspberry">Рекомендуем</p>
+      <h2 className="mt-2 text-2xl font-black tracking-tight">Популярное у клиентов</h2>
+      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {products.map((product) => (
+          <div
+            key={product.id}
+            className="flex flex-col justify-between rounded-card border border-black/10 bg-cream p-4"
+          >
+            <div>
+              <p className="text-sm font-black leading-tight text-dark">{product.name}</p>
+              <p className="mt-2 text-lg font-black text-dark">
+                {product.price > 0 ? formatCurrency(product.price) : "Цена уточняется"}
+              </p>
+            </div>
+            <button
+              type="button"
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-btn bg-coral px-4 py-2 text-sm font-black text-white transition hover:bg-coral-hover"
+              onClick={() => add(product, product.min_qty)}
+            >
+              + В корзину
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function ClientDashboard({
   session,
   onLogout,
   onUpdate,
+  popularProducts = [],
 }: {
   session: ClientSession;
   onLogout: () => void;
   onUpdate: (session: ClientSession) => void;
+  popularProducts?: Product[];
 }) {
   const [accountantPhone, setAccountantPhone] = useState(session.accountant_phone ?? "");
   const [companyName, setCompanyName] = useState(session.companyName);
@@ -658,6 +696,8 @@ function ClientDashboard({
         <MetricCard label="Оплачено" value={formatCurrency(paidAmount)} />
       </div>
 
+      <PopularProductsSection products={popularProducts} />
+
       <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="rounded-card bg-white p-6 shadow-[0_18px_48px_rgba(120,51,38,0.08)]">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -747,7 +787,7 @@ function ClientDashboard({
   );
 }
 
-export function ProfileClient() {
+export function ProfileClient({ popularProducts = [] }: { popularProducts?: Product[] }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [session, setSession] = useState<ProfileSession | null>(null);
@@ -811,7 +851,7 @@ export function ProfileClient() {
       ) : session?.role === "admin" ? (
         <AdminDashboard session={session} onLogout={handleLogout} />
       ) : session?.role === "client" ? (
-        <ClientDashboard session={session} onLogout={handleLogout} onUpdate={setSession} />
+        <ClientDashboard session={session} onLogout={handleLogout} onUpdate={setSession} popularProducts={popularProducts} />
       ) : (
         <LoginPanel onLogin={setSession} />
       )}

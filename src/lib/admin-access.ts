@@ -34,5 +34,5 @@ export function isAdminIdentity(user: AdminIdentity | null | undefined) {
 
   // Backward compatibility for existing Supabase projects. Setting ADMIN_EMAILS
   // or app_metadata.role=admin enables strict admin-only access.
-  return adminEmails.size === 0;
+  return false;
 }

@@ -20,7 +20,8 @@ const store = globalRateLimitStore.dcRateLimitStore ?? new Map<string, RateLimit
 globalRateLimitStore.dcRateLimitStore = store;
 
 export function getRequestIdentifier(request: Request) {
-  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+const forwardedFor = request.headers.get("x-forwarded-for")
+  ?.split(",").at(-1)?.trim();
 
   return (
     forwardedFor ||

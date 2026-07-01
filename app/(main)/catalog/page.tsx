@@ -6,7 +6,7 @@ import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Каталог | DC Bakery",
-  description: "B2B-каталог DC Bakery: десерты, полуфабрикаты и мясо для бизнеса.",
+  description: "B2B-каталог DC Bakery: десерты, полуфабрикаты и мясо.",
 };
 
 export default async function CatalogPage() {
@@ -25,7 +25,7 @@ export default async function CatalogPage() {
           <div>
             <p className="text-sm font-black uppercase text-raspberry">Каталог DC Bakery</p>
             <h1 className="mt-3 text-5xl font-black leading-tight tracking-tight sm:text-6xl">
-              Выберите раздел закупки
+              Выберите раздел
             </h1>
             <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-muted">
             </p>

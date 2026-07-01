@@ -4,6 +4,7 @@ import {
   bulkUpdateCatalogProductsAction,
   updateCatalogProductAction,
 } from "@/app/(main)/admin/products/actions";
+import { ProductImageUpload } from "@/src/components/admin/ProductImageUpload";
 import { Badge } from "@/src/components/ui/Badge";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { fetchAdminProducts, fetchCategories } from "@/src/lib/catalog";
@@ -290,12 +291,11 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                               name="slug"
                               placeholder="slug"
                             />
-                            <input
-                              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-muted outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            <ProductImageUpload
                               defaultValue={product.images[0] ?? ""}
                               form={formId}
-                              name="image"
-                              placeholder="/products/image.jpg"
+                              inputName="image"
+                              slug={product.slug}
                             />
                             <details className="mt-2 rounded-xl bg-cream p-3">
                               <summary className="cursor-pointer text-xs font-black text-burgundy">

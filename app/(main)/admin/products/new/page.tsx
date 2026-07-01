@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { createCatalogProductAction } from "@/app/(main)/admin/products/actions";
+import { ProductImageUpload } from "@/src/components/admin/ProductImageUpload";
 import { fetchCategories } from "@/src/lib/catalog";
 
 export const metadata: Metadata = {
@@ -113,14 +114,10 @@ export default async function NewProductPage() {
               type="number"
             />
           </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <div className="grid gap-1 text-sm font-black text-dark">
             Картинка
-            <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
-              name="image"
-              placeholder="/products/new-product.jpg"
-            />
-          </label>
+            <ProductImageUpload inputName="image" />
+          </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">

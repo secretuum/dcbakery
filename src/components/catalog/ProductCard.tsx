@@ -55,7 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
           src={imageSrc}
           alt={product.name}
           fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          sizes="(max-width: 640px) 33vw, (max-width: 1280px) 25vw, 20vw"
           className="object-cover"
         />
         {!isInStock && (
@@ -65,7 +65,7 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
 
-      <div className="p-3">
+      <div className="p-2 sm:p-3">
         <h3 className="line-clamp-2 text-sm font-semibold text-dark">
           {product.name}
         </h3>

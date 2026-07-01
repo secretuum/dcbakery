@@ -2,11 +2,11 @@
 
 import dynamic from "next/dynamic";
 
-const CartBottomBar = dynamic(
-  () => import("@/src/components/cart/CartBottomBar"),
+const CartSheet = dynamic(
+  () => import("@/src/components/cart/CartSheet"),
   { ssr: false },
 );
 
 export function CartBottomBarClient() {
-  return <CartBottomBar />;
+  return <CartSheet />;
 }

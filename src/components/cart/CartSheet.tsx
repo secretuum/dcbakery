@@ -59,14 +59,14 @@ export default function CartSheet() {
       {/* Sheet outer container — horizontally centers panel; closes sheet when clicking backdrop area */}
       <div
         className={`fixed z-50 flex justify-center ${
-          isOpen ? "inset-0 items-end" : "bottom-0 left-0 right-0"
+          isOpen ? "inset-0 items-end" : "bottom-0 left-0 right-0 pointer-events-none"
         }`}
         onClick={isOpen ? () => setIsOpen(false) : undefined}
       >
 
       {/* Sheet panel */}
       <div
-        className="flex w-full max-w-lg flex-col rounded-t-3xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-transform duration-300"
+        className="pointer-events-auto flex w-full max-w-lg flex-col rounded-t-3xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-transform duration-300"
         style={{
           maxHeight: "90vh",
           transform: isOpen ? "translateY(0)" : "translateY(calc(100% - 3.5rem))",

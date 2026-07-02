@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/src/components/ui/Badge";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
+import { ProductSheet } from "@/src/components/catalog/ProductSheet";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatProductPrice } from "@/src/lib/format";
@@ -14,6 +16,7 @@ type ProductCardProps = {
 export function ProductCard({ product }: ProductCardProps) {
   const { add, remove, updateQty, isReady, items } = useCart();
   const { showToast } = useToast();
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const imageSrc = product.images[0] ?? "/product-placeholder.png";
   const isInStock = isReady && product.stock_qty > 0;
   const priceText = formatProductPrice(product.price);
@@ -50,23 +53,33 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <article className="overflow-hidden rounded-2xl bg-white shadow-sm">
-      <div className="relative aspect-square overflow-hidden">
-        <FallbackImage
-          src={imageSrc}
-          alt={product.name}
-          fill
-          sizes="(max-width: 640px) 33vw, (max-width: 1280px) 25vw, 20vw"
-          className="object-cover"
-        />
-        {!isInStock && (
-          <span className="absolute right-2 top-2">
-            <Badge variant="dark">нет</Badge>
-          </span>
-        )}
-      </div>
+      <button
+        type="button"
+        onClick={() => setIsSheetOpen(true)}
+        className="relative block w-full cursor-pointer overflow-hidden text-left"
+        aria-label={`Подробнее: ${product.name}`}
+      >
+        <div className="relative aspect-square overflow-hidden">
+          <FallbackImage
+            src={imageSrc}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 33vw, (max-width: 1280px) 25vw, 20vw"
+            className="object-cover"
+          />
+          {!isInStock && (
+            <span className="absolute right-2 top-2">
+              <Badge variant="dark">нет</Badge>
+            </span>
+          )}
+        </div>
+      </button>
 
       <div className="p-2 sm:p-3">
-        <h3 className="line-clamp-2 text-sm font-semibold text-dark">
+        <h3
+          className="line-clamp-2 cursor-pointer text-sm font-semibold text-dark"
+          onClick={() => setIsSheetOpen(true)}
+        >
           {product.name}
         </h3>
 
@@ -106,6 +119,8 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
       </div>
+
+      {isSheetOpen && <ProductSheet product={product} onClose={() => setIsSheetOpen(false)} />}
     </article>
   );
 }

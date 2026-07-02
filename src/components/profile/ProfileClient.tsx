@@ -139,8 +139,8 @@ function MetricCard({
     <div
       className={
         tone === "coral"
-          ? "rounded-card bg-coral p-5 text-white shadow-[0_18px_48px_rgba(244,123,111,0.22)]"
-          : "rounded-card bg-white p-5 shadow-[0_18px_48px_rgba(120,51,38,0.08)]"
+          ? "rounded-card bg-coral p-5 text-white shadow-sm"
+          : "rounded-card bg-white p-5 shadow-sm"
       }
     >
       <p className={tone === "coral" ? "text-xs font-black uppercase text-white/80" : "text-xs font-black uppercase text-muted"}>
@@ -239,7 +239,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-card bg-white p-5 shadow-[0_18px_48px_rgba(120,51,38,0.08)]">
+          <div className="rounded-card bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3 text-raspberry">
               <ClientIcon />
               <p className="text-sm font-black">Клиент</p>
@@ -248,7 +248,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
               История заказов, повтор закупки, настройки компании и документы.
             </p>
           </div>
-          <div className="rounded-card bg-coral-light p-5 shadow-[0_18px_48px_rgba(120,51,38,0.08)]">
+          <div className="rounded-card bg-coral-light p-5 shadow-sm">
             <div className="flex items-center gap-3 text-burgundy">
               <AdminIcon />
               <p className="text-sm font-black">Админ</p>
@@ -262,7 +262,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-card bg-white p-6 shadow-[0_24px_80px_rgba(120,51,38,0.12)] sm:p-8"
+        className="rounded-card bg-white p-6 shadow-sm sm:p-8"
       >
         <div>
           <p className="text-sm font-black uppercase text-raspberry">Войти</p>
@@ -324,7 +324,7 @@ function AdminDashboard({
 }) {
   return (
     <section className="mx-auto max-w-6xl">
-      <div className="flex flex-col gap-5 rounded-card bg-dark p-6 text-white shadow-[0_24px_80px_rgba(28,28,28,0.18)] lg:flex-row lg:items-center lg:justify-between lg:p-8">
+      <div className="flex flex-col gap-5 rounded-card bg-dark p-6 text-white shadow-sm lg:flex-row lg:items-center lg:justify-between lg:p-8">
         <div>
           <p className="text-sm font-black uppercase text-coral">Админ-профиль</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">DC Bakery Manager</h1>
@@ -353,7 +353,7 @@ function AdminDashboard({
       <div className="mt-6 grid gap-5 lg:grid-cols-3">
         <Link
           href="/admin/orders"
-          className="rounded-card bg-white p-6 shadow-[0_18px_48px_rgba(120,51,38,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(120,51,38,0.12)]"
+          className="rounded-card bg-white p-6 shadow-sm transition hover:-translate-y-0.5"
         >
           <p className="text-xs font-black uppercase text-raspberry">Операции</p>
           <h2 className="mt-3 text-2xl font-black tracking-tight">Заказы</h2>
@@ -363,7 +363,7 @@ function AdminDashboard({
         </Link>
         <Link
           href="/admin/products"
-          className="rounded-card bg-white p-6 shadow-[0_18px_48px_rgba(120,51,38,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(120,51,38,0.12)]"
+          className="rounded-card bg-white p-6 shadow-sm transition hover:-translate-y-0.5"
         >
           <p className="text-xs font-black uppercase text-raspberry">Каталог</p>
           <h2 className="mt-3 text-2xl font-black tracking-tight">Товары</h2>
@@ -373,7 +373,7 @@ function AdminDashboard({
         </Link>
         <Link
           href="/admin/settings"
-          className="rounded-card bg-white p-6 shadow-[0_18px_48px_rgba(120,51,38,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(120,51,38,0.12)]"
+          className="rounded-card bg-white p-6 shadow-sm transition hover:-translate-y-0.5"
         >
           <p className="text-xs font-black uppercase text-raspberry">Система</p>
           <h2 className="mt-3 text-2xl font-black tracking-tight">Настройки</h2>
@@ -442,7 +442,7 @@ function ClientOrderCard({ order, clientPhone }: { order: ClientOrderSummary; cl
   }
 
   return (
-    <article className="rounded-card border border-black/10 bg-white p-5 shadow-[0_14px_40px_rgba(120,51,38,0.06)]">
+    <article className="rounded-card bg-white p-5 shadow-sm">
       <button
         type="button"
         className="flex w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:justify-between"
@@ -456,7 +456,7 @@ function ClientOrderCard({ order, clientPhone }: { order: ClientOrderSummary; cl
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <p className="text-2xl font-black text-dark">{formatCurrency(order.total_amount)}</p>
+          <p className="text-xl font-black text-coral">{formatCurrency(order.total_amount)}</p>
           <span className="text-xs text-muted">{isExpanded ? "▲" : "▼"}</span>
         </div>
       </button>
@@ -549,7 +549,7 @@ function PopularProductsSection({ products }: { products: Product[] }) {
   if (products.length === 0) return null;
 
   return (
-    <section className="mt-6 rounded-card bg-white p-6 shadow-[0_18px_48px_rgba(120,51,38,0.08)]">
+    <section className="mt-6 rounded-card bg-white p-6 shadow-sm">
       <p className="text-xs font-black uppercase text-raspberry">Рекомендуем</p>
       <h2 className="mt-2 text-2xl font-black tracking-tight">Популярное у клиентов</h2>
       <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -667,7 +667,7 @@ function ClientDashboard({
 
   return (
     <section className="mx-auto max-w-6xl">
-      <div className="flex flex-col gap-5 rounded-card bg-white p-6 shadow-[0_24px_80px_rgba(120,51,38,0.12)] lg:flex-row lg:items-center lg:justify-between lg:p-8">
+      <div className="flex flex-col gap-5 rounded-card bg-white p-6 shadow-sm lg:flex-row lg:items-center lg:justify-between lg:p-8">
         <div>
           <p className="text-sm font-black uppercase text-raspberry">Клиентский профиль</p>
           <h1 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl">
@@ -700,7 +700,7 @@ function ClientDashboard({
       <PopularProductsSection products={popularProducts} />
 
       <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="rounded-card bg-white p-6 shadow-[0_18px_48px_rgba(120,51,38,0.08)]">
+        <section className="rounded-card bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-black uppercase text-raspberry">История</p>
@@ -741,7 +741,7 @@ function ClientDashboard({
           )}
         </section>
 
-        <section className="rounded-card bg-white p-6 shadow-[0_18px_48px_rgba(120,51,38,0.08)]">
+        <section className="rounded-card bg-white p-6 shadow-sm">
           <p className="text-xs font-black uppercase text-raspberry">Настройки</p>
           <h2 className="mt-2 text-2xl font-black tracking-tight">Профиль компании</h2>
           <div className="mt-5 space-y-4">
@@ -847,7 +847,7 @@ export function ProfileClient({ popularProducts = [] }: { popularProducts?: Prod
     <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
       {isLoading ? (
         <section className="mx-auto max-w-6xl">
-          <div className="h-72 animate-pulse rounded-card bg-white shadow-[0_24px_80px_rgba(120,51,38,0.10)]" />
+          <div className="h-72 animate-pulse rounded-card bg-white shadow-sm" />
         </section>
       ) : session?.role === "admin" ? (
         <AdminDashboard session={session} onLogout={handleLogout} />

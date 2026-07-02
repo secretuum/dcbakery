@@ -7,7 +7,7 @@ import {
   getCompanyDetails,
   hasCompleteCompanyDetails,
 } from "@/src/lib/company-details";
-import { fetchAdminOrder } from "@/src/lib/supabase/admin";
+import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
 import {
@@ -82,7 +82,10 @@ export default async function PayPage({ params }: PayPageProps) {
     notFound();
   }
 
-  const order = await fetchAdminOrder(orderId);
+  const [order, orderItems] = await Promise.all([
+    fetchAdminOrder(orderId),
+    fetchAdminOrderItems(orderId),
+  ]);
 
   if (!order) {
     notFound();
@@ -146,6 +149,30 @@ export default async function PayPage({ params }: PayPageProps) {
             </p>
           </div>
         </div>
+
+        {orderItems.length > 0 ? (
+          <section className="mt-8 rounded-card bg-cream p-5">
+            <p className="text-xs font-black uppercase text-raspberry">Состав заказа</p>
+            <ul className="mt-4 space-y-2">
+              {orderItems.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-baseline justify-between gap-3 rounded-btn bg-white px-4 py-3 text-sm"
+                >
+                  <span className="font-bold text-dark">
+                    {item.product_name}{" "}
+                    <span className="font-semibold text-muted">
+                      × {item.qty} {item.unit}
+                    </span>
+                  </span>
+                  <span className="shrink-0 font-black text-dark">
+                    {formatPrice(item.total_amount)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <section className="mt-8 rounded-card bg-cream p-5">
           <p className="text-xs font-black uppercase text-raspberry">Документы</p>

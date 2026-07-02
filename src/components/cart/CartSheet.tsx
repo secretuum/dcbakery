@@ -56,6 +56,44 @@ export default function CartSheet() {
         />
       )}
 
+      {/* Floating cart pill (Drinkit-style) — visible when sheet is closed and cart is not empty */}
+      {!isOpen && totalItems > 0 && (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-white py-2 pl-5 pr-2 shadow-[0_8px_30px_rgba(0,0,0,0.18)] transition hover:shadow-[0_10px_36px_rgba(0,0,0,0.22)]"
+          style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}
+          aria-label={`Открыть корзину, товаров: ${totalItems}`}
+        >
+          <span className="whitespace-nowrap text-lg font-bold text-dark">
+            {formatPrice(totalAmount)}
+          </span>
+          <span className="flex items-center">
+            {items.slice(0, 3).map(({ product }, index) => (
+              <span
+                key={product.id}
+                className={`relative h-10 w-10 overflow-hidden rounded-full border-2 border-white bg-gray-50 ${
+                  index > 0 ? "-ml-3" : ""
+                }`}
+              >
+                <FallbackImage
+                  src={product.images[0]}
+                  alt=""
+                  fill
+                  sizes="40px"
+                  className="object-cover"
+                />
+              </span>
+            ))}
+            {items.length > 3 && (
+              <span className="-ml-3 flex h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-gray-100 text-xs font-bold text-gray-600">
+                +{items.length - 3}
+              </span>
+            )}
+          </span>
+        </button>
+      )}
+
       {/* Sheet outer container — horizontally centers panel; closes sheet when clicking backdrop area */}
       <div
         className={`fixed z-50 flex justify-center ${
@@ -71,9 +109,7 @@ export default function CartSheet() {
           maxHeight: "92vh",
           minHeight: isOpen ? "70vh" : undefined,
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
-          transform: isOpen
-            ? "translateY(0)"
-            : "translateY(calc(100% - 3.5rem - env(safe-area-inset-bottom, 0px)))",
+          transform: isOpen ? "translateY(0)" : "translateY(calc(100% + 40px))",
         }}
         onClick={(e) => e.stopPropagation()}
         aria-hidden={!isOpen}
@@ -94,22 +130,7 @@ export default function CartSheet() {
                 ? `${totalItems} ${pluralItems(totalItems)}`
                 : "Корзина пуста"}
             </span>
-            {totalItems > 0 && !isOpen && (
-              <span className="text-sm font-bold text-gray-800">
-                {formatPrice(totalAmount)}
-              </span>
-            )}
           </button>
-
-          {canCheckout && !isOpen && (
-            <Link
-              href="/checkout"
-              onClick={(e) => e.stopPropagation()}
-              className="ml-3 rounded-xl bg-green-500 px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-green-600"
-            >
-              Оформить
-            </Link>
-          )}
         </div>
 
         {/* Expanded content */}

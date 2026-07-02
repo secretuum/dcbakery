@@ -84,19 +84,19 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         })}
       </nav>
 
-      <div className="mt-6 overflow-hidden rounded-card bg-white shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
+      <div className="mt-6 overflow-hidden rounded-card bg-white shadow-sm">
         {orders.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-[960px] w-full border-collapse text-left">
+            <table className="min-w-[640px] w-full border-collapse text-left">
               <thead className="bg-coral-light text-xs font-black uppercase text-burgundy">
                 <tr>
                   <th className="px-5 py-4">Номер</th>
                   <th className="px-5 py-4">Компания</th>
-                  <th className="px-5 py-4">Телефон</th>
+                  <th className="hidden px-5 py-4 md:table-cell">Телефон</th>
                   <th className="px-5 py-4">Сумма</th>
                   <th className="px-5 py-4">Статус</th>
                   <th className="px-5 py-4">Оплата</th>
-                  <th className="px-5 py-4">Дата</th>
+                  <th className="hidden px-5 py-4 md:table-cell">Дата</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/10 text-sm font-semibold">
@@ -114,7 +114,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                       <p className="font-black text-dark">{order.company_name}</p>
                       <p className="mt-1 text-xs text-muted">{order.customer_name}</p>
                     </td>
-                    <td className="px-5 py-4 text-muted">{order.customer_phone}</td>
+                    <td className="hidden px-5 py-4 text-muted md:table-cell">{order.customer_phone}</td>
                     <td className="px-5 py-4 font-black">{formatPrice(order.total_amount)}</td>
                     <td className="px-5 py-4">
                       <OrderSlaStatus createdAt={order.created_at} status={order.status} />
@@ -122,7 +122,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                     <td className="px-5 py-4">
                       <PaymentStatusBadge status={order.payment_status} />
                     </td>
-                    <td className="px-5 py-4 text-muted">{formatDate(order.created_at)}</td>
+                    <td className="hidden px-5 py-4 text-muted md:table-cell">{formatDate(order.created_at)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -130,7 +130,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           </div>
         ) : (
           <div className="p-8 text-center">
-            <h2 className="text-3xl font-black">Заказов пока нет</h2>
+            <h2 className="text-xl font-bold">Заказов пока нет</h2>
             <p className="mt-3 text-sm font-semibold text-muted">
               Новые заявки появятся здесь после оформления на сайте.
             </p>

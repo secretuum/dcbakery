@@ -62,8 +62,8 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
   const details: Array<[string, string]> = (
     [
       ["Фасовка", product.weightLabel],
-      ["Минимальный заказ", `${product.min_qty} ${product.unit}`],
-      ["Остаток", `${product.stock_qty} ${product.unit}`],
+      ["Минимальный заказ", product.min_qty > 1 ? `${product.min_qty} ${product.unit}` : null],
+      ["В наличии", product.stock_qty > 0 ? `${product.stock_qty} ${product.unit}` : null],
       ["Срок годности", product.shelfLife],
       ["Хранение", product.storage],
       ["Упаковка", product.packageType],
@@ -81,7 +81,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
         style={{ maxHeight: "92vh", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         {/* Scrollable content */}
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto">
           <div className="relative aspect-square w-full bg-coral-light">
             <FallbackImage
               src={imageSrc}

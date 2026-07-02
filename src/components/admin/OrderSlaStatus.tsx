@@ -53,7 +53,7 @@ export function OrderSlaStatus({ createdAt, status }: OrderSlaStatusProps) {
   if (isOverdue) {
     return (
       <span
-        className="sla-flame inline-flex min-h-16 min-w-32 flex-col items-center justify-center bg-[#dc2626] px-5 pb-3 pt-5 text-center text-white shadow-[0_12px_30px_rgba(220,38,38,0.38)]"
+        className="sla-flame inline-flex min-h-11 min-w-28 flex-col items-center justify-center bg-raspberry px-4 pb-2 pt-3 text-center text-white"
         title="Заявка не обработана более 30 минут"
       >
         <span className="text-xs font-black uppercase">Срочно</span>

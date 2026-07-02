@@ -89,7 +89,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
 
       <div className="mt-8 grid gap-6 xl:grid-cols-[1fr_360px] xl:items-start">
         <div className="space-y-6">
-          <section className="rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)] sm:p-6">
+          <section className="rounded-card bg-white p-5 shadow-sm sm:p-6">
             <h2 className="text-2xl font-black tracking-tight">Клиент и доставка</h2>
             <dl className="mt-5 grid gap-4 sm:grid-cols-2">
               {[
@@ -119,12 +119,12 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
             ) : null}
           </section>
 
-          <section className="overflow-hidden rounded-card bg-white shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
+          <section className="overflow-hidden rounded-card bg-white shadow-sm">
             <div className="border-b border-black/10 p-5 sm:p-6">
               <h2 className="text-2xl font-black tracking-tight">Состав заказа</h2>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-[720px] w-full border-collapse text-left">
+              <table className="min-w-[480px] w-full border-collapse text-left">
                 <thead className="bg-coral-light text-xs font-black uppercase text-burgundy">
                   <tr>
                     <th className="px-5 py-4">Товар</th>
@@ -160,7 +160,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
           />
         </div>
 
-        <aside className="rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)] xl:sticky xl:top-8">
+        <aside className="rounded-card bg-white p-5 shadow-sm xl:sticky xl:top-8">
           <OrderStatusSelect orderId={order.id} status={order.status} />
           <ConfirmOrderButton orderId={order.id} status={order.status} />
           <MarkOrderPaidButton

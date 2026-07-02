@@ -68,7 +68,8 @@ export default function CartSheet() {
       <div
         className="pointer-events-auto flex w-full max-w-lg flex-col rounded-t-3xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-transform duration-300"
         style={{
-          maxHeight: "90vh",
+          maxHeight: "92vh",
+          minHeight: isOpen ? "70vh" : undefined,
           transform: isOpen ? "translateY(0)" : "translateY(calc(100% - 3.5rem))",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -127,7 +128,7 @@ export default function CartSheet() {
                 d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
               />
             </svg>
-            <h2 className="flex-1 text-center text-sm font-semibold text-gray-800">
+            <h2 className="flex-1 text-center text-base font-semibold text-gray-800">
               Ваша корзина
             </h2>
             <button
@@ -173,22 +174,22 @@ export default function CartSheet() {
               <ul className="space-y-3">
                 {items.map(({ product, qty }) => (
                   <li key={product.id} className="flex items-center gap-3">
-                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-50">
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-50">
                       <FallbackImage
                         src={product.images[0]}
                         alt={product.name}
                         fill
-                        sizes="64px"
+                        sizes="80px"
                         className="object-cover"
                       />
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-gray-800">
+                      <p className="truncate text-base font-semibold text-gray-800">
                         {product.name}
                       </p>
                       <p className="text-xs text-gray-400">{product.unit}</p>
-                      <p className="text-sm font-bold text-gray-900">
+                      <p className="text-base font-bold text-gray-900">
                         {formatPrice(product.price * qty)}
                       </p>
                     </div>
@@ -197,24 +198,24 @@ export default function CartSheet() {
                       <button
                         type="button"
                         onClick={() => updateQty(product.id, qty - product.step_qty)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-sm font-bold text-gray-600 hover:bg-gray-200"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-base font-bold text-gray-600 hover:bg-gray-200"
                       >
                         −
                       </button>
-                      <span className="w-6 text-center text-sm font-semibold tabular-nums">
+                      <span className="w-8 text-center text-base font-semibold tabular-nums">
                         {qty}
                       </span>
                       <button
                         type="button"
                         onClick={() => updateQty(product.id, qty + product.step_qty)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg bg-gray-100 text-sm font-bold text-gray-600 hover:bg-gray-200"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-base font-bold text-gray-600 hover:bg-gray-200"
                       >
                         +
                       </button>
                       <button
                         type="button"
                         onClick={() => remove(product.id)}
-                        className="ml-1 text-lg leading-none text-gray-300 hover:text-red-400"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-xl leading-none text-gray-300 hover:text-red-400"
                         aria-label={`Удалить ${product.name}`}
                       >
                         ×

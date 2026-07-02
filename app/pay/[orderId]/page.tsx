@@ -116,34 +116,34 @@ export default async function PayPage({ params }: PayPageProps) {
     Boolean(order.payment_url) && !order.payment_url?.includes(`/pay/${order.id}`);
 
   return (
-    <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
-      <section className="mx-auto max-w-4xl rounded-card bg-white p-8 shadow-[0_24px_80px_rgba(120,51,38,0.12)] sm:p-10">
+    <main className="min-h-screen bg-cream px-5 py-10 text-dark lg:px-8 lg:py-16">
+      <section className="mx-auto max-w-4xl rounded-card bg-white p-5 shadow-sm sm:p-8 lg:p-10">
         {order.status === "pending_manager_confirmation" || order.status === "new" ? (
           <PaymentStatusRefresh />
         ) : null}
         <p className="text-sm font-black uppercase text-raspberry">{state.eyebrow}</p>
-        <h1 className="mt-3 text-5xl font-black tracking-tight sm:text-6xl">
+        <h1 className="mt-3 break-all text-3xl font-black tracking-tight sm:text-5xl">
           {order.order_number}
         </h1>
         <p className="mt-4 text-base font-semibold leading-7 text-muted">{state.text}</p>
 
         {isDemoMode ? (
-          <p className="mt-5 rounded-btn bg-[#fff1b8] px-4 py-3 text-sm font-black text-[#7a4b00]">
+          <p className="mt-5 rounded-btn bg-coral-light px-4 py-3 text-sm font-bold text-burgundy">
             Демо-режим: реквизиты и платежи тестовые, реальные деньги не используются.
           </p>
         ) : null}
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           <div className="rounded-btn bg-cream px-4 py-3">
-            <p className="text-xs font-black uppercase text-muted">Сумма</p>
+            <p className="text-xs font-semibold uppercase text-muted">Сумма</p>
             <p className="mt-1 text-xl font-black">{formatPrice(order.total_amount)}</p>
           </div>
           <div className="rounded-btn bg-cream px-4 py-3">
-            <p className="text-xs font-black uppercase text-muted">Статус</p>
+            <p className="text-xs font-semibold uppercase text-muted">Статус</p>
             <p className="mt-1 text-sm font-black">{orderStatusLabels[order.status]}</p>
           </div>
           <div className="rounded-btn bg-cream px-4 py-3">
-            <p className="text-xs font-black uppercase text-muted">Оплата</p>
+            <p className="text-xs font-semibold uppercase text-muted">Оплата</p>
             <p className="mt-1 text-sm font-black">
               {order.payment_status ? paymentStatusLabels[order.payment_status] : "Не оплачен"}
             </p>
@@ -225,7 +225,7 @@ export default async function PayPage({ params }: PayPageProps) {
         ) : null}
 
         {order.payment_status === "failed" ? (
-          <p className="mt-6 rounded-btn bg-[#fee2e2] px-4 py-3 text-sm font-black text-[#991b1b]">
+          <p className="mt-6 rounded-btn bg-raspberry/10 px-4 py-3 text-sm font-bold text-raspberry">
             Последняя попытка оплаты не прошла. Деньги не списаны, попробуйте еще раз.
           </p>
         ) : null}

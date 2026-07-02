@@ -40,7 +40,7 @@ export function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-black/10 px-5 py-4">
+      <div className="border-t border-black/10 px-5 pb-20 pt-4">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 text-sm font-medium text-muted sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} DC Bakery</p>
           <p>Оптовые заявки без подключения оплаты на этапе MVP</p>

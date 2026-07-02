@@ -21,7 +21,7 @@ type ButtonNativeProps = ButtonBaseProps &
 export type ButtonProps = ButtonAnchorProps | ButtonNativeProps;
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-coral text-white hover:bg-coral-hover shadow-[0_14px_32px_rgba(244,123,111,0.24)]",
+  primary: "bg-coral text-white hover:bg-coral-hover",
   outline: "border border-coral bg-transparent text-coral hover:bg-coral-light",
   ghost: "bg-transparent text-dark hover:bg-coral-light",
 };

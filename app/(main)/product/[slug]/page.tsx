@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/src/components/ui/Badge";
-import { CartBottomBarClient } from "@/src/components/cart/CartBottomBarClient";
 import { ProductGallery } from "@/src/components/product/ProductGallery";
 import { ProductPurchase } from "@/src/components/product/ProductPurchase";
 import { fetchProductBySlug, fetchProductSlugs } from "@/src/lib/catalog";
@@ -58,7 +57,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
   ];
 
   return (
-    <>
     <main className="min-h-screen bg-cream text-dark pb-52">
       <section className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
         <ProductGallery images={product.images} alt={product.name} />
@@ -74,7 +72,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             <Badge variant="burgundy">B2B</Badge>
           </div>
 
-          <h1 className="mt-5 text-5xl font-black leading-tight tracking-tight sm:text-6xl">
+          <h1 className="mt-5 break-words text-2xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
             {product.name}
           </h1>
           <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-muted">
@@ -96,7 +94,5 @@ export default async function ProductPage({ params }: ProductPageProps) {
         </div>
       </section>
     </main>
-    <CartBottomBarClient />
-    </>
   );
 }

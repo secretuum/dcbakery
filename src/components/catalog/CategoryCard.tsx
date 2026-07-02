@@ -20,7 +20,7 @@ export function CategoryCard({ category, className, eyebrow, href }: CategoryCar
     <Link
       href={href ?? `/catalog/${category.slug}`}
       className={cx(
-        "group relative min-h-72 overflow-hidden rounded-card bg-dark text-white shadow-[0_18px_60px_rgba(120,51,38,0.12)] transition duration-300 hover:scale-[1.02] hover:shadow-[0_26px_80px_rgba(120,51,38,0.18)]",
+        "group relative min-h-72 overflow-hidden rounded-2xl bg-dark text-white shadow-sm transition duration-300 hover:scale-[1.02]",
         className,
       )}
     >

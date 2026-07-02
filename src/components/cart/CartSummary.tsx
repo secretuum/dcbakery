@@ -48,9 +48,9 @@ export function CartSummary({ compact = false }: CartSummaryProps) {
   }
 
   return (
-    <aside className="rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)] lg:sticky lg:top-28">
+    <aside className="rounded-card bg-white p-5 shadow-sm lg:sticky lg:top-28">
       <p className="text-sm font-black uppercase text-raspberry">Корзина</p>
-      <h2 className="mt-2 text-3xl font-black tracking-tight">Итого по заявке</h2>
+      <h2 className="mt-2 text-lg font-semibold tracking-tight">Итого по заявке</h2>
 
       <div className="mt-6 space-y-3 text-sm font-bold">
         <div className="flex items-center justify-between gap-4">
@@ -68,7 +68,7 @@ export function CartSummary({ compact = false }: CartSummaryProps) {
         <div className="border-t border-black/10 pt-4">
           <div className="flex items-end justify-between gap-4">
             <span className="text-muted">Итого</span>
-            <span className="text-3xl font-black text-dark">{formatPrice(totalAmount)}</span>
+            <span className="text-xl font-black text-coral">{formatPrice(totalAmount)}</span>
           </div>
         </div>
       </div>

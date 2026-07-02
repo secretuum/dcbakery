@@ -3,7 +3,6 @@ import Link from "next/link";
 import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { CategoryCard } from "@/src/components/catalog/CategoryCard";
 import { ProductCard } from "@/src/components/catalog/ProductCard";
-import { CartBottomBarClient } from "@/src/components/cart/CartBottomBarClient";
 import { fetchCategories, fetchPopularProducts, fetchProducts } from "@/src/lib/catalog";
 import { formatPrice } from "@/src/lib/format";
 import type { Category } from "@/src/types";
@@ -49,18 +48,17 @@ export default async function Home() {
   const homeCategories = [...categories, promoCategory];
 
   return (
-    <>
     <main className="overflow-hidden bg-cream text-dark pb-52">
       <section className="relative px-5 pb-12 pt-8 lg:px-8 lg:pb-20 lg:pt-14">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_1px_1px,rgba(139,26,74,0.14)_1px,transparent_0)] bg-[length:26px_26px]" />
         <div className="absolute inset-x-0 top-0 -z-10 h-72 bg-[linear-gradient(135deg,rgba(244,123,111,0.24),rgba(196,57,90,0.10),transparent)]" />
 
         <div className="mx-auto grid max-w-7xl gap-7 lg:grid-cols-[1.06fr_0.94fr] lg:items-stretch">
-          <div className="rounded-card bg-white/92 p-6 shadow-[0_24px_90px_rgba(120,51,38,0.13)] backdrop-blur sm:p-8 lg:p-10">
+          <div className="rounded-card bg-white/92 p-6 shadow-sm backdrop-blur sm:p-8 lg:p-10">
             <p className="inline-flex rounded-badge bg-coral-light px-4 py-2 text-sm font-black text-burgundy">
               DC Bakery для бизнеса
             </p>
-            <h1 className="mt-7 max-w-4xl text-5xl font-black leading-[0.96] tracking-tight text-dark sm:text-6xl lg:text-7xl">
+            <h1 className="mt-7 max-w-4xl break-words text-3xl font-black leading-tight tracking-tight text-dark sm:text-5xl sm:leading-[0.96] lg:text-7xl">
               Оптовые заказы десертов, полуфабрикатов и мяса
             </h1>
             <p className="mt-6 max-w-2xl text-xl font-bold leading-8 text-dark/75 sm:text-2xl">
@@ -74,33 +72,33 @@ export default async function Home() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/catalog"
-                className="inline-flex min-h-14 items-center justify-center rounded-btn bg-coral px-7 py-4 text-base font-black text-white shadow-[0_18px_38px_rgba(244,123,111,0.28)] transition hover:bg-coral-hover"
+                className="inline-flex min-h-14 items-center justify-center rounded-btn bg-coral px-7 py-4 text-base font-black text-white transition hover:bg-coral-hover"
               >
                 Смотреть каталог
               </Link>
               <Link
                 href="#terms"
-                className="inline-flex min-h-14 items-center justify-center rounded-btn bg-dark px-7 py-4 text-base font-black text-white shadow-[0_18px_38px_rgba(28,28,28,0.16)] transition hover:bg-burgundy"
+                className="inline-flex min-h-14 items-center justify-center rounded-btn bg-dark px-7 py-4 text-base font-black text-white transition hover:bg-burgundy"
               >
                 Стать партнером
               </Link>
             </div>
           </div>
 
-          <div className="grid min-h-[520px] gap-4 rounded-card bg-coral-light p-4 shadow-[0_24px_90px_rgba(196,57,90,0.14)] sm:grid-cols-2">
+          <div className="grid grid-cols-2 gap-3 rounded-card bg-coral-light p-4 shadow-sm sm:gap-4 lg:min-h-[520px]">
             <div className="rounded-card bg-white p-5 shadow-sm">
               <p className="text-sm font-black uppercase text-raspberry">каталог</p>
-              <p className="mt-3 text-5xl font-black tracking-tight">{allProducts.length}</p>
+              <p className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">{allProducts.length}</p>
               <p className="mt-2 text-sm font-bold text-muted">позиций для закупки</p>
             </div>
             <div className="rounded-card bg-dark p-5 text-white shadow-sm sm:mt-10">
               <p className="text-sm font-black uppercase text-coral-light">повтор</p>
-              <p className="mt-3 text-5xl font-black tracking-tight">2 мин</p>
+              <p className="mt-3 text-3xl font-black tracking-tight sm:text-5xl">2 мин</p>
               <p className="mt-2 text-sm font-bold text-white/70">на новую заявку</p>
             </div>
             <div className="rounded-card bg-cream p-5 shadow-sm">
               <p className="text-sm font-black uppercase text-burgundy">минимум</p>
-              <p className="mt-3 text-4xl font-black tracking-tight">
+              <p className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl">
                 {formatPrice(MIN_ORDER_AMOUNT)}
               </p>
               <p className="mt-2 text-sm font-bold text-muted">для B2B-заказа</p>
@@ -119,7 +117,7 @@ export default async function Home() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-black uppercase text-raspberry">Категории</p>
-              <h2 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">
+              <h2 className="mt-2 break-words text-2xl font-black tracking-tight sm:text-4xl lg:text-5xl">
                 Закупка по разделам
               </h2>
             </div>
@@ -142,11 +140,11 @@ export default async function Home() {
       </section>
 
       <section id="terms" className="px-5 py-12 lg:px-8">
-        <div className="mx-auto max-w-7xl rounded-card bg-dark p-6 text-white shadow-[0_24px_80px_rgba(28,28,28,0.20)] sm:p-8 lg:p-10">
+        <div className="mx-auto max-w-7xl rounded-card bg-dark p-6 text-white shadow-sm sm:p-8 lg:p-10">
           <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-start">
             <div>
               <p className="text-sm font-black uppercase text-coral-light">Как работает заказ</p>
-              <h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
+              <h2 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl lg:text-5xl">
                 Быстро, понятно, с подтверждением менеджера
               </h2>
             </div>
@@ -164,9 +162,9 @@ export default async function Home() {
 
       <section id="delivery" className="px-5 py-12 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1fr_1fr]">
-          <div className="rounded-card bg-white p-6 shadow-[0_18px_60px_rgba(120,51,38,0.10)] sm:p-8">
+          <div className="rounded-card bg-white p-6 shadow-sm sm:p-8">
             <p className="text-sm font-black uppercase text-raspberry">Преимущества</p>
-            <h2 className="mt-3 text-4xl font-black tracking-tight">B2B-заказы в одном окне</h2>
+            <h2 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl">B2B-заказы в одном окне</h2>
             <div className="mt-8 grid gap-3">
               {advantages.map((advantage) => (
                 <div key={advantage} className="rounded-btn bg-coral-light px-5 py-4 text-lg font-black">
@@ -176,9 +174,9 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="rounded-card bg-coral-light p-6 shadow-[0_18px_60px_rgba(196,57,90,0.12)] sm:p-8">
+          <div className="rounded-card bg-coral-light p-6 shadow-sm sm:p-8">
             <p className="text-sm font-black uppercase text-burgundy">Доставка</p>
-            <h2 className="mt-3 text-4xl font-black tracking-tight">Под ваш график поставок</h2>
+            <h2 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl">Под ваш график поставок</h2>
             <p className="mt-5 text-base font-semibold leading-7 text-dark/70">
               Доставка и самовывоз остаются на подтверждении менеджера: он проверит остатки, время
               производства и удобный слот для вашей точки.
@@ -202,14 +200,10 @@ export default async function Home() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-black uppercase text-raspberry">Популярные товары</p>
-              <h2 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">
+              <h2 className="mt-2 break-words text-2xl font-black tracking-tight sm:text-4xl lg:text-5xl">
                 Часто берут партнеры
               </h2>
             </div>
-            <p className="max-w-lg text-base font-semibold leading-7 text-muted">
-              Пока это mock-данные из локального каталога. База, оплата и регистрация будут в
-              следующих шагах.
-            </p>
           </div>
 
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -222,9 +216,9 @@ export default async function Home() {
 
       <section id="about" className="px-5 py-12 lg:px-8 lg:pb-20">
         <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[0.85fr_1.15fr]">
-          <div className="rounded-card bg-white p-6 shadow-[0_18px_60px_rgba(120,51,38,0.10)] sm:p-8">
+          <div className="rounded-card bg-white p-6 shadow-sm sm:p-8">
             <p className="text-sm font-black uppercase text-raspberry">О компании</p>
-            <h2 className="mt-3 text-4xl font-black tracking-tight">
+            <h2 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl">
               DC Bakery строит B2B-маркетплейс еды
             </h2>
             <p className="mt-5 text-base font-semibold leading-7 text-muted">
@@ -243,9 +237,9 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="rounded-card bg-raspberry p-6 text-white shadow-[0_24px_80px_rgba(196,57,90,0.22)] sm:p-8 lg:p-10">
+          <div className="rounded-card bg-raspberry p-6 text-white shadow-sm sm:p-8 lg:p-10">
             <p className="text-sm font-black uppercase text-coral-light">CTA</p>
-            <h2 className="mt-3 max-w-3xl text-4xl font-black tracking-tight sm:text-5xl">
+            <h2 className="mt-3 max-w-3xl break-words text-2xl font-black tracking-tight sm:text-4xl lg:text-5xl">
               Соберите первую оптовую заявку в каталоге
             </h2>
             <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-white/80">
@@ -261,7 +255,5 @@ export default async function Home() {
         </div>
       </section>
     </main>
-    <CartBottomBarClient />
-    </>
   );
 }

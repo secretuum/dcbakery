@@ -230,7 +230,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
     <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-center">
       <div>
         <p className="text-sm font-black uppercase text-raspberry">Профиль</p>
-        <h1 className="mt-3 max-w-3xl text-5xl font-black leading-tight tracking-tight sm:text-6xl">
+        <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
           Вход в кабинет DC Bakery
         </h1>
         <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-muted">
@@ -327,8 +327,8 @@ function AdminDashboard({
       <div className="flex flex-col gap-5 rounded-card bg-dark p-6 text-white shadow-[0_24px_80px_rgba(28,28,28,0.18)] lg:flex-row lg:items-center lg:justify-between lg:p-8">
         <div>
           <p className="text-sm font-black uppercase text-coral">Админ-профиль</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">DC Bakery Manager</h1>
-          <p className="mt-3 text-sm font-semibold text-white/70">{session.email}</p>
+          <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">DC Bakery Manager</h1>
+          <p className="mt-3 break-all text-sm font-semibold text-white/70">{session.email}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button href="/admin/orders" className="bg-white text-dark hover:bg-coral-light">
@@ -670,10 +670,10 @@ function ClientDashboard({
       <div className="flex flex-col gap-5 rounded-card bg-white p-6 shadow-[0_24px_80px_rgba(120,51,38,0.12)] lg:flex-row lg:items-center lg:justify-between lg:p-8">
         <div>
           <p className="text-sm font-black uppercase text-raspberry">Клиентский профиль</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
+          <h1 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl">
             {session.companyName || "Кабинет партнера"}
           </h1>
-          <p className="mt-3 text-sm font-semibold text-muted">{session.email}</p>
+          <p className="mt-3 break-all text-sm font-semibold text-muted">{session.email}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button href="/catalog">В каталог</Button>

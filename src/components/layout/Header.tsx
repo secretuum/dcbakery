@@ -78,7 +78,7 @@ export function Header() {
 
   return (
     <header className="print-hidden sticky top-0 z-30 border-b border-black/10 bg-cream/90 backdrop-blur-xl transition-all duration-200">
-      <nav className={`mx-auto flex max-w-7xl flex-col gap-4 px-5 lg:flex-row lg:items-center lg:justify-between lg:px-8 transition-all duration-200 ${scrolled ? "py-2" : "py-4"}`}>
+      <nav className={`mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 lg:px-8 transition-all duration-200 ${scrolled ? "py-2" : "py-4"}`}>
         <Link href="/" className="flex items-center gap-3" aria-label="DC Bakery">
           <span className={`flex items-center justify-center rounded-card bg-coral font-black text-white shadow-[0_14px_30px_rgba(244,123,111,0.26)] transition-all duration-200 ${scrolled ? "size-8 text-xs" : "size-11 text-sm"}`}>
             DC
@@ -86,13 +86,13 @@ export function Header() {
           <span className={`font-black tracking-tight text-dark transition-all duration-200 ${scrolled ? "text-base" : "text-xl"}`}>DC Bakery</span>
         </Link>
 
-        <div className="flex flex-wrap items-center gap-2 text-sm font-bold text-muted">
+        <div className="flex items-center gap-2 text-sm font-bold text-muted">
           {!isCatalog && navItems.map((item) => (
             (!scrolled || !hiddenOnScroll.includes(item.label)) && (
               <Link
                 key={item.label}
                 href={item.href}
-                className="rounded-btn px-4 py-2 transition hover:bg-white hover:text-dark hover:shadow-sm"
+                className="hidden rounded-btn px-4 py-2 transition hover:bg-white hover:text-dark hover:shadow-sm lg:inline-flex"
               >
                 {item.label}
               </Link>
@@ -100,23 +100,26 @@ export function Header() {
           ))}
 
           {!isCatalog && !scrolled && (
-            <Button
-              href={RETAIL_SITE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="ghost"
-              className="min-h-10 px-4 py-2"
-            >
-              Заказать в розницу →
-            </Button>
+            <span className="hidden lg:inline-flex">
+              <Button
+                href={RETAIL_SITE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="ghost"
+                className="min-h-10 px-4 py-2"
+              >
+                Заказать в розницу →
+              </Button>
+            </span>
           )}
 
           <Link
             href="/profile"
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-btn bg-white px-4 py-2 text-dark shadow-sm transition hover:shadow-md"
+            aria-label="Профиль"
           >
             <ProfileIcon />
-            <span className="font-bold">Профиль</span>
+            <span className="hidden font-bold sm:inline">Профиль</span>
           </Link>
 
           <Link
@@ -125,7 +128,7 @@ export function Header() {
             aria-label={`Корзина, товаров: ${totalItems}`}
           >
             <CartIcon />
-            <span className="font-bold">Корзина</span>
+            <span className="hidden font-bold sm:inline">Корзина</span>
             <span className="absolute -right-2 -top-2 min-w-6 rounded-badge bg-burgundy px-2 py-1 text-center text-xs font-black leading-none text-white">
               {badgeText}
             </span>

@@ -12,9 +12,9 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8">
-        <section className="mx-auto max-w-3xl rounded-card bg-white p-8 text-center shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
+        <section className="mx-auto max-w-3xl rounded-card bg-white p-8 text-center shadow-sm">
           <p className="text-sm font-black uppercase text-raspberry">Корзина</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
+          <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
             В корзине пока пусто
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base font-semibold leading-7 text-muted">
@@ -37,7 +37,7 @@ export default function CartPage() {
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-black uppercase text-raspberry">Корзина DC Bakery</p>
-            <h1 className="mt-3 text-5xl font-black leading-tight tracking-tight sm:text-6xl">
+            <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
               Ваша B2B-заявка
             </h1>
             <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-muted">
@@ -61,10 +61,6 @@ export default function CartPage() {
           <CartSummary />
         </div>
       </section>
-
-      <div className="fixed inset-x-0 bottom-0 z-40 lg:hidden">
-        <CartSummary compact />
-      </div>
     </main>
   );
 }

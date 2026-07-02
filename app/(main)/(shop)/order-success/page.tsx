@@ -35,7 +35,7 @@ export default async function OrderSuccessPage({ searchParams }: OrderSuccessPag
           <span className="block size-10 rounded-full bg-coral shadow-[0_0_0_12px_rgba(244,123,111,0.16)]" />
         </div>
         <p className="mt-8 text-sm font-black uppercase text-raspberry">Заявка отправлена</p>
-        <h1 className="mt-3 text-5xl font-black tracking-tight sm:text-6xl">{orderNumber}</h1>
+        <h1 className="mt-3 break-all text-3xl font-black tracking-tight sm:text-5xl">{orderNumber}</h1>
         <p className="mx-auto mt-4 max-w-xl text-base font-semibold leading-7 text-muted">
           Менеджер свяжется с вами в ближайшее время — уточнит наличие, итоговую сумму и детали
           доставки. Счёт придёт в WhatsApp сразу после подтверждения.

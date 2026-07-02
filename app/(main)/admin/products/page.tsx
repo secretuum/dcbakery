@@ -88,7 +88,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
     isArchiveView ? product.isArchived : !product.isArchived,
   );
   const filteredProducts = filterProducts(currentPoolProducts, selectedCategory, query);
-  const totalStock = products.reduce((sum, product) => sum + product.stock_qty, 0);
+  const totalStock = Math.round(products.reduce((sum, product) => sum + product.stock_qty, 0));
   const pricedProductsCount = products.filter((product) => product.price > 0).length;
   const archivedProductsCount = products.filter((product) => product.isArchived).length;
 
@@ -217,7 +217,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                 min="0"
                 name="bulk_price"
                 placeholder="Цена для выбранных"
-                step="0.01"
+                step="1"
                 type="number"
               />
               <button
@@ -358,7 +358,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           max={10000}
                           min="0"
                           name="price"
-                          step="0.01"
+                          step="1"
                           type="number"
                         />
                         <p className="mt-1 text-xs font-bold text-muted">
@@ -382,7 +382,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             min="0"
                             name="weight_grams"
                             placeholder="Граммы"
-                            step="0.001"
+                            step="1"
                             type="number"
                           />
                           <p className="rounded-badge bg-coral-light px-3 py-2 text-xs font-black text-coral">

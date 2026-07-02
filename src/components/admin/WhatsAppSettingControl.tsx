@@ -18,10 +18,12 @@ export function WhatsAppSettingControl({
   const [enabled, setEnabled] = useState(initialValue);
   const [savedValue, setSavedValue] = useState(initialValue);
   const [state, setState] = useState<"error" | "idle" | "saving" | "success">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const hasChanges = enabled !== savedValue;
 
   async function handleSave() {
     setState("saving");
+    setErrorMessage(null);
 
     try {
       const response = await fetch("/api/admin/settings", {
@@ -34,20 +36,22 @@ export function WhatsAppSettingControl({
           value: enabled ? "true" : "false",
         }),
       });
-      const result = (await response.json()) as {
+      const result = (await response.json().catch(() => ({}))) as {
         setting?: { value?: string | null };
+        error?: string;
       };
 
       if (!response.ok || !result.setting) {
-        throw new Error("Failed to save setting");
+        throw new Error(result.error || "Failed to save setting");
       }
 
       const nextValue = result.setting.value === "true";
       setEnabled(nextValue);
       setSavedValue(nextValue);
       setState("success");
-    } catch {
+    } catch (error) {
       setEnabled(savedValue);
+      setErrorMessage(error instanceof Error ? error.message : null);
       setState("error");
     }
   }
@@ -101,7 +105,8 @@ export function WhatsAppSettingControl({
       ) : null}
       {state === "error" ? (
         <p className="mt-3 text-sm font-bold text-[#991b1b]">
-          Не удалось сохранить настройку. Проверьте миграцию app_settings и подключение Supabase.
+          Не удалось сохранить настройку.
+          {errorMessage ? ` Причина: ${errorMessage}` : " Проверьте миграцию app_settings и подключение Supabase."}
         </p>
       ) : null}
     </section>

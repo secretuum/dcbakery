@@ -247,7 +247,7 @@ export default function CartSheet() {
                       <p className="text-xs text-gray-400">{formatPrice(p.price)}</p>
                       <button
                         type="button"
-                        onClick={() => add(p)}
+                        onClick={() => add(p, 1)}
                         className="mt-auto rounded-lg bg-green-50 py-1 text-xs font-bold text-green-600 hover:bg-green-100"
                       >
                         + В корзину

@@ -48,22 +48,17 @@ export function QuantitySelector({
       : Number.POSITIVE_INFINITY;
 
   return (
-    <div
-      className={cx(
-        "grid grid-cols-[44px_1fr_44px] overflow-hidden rounded-btn border border-black/10 bg-white",
-        className,
-      )}
-    >
+    <div className={cx("flex items-center gap-1.5", className)}>
       <button
         type="button"
         disabled={disabled || value <= safeMin}
         onClick={() => onChange(normalizeQty(value - safeStep, safeMin, safeStep, safeMax))}
-        className="min-h-12 text-xl font-black text-dark transition hover:bg-coral-light disabled:pointer-events-none disabled:opacity-40"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl font-black text-coral transition hover:bg-coral/10 active:bg-coral/20 disabled:pointer-events-none disabled:opacity-40"
         aria-label="Уменьшить количество"
       >
-        -
+        −
       </button>
-      <label className="flex min-h-12 items-center justify-center border-x border-black/10 px-2">
+      <label className="flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-btn border border-black/10 bg-white px-2">
         <input
           type="number"
           min={safeMin}
@@ -87,7 +82,7 @@ export function QuantitySelector({
         onClick={() =>
           onChange(normalizeQty(value + safeStep, safeMin, safeStep, safeMax))
         }
-        className="min-h-12 text-xl font-black text-dark transition hover:bg-coral-light disabled:pointer-events-none disabled:opacity-40"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-coral text-xl font-black text-white transition hover:bg-coral-hover disabled:pointer-events-none disabled:bg-gray-300"
         aria-label="Увеличить количество"
       >
         +

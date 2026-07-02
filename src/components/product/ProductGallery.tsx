@@ -14,7 +14,7 @@ export function ProductGallery({ alt, images }: ProductGalleryProps) {
 
   return (
     <div className="space-y-4">
-      <div className="relative aspect-square overflow-hidden rounded-card bg-coral-light shadow-[0_18px_60px_rgba(120,51,38,0.12)]">
+      <div className="relative aspect-square overflow-hidden rounded-2xl bg-coral-light shadow-sm">
         <FallbackImage
           src={activeImage}
           alt={alt}
@@ -35,7 +35,7 @@ export function ProductGallery({ alt, images }: ProductGalleryProps) {
               type="button"
               onClick={() => setActiveImage(image)}
               className={`relative aspect-square overflow-hidden rounded-btn border bg-white transition ${
-                isActive ? "border-coral shadow-sm" : "border-black/10 hover:border-coral/60"
+                isActive ? "border-2 border-coral" : "border-black/10 hover:border-coral/60"
               }`}
               aria-label={`Показать фото ${index + 1}`}
             >

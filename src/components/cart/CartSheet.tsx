@@ -70,7 +70,10 @@ export default function CartSheet() {
         style={{
           maxHeight: "92vh",
           minHeight: isOpen ? "70vh" : undefined,
-          transform: isOpen ? "translateY(0)" : "translateY(calc(100% - 3.5rem))",
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          transform: isOpen
+            ? "translateY(0)"
+            : "translateY(calc(100% - 3.5rem - env(safe-area-inset-bottom, 0px)))",
         }}
         onClick={(e) => e.stopPropagation()}
         aria-hidden={!isOpen}

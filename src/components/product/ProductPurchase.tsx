@@ -40,7 +40,7 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
   }
 
   return (
-    <div className="rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)] sm:p-6">
+    <div className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-black uppercase text-muted">Количество</p>
@@ -66,7 +66,7 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
 
       <div className="mt-5 flex items-end justify-between gap-4 rounded-btn bg-cream px-4 py-3">
         <span className="text-sm font-bold text-muted">Итого</span>
-        <span className="text-3xl font-black text-dark">{totalText}</span>
+        <span className="text-xl font-black text-coral">{totalText}</span>
       </div>
 
       {!isInStock && cartQty >= product.stock_qty ? (

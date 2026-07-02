@@ -248,13 +248,24 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                   return (
                     <tr key={product.id} className="transition hover:bg-cream">
                       <td className="px-5 py-4">
-                        <input
-                          className="size-5 rounded border-black/20 text-coral focus:ring-coral"
-                          form="bulk-products"
-                          name="product_id"
-                          type="checkbox"
-                          value={product.id}
-                        />
+                        <div className="flex flex-col items-center gap-3">
+                          <input
+                            className="size-5 rounded border-black/20 text-coral focus:ring-coral"
+                            form="bulk-products"
+                            name="product_id"
+                            type="checkbox"
+                            value={product.id}
+                          />
+                          <div className="relative size-28 shrink-0 overflow-hidden rounded-xl bg-coral-light">
+                            <FallbackImage
+                              alt={product.name}
+                              className="object-cover"
+                              fill
+                              sizes="112px"
+                              src={product.images[0]}
+                            />
+                          </div>
+                        </div>
                       </td>
                       <td className="px-5 py-4">
                         <form action={updateCatalogProductAction} id={formId}>
@@ -262,15 +273,6 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           <input name="is_archived" type="hidden" value={String(Boolean(product.isArchived))} />
                         </form>
                         <div className="flex items-center gap-3">
-                          <div className="relative size-16 shrink-0 overflow-hidden rounded-btn bg-coral-light">
-                            <FallbackImage
-                              alt={product.name}
-                              className="object-cover"
-                              fill
-                              sizes="64px"
-                              src={product.images[0]}
-                            />
-                          </div>
                           <div className="min-w-0">
                             <input
                               className="w-full min-w-64 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"

@@ -15,7 +15,6 @@ const BUCKET = "product-images";
 
 export function ProductImageUpload({ defaultValue = "", form, inputName = "image", slug }: Props) {
   const [urlValue, setUrlValue] = useState(defaultValue);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -24,8 +23,6 @@ export function ProductImageUpload({ defaultValue = "", form, inputName = "image
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewUrl(objectUrl);
     setError(null);
     setUploading(true);
 
@@ -52,24 +49,12 @@ export function ProductImageUpload({ defaultValue = "", form, inputName = "image
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка загрузки");
     } finally {
-      setPreviewUrl(null);
       setUploading(false);
-      URL.revokeObjectURL(objectUrl);
     }
   }
 
-  const displaySrc = previewUrl ?? urlValue;
-
   return (
     <div className="mt-2 grid gap-2">
-      {displaySrc ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          alt="Превью"
-          src={displaySrc}
-          className="size-20 rounded-btn object-cover bg-coral-light"
-        />
-      ) : null}
       <button
         type="button"
         disabled={uploading}

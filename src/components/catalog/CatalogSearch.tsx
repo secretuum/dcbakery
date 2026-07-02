@@ -68,7 +68,7 @@ export function CatalogSearch({ products, categories, popularProducts }: Props) 
               Ничего не найдено по запросу «{debouncedQuery}»
             </p>
           ) : (
-            <div className="grid gap-3 grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
               {filtered.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
@@ -85,7 +85,7 @@ export function CatalogSearch({ products, categories, popularProducts }: Props) 
               >
                 Популярное
               </h2>
-              <div className="grid gap-3 grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {popularProducts.map((p) => (
                   <ProductCard key={p.id} product={p} />
                 ))}
@@ -105,7 +105,7 @@ export function CatalogSearch({ products, categories, popularProducts }: Props) 
                 >
                   {category.name}
                 </h2>
-                <div className="grid gap-3 grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                   {categoryProducts.map((p) => (
                     <ProductCard key={p.id} product={p} />
                   ))}

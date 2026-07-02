@@ -56,7 +56,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-black uppercase text-raspberry">Каталог</p>
-            <h1 className="mt-3 text-5xl font-black leading-tight tracking-tight sm:text-6xl">
+            <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
               {currentCategory.name}
             </h1>
             {currentCategory.description ? (
@@ -67,7 +67,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           </div>
 
           <div className="rounded-card bg-white px-5 py-4 text-sm font-bold text-muted shadow-sm">
-            <span className="text-3xl font-black text-dark">{products.length}</span> позиций
+            <span className="text-xl font-black text-dark">{products.length}</span> позиций
           </div>
         </div>
 
@@ -98,7 +98,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </nav>
 
         {products.length > 0 ? (
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

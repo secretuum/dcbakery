@@ -19,13 +19,17 @@ function pluralItems(n: number) {
   return "товаров";
 }
 
+const PILL_STRIPES =
+  "repeating-linear-gradient(45deg, #f47b6f 0 12px, #fff8f6 12px 20px, #8b1a4a 20px 32px, #fff8f6 32px 40px)";
+
 export default function CartSheet() {
-  const { items, totalAmount, totalItems, remove, updateQty, add } = useCart();
+  const { items, totalAmount, totalItems, remove, updateQty, add, clear } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [popular, setPopular] = useState<Product[]>([]);
   const hasLoadedPopular = useRef(false);
 
   const fillPct = Math.min((totalAmount / PROGRESS_MAX) * 100, 100);
+  const pillFillPct = Math.min((totalAmount / MIN_ORDER_AMOUNT) * 100, 100);
   const canCheckout = totalAmount >= MIN_ORDER_AMOUNT;
 
   // Fetch popular products once on first open
@@ -61,14 +65,20 @@ export default function CartSheet() {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-full bg-white py-2 pl-5 pr-2 shadow-[0_8px_30px_rgba(0,0,0,0.18)] transition hover:shadow-[0_10px_36px_rgba(0,0,0,0.22)]"
+          className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 overflow-hidden rounded-full bg-white py-2 pl-5 pr-2 shadow-[0_8px_30px_rgba(0,0,0,0.18)] transition hover:shadow-[0_10px_36px_rgba(0,0,0,0.22)]"
           style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}
-          aria-label={`Открыть корзину, товаров: ${totalItems}`}
+          aria-label={`Открыть корзину, товаров: ${totalItems}, набрано ${Math.round(pillFillPct)}% минимального заказа`}
         >
-          <span className="whitespace-nowrap text-lg font-bold text-dark">
+          {/* Заполнение капсулы полосатым паттерном по мере набора минимума 15 000 ₸ */}
+          <span
+            aria-hidden
+            className="absolute inset-y-0 left-0 transition-[width] duration-500 ease-out"
+            style={{ width: `${pillFillPct}%`, background: PILL_STRIPES, opacity: 0.3 }}
+          />
+          <span className="relative whitespace-nowrap text-lg font-bold text-dark">
             {formatPrice(totalAmount)}
           </span>
-          <span className="flex items-center">
+          <span className="relative flex items-center">
             {items.slice(0, 3).map(({ product }, index) => (
               <span
                 key={product.id}
@@ -139,26 +149,29 @@ export default function CartSheet() {
         >
           {/* Header */}
           <div className="flex shrink-0 items-center border-b border-gray-100 px-4 py-3">
-            <svg
-              className="h-5 w-5 text-gray-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+            <button
+              type="button"
+              onClick={clear}
+              disabled={items.length === 0}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition hover:text-red-400 disabled:opacity-40"
+              aria-label="Очистить корзину"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-              />
-            </svg>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
+              </svg>
+            </button>
             <h2 className="flex-1 text-center text-base font-semibold text-gray-800">
               Ваша корзина
             </h2>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-50 text-gray-500 transition hover:text-gray-700"
               aria-label="Закрыть"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -195,9 +208,9 @@ export default function CartSheet() {
             {items.length === 0 ? (
               <p className="py-10 text-center text-sm text-gray-400">Корзина пуста</p>
             ) : (
-              <ul className="space-y-3">
+              <ul className="divide-y divide-gray-100">
                 {items.map(({ product, qty }) => (
-                  <li key={product.id} className="flex items-center gap-3">
+                  <li key={product.id} className="flex items-center gap-3 py-3 first:pt-0">
                     <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-50">
                       <FallbackImage
                         src={product.images[0]}
@@ -209,11 +222,11 @@ export default function CartSheet() {
                     </div>
 
                     <div className="min-w-0 flex-1">
+                      <p className="text-xs text-gray-400">{product.unit}</p>
                       <p className="truncate text-base font-semibold text-gray-800">
                         {product.name}
                       </p>
-                      <p className="text-xs text-gray-400">{product.unit}</p>
-                      <p className="text-base font-bold text-gray-900">
+                      <p className="mt-1 text-base font-bold text-gray-900">
                         {formatPrice(product.price * qty)}
                       </p>
                     </div>
@@ -222,7 +235,8 @@ export default function CartSheet() {
                       <button
                         type="button"
                         onClick={() => updateQty(product.id, qty - product.step_qty)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-base font-bold text-gray-600 hover:bg-gray-200"
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-lg font-bold text-gray-600 hover:bg-gray-200"
+                        aria-label="Уменьшить количество"
                       >
                         −
                       </button>
@@ -232,14 +246,15 @@ export default function CartSheet() {
                       <button
                         type="button"
                         onClick={() => updateQty(product.id, qty + product.step_qty)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-base font-bold text-gray-600 hover:bg-gray-200"
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-lg font-bold text-gray-600 hover:bg-gray-200"
+                        aria-label="Увеличить количество"
                       >
                         +
                       </button>
                       <button
                         type="button"
                         onClick={() => remove(product.id)}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg text-xl leading-none text-gray-300 hover:text-red-400"
+                        className="flex h-10 w-8 items-center justify-center rounded-lg text-xl leading-none text-gray-300 hover:text-red-400"
                         aria-label={`Удалить ${product.name}`}
                       >
                         ×
@@ -253,30 +268,36 @@ export default function CartSheet() {
             {/* Popular products */}
             {popular.length > 0 && (
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  Популярное
-                </p>
+                <p className="mb-3 text-lg font-semibold text-gray-900">Часто добавляют</p>
                 <div className="flex gap-3 overflow-x-auto pb-1">
                   {popular.map((p) => (
-                    <div key={p.id} className="flex w-28 shrink-0 flex-col gap-1">
-                      <div className="relative h-20 overflow-hidden rounded-xl bg-gray-50">
+                    <div
+                      key={p.id}
+                      className="flex w-32 shrink-0 flex-col rounded-2xl bg-gray-50 p-2"
+                    >
+                      <div className="relative h-24 overflow-hidden rounded-xl bg-white">
                         <FallbackImage
                           src={p.images[0]}
                           alt={p.name}
                           fill
-                          sizes="112px"
+                          sizes="128px"
                           className="object-cover"
                         />
                       </div>
-                      <p className="line-clamp-2 text-xs font-semibold text-gray-700">{p.name}</p>
-                      <p className="text-xs text-gray-400">{formatPrice(p.price)}</p>
-                      <button
-                        type="button"
-                        onClick={() => add(p, 1)}
-                        className="mt-auto rounded-lg bg-green-50 py-1 text-xs font-bold text-green-600 hover:bg-green-100"
-                      >
-                        + В корзину
-                      </button>
+                      <p className="mt-2 line-clamp-2 text-xs font-semibold text-gray-700">
+                        {p.name}
+                      </p>
+                      <div className="mt-auto flex items-center justify-between pt-2">
+                        <p className="text-sm font-bold text-gray-900">{formatPrice(p.price)}</p>
+                        <button
+                          type="button"
+                          onClick={() => add(p, 1)}
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-lg font-bold text-gray-700 shadow-sm transition hover:bg-gray-100"
+                          aria-label={`Добавить ${p.name} в корзину`}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -286,24 +307,33 @@ export default function CartSheet() {
 
           {/* Footer: total + checkout */}
           <div className="shrink-0 border-t border-gray-100 px-4 pb-6 pt-4">
-            <div className="mb-3 flex items-baseline justify-between">
-              <span className="text-sm text-gray-500">Итого</span>
-              <span className="text-xl font-black text-gray-900">{formatPrice(totalAmount)}</span>
+            <div className="mb-3 flex items-end justify-between">
+              <span className="pb-1 text-sm text-gray-500">
+                {totalItems > 0 ? `${totalItems} ${pluralItems(totalItems)}` : ""}
+              </span>
+              <div className="text-right">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Итого
+                </p>
+                <p className="text-2xl font-black leading-tight text-gray-900">
+                  {formatPrice(totalAmount)}
+                </p>
+              </div>
             </div>
             {canCheckout ? (
               <Link
                 href="/checkout"
                 onClick={() => setIsOpen(false)}
-                className="block w-full rounded-xl bg-green-500 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-green-600"
+                className="block w-full rounded-full bg-coral py-3.5 text-center text-base font-semibold text-white transition-colors hover:bg-coral-hover"
               >
                 Оформить заказ
               </Link>
             ) : (
               <button
                 disabled
-                className="w-full cursor-not-allowed rounded-xl bg-gray-200 py-3 text-sm font-semibold text-gray-400"
+                className="w-full cursor-not-allowed rounded-full bg-gray-200 py-3.5 text-base font-semibold text-gray-400"
               >
-                Минимум {formatPrice(MIN_ORDER_AMOUNT)}
+                Минимум {formatPrice(MIN_ORDER_AMOUNT)} — осталось {formatPrice(MIN_ORDER_AMOUNT - totalAmount)}
               </button>
             )}
           </div>

@@ -125,8 +125,11 @@ export async function proxy(request: NextRequest) {
     const origin = request.headers.get("origin");
 
     if (origin) {
+      const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+      const requestHost = forwardedHost || request.nextUrl.host;
+
       try {
-        if (new URL(origin).host !== request.nextUrl.host) {
+        if (new URL(origin).host !== requestHost) {
           return NextResponse.json({ error: "Invalid origin" }, { status: 403 });
         }
       } catch {

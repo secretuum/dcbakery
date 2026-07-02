@@ -208,7 +208,7 @@ export function CheckoutForm() {
   if (!isReady || items.length === 0) {
     return (
       <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
-        <section className="mx-auto max-w-2xl rounded-card bg-white p-8 text-center shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
+        <section className="mx-auto max-w-2xl rounded-card bg-white p-8 text-center shadow-sm">
           <p className="text-sm font-black uppercase text-raspberry">Оформление</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight">Проверяем корзину</h1>
           <p className="mt-4 text-sm font-semibold leading-6 text-muted">
@@ -222,7 +222,7 @@ export function CheckoutForm() {
   if (!canCheckout) {
     return (
       <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
-        <section className="mx-auto max-w-2xl rounded-card bg-white p-8 text-center shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
+        <section className="mx-auto max-w-2xl rounded-card bg-white p-8 text-center shadow-sm">
           <p className="text-sm font-black uppercase text-raspberry">Минимальный заказ</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight">Нужно добрать корзину</h1>
           <p className="mt-4 text-sm font-semibold leading-6 text-muted">
@@ -240,27 +240,28 @@ export function CheckoutForm() {
   }
 
   return (
-    <main className="min-h-screen bg-cream px-5 py-10 text-dark lg:px-8 lg:py-14">
+    <main className="min-h-screen bg-cream px-5 pb-24 pt-10 text-dark lg:px-8 lg:pb-14 lg:pt-14">
       <section className="mx-auto max-w-7xl">
         <div>
           <p className="text-sm font-black uppercase text-raspberry">Оформление заявки</p>
-          <h1 className="mt-3 text-5xl font-black leading-tight tracking-tight sm:text-6xl">
+          <h1 className="mt-3 text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
             Контакты и доставка
           </h1>
           <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-muted">
-            Заявка отправится в локальный API. База данных и админская часть будут подключаться
-            отдельными шагами.
+            Заполните контакты и удобное время доставки — менеджер подтвердит заявку и пришлёт
+            счёт в WhatsApp.
           </p>
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
           <form
             onSubmit={handleSubmit}
-            className="rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)] sm:p-6"
+            className="rounded-card bg-white p-5 shadow-sm sm:p-6"
           >
-            <div className="grid gap-5 sm:grid-cols-2">
+            <p className="text-base font-semibold text-dark">Контакты</p>
+            <div className="mt-4 grid gap-5 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="text-sm font-black text-dark">Название компании / заведения</span>
+                <span className="text-sm font-semibold text-dark">Название компании / заведения</span>
                 <Input
                   className="mt-2"
                   value={form.company_name}
@@ -271,7 +272,7 @@ export function CheckoutForm() {
               </label>
 
               <label className="block sm:col-span-2">
-                <span className="text-sm font-black text-dark">БИН / ИП</span>
+                <span className="text-sm font-semibold text-dark">БИН / ИП</span>
                 <Input
                   className="mt-2"
                   value={form.customer_bin}
@@ -281,7 +282,7 @@ export function CheckoutForm() {
               </label>
 
               <label className="block">
-                <span className="text-sm font-black text-dark">Контактное лицо</span>
+                <span className="text-sm font-semibold text-dark">Контактное лицо</span>
                 <Input
                   className="mt-2"
                   value={form.customer_name}
@@ -292,7 +293,7 @@ export function CheckoutForm() {
               </label>
 
               <label className="block">
-                <span className="text-sm font-black text-dark">Телефон</span>
+                <span className="text-sm font-semibold text-dark">Телефон</span>
                 <Input
                   className="mt-2"
                   inputMode="tel"
@@ -306,7 +307,7 @@ export function CheckoutForm() {
               </label>
 
               <label className="block sm:col-span-2">
-                <span className="text-sm font-black text-dark">Email для документов</span>
+                <span className="text-sm font-semibold text-dark">Email для документов</span>
                 <Input
                   className="mt-2"
                   inputMode="email"
@@ -317,8 +318,12 @@ export function CheckoutForm() {
                 />
               </label>
 
+            </div>
+
+            <p className="mt-6 border-t border-black/5 pt-6 text-base font-semibold text-dark">Доставка</p>
+            <div className="mt-4 grid gap-5 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="text-sm font-black text-dark">Адрес доставки</span>
+                <span className="text-sm font-semibold text-dark">Адрес доставки</span>
                 <Input
                   className="mt-2"
                   value={form.delivery_address}
@@ -328,7 +333,7 @@ export function CheckoutForm() {
               </label>
 
               <label className="block">
-                <span className="text-sm font-black text-dark">Дата доставки</span>
+                <span className="text-sm font-semibold text-dark">Дата доставки</span>
                 <Input
                   className="mt-2"
                   min={tomorrow}
@@ -340,7 +345,7 @@ export function CheckoutForm() {
               </label>
 
               <label className="block">
-                <span className="text-sm font-black text-dark">Время</span>
+                <span className="text-sm font-semibold text-dark">Время</span>
                 <select
                   className={`${fieldClassName} mt-2`}
                   value={form.delivery_time}
@@ -352,8 +357,12 @@ export function CheckoutForm() {
                 </select>
               </label>
 
+            </div>
+
+            <p className="mt-6 border-t border-black/5 pt-6 text-base font-semibold text-dark">Оплата и документы</p>
+            <div className="mt-4 grid gap-5 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="text-sm font-black text-dark">Способ оплаты</span>
+                <span className="text-sm font-semibold text-dark">Способ оплаты</span>
                 <select
                   className={`${fieldClassName} mt-2`}
                   value={form.payment_method}
@@ -376,7 +385,7 @@ export function CheckoutForm() {
                   onChange={(event) => updateField("request_avr", event.currentTarget.checked)}
                 />
                 <span>
-                  <span className="block text-sm font-black text-dark">Нужен АВР</span>
+                  <span className="block text-sm font-semibold text-dark">Нужен АВР</span>
                   <span className="mt-1 block text-xs font-semibold leading-5 text-muted">
                     Акт выполненных работ станет доступен после завершения заказа.
                   </span>
@@ -384,7 +393,7 @@ export function CheckoutForm() {
               </label>
 
               <label className="block sm:col-span-2">
-                <span className="text-sm font-black text-dark">Комментарий</span>
+                <span className="text-sm font-semibold text-dark">Комментарий</span>
                 <textarea
                   className={`${fieldClassName} mt-2 min-h-32 resize-y`}
                   value={form.comment}
@@ -395,7 +404,7 @@ export function CheckoutForm() {
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Link href="/cart" className="text-sm font-black text-muted transition hover:text-dark">
+              <Link href="/cart" className="inline-flex min-h-11 items-center text-sm font-black text-muted transition hover:text-dark">
                 Вернуться в корзину
               </Link>
               <Button type="submit" disabled={isSubmitting} className="min-h-12 px-6">
@@ -404,9 +413,9 @@ export function CheckoutForm() {
             </div>
           </form>
 
-          <aside className="rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)] lg:sticky lg:top-28">
+          <aside className="rounded-card bg-white p-5 shadow-sm lg:sticky lg:top-28">
             <p className="text-sm font-black uppercase text-raspberry">Сводка</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight">Ваш заказ</h2>
+            <h2 className="mt-2 text-lg font-semibold tracking-tight">Ваш заказ</h2>
             <div className="mt-6 space-y-3 text-sm font-bold">
               <div className="flex items-center justify-between gap-4">
                 <span className="text-muted">Товаров</span>
@@ -418,7 +427,7 @@ export function CheckoutForm() {
               </div>
               <div className="flex items-end justify-between gap-4 border-t border-black/10 pt-4">
                 <span className="text-muted">Итого</span>
-                <span className="text-3xl font-black">{formatPrice(totalAmount)}</span>
+                <span className="text-xl font-black text-coral">{formatPrice(totalAmount)}</span>
               </div>
             </div>
 

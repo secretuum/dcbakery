@@ -30,9 +30,9 @@ export default async function OrderSuccessPage({ searchParams }: OrderSuccessPag
 
   return (
     <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
-      <section className="mx-auto max-w-3xl rounded-card bg-white p-8 text-center shadow-[0_24px_80px_rgba(120,51,38,0.12)] sm:p-10">
+      <section className="mx-auto max-w-3xl rounded-card bg-white p-8 text-center shadow-sm sm:p-10">
         <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-coral-light">
-          <span className="block size-10 rounded-full bg-coral shadow-[0_0_0_12px_rgba(244,123,111,0.16)]" />
+          <span className="block size-10 rounded-full bg-coral" />
         </div>
         <p className="mt-8 text-sm font-black uppercase text-raspberry">Заявка отправлена</p>
         <h1 className="mt-3 break-all text-3xl font-black tracking-tight sm:text-5xl">{orderNumber}</h1>
@@ -59,7 +59,7 @@ export default async function OrderSuccessPage({ searchParams }: OrderSuccessPag
           {hasOrderId ? (
             <Link
               href={`/pay/${orderId}`}
-              className="inline-flex min-h-12 items-center justify-center rounded-btn bg-white px-5 py-3 text-sm font-black text-burgundy transition hover:bg-coral-light"
+              className="inline-flex min-h-12 items-center justify-center rounded-btn bg-cream px-5 py-3 text-sm font-black text-burgundy transition hover:bg-coral-light"
             >
               Посмотреть заказ
             </Link>

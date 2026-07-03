@@ -27,6 +27,10 @@ export async function POST(request: Request, { params }: ConfirmRouteProps) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
+  if (order.status === "confirmed_waiting_payment") {
+    return NextResponse.json({ error: "Order already confirmed" }, { status: 400 });
+  }
+
   if (order.status === "paid" || order.status === "completed" || order.status === "canceled") {
     return NextResponse.json({ error: "Order cannot be confirmed" }, { status: 400 });
   }

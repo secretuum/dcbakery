@@ -9,10 +9,6 @@ type Props = {
   slug?: string;
 };
 
-const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
-const BUCKET = "product-images";
-
 export function ProductImageUpload({ defaultValue = "", form, inputName = "image", slug }: Props) {
   const [urlValue, setUrlValue] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
@@ -27,25 +23,18 @@ export function ProductImageUpload({ defaultValue = "", form, inputName = "image
     setUploading(true);
 
     try {
-      const ext = file.type === "image/webp" ? "webp" : file.type === "image/png" ? "png" : "jpg";
-      const path = `products/${slug ?? "new"}_${Date.now()}.${ext}`;
-      const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`;
+      const body = new FormData();
+      body.append("file", file);
+      body.append("slug", slug ?? "new");
 
-      const res = await fetch(uploadUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${ANON_KEY}`,
-          "Content-Type": file.type,
-        },
-        body: file,
-      });
+      const res = await fetch("/api/admin/upload-image", { method: "POST", body });
+      const json = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
 
       if (!res.ok) {
-        const json = await res.json().catch(() => ({})) as { message?: string; error?: string };
-        throw new Error(json.message ?? json.error ?? res.statusText);
+        throw new Error(json.error ?? res.statusText);
       }
 
-      setUrlValue(`${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`);
+      setUrlValue(json.url ?? "");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ошибка загрузки");
     } finally {

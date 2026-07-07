@@ -108,7 +108,7 @@ async function refreshAdminToken(refreshToken: string): Promise<RefreshedAdminTo
   }
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
-import { CartSheetAccent } from "@/src/components/ui/DecorativeShapes";
 import { useCart } from "@/src/contexts/CartContext";
 import { formatPrice } from "@/src/lib/format";
 import { MIN_ORDER_AMOUNT } from "@/app/constants";
@@ -21,7 +20,7 @@ function pluralItems(n: number) {
 }
 
 const PILL_STRIPES =
-  "repeating-linear-gradient(45deg, #f47b6f 0 12px, #fff8f6 12px 20px, #8b1a4a 20px 32px, #fff8f6 32px 40px)";
+  "repeating-linear-gradient(45deg, #c2531f 0 12px, #fff8f6 12px 20px, #96401a 20px 32px, #fff8f6 32px 40px)";
 
 export default function CartSheet() {
   const { items, totalAmount, totalItems, remove, updateQty, add, clear } = useCart();
@@ -115,7 +114,7 @@ export default function CartSheet() {
 
       {/* Sheet panel */}
       <div
-        className="glass pointer-events-auto flex w-full max-w-lg flex-col rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-transform duration-300"
+        className="pointer-events-auto flex w-full max-w-lg flex-col rounded-t-3xl bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.12)] transition-transform duration-300"
         style={{
           maxHeight: "92vh",
           minHeight: isOpen ? "70vh" : undefined,
@@ -127,7 +126,6 @@ export default function CartSheet() {
       >
         {/* Handle bar — always visible */}
         <div className="relative flex h-14 shrink-0 items-center justify-between px-4">
-          <CartSheetAccent />
           {/* Drag pill */}
           <span className="absolute left-1/2 top-2 h-1 w-10 -translate-x-1/2 rounded-full bg-gray-200" />
 
@@ -275,14 +273,12 @@ export default function CartSheet() {
                   {popular.map((p) => (
                     <div
                       key={p.id}
-                      className="glass flex w-32 shrink-0 flex-col rounded-2xl p-2"
+                      className="flex w-32 shrink-0 flex-col rounded-xl border border-black/8 bg-white p-2"
                     >
-                      <div className="relative h-24 overflow-hidden rounded-xl bg-coral-light">
+                      <div className="relative h-24 overflow-hidden rounded-lg bg-gray-50">
                         <FallbackImage
                           src={p.images[0]}
                           alt={p.name}
-                          categoryId={p.category_id}
-                          categorySlug={p.category?.slug}
                           fill
                           sizes="128px"
                           className="object-cover"

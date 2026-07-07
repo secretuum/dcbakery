@@ -88,41 +88,41 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         {orders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-[640px] w-full border-collapse text-left">
-              <thead className="bg-coral-light text-xs font-black uppercase text-burgundy">
+              <thead className="border-b border-black/10 bg-gray-50 text-xs font-semibold uppercase text-muted">
                 <tr>
-                  <th className="px-5 py-4">Номер</th>
-                  <th className="px-5 py-4">Компания</th>
-                  <th className="hidden px-5 py-4 md:table-cell">Телефон</th>
-                  <th className="px-5 py-4">Сумма</th>
-                  <th className="px-5 py-4">Статус</th>
-                  <th className="px-5 py-4">Оплата</th>
-                  <th className="hidden px-5 py-4 md:table-cell">Дата</th>
+                  <th className="px-4 py-3">Номер</th>
+                  <th className="px-4 py-3">Компания</th>
+                  <th className="hidden px-4 py-3 md:table-cell">Телефон</th>
+                  <th className="px-4 py-3">Сумма</th>
+                  <th className="px-4 py-3">Статус</th>
+                  <th className="px-4 py-3">Оплата</th>
+                  <th className="hidden px-4 py-3 md:table-cell">Дата</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/10 text-sm font-semibold">
+              <tbody className="divide-y divide-black/8 text-sm font-semibold">
                 {orders.map((order) => (
-                  <tr key={order.id} className="transition hover:bg-cream">
-                    <td className="px-5 py-4">
+                  <tr key={order.id} className="transition hover:bg-gray-50">
+                    <td className="px-4 py-3">
                       <Link
                         href={`/admin/orders/${order.id}`}
-                        className="font-black text-raspberry hover:text-burgundy"
+                        className="font-bold text-coral hover:text-coral-hover"
                       >
                         {order.order_number}
                       </Link>
                     </td>
-                    <td className="px-5 py-4">
-                      <p className="font-black text-dark">{order.company_name}</p>
-                      <p className="mt-1 text-xs text-muted">{order.customer_name}</p>
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-dark">{order.company_name}</p>
+                      <p className="mt-0.5 text-xs text-muted">{order.customer_name}</p>
                     </td>
-                    <td className="hidden px-5 py-4 text-muted md:table-cell">{order.customer_phone}</td>
-                    <td className="px-5 py-4 font-black">{formatPrice(order.total_amount)}</td>
-                    <td className="px-5 py-4">
+                    <td className="hidden px-4 py-3 text-muted md:table-cell">{order.customer_phone}</td>
+                    <td className="px-4 py-3 font-semibold">{formatPrice(order.total_amount)}</td>
+                    <td className="px-4 py-3">
                       <OrderSlaStatus createdAt={order.created_at} status={order.status} />
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <PaymentStatusBadge status={order.payment_status} />
                     </td>
-                    <td className="hidden px-5 py-4 text-muted md:table-cell">{formatDate(order.created_at)}</td>
+                    <td className="hidden px-4 py-3 text-muted md:table-cell">{formatDate(order.created_at)}</td>
                   </tr>
                 ))}
               </tbody>

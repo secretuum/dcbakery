@@ -256,7 +256,7 @@ export function CheckoutForm() {
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
           <form
             onSubmit={handleSubmit}
-            className="glass rounded-card p-5 sm:p-6"
+            className="rounded-card border border-black/10 bg-white p-5 sm:p-6"
           >
             <p className="text-base font-semibold text-dark">Контакты</p>
             <div className="mt-4 grid gap-5 sm:grid-cols-2">
@@ -413,7 +413,7 @@ export function CheckoutForm() {
             </div>
           </form>
 
-          <aside className="glass rounded-card p-5 lg:sticky lg:top-28">
+          <aside className="rounded-card border border-black/10 bg-white p-5 lg:sticky lg:top-28">
             <p className="text-sm font-black uppercase text-raspberry">Сводка</p>
             <h2 className="mt-2 text-lg font-semibold tracking-tight">Ваш заказ</h2>
             <div className="mt-6 space-y-3 text-sm font-bold">

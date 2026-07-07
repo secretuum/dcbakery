@@ -80,7 +80,7 @@ export function Header() {
     <header className="print-hidden sticky top-0 z-30 border-b border-black/10 bg-cream/90 backdrop-blur-xl transition-all duration-200">
       <nav className={`mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 lg:px-8 transition-all duration-200 ${scrolled ? "py-2" : "py-4"}`}>
         <Link href="/" className="flex items-center gap-3" aria-label="DC Bakery">
-          <span className={`flex items-center justify-center rounded-card bg-coral font-black text-white shadow-[0_14px_30px_rgba(244,123,111,0.26)] transition-all duration-200 ${scrolled ? "size-8 text-xs" : "size-11 text-sm"}`}>
+          <span className={`flex items-center justify-center rounded-card bg-coral font-black text-white shadow-[0_8px_20px_rgba(194,83,31,0.22)] transition-all duration-200 ${scrolled ? "size-8 text-xs" : "size-11 text-sm"}`}>
             DC
           </span>
           <span className={`font-black tracking-tight text-dark transition-all duration-200 ${scrolled ? "text-base" : "text-xl"}`}>DC Bakery</span>

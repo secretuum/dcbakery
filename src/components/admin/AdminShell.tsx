@@ -21,33 +21,33 @@ export function AdminShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <main className="min-h-screen bg-cream text-dark lg:grid lg:grid-cols-[280px_1fr]">
-      <aside className="border-b border-black/10 bg-white/90 px-5 py-4 backdrop-blur lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:px-6 lg:py-6">
+    <main className="min-h-screen bg-cream text-dark lg:grid lg:grid-cols-[240px_1fr]">
+      <aside className="border-b border-white/10 bg-dark px-5 py-4 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:border-r-white/10 lg:px-6 lg:py-6">
         <div className="flex items-center justify-between gap-4 lg:block">
           <Link href="/admin/orders" className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-card bg-coral text-sm font-black text-white shadow-[0_14px_30px_rgba(244,123,111,0.26)]">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-coral text-xs font-black text-white">
               DC
             </span>
             <span>
-              <span className="block text-xl font-black tracking-tight">DC Bakery</span>
-              <span className="block text-xs font-black uppercase text-muted">admin</span>
+              <span className="block text-base font-black tracking-tight text-white">DC Bakery</span>
+              <span className="block text-xs font-bold uppercase text-white/40">admin</span>
             </span>
           </Link>
         </div>
 
-        <nav className="mt-6 flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
+        <nav className="mt-8 flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
           {adminNavItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname.startsWith(item.href);
 
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={[
-                  "shrink-0 rounded-btn px-4 py-3 text-sm font-black transition",
+                  "shrink-0 rounded-lg px-3 py-2.5 text-sm font-semibold transition",
                   isActive
-                    ? "bg-coral text-dark shadow-[0_14px_30px_rgba(244,123,111,0.22)]"
-                    : "text-muted hover:bg-coral-light hover:text-dark",
+                    ? "bg-coral text-white"
+                    : "text-white/60 hover:bg-white/8 hover:text-white",
                 ].join(" ")}
               >
                 {item.label}

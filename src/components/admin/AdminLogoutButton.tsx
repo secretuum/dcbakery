@@ -15,7 +15,7 @@ export function AdminLogoutButton() {
   }
 
   return (
-    <Button variant="ghost" onClick={handleLogout} className="w-full bg-white">
+    <Button variant="ghost" onClick={handleLogout} className="w-full border border-white/20 text-white/60 hover:border-white/40 hover:text-white">
       Выйти
     </Button>
   );

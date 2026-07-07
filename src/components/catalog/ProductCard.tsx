@@ -52,7 +52,7 @@ export function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <article className="glass overflow-hidden rounded-2xl shadow-sm">
+    <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
       <button
         type="button"
         onClick={() => setIsSheetOpen(true)}

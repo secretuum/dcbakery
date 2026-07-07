@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
-import { FallbackImage } from "@/src/components/ui/FallbackImage";
-import { ProfileShapes } from "@/src/components/ui/DecorativeShapes";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
 import { useCart } from "@/src/contexts/CartContext";
 import type { ClientOrderSummary, OrderItemSummary, Product } from "@/src/types";
@@ -137,14 +135,10 @@ function MetricCard({
   icon?: ReactNode;
 }) {
   return (
-    <div className="glass flex items-center gap-4 rounded-2xl border border-white/50 p-5">
-      {icon && (
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-coral-light">
-          {icon}
-        </div>
-      )}
+    <div className="flex items-center gap-4 rounded-xl border border-black/10 bg-white p-5">
+      {icon && <div className="shrink-0">{icon}</div>}
       <div>
-        <p className="text-2xl font-black tracking-tight text-dark">{value}</p>
+        <p className="text-2xl font-bold tracking-tight text-dark">{value}</p>
         <p className="mt-0.5 text-xs text-muted">{label}</p>
       </div>
     </div>
@@ -572,32 +566,21 @@ function PopularProductsSection({ products }: { products: Product[] }) {
         {products.map((product) => (
           <div
             key={product.id}
-            className="glass flex flex-col overflow-hidden rounded-2xl"
+            className="flex flex-col justify-between rounded-xl border border-black/10 bg-white p-4"
           >
-            <div className="relative h-36 w-full overflow-hidden bg-coral-light">
-              <FallbackImage
-                src={product.images?.[0]}
-                alt={product.name}
-                categoryId={product.category_id}
-                categorySlug={product.category?.slug}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover"
-              />
-            </div>
-            <div className="flex flex-1 flex-col p-4">
+            <div>
               <p className="text-sm font-black leading-tight text-dark">{product.name}</p>
-              <p className="mt-2 text-lg font-black text-dark">
+              <p className="mt-2 text-lg font-bold text-dark">
                 {product.price > 0 ? formatCurrency(product.price) : "Цена уточняется"}
               </p>
-              <button
-                type="button"
-                className="mt-4 inline-flex min-h-10 items-center justify-center rounded-btn bg-coral px-4 py-2 text-sm font-black text-white transition hover:bg-coral-hover"
-                onClick={() => add(product, product.min_qty)}
-              >
-                + В корзину
-              </button>
             </div>
+            <button
+              type="button"
+              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-btn bg-coral px-4 py-2 text-sm font-black text-white transition hover:bg-coral-hover"
+              onClick={() => add(product, product.min_qty)}
+            >
+              + В корзину
+            </button>
           </div>
         ))}
       </div>
@@ -890,8 +873,7 @@ export function ProfileClient({ popularProducts = [] }: { popularProducts?: Prod
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
-      <ProfileShapes />
+    <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
       {isLoading ? (
         <section className="mx-auto max-w-6xl">
           <div className="h-72 animate-pulse rounded-card bg-white shadow-sm" />

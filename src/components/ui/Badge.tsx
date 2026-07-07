@@ -9,7 +9,7 @@ type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
 
 const variantClasses: Record<BadgeVariant, string> = {
   coral: "bg-coral-light text-coral",
-  burgundy: "bg-[#f7d9e5] text-burgundy",
+  burgundy: "bg-coral-light text-burgundy",
   dark: "bg-dark text-white",
   neutral: "bg-white text-muted ring-1 ring-black/10",
   green: "bg-green-50 text-green-700",
@@ -27,7 +27,7 @@ export function Badge({ children, className, variant = "neutral", ...props }: Ba
     <span
       {...props}
       className={cx(
-        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
         variantClasses[variant],
         className,
       )}

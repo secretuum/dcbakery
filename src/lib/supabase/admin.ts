@@ -838,44 +838,57 @@ export async function replaceAdminOrderItems({
     throw new Error("Order must contain at least one item");
   }
 
-  await deleteSupabaseOrderItems(orderId);
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error(getSupabaseAdminConfigError() ?? "Supabase is not configured");
+  }
 
-  const orderItems = await supabaseRequest<OrderItem[]>(
-    "order_items",
-    cleanItems.map((item) => ({
-      id: crypto.randomUUID(),
-      order_id: orderId,
+  const revisionPayload = {
+    items: cleanItems.map((item) => ({
+      price: item.price,
       product_id: item.product_id,
       product_name: item.product_name,
-      unit: item.unit,
       qty: item.qty,
-      price: item.price,
       total_amount: item.price * item.qty,
+      unit: item.unit,
     })),
-  );
-  const totalAmount = orderItems.reduce((sum, item) => sum + item.total_amount, 0);
-  const params = new URLSearchParams({
-    id: `eq.${orderId}`,
-  });
-  const [order] = await supabasePatch<Order[]>("orders", params.toString(), {
-    payment_status: "unpaid",
-    payment_url: null,
-    revision_note: note ?? null,
-    revision_payload: {
-      items: orderItems.map((item) => ({
-        price: item.price,
-        product_id: item.product_id,
-        product_name: item.product_name,
-        qty: item.qty,
-        total_amount: item.total_amount,
-        unit: item.unit,
-      })),
-      note: note ?? null,
+    note: note ?? null,
+  };
+
+  const res = await fetch(
+    `${supabaseUrl.replace(/\/$/, "")}/rest/v1/rpc/replace_order_items`,
+    {
+      method: "POST",
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify({
+        p_order_id: orderId,
+        p_items: cleanItems.map((item) => ({
+          category: item.category ?? null,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          unit: item.unit,
+          qty: item.qty,
+          price: item.price,
+          total_amount: item.price * item.qty,
+        })),
+        p_note: note ?? null,
+        p_revision_payload: revisionPayload,
+      }),
     },
-    revision_requested_at: new Date().toISOString(),
-    status: "change_proposed",
-    total_amount: totalAmount,
-  });
+  );
+
+  if (!res.ok) {
+    throw new Error(await parseSupabaseError(res));
+  }
+
+  const [order] = (await res.json()) as Order[];
+
+  // RPC committed — safe to read the freshly inserted items
+  const orderItems = await fetchAdminOrderItems(orderId);
 
   return {
     items: orderItems,
@@ -895,6 +908,7 @@ export async function confirmAdminOrder(orderId: string, patch: OrderConfirmatio
 export async function markOrderPaid(orderId: string) {
   const params = new URLSearchParams({
     id: `eq.${orderId}`,
+    payment_status: "neq.paid",
   });
   const [order] = await supabasePatch<Order[]>("orders", params.toString(), {
     paid_at: new Date().toISOString(),

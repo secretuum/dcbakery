@@ -30,11 +30,19 @@ export async function POST(_request: Request, { params }: MarkPaidRouteProps) {
 
   try {
     const paidOrder = await markOrderPaid(id);
-    const managerMessageId = paidOrder
-      ? await replaceWhatsAppOrderMessage(paidOrder, order.whatsapp_message_id).catch(() => null)
-      : null;
 
-    if (paidOrder && managerMessageId) {
+    // null = atomic guard rejected the UPDATE (payment_status was already 'paid'
+    // by a concurrent request between our fetch and this PATCH) — idempotent success
+    if (!paidOrder) {
+      return NextResponse.json({ order });
+    }
+
+    const managerMessageId = await replaceWhatsAppOrderMessage(
+      paidOrder,
+      order.whatsapp_message_id,
+    ).catch(() => null);
+
+    if (managerMessageId) {
       await updateOrderWhatsAppMessageId(paidOrder.id, managerMessageId).catch(() => undefined);
     }
 

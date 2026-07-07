@@ -22,7 +22,15 @@ function normalizeEmail(value: string) {
   return value.trim().toLowerCase();
 }
 
-function hasEnoughPhoneDigits(value: string) {
+const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+
+function isValidEmail(value: string): boolean {
+  return EMAIL_RE.test(value);
+}
+
+function isValidPhone(value: string): boolean {
+  // Reject anything that isn't a digit or common phone separator (+, -, space, parens)
+  if (!/^[0-9+\-() ]+$/.test(value)) return false;
   return value.replace(/\D/g, "").length >= 10;
 }
 
@@ -71,8 +79,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const email = body.email?.includes("@") ? body.email : "";
-  const phone = body.phone && hasEnoughPhoneDigits(body.phone) ? body.phone : "";
+  const email = body.email && isValidEmail(body.email) ? body.email : "";
+  const phone = body.phone && isValidPhone(body.phone) ? body.phone : "";
 
   if (!email && !phone) {
     return NextResponse.json(

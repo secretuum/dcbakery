@@ -82,6 +82,40 @@ html {
 }
 .animate-fadeIn { animation: fadeIn 0.25s ease-out; }
 
+/* ── Glassmorphism utility ──────────────────────────────────────────────────
+   Матовое белое стекло. Применяй классом .glass к карточкам и панелям.
+   noise-overlay создаётся через ::before — pointer-events: none,
+   не перекрывает текст и кнопки. border-radius наследуется от родителя.
+   ────────────────────────────────────────────────────────────────────────── */
+.glass {
+  position: relative;
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(16px) saturate(1.5);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  box-shadow: 0 2px 12px rgba(28, 28, 28, 0.06);
+  overflow: hidden;
+}
+
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: overlay;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* Все прямые дети .glass должны быть поверх noise-слоя */
+.glass > * {
+  position: relative;
+  z-index: 1;
+}
+
 @media print {
   .print-hidden {
     display: none !important;

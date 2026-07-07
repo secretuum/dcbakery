@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- steak body -->
+  <path d="M10 42 Q10 24 20 20 Q30 16 42 20 Q54 24 54 36 Q54 46 44 50 Q34 54 22 50 Q10 46 10 42Z" fill="#f47b6f"/>
+  <!-- marbling lines -->
+  <path d="M20 30 Q28 26 36 32 Q40 34 38 40" fill="none" stroke="#c4395a" stroke-width="2" stroke-linecap="round"/>
+  <path d="M30 24 Q36 28 34 36" fill="none" stroke="#c4395a" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- bone -->
+  <rect x="44" y="26" width="8" height="22" rx="4" fill="#8b1a4a"/>
+  <ellipse cx="48" cy="26" rx="5" ry="4" fill="#8b1a4a"/>
+  <ellipse cx="48" cy="48" rx="5" ry="4" fill="#8b1a4a"/>
+  <!-- shadow -->
+  <ellipse cx="32" cy="56" rx="20" ry="3" fill="#8b1a4a" opacity="0.2"/>
+</svg>

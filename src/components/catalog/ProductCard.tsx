@@ -52,7 +52,7 @@ export function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl bg-white shadow-sm">
+    <article className="glass overflow-hidden rounded-2xl shadow-sm">
       <button
         type="button"
         onClick={() => setIsSheetOpen(true)}
@@ -63,6 +63,8 @@ export function ProductCard({ product }: ProductCardProps) {
           <FallbackImage
             src={imageSrc}
             alt={product.name}
+            categoryId={product.category_id}
+            categorySlug={product.category?.slug}
             fill
             sizes="(max-width: 640px) 33vw, (max-width: 1280px) 25vw, 20vw"
             className="object-cover"

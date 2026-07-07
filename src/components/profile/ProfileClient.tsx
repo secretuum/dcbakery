@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
+import { FallbackImage } from "@/src/components/ui/FallbackImage";
+import { ProfileShapes } from "@/src/components/ui/DecorativeShapes";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
 import { useCart } from "@/src/contexts/CartContext";
 import type { ClientOrderSummary, OrderItemSummary, Product } from "@/src/types";
@@ -136,7 +137,7 @@ function MetricCard({
   icon?: ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
+    <div className="glass flex items-center gap-4 rounded-2xl border border-white/50 p-5">
       {icon && (
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-coral-light">
           {icon}
@@ -571,21 +572,32 @@ function PopularProductsSection({ products }: { products: Product[] }) {
         {products.map((product) => (
           <div
             key={product.id}
-            className="flex flex-col justify-between rounded-card border border-black/10 bg-cream p-4"
+            className="glass flex flex-col overflow-hidden rounded-2xl"
           >
-            <div>
+            <div className="relative h-36 w-full overflow-hidden bg-coral-light">
+              <FallbackImage
+                src={product.images?.[0]}
+                alt={product.name}
+                categoryId={product.category_id}
+                categorySlug={product.category?.slug}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover"
+              />
+            </div>
+            <div className="flex flex-1 flex-col p-4">
               <p className="text-sm font-black leading-tight text-dark">{product.name}</p>
               <p className="mt-2 text-lg font-black text-dark">
                 {product.price > 0 ? formatCurrency(product.price) : "Цена уточняется"}
               </p>
+              <button
+                type="button"
+                className="mt-4 inline-flex min-h-10 items-center justify-center rounded-btn bg-coral px-4 py-2 text-sm font-black text-white transition hover:bg-coral-hover"
+                onClick={() => add(product, product.min_qty)}
+              >
+                + В корзину
+              </button>
             </div>
-            <button
-              type="button"
-              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-btn bg-coral px-4 py-2 text-sm font-black text-white transition hover:bg-coral-hover"
-              onClick={() => add(product, product.min_qty)}
-            >
-              + В корзину
-            </button>
           </div>
         ))}
       </div>
@@ -701,22 +713,13 @@ function ClientDashboard({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <MetricCard
           label="Всего заказов"
           value={isLoadingOrders ? "..." : String(orders.length)}
           icon={
             <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          }
-        />
-        <MetricCard
-          label="Минимальный заказ"
-          value={formatCurrency(MIN_ORDER_AMOUNT)}
-          icon={
-            <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           }
         />
@@ -887,7 +890,8 @@ export function ProfileClient({ popularProducts = [] }: { popularProducts?: Prod
   }
 
   return (
-    <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
+    <main className="relative min-h-screen overflow-hidden bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
+      <ProfileShapes />
       {isLoading ? (
         <section className="mx-auto max-w-6xl">
           <div className="h-72 animate-pulse rounded-card bg-white shadow-sm" />

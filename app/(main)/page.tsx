@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { CategoryCard } from "@/src/components/catalog/CategoryCard";
 import { ProductCard } from "@/src/components/catalog/ProductCard";
+import { HeroShapes, SectionAccentShapes } from "@/src/components/ui/DecorativeShapes";
 import { fetchCategories, fetchPopularProducts, fetchProducts } from "@/src/lib/catalog";
 import { formatPrice } from "@/src/lib/format";
 import type { Category } from "@/src/types";
@@ -114,6 +115,7 @@ export default async function Home() {
       <section className="relative px-5 pb-10 pt-8 lg:px-8 lg:pb-16 lg:pt-14">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_1px_1px,rgba(139,26,74,0.14)_1px,transparent_0)] bg-[length:26px_26px]" />
         <div className="absolute inset-x-0 top-0 -z-10 h-72 bg-[linear-gradient(135deg,rgba(244,123,111,0.24),rgba(196,57,90,0.10),transparent)]" />
+        <HeroShapes />
 
         <div className="mx-auto grid max-w-7xl gap-7 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div className="rounded-2xl border border-black/10 bg-white/92 p-6 shadow-sm backdrop-blur sm:p-8 lg:p-10">
@@ -156,7 +158,7 @@ export default async function Home() {
       <section className="px-5 pb-10 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-4 sm:grid-cols-3">
           {metrics.map((m) => (
-            <div key={m.label} className="flex items-center gap-4 rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
+            <div key={m.label} className="glass flex items-center gap-4 rounded-2xl border border-white/50 p-5">
               <MetricIcon>{m.icon}</MetricIcon>
               <div>
                 <p className="text-3xl font-black tracking-tight text-dark">{m.value}</p>
@@ -168,7 +170,8 @@ export default async function Home() {
       </section>
 
       {/* Categories */}
-      <section id="catalog" className="px-5 py-12 lg:px-8">
+      <section id="catalog" className="relative px-5 py-12 lg:px-8">
+        <SectionAccentShapes />
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
@@ -229,7 +232,7 @@ export default async function Home() {
 
           <div className="grid gap-4 sm:grid-cols-3">
             {advantages.map((a) => (
-              <div key={a.title} className="flex items-start gap-4 rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
+              <div key={a.title} className="glass flex items-start gap-4 rounded-2xl border border-white/50 p-5">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-coral-light">
                   {a.icon}
                 </div>

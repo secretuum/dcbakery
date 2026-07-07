@@ -644,7 +644,7 @@ export async function fetchClientOrderSummaries({
 }) {
   const params = new URLSearchParams({
     select:
-      "id,order_number,company_name,status,payment_status,revision_note,total_amount,delivery_date,payment_url,created_at,order_items(id,product_name,unit,qty,price,total_amount)",
+      "id,order_number,company_name,status,payment_status,revision_note,total_amount,delivery_date,created_at,order_items(id,product_name,unit,qty,price,total_amount)",
     order: "created_at.desc",
     limit: "20",
   });

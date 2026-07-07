@@ -50,9 +50,9 @@ async function parseBody(request: Request): Promise<ProfileOrdersBody> {
 export async function POST(request: Request) {
   const rateLimit = checkRateLimit({
     identifier: getRequestIdentifier(request),
-    limit: 8,
+    limit: 3,
     namespace: "profile:orders",
-    windowMs: 15 * 60 * 1000,
+    windowMs: 30 * 60 * 1000,
   });
 
   if (!rateLimit.allowed) {

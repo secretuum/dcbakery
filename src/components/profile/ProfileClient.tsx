@@ -9,8 +9,6 @@ import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
 import { useCart } from "@/src/contexts/CartContext";
 import type { ClientOrderSummary, OrderItemSummary, Product } from "@/src/types";
 
-const PROFILE_STORAGE_KEY = "dc_bakery_client_profile";
-
 type AdminSession = {
   email: string;
   role: "admin";
@@ -33,6 +31,14 @@ type ProfileSessionResponse = {
   role?: "admin" | null;
 };
 
+type ClientSessionResponse = {
+  authenticated: boolean;
+  email?: string;
+  phone?: string;
+  companyName?: string;
+  accountantPhone?: string;
+};
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("ru-KZ", {
     maximumFractionDigits: 0,
@@ -49,41 +55,6 @@ function formatDate(value?: string | null) {
   return new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "medium",
   }).format(new Date(value));
-}
-
-function readClientSession(): ClientSession | null {
-  try {
-    const rawSession = window.localStorage.getItem(PROFILE_STORAGE_KEY);
-
-    if (!rawSession) {
-      return null;
-    }
-
-    const parsedSession = JSON.parse(rawSession) as Partial<ClientSession>;
-
-    if (parsedSession.role !== "client" || !parsedSession.email) {
-      return null;
-    }
-
-    return {
-      companyName: parsedSession.companyName ?? "",
-      createdAt: parsedSession.createdAt ?? new Date().toISOString(),
-      email: parsedSession.email,
-      phone: parsedSession.phone ?? "",
-      accountant_phone: parsedSession.accountant_phone ?? "",
-      role: "client",
-    };
-  } catch {
-    return null;
-  }
-}
-
-function writeClientSession(session: ClientSession) {
-  window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(session));
-}
-
-function removeClientSession() {
-  window.localStorage.removeItem(PROFILE_STORAGE_KEY);
 }
 
 function AdminIcon() {
@@ -146,90 +117,99 @@ function MetricCard({
 }
 
 function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void }) {
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Admin section state
+  const [adminEmail, setAdminEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminError, setAdminError] = useState("");
+  const [isAdminSubmitting, setIsAdminSubmitting] = useState(false);
 
-  function handleClientLogin() {
-    const normalizedEmail = email.trim().toLowerCase();
+  // Client magic link section state
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientError, setClientError] = useState("");
+  const [clientStep, setClientStep] = useState<"idle" | "sending" | "sent">("idle");
 
-    if (!normalizedEmail) {
-      setError("Введите email для клиентского профиля");
-      return;
-    }
-
-    const clientSession: ClientSession = {
-      companyName: normalizedEmail.split("@")[0] ?? "",
-      createdAt: new Date().toISOString(),
-      email: normalizedEmail,
-      phone: "",
-      role: "client",
-    };
-
-    writeClientSession(clientSession);
-    onLogin(clientSession);
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleAdminSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
+    setAdminError("");
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = adminEmail.trim().toLowerCase();
 
     if (!normalizedEmail || !password) {
-      setError("Введите email и пароль");
+      setAdminError("Введите email и пароль");
       return;
     }
 
-    setIsSubmitting(true);
+    setIsAdminSubmitting(true);
 
     try {
-      const adminResponse = await fetch("/api/admin/login", {
+      const response = await fetch("/api/admin/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail, password }),
       });
 
-      if (adminResponse.ok) {
-        removeClientSession();
-        onLogin({
-          email: normalizedEmail,
-          role: "admin",
-        });
+      if (response.ok) {
+        onLogin({ email: normalizedEmail, role: "admin" });
         return;
       }
 
-      if (adminResponse.status !== 401) {
-        setError("Не удалось проверить вход. Попробуйте еще раз");
+      if (response.status !== 401) {
+        setAdminError("Не удалось войти. Попробуйте еще раз");
         return;
       }
 
-      setError(
-        "Админ-вход не прошел. Проверьте email, пароль и что пользователь создан в Supabase Authentication.",
+      setAdminError(
+        "Неверный email или пароль. Проверьте пользователя в Supabase Authentication.",
       );
     } catch {
-      setError("Не удалось войти. Проверьте соединение и попробуйте снова");
+      setAdminError("Не удалось войти. Проверьте соединение и попробуйте снова");
     } finally {
-      setIsSubmitting(false);
+      setIsAdminSubmitting(false);
+    }
+  }
+
+  async function handleClientMagicLink() {
+    const normalizedEmail = clientEmail.trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      setClientError("Введите email");
+      return;
+    }
+
+    setClientError("");
+    setClientStep("sending");
+
+    try {
+      const response = await fetch("/api/profile/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        setClientError(data.error ?? "Не удалось отправить ссылку");
+        setClientStep("idle");
+        return;
+      }
+
+      setClientStep("sent");
+    } catch {
+      setClientError("Не удалось отправить ссылку. Проверьте соединение");
+      setClientStep("idle");
     }
   }
 
   return (
-    <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-center">
+    <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-start">
       <div>
         <p className="text-sm font-black uppercase text-raspberry">Профиль</p>
         <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
           Вход в кабинет DC Bakery
         </h1>
         <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-muted">
-          Одна форма для клиента и команды. Если введены данные админа из Supabase, откроется
-          админ-профиль. Остальные данные пока открывают MVP-кабинет клиента без подключения базы.
+          Клиенты входят по ссылке в WhatsApp. Менеджеры — через Supabase Authentication.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -254,57 +234,90 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
         </div>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="rounded-card bg-white p-6 shadow-sm sm:p-8"
-      >
-        <div>
-          <p className="text-sm font-black uppercase text-raspberry">Войти</p>
-          <h2 className="mt-3 text-4xl font-black tracking-tight">Email и пароль</h2>
-          <p className="mt-3 text-sm font-semibold leading-6 text-muted">
-            Для админа используйте пользователя из Supabase Authentication.
-          </p>
+      <div className="grid gap-4">
+        {/* Client magic link */}
+        <div className="rounded-card bg-white p-6 shadow-sm">
+          <p className="text-sm font-black uppercase text-raspberry">Клиентский кабинет</p>
+          <h2 className="mt-3 text-2xl font-black tracking-tight">Войти по WhatsApp</h2>
+
+          {clientStep === "sent" ? (
+            <div className="mt-5 rounded-xl bg-green-50 p-4">
+              <p className="text-sm font-black text-green-700">Ссылка отправлена в WhatsApp</p>
+              <p className="mt-1 text-sm font-semibold text-green-600/80">
+                Откройте WhatsApp и перейдите по ссылке. Она действует 15 минут.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="mt-5">
+                <label className="block">
+                  <span className="text-sm font-black text-dark">Email</span>
+                  <Input
+                    className="mt-2"
+                    inputMode="email"
+                    type="email"
+                    value={clientEmail}
+                    onChange={(e) => setClientEmail(e.currentTarget.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void handleClientMagicLink();
+                      }
+                    }}
+                    placeholder="company@example.com"
+                  />
+                </label>
+              </div>
+              {clientError ? (
+                <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
+              ) : null}
+              <Button
+                type="button"
+                disabled={clientStep === "sending"}
+                className="mt-5 w-full"
+                onClick={() => void handleClientMagicLink()}
+              >
+                {clientStep === "sending" ? "Отправляем..." : "Получить ссылку в WhatsApp"}
+              </Button>
+            </>
+          )}
         </div>
 
-        <div className="mt-7 space-y-5">
-          <label className="block">
-            <span className="text-sm font-black text-dark">Email</span>
-            <Input
-              className="mt-2"
-              inputMode="email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.currentTarget.value)}
-              placeholder="company@example.com"
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-black text-dark">Пароль</span>
-            <Input
-              className="mt-2"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.currentTarget.value)}
-              placeholder="••••••••"
-            />
-          </label>
-        </div>
-
-        {error ? <p className="mt-4 text-sm font-bold text-burgundy">{error}</p> : null}
-
-        <Button type="submit" disabled={isSubmitting} className="mt-7 w-full">
-          {isSubmitting ? "Проверяем..." : "Войти в профиль"}
-        </Button>
-        <Button
-          type="button"
-          disabled={isSubmitting}
-          variant="outline"
-          className="mt-3 w-full"
-          onClick={handleClientLogin}
-        >
-          Открыть клиентский профиль
-        </Button>
-      </form>
+        {/* Admin form */}
+        <form onSubmit={(e) => void handleAdminSubmit(e)} className="rounded-card bg-white p-6 shadow-sm">
+          <p className="text-sm font-black uppercase text-muted">Для менеджеров</p>
+          <h2 className="mt-2 text-xl font-black tracking-tight">Email и пароль</h2>
+          <div className="mt-4 space-y-3">
+            <label className="block">
+              <span className="text-sm font-black text-dark">Email</span>
+              <Input
+                className="mt-1.5"
+                inputMode="email"
+                type="email"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.currentTarget.value)}
+                placeholder="admin@example.com"
+              />
+            </label>
+            <label className="block">
+              <span className="text-sm font-black text-dark">Пароль</span>
+              <Input
+                className="mt-1.5"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.currentTarget.value)}
+                placeholder="••••••••"
+              />
+            </label>
+          </div>
+          {adminError ? (
+            <p className="mt-3 text-sm font-bold text-burgundy">{adminError}</p>
+          ) : null}
+          <Button type="submit" disabled={isAdminSubmitting} variant="outline" className="mt-5 w-full">
+            {isAdminSubmitting ? "Проверяем..." : "Войти как менеджер"}
+          </Button>
+        </form>
+      </div>
     </section>
   );
 }
@@ -496,7 +509,7 @@ function ClientOrderCard({ order, clientPhone }: { order: ClientOrderSummary; cl
             type="button"
             className="min-h-10 px-4 py-2"
             disabled={actionStatus === "loading"}
-            onClick={() => sendClientAction("accept_revision")}
+            onClick={() => void sendClientAction("accept_revision")}
           >
             Принять изменения
           </Button>
@@ -604,7 +617,6 @@ function ClientDashboard({
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [orders, setOrders] = useState<ClientOrderSummary[]>([]);
   const [ordersError, setOrdersError] = useState("");
-  const [phone, setPhone] = useState(session.phone);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -665,11 +677,9 @@ function ClientDashboard({
     const nextSession: ClientSession = {
       ...session,
       companyName,
-      phone,
       accountant_phone: accountantPhone,
     };
 
-    writeClientSession(nextSession);
     onUpdate(nextSession);
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
@@ -735,9 +745,6 @@ function ClientDashboard({
               <p className="text-xs font-black uppercase text-raspberry">История</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight">Заказы</h2>
             </div>
-            <span className="w-fit rounded-badge bg-coral-light px-4 py-2 text-xs font-black text-burgundy">
-              MVP по email/телефону
-            </span>
           </div>
           {isLoadingOrders ? (
             <div className="mt-6 rounded-card bg-cream p-6">
@@ -761,7 +768,7 @@ function ClientDashboard({
               <h3 className="text-xl font-black tracking-tight">Заказы пока не найдены</h3>
               <p className="mt-3 text-sm font-semibold leading-6 text-muted">
                 История подтягивается по email и телефону из профиля. Если заказ оформлялся на другой
-                контакт, обновите настройки профиля или соберите новую заявку.
+                контакт, обратитесь к менеджеру.
               </p>
               <Button href="/catalog" className="mt-5">
                 Собрать первый заказ
@@ -783,16 +790,13 @@ function ClientDashboard({
                 placeholder="Название компании"
               />
             </label>
-            <label className="block">
-              <span className="text-sm font-black text-dark">Телефон</span>
-              <Input
-                className="mt-2"
-                inputMode="tel"
-                value={phone}
-                onChange={(event) => setPhone(event.currentTarget.value)}
-                placeholder="+7 (___) ___-__-__"
-              />
-            </label>
+            <div className="block">
+              <span className="text-sm font-black text-dark">Телефон WhatsApp</span>
+              <p className="mt-2 rounded-xl border border-black/10 bg-cream px-3 py-2.5 text-sm font-semibold text-muted">
+                {session.phone || "Не указан"}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-muted">Привязан к WhatsApp-аккаунту</p>
+            </div>
             <label className="block">
               <span className="text-sm font-black text-dark">Телефон бухгалтера</span>
               <Input
@@ -826,25 +830,37 @@ export function ProfileClient({ popularProducts = [] }: { popularProducts?: Prod
     let isMounted = true;
 
     async function loadSession() {
+      // Check admin session
       try {
-        const response = await fetch("/api/profile/session", {
-          cache: "no-store",
-        });
-        const adminSession = (await response.json()) as ProfileSessionResponse;
+        const response = await fetch("/api/profile/session", { cache: "no-store" });
+        const adminData = (await response.json()) as ProfileSessionResponse;
 
-        if (isMounted && adminSession.authenticated && adminSession.role === "admin") {
+        if (isMounted && adminData.authenticated && adminData.role === "admin") {
+          setSession({ email: adminData.email ?? "", role: "admin" });
+          return;
+        }
+      } catch {}
+
+      // Check client session cookie
+      try {
+        const response = await fetch("/api/profile/client-session", { cache: "no-store" });
+        const clientData = (await response.json()) as ClientSessionResponse;
+
+        if (isMounted && clientData.authenticated && clientData.email) {
           setSession({
-            email: adminSession.email ?? "",
-            role: "admin",
+            email: clientData.email,
+            phone: clientData.phone ?? "",
+            companyName: clientData.companyName ?? "",
+            accountant_phone: clientData.accountantPhone ?? "",
+            createdAt: new Date().toISOString(),
+            role: "client",
           });
           return;
         }
-      } catch {
-      }
+      } catch {}
 
       if (isMounted) {
-        setSession(readClientSession());
-        setIsLoading(false);
+        setSession(null);
       }
     }
 
@@ -860,13 +876,11 @@ export function ProfileClient({ popularProducts = [] }: { popularProducts?: Prod
   }, []);
 
   async function handleLogout() {
-    removeClientSession();
-
     if (session?.role === "admin") {
-      await fetch("/api/admin/logout", {
-        method: "POST",
-      }).catch(() => undefined);
+      await fetch("/api/admin/logout", { method: "POST" }).catch(() => undefined);
       router.refresh();
+    } else {
+      await fetch("/api/profile/client-logout", { method: "POST" }).catch(() => undefined);
     }
 
     setSession(null);
@@ -879,9 +893,9 @@ export function ProfileClient({ popularProducts = [] }: { popularProducts?: Prod
           <div className="h-72 animate-pulse rounded-card bg-white shadow-sm" />
         </section>
       ) : session?.role === "admin" ? (
-        <AdminDashboard session={session} onLogout={handleLogout} />
+        <AdminDashboard session={session} onLogout={() => void handleLogout()} />
       ) : session?.role === "client" ? (
-        <ClientDashboard session={session} onLogout={handleLogout} onUpdate={setSession} popularProducts={popularProducts} />
+        <ClientDashboard session={session} onLogout={() => void handleLogout()} onUpdate={setSession} popularProducts={popularProducts} />
       ) : (
         <LoginPanel onLogin={setSession} />
       )}

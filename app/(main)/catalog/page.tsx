@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CategoryNavBar } from "@/src/components/catalog/CategoryNavBar";
-import { CatalogSearch } from "@/src/components/catalog/CatalogSearch";
+import { CatalogFilters } from "@/src/components/catalog/CatalogFilters";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 
 export const metadata: Metadata = {
@@ -18,7 +18,11 @@ export default async function CatalogPage() {
   return (
     <main className="min-h-screen bg-cream text-dark">
       <CategoryNavBar categories={categories} popularCount={popularProducts.length} />
-      <CatalogSearch products={products} categories={categories} popularProducts={popularProducts} />
+      <CatalogFilters
+        categories={categories}
+        products={products}
+        popularProducts={popularProducts}
+      />
     </main>
   );
 }

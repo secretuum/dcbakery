@@ -83,6 +83,12 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.name}
         </h3>
 
+        {product.min_qty > 1 && (
+          <p className="mt-1 text-xs text-muted">
+            Мин. заказ: {product.min_qty} {product.unit}
+          </p>
+        )}
+
         <div className="mt-2 flex items-center justify-between gap-2">
           <p className="text-base font-bold text-coral">{priceText}</p>
 
@@ -111,7 +117,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <button
               onClick={handleAddToCart}
               disabled={!isInStock}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-coral text-lg font-bold text-white disabled:bg-gray-300"
+              className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-coral bg-transparent text-lg font-bold text-coral hover:bg-coral-light disabled:border-gray-300 disabled:text-gray-300"
               aria-label={`Добавить в корзину: ${product.name}`}
             >
               +

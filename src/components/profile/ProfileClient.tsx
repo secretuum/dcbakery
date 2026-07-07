@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
@@ -129,24 +129,23 @@ function ClientIcon() {
 function MetricCard({
   label,
   value,
-  tone = "light",
+  icon,
 }: {
   label: string;
   value: string;
-  tone?: "light" | "coral";
+  icon?: ReactNode;
 }) {
   return (
-    <div
-      className={
-        tone === "coral"
-          ? "rounded-card bg-coral p-5 text-white shadow-sm"
-          : "rounded-card bg-white p-5 shadow-sm"
-      }
-    >
-      <p className={tone === "coral" ? "text-xs font-black uppercase text-white/80" : "text-xs font-black uppercase text-muted"}>
-        {label}
-      </p>
-      <p className="mt-3 text-3xl font-black tracking-tight">{value}</p>
+    <div className="flex items-center gap-4 rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
+      {icon && (
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-coral-light">
+          {icon}
+        </div>
+      )}
+      <div>
+        <p className="text-2xl font-black tracking-tight text-dark">{value}</p>
+        <p className="mt-0.5 text-xs text-muted">{label}</p>
+      </div>
     </div>
   );
 }
@@ -344,10 +343,26 @@ function AdminDashboard({
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Заявки" value="Админка" tone="coral" />
-        <MetricCard label="Оплата" value="Контроль" />
-        <MetricCard label="Каталог" value="Товары" />
-        <MetricCard label="Каналы" value="WA/TG" />
+        <MetricCard label="Заявки" value="Заказы" icon={
+          <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        } />
+        <MetricCard label="Оплата" value="Контроль" icon={
+          <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+        } />
+        <MetricCard label="Каталог" value="Товары" icon={
+          <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+        } />
+        <MetricCard label="Каналы" value="WA/TG" icon={
+          <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        } />
       </div>
 
       <div className="mt-6 grid gap-5 lg:grid-cols-3">
@@ -688,13 +703,41 @@ function ClientDashboard({
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
-          label="История заказов"
+          label="Всего заказов"
           value={isLoadingOrders ? "..." : String(orders.length)}
-          tone="coral"
+          icon={
+            <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          }
         />
-        <MetricCard label="Минимальный заказ" value={formatCurrency(MIN_ORDER_AMOUNT)} />
-        <MetricCard label="Активные заявки" value={isLoadingOrders ? "..." : String(activeOrders)} />
-        <MetricCard label="Оплачено" value={formatCurrency(paidAmount)} />
+        <MetricCard
+          label="Минимальный заказ"
+          value={formatCurrency(MIN_ORDER_AMOUNT)}
+          icon={
+            <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          }
+        />
+        <MetricCard
+          label="Активные заявки"
+          value={isLoadingOrders ? "..." : String(activeOrders)}
+          icon={
+            <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+        />
+        <MetricCard
+          label="Оплачено"
+          value={formatCurrency(paidAmount)}
+          icon={
+            <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+        />
       </div>
 
       <PopularProductsSection products={popularProducts} />

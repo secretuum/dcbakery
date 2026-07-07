@@ -1,5 +1,7 @@
 import type { OrderStatus, PaymentStatus } from "@/src/types";
 
+type StatusVariant = "coral" | "burgundy" | "dark" | "neutral" | "green" | "blue" | "amber" | "red";
+
 export const canonicalOrderStatuses = [
   "pending_manager_confirmation",
   "change_proposed",
@@ -27,20 +29,20 @@ export const orderStatusLabels: Record<OrderStatus, string> = {
   cancelled: "Отменена",
 };
 
-export const orderStatusVariants: Record<OrderStatus, "coral" | "burgundy" | "dark" | "neutral"> = {
-  pending_manager_confirmation: "coral",
-  change_proposed: "burgundy",
-  confirmed_waiting_payment: "burgundy",
-  paid: "neutral",
-  in_progress: "dark",
-  delivering: "dark",
-  completed: "neutral",
-  canceled: "dark",
-  new: "coral",
-  confirmed: "burgundy",
-  ready: "neutral",
-  delivered: "neutral",
-  cancelled: "dark",
+export const orderStatusVariants: Record<OrderStatus, StatusVariant> = {
+  pending_manager_confirmation: "amber",
+  change_proposed: "amber",
+  confirmed_waiting_payment: "amber",
+  paid: "green",
+  in_progress: "blue",
+  delivering: "blue",
+  completed: "green",
+  canceled: "red",
+  new: "amber",
+  confirmed: "green",
+  ready: "green",
+  delivered: "green",
+  cancelled: "red",
 };
 
 export const paymentStatusLabels: Record<PaymentStatus, string> = {

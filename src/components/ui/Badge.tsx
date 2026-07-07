@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from "react";
 
-type BadgeVariant = "coral" | "burgundy" | "dark" | "neutral";
+type BadgeVariant = "coral" | "burgundy" | "dark" | "neutral" | "green" | "blue" | "amber" | "red";
 
 type BadgeProps = HTMLAttributes<HTMLSpanElement> & {
   children: ReactNode;
@@ -12,6 +12,10 @@ const variantClasses: Record<BadgeVariant, string> = {
   burgundy: "bg-[#f7d9e5] text-burgundy",
   dark: "bg-dark text-white",
   neutral: "bg-white text-muted ring-1 ring-black/10",
+  green: "bg-green-50 text-green-700",
+  blue: "bg-blue-50 text-blue-700",
+  amber: "bg-amber-50 text-amber-700",
+  red: "bg-red-50 text-red-700",
 };
 
 function cx(...classes: Array<string | undefined | false>) {
@@ -23,7 +27,7 @@ export function Badge({ children, className, variant = "neutral", ...props }: Ba
     <span
       {...props}
       className={cx(
-        "inline-flex items-center rounded-badge px-3 py-1 text-xs font-bold",
+        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold",
         variantClasses[variant],
         className,
       )}

@@ -7,6 +7,9 @@ import {
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 import { CLIENT_SESSION_COOKIE, verifyClientSession } from "@/src/lib/client-session";
 
+const EMAIL_RE = /^[^,()[\]\s]+@[^,()[\]\s]+\.[^,()[\]\s]+$/;
+const PHONE_RE = /^\+?\d{10,15}$/;
+
 export async function POST(request: Request) {
   const rateLimit = checkRateLimit({
     identifier: getRequestIdentifier(request),
@@ -31,6 +34,14 @@ export async function POST(request: Request) {
 
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (session.email && !EMAIL_RE.test(session.email)) {
+    return NextResponse.json({ error: "Bad Request" }, { status: 400 });
+  }
+
+  if (session.phone && !PHONE_RE.test(session.phone)) {
+    return NextResponse.json({ error: "Bad Request" }, { status: 400 });
   }
 
   const supabaseConfigError = getSupabaseAdminConfigError();

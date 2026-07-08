@@ -651,11 +651,11 @@ export async function fetchClientOrderSummaries({
   const filters: string[] = [];
 
   if (email) {
-    filters.push(`customer_email.eq.${encodeURIComponent(email)}`);
+    filters.push(`customer_email.eq.${email}`);
   }
 
   if (phone) {
-    filters.push(`customer_phone.eq.${encodeURIComponent(phone)}`);
+    filters.push(`customer_phone.eq.${phone}`);
   }
 
   if (filters.length > 1) {

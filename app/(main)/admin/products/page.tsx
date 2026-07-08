@@ -140,7 +140,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
         </div>
       </section>
 
-      <section className="mt-6 rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
+      <section className="mt-6 rounded-card bg-white p-5 shadow-sm">
         <form className="grid gap-3 lg:grid-cols-[1fr_auto]" action="/admin/products">
           {selectedCategory ? <input type="hidden" name="category" value={selectedCategory} /> : null}
           {isArchiveView ? <input type="hidden" name="view" value="archive" /> : null}
@@ -193,7 +193,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
         </nav>
       </section>
 
-      <div className="mt-6 overflow-hidden rounded-card bg-white shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
+      <div className="mt-6 overflow-hidden rounded-card bg-white shadow-sm">
         {filteredProducts.length > 0 ? (
           <>
             <form
@@ -275,7 +275,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                         <div className="flex items-center gap-3">
                           <div className="min-w-0">
                             <input
-                              className="w-full min-w-64 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                              className="h-9 w-full min-w-64 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                               defaultValue={product.name}
                               form={formId}
                               name="name"
@@ -287,7 +287,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                               /product/{product.slug}
                             </Link>
                             <input
-                              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-muted outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                              className="mt-2 h-9 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-muted outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                               defaultValue={product.slug}
                               form={formId}
                               name="slug"
@@ -331,7 +331,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                       <td className="px-5 py-4">
                         <div className="grid gap-2">
                           <select
-                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            className="h-9 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                             defaultValue={product.category?.slug ?? ""}
                             form={formId}
                             name="category_slug"
@@ -343,7 +343,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             ))}
                           </select>
                           <input
-                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-muted outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            className="h-9 rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-muted outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                             defaultValue={product.subcategory ?? ""}
                             form={formId}
                             name="subcategory"
@@ -354,7 +354,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                       </td>
                       <td className="px-5 py-4">
                         <input
-                          className="w-32 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-raspberry outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                          className="h-9 w-32 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-raspberry outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                           defaultValue={product.price}
                           form={formId}
                           max={10000}
@@ -370,14 +370,14 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                       <td className="px-5 py-4">
                         <div className="grid gap-2">
                           <input
-                            className="w-36 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            className="h-9 w-36 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                             defaultValue={product.weightLabel ?? ""}
                             form={formId}
                             name="weight_label"
                             placeholder="Вес"
                           />
                           <input
-                            className="w-36 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            className="h-9 w-36 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-bold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                             defaultValue={product.weightGrams ?? ""}
                             form={formId}
                             max={2000}
@@ -394,7 +394,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                       </td>
                       <td className={`px-5 py-4 font-black ${getStockTone(product.stock_qty)}`}>
                         <input
-                          className="w-28 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                          className="h-9 w-28 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                           defaultValue={product.stock_qty}
                           form={formId}
                           max={100}
@@ -407,7 +407,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                       <td className="px-5 py-4">
                         <div className="grid gap-2">
                           <select
-                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            className="h-9 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                             defaultValue={String(product.is_active)}
                             form={formId}
                             name="is_active"
@@ -418,7 +418,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           <label className="flex items-center gap-2">
                             <span className="shrink-0 text-xs font-bold text-muted">Популярность (1–15)</span>
                             <input
-                              className="w-16 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                              className="h-9 w-16 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                               defaultValue={product.popularity_rank ?? ""}
                               form={formId}
                               max={15}
@@ -429,7 +429,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             />
                           </label>
                           <select
-                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            className="h-9 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                             defaultValue={String(Boolean(product.isNew))}
                             form={formId}
                             name="is_new"
@@ -438,7 +438,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                             <option value="true">Новинка</option>
                           </select>
                           <select
-                            className="rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+                            className="h-9 rounded-xl border border-black/10 bg-white px-3 py-2 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                             defaultValue={String(Boolean(product.isPromo))}
                             form={formId}
                             name="is_promo"

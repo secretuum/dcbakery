@@ -1,3 +1,3 @@
 export default function CatalogLayout({ children }: { children: React.ReactNode }) {
-  return <div className="pb-52">{children}</div>;
+  return <div className="pb-24">{children}</div>;
 }

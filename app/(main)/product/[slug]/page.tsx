@@ -57,7 +57,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
   ];
 
   return (
-    <main className="min-h-screen bg-cream text-dark pb-52">
+    <main className="min-h-screen bg-cream text-dark pb-24">
       <section className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
         <ProductGallery images={product.images} alt={product.name} />
 

@@ -397,7 +397,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
         {/* Admin form */}
         <form onSubmit={(e) => void handleAdminSubmit(e)} className="rounded-card bg-white p-6 shadow-sm">
           <p className="text-sm font-black uppercase text-muted">Для менеджеров</p>
-          <h2 className="mt-2 text-xl font-black tracking-tight">Email и пароль</h2>
+          <h2 className="mt-2 text-2xl font-black tracking-tight">Email и пароль</h2>
           <div className="mt-4 space-y-3">
             <label className="block">
               <span className="text-sm font-black text-dark">Email</span>
@@ -687,11 +687,11 @@ function PopularProductsSection({ products }: { products: Product[] }) {
         {products.map((product) => (
           <div
             key={product.id}
-            className="flex flex-col justify-between rounded-xl border border-black/10 bg-white p-4"
+            className="flex flex-col justify-between rounded-xl bg-cream p-4"
           >
             <div>
               <p className="text-sm font-black leading-tight text-dark">{product.name}</p>
-              <p className="mt-2 text-lg font-bold text-dark">
+              <p className="mt-2 text-lg font-black text-coral">
                 {product.price > 0 ? formatCurrency(product.price) : "Цена уточняется"}
               </p>
             </div>

@@ -31,7 +31,7 @@ export default async function NewProductPage() {
 
       <form
         action={createCatalogProductAction}
-        className="mt-6 grid gap-5 rounded-card bg-white p-6 shadow-[0_18px_60px_rgba(120,51,38,0.10)]"
+        className="mt-6 grid gap-5 rounded-card bg-white p-6 shadow-sm"
       >
         <div className="grid gap-4 lg:grid-cols-2">
           <label className="grid gap-2 text-sm font-black text-dark">

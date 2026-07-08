@@ -3,15 +3,14 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { Button } from "@/src/components/ui/Button";
 import { useCart } from "@/src/contexts/CartContext";
-import { RETAIL_SITE_URL } from "@/app/constants";
 
 const navItems = [
   { label: "Каталог", href: "/catalog" },
-  { label: "Условия", href: "/#terms" },
-  { label: "Доставка", href: "/#delivery" },
   { label: "О компании", href: "/#about" },
+  { label: "Доставка", href: "/#delivery" },
+  { label: "Условия", href: "/#terms" },
+  { label: "Контакты", href: "/#about" },
 ];
 
 function CartIcon() {
@@ -23,7 +22,7 @@ function CartIcon() {
       stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth="2"
+      strokeWidth="1.75"
       viewBox="0 0 24 24"
     >
       <path d="M6 6h15l-2 8H8L6 6Z" />
@@ -38,12 +37,12 @@ function ProfileIcon() {
   return (
     <svg
       aria-hidden="true"
-      className="size-5"
+      className="size-4"
       fill="none"
       stroke="currentColor"
       strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth="2"
+      strokeWidth="1.75"
       viewBox="0 0 24 24"
     >
       <path d="M20 21a8 8 0 0 0-16 0" />
@@ -74,64 +73,66 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const hiddenOnScroll = ["Условия", "Доставка", "О компании"];
-
   return (
-    <header className="print-hidden sticky top-0 z-30 border-b border-black/10 bg-cream/90 backdrop-blur-xl transition-all duration-200">
-      <nav className={`mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 lg:px-8 transition-all duration-200 ${scrolled ? "py-2" : "py-4"}`}>
-        <Link href="/" className="flex items-center gap-3" aria-label="DC Bakery">
-          <span className={`flex items-center justify-center rounded-card bg-coral font-black text-white shadow-[0_8px_20px_rgba(194,83,31,0.22)] transition-all duration-200 ${scrolled ? "size-8 text-xs" : "size-11 text-sm"}`}>
-            DC
-          </span>
-          <span className={`font-black tracking-tight text-dark transition-all duration-200 ${scrolled ? "text-base" : "text-xl"}`}>DC Bakery</span>
+    <header
+      className={`print-hidden sticky top-0 z-30 border-b border-fudo-border bg-white/95 backdrop-blur-xl transition-shadow duration-200 ${
+        scrolled ? "shadow-[0_1px_12px_rgba(0,0,0,0.06)]" : ""
+      }`}
+    >
+      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-4 lg:px-8">
+        {/* Logo */}
+        <Link
+          href="/"
+          className="font-serif text-lg font-bold uppercase tracking-[0.12em] text-fudo-dark transition hover:opacity-75"
+          aria-label="DC Bakery"
+        >
+          DC Bakery
         </Link>
 
-        <div className="flex items-center gap-2 text-sm font-bold text-muted">
-          {!isCatalog && navItems.map((item) => (
-            (!scrolled || !hiddenOnScroll.includes(item.label)) && (
+        {/* Center nav — desktop only */}
+        {!isCatalog && (
+          <div className="hidden items-center gap-0.5 lg:flex">
+            {navItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
-                className="hidden rounded-btn px-4 py-2 transition hover:bg-white hover:text-dark hover:shadow-sm lg:inline-flex"
+                className="rounded-lg px-3.5 py-2 text-sm font-medium text-fudo-muted transition hover:text-fudo-dark"
               >
                 {item.label}
               </Link>
-            )
-          ))}
+            ))}
+          </div>
+        )}
 
-          {!isCatalog && !scrolled && (
-            <span className="hidden lg:inline-flex">
-              <Button
-                href={RETAIL_SITE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                variant="ghost"
-                className="min-h-10 px-4 py-2"
-              >
-                Заказать в розницу →
-              </Button>
-            </span>
-          )}
-
+        {/* Right actions */}
+        <div className="flex items-center gap-3">
           <Link
             href="/profile"
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-btn bg-white px-4 py-2 text-dark shadow-sm transition hover:shadow-md"
-            aria-label="Профиль"
+            className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-fudo-muted transition hover:text-fudo-dark lg:flex"
+            aria-label="Войти"
           >
             <ProfileIcon />
-            <span className="hidden font-bold sm:inline">Профиль</span>
+            Войти
+          </Link>
+
+          <Link
+            href="/#terms"
+            className="hidden rounded-xl border border-fudo-accent px-5 py-2.5 text-sm font-semibold text-fudo-accent transition hover:bg-fudo-accent-light lg:flex"
+          >
+            Стать партнёром
           </Link>
 
           <Link
             href="/cart"
-            className="relative inline-flex min-h-10 items-center justify-center gap-2 rounded-btn bg-white px-4 py-2 text-dark shadow-sm transition hover:shadow-md"
+            className="relative flex size-10 items-center justify-center rounded-xl border border-fudo-border text-fudo-dark transition hover:border-fudo-accent hover:text-fudo-accent"
             aria-label={`Корзина, товаров: ${totalItems}`}
           >
             <CartIcon />
-            <span className="hidden font-bold sm:inline">Корзина</span>
-            <span className="absolute -right-2 -top-2 min-w-6 rounded-badge bg-burgundy px-2 py-1 text-center text-xs font-black leading-none text-white">
-              {badgeText}
-            </span>
+            {totalItems > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full bg-fudo-accent px-1 py-0.5 text-[10px] font-bold leading-none text-white">
+                {badgeText}
+              </span>
+            )}
           </Link>
         </div>
       </nav>

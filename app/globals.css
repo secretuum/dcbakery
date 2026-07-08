@@ -14,6 +14,14 @@
   --radius-badge: 20px;
   --background: var(--dc-cream);
   --foreground: var(--dc-dark);
+
+  /* Premium design system */
+  --fudo-accent: #E8963C;
+  --fudo-accent-light: #FEF3E4;
+  --fudo-beige: #FDF6EC;
+  --fudo-dark: #1A1A1A;
+  --fudo-muted: #8A8A8A;
+  --fudo-border: #EEEEEE;
 }
 
 @theme inline {
@@ -32,6 +40,15 @@
   --radius-badge: var(--radius-badge);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Premium design tokens */
+  --color-fudo-accent: var(--fudo-accent);
+  --color-fudo-accent-light: var(--fudo-accent-light);
+  --color-fudo-beige: var(--fudo-beige);
+  --color-fudo-dark: var(--fudo-dark);
+  --color-fudo-muted: var(--fudo-muted);
+  --color-fudo-border: var(--fudo-border);
+  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
 }
 
 body {
@@ -42,6 +59,10 @@ body {
 
 html {
   scroll-behavior: smooth;
+}
+
+.hero-gradient {
+  background: radial-gradient(ellipse 100% 80% at 0% 0%, #FDF6EC 0%, #ffffff 62%);
 }
 
 .no-scrollbar {

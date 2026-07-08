@@ -1,310 +1,253 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MIN_ORDER_AMOUNT } from "@/app/constants";
-import { CategoryCard } from "@/src/components/catalog/CategoryCard";
-import { ProductCard } from "@/src/components/catalog/ProductCard";
-import { fetchCategories, fetchPopularProducts, fetchProducts } from "@/src/lib/catalog";
-import { formatPrice } from "@/src/lib/format";
-import type { Category } from "@/src/types";
+import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
+import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
 
 export const metadata: Metadata = {
-  title: "DC Bakery для бизнеса",
+  title: "DC Bakery — надёжный B2B-поставщик",
   description:
-    "B2B-маркетплейс DC Bakery: десерты, полуфабрикаты и мясо для кофеен, ресторанов, магазинов и отелей.",
+    "B2B-поставщик десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые цены, живые остатки, история заказов.",
 };
 
+const stats = [
+  { value: "100+", label: "наименований\nв каталоге" },
+  { value: "500+", label: "партнёров\nв Казахстане" },
+  { value: "98%", label: "заказов\nдоставлено в срок" },
+];
+
 const orderSteps = [
-  "Выберите товары",
-  "Оформите заказ",
-  "Менеджер подтвердит",
+  "Выберите товары в каталоге",
+  "Оформите заявку онлайн",
+  "Менеджер подтвердит заказ",
   "Доставка или самовывоз",
 ];
 
 const advantages = [
   {
-    title: "Открытые B2B-цены",
-    desc: "Оптовые цены без скрытых наценок и звонка торговому представителю.",
+    title: "Контроль качества",
+    desc: "Каждая партия проходит проверку перед отгрузкой. Работаем только с проверенным сырьём.",
     icon: (
-      <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="m9 12 2 2 4-4" />
       </svg>
     ),
   },
   {
-    title: "Повторные заказы за 2 мин",
-    desc: "История закупок всегда под рукой — повторите заявку в пару кликов.",
+    title: "Своевременная доставка",
+    desc: "Слот доставки согласуется с менеджером под ваш график. Работает собственная логистика.",
     icon: (
-      <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3" />
+        <rect width="7" height="7" x="14" y="10" rx="1" />
+        <path d="M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z" />
+        <path d="M17 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z" />
+        <path d="M16 10h4l1 4" />
       </svg>
     ),
   },
   {
-    title: "Контроль остатков",
-    desc: "Актуальные остатки и минимальные заказы видны прямо в каталоге.",
+    title: "Удобный формат",
+    desc: "Оформляйте заявки 24/7. История заказов и повтор закупок — в пару кликов.",
     icon: (
-      <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="7" height="7" x="3" y="3" rx="1" />
+        <rect width="7" height="7" x="14" y="3" rx="1" />
+        <rect width="7" height="7" x="3" y="14" rx="1" />
+        <rect width="7" height="7" x="14" y="14" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    title: "Выгодное сотрудничество",
+    desc: "Прозрачные оптовые цены без скрытых наценок. Минимальный заказ от 15 000 ₸.",
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
       </svg>
     ),
   },
 ];
 
-const promoCategory: Category = {
-  id: "promo",
-  name: "Акции",
-  slug: "akcii",
-  description: "Сезонные предложения и выгодные закупки для партнеров.",
-  image: "/product-placeholder.png",
-  parent_id: null,
-  sort_order: 40,
-  is_active: true,
-};
-
+const contactInfo = [
+  { label: "Телефон", value: "+7 (705) 886-50-14" },
+  { label: "WhatsApp", value: "+7 (705) 886-50-14" },
+  { label: "Адрес", value: "Казахстан, уточняется" },
+  { label: "Режим работы", value: "Ежедневно 9:00–19:00" },
+];
 
 export default async function Home() {
-  const [categories, popularProducts, allProducts] = await Promise.all([
+  const [categories, allProducts] = await Promise.all([
     fetchCategories(),
-    fetchPopularProducts(4),
     fetchProducts(),
   ]);
-  const homeCategories = [...categories, promoCategory];
-
-  const metrics = [
-    {
-      label: "позиций в каталоге",
-      value: String(allProducts.length),
-      icon: (
-        <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-        </svg>
-      ),
-    },
-    {
-      label: "на повторный заказ",
-      value: "2 мин",
-      icon: (
-        <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-    },
-    {
-      label: "минимальный заказ",
-      value: formatPrice(MIN_ORDER_AMOUNT),
-      icon: (
-        <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-      ),
-    },
-  ];
 
   return (
-    <main className="bg-cream text-dark pb-52">
-      {/* Hero */}
-      <section className="px-5 pb-10 pt-8 lg:px-8 lg:pb-16 lg:pt-14">
-        <div className="mx-auto max-w-7xl">
-          <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm sm:p-8 lg:p-10">
-            <p className="inline-flex rounded-full bg-coral-light px-4 py-1.5 text-sm font-black text-coral">
-              DC Bakery для бизнеса
-            </p>
-            <h1 className="mt-6 max-w-4xl break-words text-5xl font-black leading-[0.96] tracking-tight text-dark lg:text-6xl">
-              Оптовые заказы десертов, полуфабрикатов и мяса
-            </h1>
-            <p className="mt-5 max-w-2xl text-lg text-muted">
-              Для кофеен, ресторанов, магазинов и отелей. Без лишних звонков — каталог, остатки и история заказов в одном окне.
-            </p>
+    <main className="text-fudo-dark">
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href="/catalog"
-                className="inline-flex min-h-14 items-center justify-center rounded-xl bg-dark px-7 py-4 text-base font-black text-white transition hover:opacity-80"
-              >
-                Смотреть каталог
-              </Link>
-              <Link
-                href="#terms"
-                className="inline-flex min-h-14 items-center justify-center rounded-xl border-2 border-coral bg-transparent px-7 py-4 text-base font-black text-coral transition hover:bg-coral-light"
-              >
-                Стать партнером
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ─── Hero ─── */}
+      <section className="hero-gradient overflow-hidden">
+        <div className="mx-auto max-w-7xl px-5 pb-16 pt-14 lg:px-8 lg:pb-24 lg:pt-20">
+          <div className="grid items-center gap-14 lg:grid-cols-2">
 
-      {/* Metric cards */}
-      <section className="px-5 pb-10 lg:px-8">
-        <div className="mx-auto grid max-w-7xl gap-4 sm:grid-cols-3">
-          {metrics.map((m) => (
-            <div key={m.label} className="flex items-center gap-4 rounded-xl border border-black/10 bg-white p-5">
-              <div className="shrink-0">{m.icon}</div>
-              <div>
-                <p className="text-2xl font-bold tracking-tight text-dark">{m.value}</p>
-                <p className="mt-0.5 text-xs uppercase text-muted">{m.label}</p>
+            {/* Left: headline + CTA */}
+            <div>
+              <span className="text-xs font-medium uppercase tracking-[0.15em] text-fudo-muted">
+                B2B поставщик продуктов питания
+              </span>
+              <h1 className="mt-5 font-serif text-5xl font-bold leading-[1.08] text-fudo-dark lg:text-[3.5rem]">
+                Надёжные<br />
+                полуфабрикаты<br />
+                для вашего бизнеса
+              </h1>
+              <p className="mt-6 max-w-md text-base leading-7 text-fudo-muted">
+                Поставки для кофеен, ресторанов, отелей и магазинов. Оптовые B2B-цены,
+                живые остатки и история заказов — всё в одном кабинете.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link
+                  href="/catalog"
+                  className="inline-flex items-center justify-center rounded-xl bg-fudo-accent px-8 py-4 text-sm font-semibold text-white transition hover:opacity-90"
+                >
+                  Смотреть каталог
+                </Link>
+                <Link
+                  href="#terms"
+                  className="inline-flex items-center justify-center rounded-xl border border-fudo-accent px-8 py-4 text-sm font-semibold text-fudo-accent transition hover:bg-fudo-accent-light"
+                >
+                  Стать партнёром
+                </Link>
               </div>
             </div>
-          ))}
+
+            {/* Right: stats */}
+            <div className="hidden divide-x divide-fudo-border lg:flex">
+              {stats.map((stat) => (
+                <div key={stat.value} className="flex-1 px-8 first:pl-0 last:pr-0">
+                  <p className="font-serif text-6xl font-bold text-fudo-dark">{stat.value}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-fudo-muted" style={{ whiteSpace: "pre-line" }}>
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile stats */}
+            <div className="grid grid-cols-3 divide-x divide-fudo-border lg:hidden">
+              {stats.map((stat) => (
+                <div key={stat.value} className="px-4 first:pl-0 last:pr-0">
+                  <p className="font-serif text-3xl font-bold text-fudo-dark">{stat.value}</p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-fudo-muted" style={{ whiteSpace: "pre-line" }}>
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+          </div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section id="catalog" className="px-5 py-12 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-black uppercase text-raspberry">Категории</p>
-              <h2 className="mt-2 break-words text-2xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                Закупка по разделам
-              </h2>
-            </div>
-            <Link href="/catalog" className="font-black text-coral transition hover:text-coral-hover">
-              Весь каталог
-            </Link>
-          </div>
+      {/* ─── Catalog with category tabs ─── */}
+      <HomeCatalogTabs categories={categories} products={allProducts} />
 
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {homeCategories.map((category) => (
-              <CategoryCard
-                key={category.id}
-                category={category}
-                href={category.id === "promo" ? "/catalog" : undefined}
-                eyebrow={category.id === "promo" ? "выгода" : "раздел"}
-              />
+      {/* ─── How it works ─── */}
+      <section id="terms" className="border-t border-fudo-border bg-white px-5 py-16 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12">
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-fudo-muted">
+              Как работает заказ
+            </p>
+            <h2 className="mt-4 font-serif text-3xl font-bold text-fudo-dark lg:text-4xl">
+              Быстро, понятно,<br className="hidden sm:block" />
+              с подтверждением менеджера
+            </h2>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {orderSteps.map((step, i) => (
+              <div key={step} className="rounded-2xl border border-fudo-border bg-white p-6">
+                <p className="font-serif text-4xl font-bold text-fudo-accent">0{i + 1}</p>
+                <p className="mt-6 text-sm font-semibold leading-relaxed text-fudo-dark">{step}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="terms" className="px-5 py-12 lg:px-8">
-        <div className="mx-auto max-w-7xl rounded-2xl bg-dark p-6 text-white shadow-sm sm:p-8 lg:p-10">
-          <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr] lg:items-start">
-            <div>
-              <p className="text-sm font-black uppercase text-coral-light">Как работает заказ</p>
-              <h2 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                Быстро, понятно, с подтверждением менеджера
-              </h2>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {orderSteps.map((step, index) => (
-                <div key={step} className="rounded-2xl bg-white/10 p-5">
-                  <p className="text-4xl font-black text-coral">{index + 1}</p>
-                  <p className="mt-8 text-lg font-black leading-6">{step}</p>
+      {/* ─── Advantages ─── */}
+      <section id="delivery" className="bg-fudo-beige px-5 py-16 lg:px-8 lg:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12">
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-fudo-muted">
+              Почему выбирают нас
+            </p>
+            <h2 className="mt-4 font-serif text-3xl font-bold text-fudo-dark lg:text-4xl">
+              Надёжный партнёр<br className="hidden sm:block" />
+              для вашего бизнеса
+            </h2>
+          </div>
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+            {advantages.map((adv) => (
+              <div key={adv.title}>
+                <div className="flex size-12 items-center justify-center rounded-full border border-fudo-border bg-white text-fudo-dark">
+                  {adv.icon}
+                </div>
+                <h3 className="mt-5 text-base font-bold text-fudo-dark">{adv.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-fudo-muted">{adv.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── About + CTA ─── */}
+      <section id="about" className="px-5 py-16 lg:px-8 lg:py-24">
+        <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-2">
+
+          {/* About card */}
+          <div className="rounded-2xl border border-fudo-border bg-white p-8">
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-fudo-muted">
+              О компании
+            </p>
+            <h2 className="mt-4 font-serif text-2xl font-bold text-fudo-dark lg:text-3xl">
+              DC Bakery — B2B-поставщик еды в Казахстане
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-fudo-muted">
+              Для закупщиков важны скорость, повторяемость и прозрачные условия.
+              Интерфейс фокусируется на каталоге, остатках, B2B-ценах и удобном повторе заказов.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              {contactInfo.map((item) => (
+                <div key={item.label} className="rounded-xl bg-fudo-beige px-4 py-3">
+                  <p className="text-xs font-medium text-fudo-muted">{item.label}</p>
+                  <p className="mt-1 text-sm font-semibold text-fudo-dark">{item.value}</p>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Advantages + Delivery */}
-      <section id="delivery" className="px-5 py-12 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-8">
-            <p className="text-sm font-black uppercase text-raspberry">Преимущества</p>
-            <h2 className="mt-2 break-words text-2xl font-black tracking-tight sm:text-4xl">
-              B2B-заказы в одном окне
-            </h2>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            {advantages.map((a) => (
-              <div key={a.title} className="flex items-start gap-4 rounded-xl border border-black/10 bg-white p-5">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-coral-light">
-                  {a.icon}
-                </div>
-                <div>
-                  <p className="font-black text-dark">{a.title}</p>
-                  <p className="mt-1 text-sm text-muted">{a.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-5 rounded-2xl bg-coral-light p-6 shadow-sm sm:p-8">
-            <p className="text-sm font-black uppercase text-burgundy">Доставка</p>
-            <h2 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl">Под ваш график поставок</h2>
-            <p className="mt-5 text-base font-semibold leading-7 text-dark/70">
-              Доставка и самовывоз остаются на подтверждении менеджера: он проверит остатки, время
-              производства и удобный слот для вашей точки.
+          {/* CTA card */}
+          <div className="rounded-2xl bg-fudo-dark p-8 text-white lg:p-10">
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-fudo-accent">
+              Начать закупку
             </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl bg-white p-5">
-                <p className="text-3xl font-black">24/7</p>
-                <p className="mt-2 text-sm font-bold text-muted">оформление заявки онлайн</p>
-              </div>
-              <div className="rounded-2xl bg-white p-5">
-                <p className="text-3xl font-black">1 кабинет</p>
-                <p className="mt-2 text-sm font-bold text-muted">история и повтор заказов</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Popular products */}
-      <section className="px-5 py-12 lg:px-8">
-        <div className="mx-auto max-w-7xl">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-black uppercase text-raspberry">Популярные товары</p>
-              <h2 className="mt-2 break-words text-2xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                Часто берут партнеры
-              </h2>
-            </div>
-          </div>
-
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {popularProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* About + CTA */}
-      <section id="about" className="px-5 py-12 lg:px-8 lg:pb-20">
-        <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[0.85fr_1.15fr]">
-          <div className="rounded-2xl border border-black/10 bg-white p-6 shadow-sm sm:p-8">
-            <p className="text-sm font-black uppercase text-raspberry">О компании</p>
-            <h2 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl">
-              DC Bakery строит B2B-маркетплейс еды
-            </h2>
-            <p className="mt-5 text-base font-semibold leading-7 text-muted">
-              Для закупщиков важны скорость, повторяемость и прозрачные условия. Поэтому интерфейс
-              фокусируется на каталоге, остатках, B2B-ценах и удобном повторе заказов.
-            </p>
-            <div className="mt-8 grid gap-3 text-sm font-bold text-muted sm:grid-cols-2">
-              <p className="rounded-xl bg-cream px-4 py-3">Телефон: +7 700 000 00 00</p>
-              <p className="rounded-xl bg-cream px-4 py-3">WhatsApp: +7 700 000 00 00</p>
-              <p className="rounded-xl bg-cream px-4 py-3 sm:col-span-2">
-                Адрес: Казахстан, уточняется
-              </p>
-              <p className="rounded-xl bg-cream px-4 py-3 sm:col-span-2">
-                Время работы: ежедневно, 9:00-19:00
-              </p>
-            </div>
-          </div>
-
-          <div className="rounded-2xl bg-raspberry p-6 text-white shadow-sm sm:p-8 lg:p-10">
-            <p className="text-sm font-black uppercase text-coral-light">Начать закупку</p>
-            <h2 className="mt-3 max-w-3xl break-words text-2xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+            <h2 className="mt-4 font-serif text-2xl font-bold leading-snug text-white lg:text-3xl">
               Соберите первую оптовую заявку в каталоге
             </h2>
-            <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-white/80">
+            <p className="mt-4 text-sm leading-7 text-white/70">
               Выберите позиции, проверьте остатки и отправьте заказ на подтверждение менеджеру.
             </p>
             <Link
               href="/catalog"
-              className="mt-8 inline-flex min-h-14 items-center justify-center rounded-xl bg-white px-7 py-4 text-base font-black text-raspberry transition hover:bg-coral-light"
+              className="mt-8 inline-flex items-center justify-center rounded-xl bg-fudo-accent px-8 py-4 text-sm font-semibold text-white transition hover:opacity-90"
             >
               Перейти в каталог
             </Link>
           </div>
+
         </div>
       </section>
+
     </main>
   );
 }

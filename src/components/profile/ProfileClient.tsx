@@ -125,8 +125,10 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
 
   // Client magic link section state
   const [clientEmail, setClientEmail] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientCompany, setClientCompany] = useState("");
   const [clientError, setClientError] = useState("");
-  const [clientStep, setClientStep] = useState<"idle" | "sending" | "sent">("idle");
+  const [clientStep, setClientStep] = useState<"idle" | "sending" | "sent" | "needs_registration" | "registering">("idle");
 
   async function handleAdminSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -186,7 +188,16 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
         body: JSON.stringify({ email: normalizedEmail }),
       });
 
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        needsRegistration?: boolean;
+      };
+
+      if (response.ok && data.needsRegistration) {
+        // New client — show registration form
+        setClientStep("needs_registration");
+        return;
+      }
 
       if (!response.ok) {
         setClientError(data.error ?? "Не удалось отправить ссылку");
@@ -198,6 +209,44 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
     } catch {
       setClientError("Не удалось отправить ссылку. Проверьте соединение");
       setClientStep("idle");
+    }
+  }
+
+  async function handleRegistration() {
+    const normalizedEmail = clientEmail.trim().toLowerCase();
+    const phoneDigits = clientPhone.replace(/\D/g, "");
+
+    if (phoneDigits.length < 11) {
+      setClientError("Введите корректный номер телефона WhatsApp");
+      return;
+    }
+
+    setClientError("");
+    setClientStep("registering");
+
+    try {
+      const response = await fetch("/api/profile/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: normalizedEmail,
+          phone: clientPhone,
+          companyName: clientCompany,
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        setClientError(data.error ?? "Не удалось создать аккаунт");
+        setClientStep("needs_registration");
+        return;
+      }
+
+      setClientStep("sent");
+    } catch {
+      setClientError("Не удалось отправить ссылку. Проверьте соединение");
+      setClientStep("needs_registration");
     }
   }
 
@@ -247,6 +296,68 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                 Откройте WhatsApp и перейдите по ссылке. Она действует 15 минут.
               </p>
             </div>
+          ) : clientStep === "needs_registration" || clientStep === "registering" ? (
+            <>
+              <div className="mt-4 rounded-xl border border-coral/20 bg-coral-light px-4 py-3">
+                <p className="text-xs font-black uppercase text-burgundy">Новый партнёр</p>
+                <p className="mt-1 text-sm font-semibold text-dark/80">
+                  Аккаунт для <span className="font-black">{clientEmail}</span> не найден.
+                  Укажите номер WhatsApp для регистрации — ссылка для входа придёт туда.
+                </p>
+              </div>
+              <div className="mt-4 space-y-3">
+                <label className="block">
+                  <span className="text-sm font-black text-dark">Телефон WhatsApp</span>
+                  <Input
+                    className="mt-2"
+                    inputMode="tel"
+                    type="tel"
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.currentTarget.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void handleRegistration();
+                      }
+                    }}
+                    placeholder="+7 (705) 000-00-00"
+                    autoFocus
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-black text-dark">Компания / заведение</span>
+                  <Input
+                    className="mt-2"
+                    value={clientCompany}
+                    onChange={(e) => setClientCompany(e.currentTarget.value)}
+                    placeholder="Название компании"
+                  />
+                </label>
+              </div>
+              {clientError ? (
+                <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
+              ) : null}
+              <div className="mt-5 flex gap-3">
+                <Button
+                  type="button"
+                  disabled={clientStep === "registering"}
+                  className="flex-1"
+                  onClick={() => void handleRegistration()}
+                >
+                  {clientStep === "registering" ? "Создаём аккаунт..." : "Создать и войти"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setClientStep("idle");
+                    setClientError("");
+                  }}
+                >
+                  Назад
+                </Button>
+              </div>
+            </>
           ) : (
             <>
               <div className="mt-5">
@@ -277,7 +388,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                 className="mt-5 w-full"
                 onClick={() => void handleClientMagicLink()}
               >
-                {clientStep === "sending" ? "Отправляем..." : "Получить ссылку в WhatsApp"}
+                {clientStep === "sending" ? "Проверяем..." : "Войти по WhatsApp"}
               </Button>
             </>
           )}

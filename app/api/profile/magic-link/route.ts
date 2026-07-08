@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 import { createMagicLinkToken, fetchWhatsAppClientByEmail } from "@/src/lib/magic-link-store";
-import { sendGreenApiTextMessage } from "@/src/lib/whatsapp";
+import { sendGreenApiTextMessage, getWhatsAppChatIdFromPhone } from "@/src/lib/whatsapp";
+import { saveWhatsAppClientProfile } from "@/src/lib/whatsapp-client-store";
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
 const TOKEN_TTL_MS = 15 * 60 * 1000;
 
+function asString(v: unknown): string {
+  return typeof v === "string" ? v.trim() : "";
+}
+
 export async function POST(request: Request) {
   const limited = checkRateLimit({
     identifier: getRequestIdentifier(request),
-    limit: 2,
+    limit: 4,
     namespace: "profile:magic-link",
     windowMs: 30 * 60 * 1000,
   });
@@ -31,25 +36,53 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Неверный формат запроса" }, { status: 400 });
   }
 
-  const email =
-    typeof body === "object" &&
-    body !== null &&
-    "email" in body &&
-    typeof (body as Record<string, unknown>).email === "string"
-      ? ((body as Record<string, unknown>).email as string).trim().toLowerCase()
-      : "";
+  const raw = typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {};
+  const email = asString(raw.email).toLowerCase();
+  const phone = asString(raw.phone);
+  const companyName = asString(raw.companyName);
 
   if (!EMAIL_RE.test(email)) {
     return NextResponse.json({ error: "Введите корректный email" }, { status: 400 });
   }
 
-  const client = await fetchWhatsAppClientByEmail(email).catch(() => null);
+  // Look up existing client by email
+  const existingClient = await fetchWhatsAppClientByEmail(email).catch(() => null);
+  let chatId: string | null = existingClient?.chat_id ?? null;
 
-  if (!client?.chat_id) {
-    return NextResponse.json(
-      { error: "Для входа обратитесь к менеджеру" },
-      { status: 422 },
-    );
+  if (!chatId) {
+    // New client — need phone to register
+    if (!phone) {
+      // Tell the UI to show the registration form
+      return NextResponse.json({ needsRegistration: true });
+    }
+
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 11) {
+      return NextResponse.json(
+        { error: "Введите корректный номер телефона" },
+        { status: 422 },
+      );
+    }
+
+    chatId = getWhatsAppChatIdFromPhone(phone);
+    if (!chatId) {
+      return NextResponse.json({ error: "Неверный номер телефона" }, { status: 422 });
+    }
+
+    // Create a free-client record in whatsapp_clients
+    try {
+      await saveWhatsAppClientProfile({
+        chatId,
+        customerEmail: email,
+        customerPhone: phone,
+        companyName: companyName || null,
+      });
+    } catch {
+      return NextResponse.json(
+        { error: "Не удалось создать аккаунт. Попробуйте позже." },
+        { status: 500 },
+      );
+    }
   }
 
   // Generate 32-byte cryptographically secure token
@@ -78,7 +111,7 @@ export async function POST(request: Request) {
     "Если вы не запрашивали вход — проигнорируйте это сообщение.",
   ].join("\n");
 
-  await sendGreenApiTextMessage(client.chat_id, message).catch(() => null);
+  await sendGreenApiTextMessage(chatId, message).catch(() => null);
 
   return NextResponse.json({ sent: true });
 }

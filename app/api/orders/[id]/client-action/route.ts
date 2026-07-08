@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import {
   acceptOrderRevision,
   cancelOrder,
@@ -13,6 +14,7 @@ import {
   sendGreenApiTextMessage,
   getWhatsAppChatIdFromPhone,
 } from "@/src/lib/whatsapp";
+import { CLIENT_SESSION_COOKIE, verifyClientSession } from "@/src/lib/client-session";
 
 type ClientActionRouteProps = {
   params: Promise<{
@@ -43,6 +45,14 @@ async function notifyManager(orderId: string, previousMessageId?: string | null)
 }
 
 export async function POST(request: Request, { params }: ClientActionRouteProps) {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get(CLIENT_SESSION_COOKIE)?.value;
+  const session = sessionCookie ? await verifyClientSession(sessionCookie) : null;
+
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const payload = (await request.json().catch(() => ({}))) as ClientActionPayload;
   const order = await fetchAdminOrder(id);
@@ -51,10 +61,9 @@ export async function POST(request: Request, { params }: ClientActionRouteProps)
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  const clientPhone = request.headers.get("x-client-phone");
   const normalize = (p: string) => p.replace(/\D/g, "");
 
-  if (!clientPhone || normalize(clientPhone) !== normalize(order.customer_phone ?? "")) {
+  if (!session.phone || normalize(session.phone) !== normalize(order.customer_phone ?? "")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

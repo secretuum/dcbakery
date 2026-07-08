@@ -540,7 +540,7 @@ function OrderItemsList({ items }: { items: OrderItemSummary[] }) {
   );
 }
 
-function ClientOrderCard({ order, clientPhone }: { order: ClientOrderSummary; clientPhone: string }) {
+function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   const orderStatus = orderStatusLabels[order.status] ?? order.status;
   const paymentStatus = order.payment_status
     ? paymentStatusLabels[order.payment_status]
@@ -560,10 +560,7 @@ function ClientOrderCard({ order, clientPhone }: { order: ClientOrderSummary; cl
 
     const response = await fetch(`/api/orders/${order.id}/client-action`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-client-phone": clientPhone,
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, comment }),
     });
 
@@ -871,7 +868,7 @@ function ClientDashboard({
           ) : orders.length > 0 ? (
             <div className="mt-6 space-y-4">
               {orders.map((order) => (
-                <ClientOrderCard key={order.id} order={order} clientPhone={session.phone} />
+                <ClientOrderCard key={order.id} order={order} />
               ))}
             </div>
           ) : (

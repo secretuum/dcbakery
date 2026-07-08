@@ -125,8 +125,7 @@ export async function middleware(request: NextRequest) {
     const origin = request.headers.get("origin");
 
     if (origin) {
-      const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-      const requestHost = forwardedHost || request.nextUrl.host;
+      const requestHost = request.nextUrl.host;
 
       try {
         if (new URL(origin).host !== requestHost) {

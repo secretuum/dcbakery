@@ -48,7 +48,6 @@
   --color-fudo-dark: var(--fudo-dark);
   --color-fudo-muted: var(--fudo-muted);
   --color-fudo-border: var(--fudo-border);
-  --font-serif: var(--font-playfair), Georgia, "Times New Roman", serif;
 }
 
 body {

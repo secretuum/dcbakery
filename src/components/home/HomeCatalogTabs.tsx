@@ -29,7 +29,7 @@ export function HomeCatalogTabs({ categories, products }: Props) {
       <div className="mx-auto max-w-7xl">
         {/* Section header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="font-serif text-3xl font-bold text-fudo-dark lg:text-4xl">
+          <h2 className="text-3xl font-black text-fudo-dark lg:text-4xl">
             Каталог продукции
           </h2>
           <Link

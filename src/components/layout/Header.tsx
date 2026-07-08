@@ -83,7 +83,7 @@ export function Header() {
         {/* Logo */}
         <Link
           href="/"
-          className="font-serif text-lg font-bold uppercase tracking-[0.12em] text-fudo-dark transition hover:opacity-75"
+          className="text-lg font-black uppercase tracking-[0.12em] text-fudo-dark transition hover:opacity-75"
           aria-label="DC Bakery"
         >
           DC Bakery

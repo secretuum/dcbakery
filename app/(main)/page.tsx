@@ -86,16 +86,32 @@ export default async function Home() {
     <main className="text-fudo-dark">
 
       {/* ─── Hero ─── */}
-      <section className="hero-gradient overflow-hidden">
-        <div className="mx-auto max-w-7xl px-5 pb-16 pt-14 lg:px-8 lg:pb-24 lg:pt-20">
+      <section className="hero-gradient relative overflow-hidden">
+        {/* Sunray decoration */}
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          viewBox="0 0 1000 520"
+          preserveAspectRatio="xMidYMid slice"
+          aria-hidden="true"
+        >
+          <path d="M0,260 L1100,-120 L1100,-30 Z"   fill="#E8963C" fillOpacity="0.045"/>
+          <path d="M0,260 L1100,-30  L1100,80 Z"    fill="#E8963C" fillOpacity="0.028"/>
+          <path d="M0,260 L1100,80   L1100,185 Z"   fill="#E8963C" fillOpacity="0.045"/>
+          <path d="M0,260 L1100,185  L1100,295 Z"   fill="#E8963C" fillOpacity="0.028"/>
+          <path d="M0,260 L1100,295  L1100,405 Z"   fill="#E8963C" fillOpacity="0.045"/>
+          <path d="M0,260 L1100,405  L1100,510 Z"   fill="#E8963C" fillOpacity="0.028"/>
+          <path d="M0,260 L1100,510  L1100,640 Z"   fill="#E8963C" fillOpacity="0.045"/>
+        </svg>
+
+        <div className="relative z-10 mx-auto max-w-7xl px-5 pb-16 pt-14 lg:px-8 lg:pb-24 lg:pt-20">
           <div className="grid items-center gap-14 lg:grid-cols-2">
 
             {/* Left: headline + CTA */}
             <div>
-              <span className="text-xs font-medium uppercase tracking-[0.15em] text-fudo-muted">
+              <span className="text-xs font-semibold uppercase tracking-[0.15em] text-fudo-muted">
                 B2B поставщик продуктов питания
               </span>
-              <h1 className="mt-5 font-serif text-5xl font-bold leading-[1.08] text-fudo-dark lg:text-[3.5rem]">
+              <h1 className="mt-5 text-5xl font-black leading-[1.06] tracking-tight text-fudo-dark lg:text-[3.5rem]">
                 Надёжные<br />
                 полуфабрикаты<br />
                 для вашего бизнеса
@@ -120,11 +136,11 @@ export default async function Home() {
               </div>
             </div>
 
-            {/* Right: stats */}
+            {/* Right: stats — desktop */}
             <div className="hidden divide-x divide-fudo-border lg:flex">
               {stats.map((stat) => (
                 <div key={stat.value} className="flex-1 px-8 first:pl-0 last:pr-0">
-                  <p className="font-serif text-6xl font-bold text-fudo-dark">{stat.value}</p>
+                  <p className="text-6xl font-black tracking-tight text-fudo-dark">{stat.value}</p>
                   <p className="mt-3 text-sm leading-relaxed text-fudo-muted" style={{ whiteSpace: "pre-line" }}>
                     {stat.label}
                   </p>
@@ -132,11 +148,11 @@ export default async function Home() {
               ))}
             </div>
 
-            {/* Mobile stats */}
+            {/* Stats — mobile */}
             <div className="grid grid-cols-3 divide-x divide-fudo-border lg:hidden">
               {stats.map((stat) => (
                 <div key={stat.value} className="px-4 first:pl-0 last:pr-0">
-                  <p className="font-serif text-3xl font-bold text-fudo-dark">{stat.value}</p>
+                  <p className="text-3xl font-black tracking-tight text-fudo-dark">{stat.value}</p>
                   <p className="mt-1.5 text-xs leading-relaxed text-fudo-muted" style={{ whiteSpace: "pre-line" }}>
                     {stat.label}
                   </p>
@@ -158,7 +174,7 @@ export default async function Home() {
             <p className="text-xs font-medium uppercase tracking-[0.15em] text-fudo-muted">
               Как работает заказ
             </p>
-            <h2 className="mt-4 font-serif text-3xl font-bold text-fudo-dark lg:text-4xl">
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-fudo-dark lg:text-4xl">
               Быстро, понятно,<br className="hidden sm:block" />
               с подтверждением менеджера
             </h2>
@@ -166,7 +182,7 @@ export default async function Home() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {orderSteps.map((step, i) => (
               <div key={step} className="rounded-2xl border border-fudo-border bg-white p-6">
-                <p className="font-serif text-4xl font-bold text-fudo-accent">0{i + 1}</p>
+                <p className="text-4xl font-black tracking-tight text-fudo-accent">0{i + 1}</p>
                 <p className="mt-6 text-sm font-semibold leading-relaxed text-fudo-dark">{step}</p>
               </div>
             ))}
@@ -181,7 +197,7 @@ export default async function Home() {
             <p className="text-xs font-medium uppercase tracking-[0.15em] text-fudo-muted">
               Почему выбирают нас
             </p>
-            <h2 className="mt-4 font-serif text-3xl font-bold text-fudo-dark lg:text-4xl">
+            <h2 className="mt-4 text-3xl font-black tracking-tight text-fudo-dark lg:text-4xl">
               Надёжный партнёр<br className="hidden sm:block" />
               для вашего бизнеса
             </h2>
@@ -209,7 +225,7 @@ export default async function Home() {
             <p className="text-xs font-medium uppercase tracking-[0.15em] text-fudo-muted">
               О компании
             </p>
-            <h2 className="mt-4 font-serif text-2xl font-bold text-fudo-dark lg:text-3xl">
+            <h2 className="mt-4 text-2xl font-black tracking-tight text-fudo-dark lg:text-3xl">
               DC Bakery — B2B-поставщик еды в Казахстане
             </h2>
             <p className="mt-4 text-sm leading-7 text-fudo-muted">
@@ -231,7 +247,7 @@ export default async function Home() {
             <p className="text-xs font-medium uppercase tracking-[0.15em] text-fudo-accent">
               Начать закупку
             </p>
-            <h2 className="mt-4 font-serif text-2xl font-bold leading-snug text-white lg:text-3xl">
+            <h2 className="mt-4 text-2xl font-black leading-snug tracking-tight text-white lg:text-3xl">
               Соберите первую оптовую заявку в каталоге
             </h2>
             <p className="mt-4 text-sm leading-7 text-white/70">

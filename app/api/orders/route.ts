@@ -19,6 +19,8 @@ import {
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 import type { Order } from "@/src/types";
 
+const OFERTA_VERSION = "2026-07-10";
+
 type IncomingItem = {
   price?: number;
   product_id: string;
@@ -41,6 +43,7 @@ type IncomingOrderBody = {
   items?: IncomingItem[];
   payment_method?: string;
   request_avr?: boolean;
+  oferta_accepted?: boolean;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -111,6 +114,7 @@ function parseBody(value: unknown): IncomingOrderBody {
     items: parseItems(value.items),
     payment_method: asString(value.payment_method),
     request_avr: value.request_avr === true,
+    oferta_accepted: value.oferta_accepted === true,
   };
 }
 
@@ -153,6 +157,10 @@ function validateOrder(body: IncomingOrderBody) {
 
   if (totalAmount < MIN_ORDER_AMOUNT) {
     errors.push("minimum order amount is not reached");
+  }
+
+  if (!body.oferta_accepted) {
+    errors.push("oferta must be accepted");
   }
 
   return { errors, totalAmount };
@@ -290,6 +298,8 @@ export async function POST(request: Request) {
     status: "pending_manager_confirmation",
     total_amount: totalAmount,
     payment_status: "unpaid",
+    oferta_accepted_at: new Date().toISOString(),
+    oferta_version: OFERTA_VERSION,
     created_at: new Date().toISOString(),
   };
 

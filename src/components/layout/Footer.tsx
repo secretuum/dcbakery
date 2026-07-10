@@ -41,9 +41,15 @@ export function Footer() {
       </div>
 
       <div className="border-t border-black/10 px-5 pb-20 pt-4">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 text-sm font-medium text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} DC Bakery</p>
-          <p>Оптовые заявки без подключения оплаты на этапе MVP</p>
+        <div className="mx-auto max-w-7xl space-y-3">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <p className="text-xs font-black uppercase text-muted/60">Правовая информация</p>
+            <Link href="/oferta" className="text-sm font-medium text-muted transition hover:text-dark">Публичная оферта</Link>
+            <Link href="/privacy" className="text-sm font-medium text-muted transition hover:text-dark">Политика конфиденциальности</Link>
+            <Link href="/oplata-i-dostavka" className="text-sm font-medium text-muted transition hover:text-dark">Оплата и доставка</Link>
+            <Link href="/contacts" className="text-sm font-medium text-muted transition hover:text-dark">Контакты и реквизиты</Link>
+          </div>
+          <p className="text-sm font-medium text-muted">© {new Date().getFullYear()} DC Bakery</p>
         </div>
       </div>
     </footer>

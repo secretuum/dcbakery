@@ -22,6 +22,7 @@ type CheckoutFormState = {
   payment_method: string;
   request_avr: boolean;
   comment: string;
+  oferta_accepted: boolean;
 };
 
 type CheckoutFormErrors = Partial<Record<keyof CheckoutFormState, string>>;
@@ -99,6 +100,10 @@ function validateForm(form: CheckoutFormState) {
     errors.delivery_date = "Дата должна быть не раньше завтра";
   }
 
+  if (!form.oferta_accepted) {
+    errors.oferta_accepted = "Необходимо принять условия оферты";
+  }
+
   return errors;
 }
 
@@ -132,6 +137,7 @@ export function CheckoutForm() {
     payment_method: "Выставить счет",
     request_avr: false,
     comment: "",
+    oferta_accepted: false,
   });
 
   useEffect(() => {
@@ -403,7 +409,41 @@ export function CheckoutForm() {
               </label>
             </div>
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-6 border-t border-black/5 pt-5">
+              <label className="flex cursor-pointer items-start gap-3 rounded-btn bg-cream px-4 py-3">
+                <input
+                  checked={form.oferta_accepted}
+                  className="mt-0.5 size-4 shrink-0 accent-coral"
+                  type="checkbox"
+                  onChange={(event) => updateField("oferta_accepted", event.currentTarget.checked)}
+                />
+                <span className="text-sm font-semibold leading-6 text-dark">
+                  Я ознакомлен(а) и принимаю условия{" "}
+                  <a
+                    href="/oferta"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-coral hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Публичной оферты
+                  </a>{" "}
+                  и{" "}
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-coral hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    Политики конфиденциальности
+                  </a>
+                </span>
+              </label>
+              <FieldError>{errors.oferta_accepted}</FieldError>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <Link href="/cart" className="inline-flex min-h-11 items-center text-sm font-black text-muted transition hover:text-dark">
                 Вернуться в корзину
               </Link>

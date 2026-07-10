@@ -114,6 +114,8 @@ export type Order = {
   payment_link_sent_at?: string | null;
   paid_at?: string | null;
   canceled_at?: string | null;
+  oferta_accepted_at?: string | null;
+  oferta_version?: string | null;
   created_at: string;
   updated_at?: string;
 };

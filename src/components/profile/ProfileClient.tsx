@@ -718,6 +718,35 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
         <Button href="/catalog" variant="outline" className="min-h-10 px-4 py-2">
           Повторить закупку
         </Button>
+        {!["pending_manager_confirmation", "change_proposed", "canceled", "cancelled"].includes(
+          order.status,
+        ) ? (
+          <>
+            <Button
+              href={`/documents/invoice/${order.id}`}
+              variant="ghost"
+              className="min-h-10 px-4 py-2 text-dark"
+            >
+              Счет
+            </Button>
+            <Button
+              href={`/documents/nakl/${order.id}`}
+              variant="ghost"
+              className="min-h-10 px-4 py-2 text-dark"
+            >
+              Накладная
+            </Button>
+          </>
+        ) : null}
+        {order.status === "completed" ? (
+          <Button
+            href={`/documents/avr/${order.id}`}
+            variant="ghost"
+            className="min-h-10 px-4 py-2 text-dark"
+          >
+            АВР
+          </Button>
+        ) : null}
       </div>
       {order.revision_note ? (
         <p className="mt-3 rounded-btn bg-coral-light px-4 py-3 text-sm font-bold text-burgundy">

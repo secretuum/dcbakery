@@ -171,6 +171,40 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
           <CancelOrderForm disabled={isLocked} orderId={order.id} />
           <AvrRequestButton orderId={order.id} requested={order.request_avr === true} />
 
+          <div className="mt-6 space-y-2">
+            <p className="text-xs font-black uppercase text-muted">Документы</p>
+            {!["pending_manager_confirmation", "change_proposed", "canceled", "cancelled"].includes(
+              order.status,
+            ) ? (
+              <>
+                <Link
+                  href={`/documents/invoice/${order.id}`}
+                  className="block rounded-btn bg-cream px-4 py-3 text-sm font-black text-dark transition hover:bg-coral-light"
+                >
+                  Счет на оплату →
+                </Link>
+                <Link
+                  href={`/documents/nakl/${order.id}`}
+                  className="block rounded-btn bg-cream px-4 py-3 text-sm font-black text-dark transition hover:bg-coral-light"
+                >
+                  Накладная →
+                </Link>
+              </>
+            ) : (
+              <p className="rounded-btn bg-cream px-4 py-3 text-sm font-semibold text-muted">
+                Доступны после подтверждения
+              </p>
+            )}
+            {order.status === "completed" ? (
+              <Link
+                href={`/documents/avr/${order.id}`}
+                className="block rounded-btn bg-cream px-4 py-3 text-sm font-black text-dark transition hover:bg-coral-light"
+              >
+                АВР →
+              </Link>
+            ) : null}
+          </div>
+
           <div className="mt-6 rounded-btn bg-coral-light px-4 py-3">
             <p className="text-xs font-black uppercase text-muted">Оплата</p>
             <div className="mt-2">

@@ -7,46 +7,19 @@ import { useCart } from "@/src/contexts/CartContext";
 
 const navItems = [
   { label: "Каталог", href: "/catalog" },
-  { label: "О компании", href: "/#about" },
+  { label: "О нас", href: "/#about" },
   { label: "Доставка", href: "/#delivery" },
-  { label: "Условия", href: "/#terms" },
   { label: "Контакты", href: "/#about" },
 ];
 
 function CartIcon() {
   return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.75"
-      viewBox="0 0 24 24"
-    >
+    <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor"
+      strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" viewBox="0 0 24 24">
       <path d="M6 6h15l-2 8H8L6 6Z" />
       <path d="M6 6 5 3H2" />
       <path d="M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
       <path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
-    </svg>
-  );
-}
-
-function ProfileIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="1.75"
-      viewBox="0 0 24 24"
-    >
-      <path d="M20 21a8 8 0 0 0-16 0" />
-      <path d="M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10Z" />
     </svg>
   );
 }
@@ -62,10 +35,7 @@ export function Header() {
     let ticking = false;
     const onScroll = () => {
       if (!ticking) {
-        requestAnimationFrame(() => {
-          setScrolled(window.scrollY > 40);
-          ticking = false;
-        });
+        requestAnimationFrame(() => { setScrolled(window.scrollY > 20); ticking = false; });
         ticking = true;
       }
     };
@@ -74,30 +44,25 @@ export function Header() {
   }, []);
 
   return (
-    <header
-      className={`print-hidden sticky top-0 z-30 border-b border-fudo-border bg-white/95 backdrop-blur-xl transition-shadow duration-200 ${
-        scrolled ? "shadow-[0_1px_12px_rgba(0,0,0,0.06)]" : ""
-      }`}
-    >
-      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-4 lg:px-8">
+    <header className={`print-hidden sticky top-0 z-30 border-b border-black/10 bg-white/95 backdrop-blur-sm transition-shadow duration-200 ${scrolled ? "shadow-sm" : ""}`}>
+      <nav className="mx-auto flex max-w-7xl items-center gap-3 px-5 py-3 lg:px-8">
+
         {/* Logo */}
-        <Link
-          href="/"
-          className="text-lg font-black uppercase tracking-[0.12em] text-fudo-dark transition hover:opacity-75"
-          aria-label="DC Bakery"
-        >
-          DC Bakery
+        <Link href="/" aria-label="DC Bakery"
+          className="font-display text-[15px] font-semibold tracking-[.08em] text-dark transition hover:opacity-75">
+          DC<span className="text-coral">.</span>Bakery
         </Link>
 
-        {/* Center nav — desktop only */}
+        {/* Center nav — desktop, hidden on catalog */}
         {!isCatalog && (
-          <div className="hidden items-center gap-0.5 lg:flex">
+          <div className="ml-4 hidden items-center gap-0.5 lg:flex">
             {navItems.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                className="rounded-lg px-3.5 py-2 text-sm font-medium text-fudo-muted transition hover:text-fudo-dark"
-              >
+              <Link key={item.label} href={item.href}
+                className={`rounded px-3 py-1.5 text-sm font-medium transition ${
+                  pathname === item.href
+                    ? "bg-dark text-white"
+                    : "text-muted hover:bg-black/5 hover:text-dark"
+                }`}>
                 {item.label}
               </Link>
             ))}
@@ -105,31 +70,26 @@ export function Header() {
         )}
 
         {/* Right actions */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/profile"
-            className="flex items-center gap-2 rounded-xl bg-fudo-accent px-3 py-2 text-sm font-black text-white transition hover:opacity-90 sm:px-4"
-            aria-label="Профиль"
-          >
-            <ProfileIcon />
-            <span className="hidden sm:inline">Профиль</span>
-          </Link>
-
-          <Link
-            href="/#terms"
-            className="hidden rounded-xl border border-fudo-accent px-5 py-2.5 text-sm font-semibold text-fudo-accent transition hover:bg-fudo-accent-light lg:flex"
-          >
+        <div className="ml-auto flex items-center gap-2">
+          {/* Стать партнёром → /profile */}
+          <Link href="/profile"
+            className="hidden rounded border border-dark bg-dark px-3.5 py-1.5 text-sm font-semibold text-white transition hover:bg-dark/80 sm:block">
             Стать партнёром
           </Link>
 
-          <Link
-            href="/cart"
-            className="relative flex size-10 items-center justify-center rounded-xl border border-fudo-border text-fudo-dark transition hover:border-fudo-accent hover:text-fudo-accent"
-            aria-label={`Корзина, товаров: ${totalItems}`}
-          >
+          {/* Кабинет */}
+          <Link href="/profile"
+            className="rounded border border-black/15 px-3 py-1.5 text-sm font-medium text-dark transition hover:bg-black/5">
+            Кабинет
+          </Link>
+
+          {/* Cart */}
+          <Link href="/cart"
+            className="relative flex size-9 items-center justify-center rounded border border-black/15 text-dark transition hover:bg-black/5"
+            aria-label={`Корзина, товаров: ${totalItems}`}>
             <CartIcon />
             {totalItems > 0 && (
-              <span className="absolute -right-1.5 -top-1.5 flex min-w-5 items-center justify-center rounded-full bg-fudo-accent px-1 py-0.5 text-[10px] font-bold leading-none text-white">
+              <span className="absolute -right-1 -top-1 flex min-w-4 items-center justify-center rounded-full bg-coral px-0.5 py-px text-[9px] font-bold leading-none text-white">
                 {badgeText}
               </span>
             )}

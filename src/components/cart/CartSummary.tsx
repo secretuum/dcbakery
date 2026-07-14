@@ -7,15 +7,11 @@ import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatPrice } from "@/src/lib/format";
 
-type CartSummaryProps = {
-  compact?: boolean;
-};
-
 function getProgress(totalAmount: number) {
   return Math.min(100, Math.round((totalAmount / MIN_ORDER_AMOUNT) * 100));
 }
 
-export function CartSummary({ compact = false }: CartSummaryProps) {
+export function CartSummary() {
   const { items, totalAmount, totalItems } = useCart();
   const { showToast } = useToast();
   const router = useRouter();
@@ -31,20 +27,6 @@ export function CartSummary({ compact = false }: CartSummaryProps) {
     }
 
     router.push("/checkout");
-  }
-
-  if (compact) {
-    return (
-      <div className="flex items-center justify-between gap-3 border-t border-black/10 bg-white/95 px-4 py-3 shadow-[0_-12px_40px_rgba(28,28,28,0.10)] backdrop-blur">
-        <div>
-          <p className="text-xs font-black uppercase text-muted">Итого</p>
-          <p className="text-xl font-black text-dark">{formatPrice(totalAmount)}</p>
-        </div>
-        <Button onClick={handleCheckout} disabled={!canCheckout} className="min-h-11 px-4">
-          Оформить
-        </Button>
-      </div>
-    );
   }
 
   return (

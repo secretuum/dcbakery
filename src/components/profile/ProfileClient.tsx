@@ -822,24 +822,38 @@ function PopularProductsSection({ products }: { products: Product[] }) {
     <section className="mt-6 rounded-card bg-white p-6 shadow-sm">
       <p className="text-xs font-black uppercase text-raspberry">Рекомендуем</p>
       <h2 className="mt-2 text-2xl font-black tracking-tight">Популярное у клиентов</h2>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
           <div
             key={product.id}
-            className="flex flex-col justify-between rounded-xl bg-cream p-4"
+            className="flex items-center gap-3 rounded-xl bg-cream p-3"
           >
-            <div>
-              <p className="text-sm font-black leading-tight text-dark">{product.name}</p>
-              <p className="mt-2 text-lg font-black text-coral">
-                {product.price > 0 ? formatCurrency(product.price) : "Цена уточняется"}
+            <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-white">
+              {product.images[0] ? (
+                <img
+                  src={product.images[0]}
+                  alt={product.name}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-coral-light" />
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-2 text-sm font-black leading-tight text-dark">
+                {product.name}
+              </p>
+              <p className="mt-1 text-base font-black text-coral">
+                {product.price > 0 ? formatCurrency(product.price) : "По запросу"}
               </p>
             </div>
             <button
               type="button"
-              className="mt-4 inline-flex min-h-10 items-center justify-center rounded-btn bg-coral px-4 py-2 text-sm font-black text-white transition hover:bg-coral-hover"
+              aria-label={`Добавить ${product.name} в корзину`}
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-coral text-sm font-black text-white transition hover:bg-coral-hover"
               onClick={() => add(product, product.min_qty)}
             >
-              + В корзину
+              +
             </button>
           </div>
         ))}

@@ -49,8 +49,8 @@ export function Header() {
 
         {/* Logo */}
         <Link href="/" aria-label="DC Bakery"
-          className="font-display text-[15px] font-semibold tracking-[.08em] text-dark transition hover:opacity-75">
-          DC<span className="text-coral">.</span>Bakery
+          className="font-display text-[15px] font-black uppercase tracking-[.12em] text-dark transition hover:opacity-60">
+          DC BAKERY
         </Link>
 
         {/* Center nav — desktop, hidden on catalog */}

@@ -121,14 +121,14 @@ export function CatalogFilters({ categories, products, popularProducts }: Props)
             value={priceMin}
             onChange={(e) => setPriceMin(e.target.value)}
             placeholder="от"
-            className="w-full rounded-xl border border-black/10 bg-white px-3 py-1.5 text-sm text-dark placeholder-muted outline-none focus:border-coral focus:ring-2 focus:ring-coral/20"
+            className="w-full rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-dark placeholder-muted outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
           />
           <input
             type="number"
             value={priceMax}
             onChange={(e) => setPriceMax(e.target.value)}
             placeholder="до"
-            className="w-full rounded-xl border border-black/10 bg-white px-3 py-1.5 text-sm text-dark placeholder-muted outline-none focus:border-coral focus:ring-2 focus:ring-coral/20"
+            className="w-full rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-dark placeholder-muted outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
           />
         </div>
         {(priceMin !== "" || priceMax !== "") && (
@@ -142,7 +142,7 @@ export function CatalogFilters({ categories, products, popularProducts }: Props)
   );
 
   const productGrid = (products: Product[]) => (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+    <div className="product-grid grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
       {products.map((p) => (
         <ProductCard key={p.id} product={p} />
       ))}
@@ -170,7 +170,7 @@ export function CatalogFilters({ categories, products, popularProducts }: Props)
           <button
             type="button"
             onClick={() => setIsMobileOpen(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200"
+            className="flex h-8 w-8 items-center justify-center border border-black/10 bg-white text-dark hover:bg-black/5"
             aria-label="Закрыть"
           >
             ✕
@@ -181,7 +181,7 @@ export function CatalogFilters({ categories, products, popularProducts }: Props)
           <button
             type="button"
             onClick={() => { resetFilters(); setIsMobileOpen(false); }}
-            className="mt-6 w-full rounded-xl bg-dark py-2.5 text-sm font-black text-white"
+            className="mt-6 w-full rounded bg-dark py-2.5 text-sm font-black text-white"
           >
             Сбросить и закрыть
           </button>
@@ -217,7 +217,7 @@ export function CatalogFilters({ categories, products, popularProducts }: Props)
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Найти товар..."
-                className="w-full rounded-xl border border-black/10 bg-white py-2.5 pl-10 pr-8 text-sm text-dark placeholder-gray-400 shadow-sm outline-none focus:border-coral focus:ring-2 focus:ring-coral/20"
+                className="w-full rounded border border-black/10 bg-white py-2.5 pl-10 pr-8 text-sm text-dark placeholder-gray-400 outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
               />
               {query && (
                 <button
@@ -231,14 +231,14 @@ export function CatalogFilters({ categories, products, popularProducts }: Props)
             <button
               type="button"
               onClick={() => setIsMobileOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm font-black text-dark shadow-sm lg:hidden"
+              className="flex items-center gap-2 rounded border border-black/10 bg-white px-4 py-2.5 text-sm font-black text-dark lg:hidden"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 12h10M11 20h2" />
               </svg>
               Фильтры
               {hasActiveFilters && (
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-coral text-[10px] font-black text-white">
+                <span className="flex h-5 w-5 items-center justify-center bg-coral text-[10px] font-black text-white">
                   {selectedCategories.length + (inStockOnly ? 1 : 0) + (priceMin !== "" || priceMax !== "" ? 1 : 0)}
                 </span>
               )}

@@ -12,28 +12,27 @@ export function Footer() {
     <footer className="print-hidden border-t border-black/10 bg-white">
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[1.2fr_1.8fr] lg:px-8">
         <div>
-          <Link href="/" className="inline-flex items-center gap-3" aria-label="DC Bakery">
-            <span className="flex size-11 items-center justify-center rounded-card bg-coral text-sm font-black text-white">
-              DC
+          <Link href="/" className="inline-block" aria-label="DC Bakery">
+            <span className="font-display text-xl font-black uppercase tracking-[.12em] text-dark">
+              DC BAKERY
             </span>
-            <span className="text-xl font-black tracking-tight text-dark">DC Bakery</span>
           </Link>
-          <p className="mt-4 max-w-md text-sm font-medium leading-6 text-muted">
+          <p className="mt-4 max-w-md text-sm leading-6 text-muted">
             B2B-каталог десертов, полуфабрикатов и мясных позиций для кофеен,
             ресторанов, магазинов и отелей.
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {contactItems.map((item) => (
-            <div key={item.label} className="rounded-card bg-cream p-4">
-              <p className="text-xs font-black uppercase text-coral">{item.label}</p>
+            <div key={item.label} className="border border-black/10 bg-cream p-4">
+              <p className="text-[10px] font-bold uppercase tracking-[.1em] text-coral">{item.label}</p>
               {item.href ? (
-                <a className="mt-2 block text-sm font-bold text-dark hover:text-coral" href={item.href}>
+                <a className="mt-2 block text-sm font-semibold text-dark hover:text-coral" href={item.href}>
                   {item.value}
                 </a>
               ) : (
-                <p className="mt-2 text-sm font-bold text-dark">{item.value}</p>
+                <p className="mt-2 text-sm font-semibold text-dark">{item.value}</p>
               )}
             </div>
           ))}
@@ -43,13 +42,13 @@ export function Footer() {
       <div className="border-t border-black/10 px-5 pb-20 pt-4">
         <div className="mx-auto max-w-7xl space-y-3">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <p className="text-xs font-black uppercase text-muted/60">Правовая информация</p>
-            <Link href="/oferta" className="text-sm font-medium text-muted transition hover:text-dark">Публичная оферта</Link>
-            <Link href="/privacy" className="text-sm font-medium text-muted transition hover:text-dark">Политика конфиденциальности</Link>
-            <Link href="/oplata-i-dostavka" className="text-sm font-medium text-muted transition hover:text-dark">Оплата и доставка</Link>
-            <Link href="/contacts" className="text-sm font-medium text-muted transition hover:text-dark">Контакты и реквизиты</Link>
+            <p className="text-[10px] font-bold uppercase tracking-[.1em] text-muted/60">Правовая информация</p>
+            <Link href="/oferta" className="text-sm text-muted transition hover:text-dark">Публичная оферта</Link>
+            <Link href="/privacy" className="text-sm text-muted transition hover:text-dark">Политика конфиденциальности</Link>
+            <Link href="/oplata-i-dostavka" className="text-sm text-muted transition hover:text-dark">Оплата и доставка</Link>
+            <Link href="/contacts" className="text-sm text-muted transition hover:text-dark">Контакты и реквизиты</Link>
           </div>
-          <p className="text-sm font-medium text-muted">© {new Date().getFullYear()} DC Bakery</p>
+          <p className="text-sm text-muted">© {new Date().getFullYear()} DC Bakery</p>
         </div>
       </div>
     </footer>

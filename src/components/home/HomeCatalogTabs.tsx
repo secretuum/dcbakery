@@ -25,32 +25,32 @@ export function HomeCatalogTabs({ categories, products }: Props) {
   }, [activeTab, products]);
 
   return (
-    <section className="border-t border-fudo-border px-5 py-16 lg:px-8 lg:py-24">
+    <section className="border-t border-black/10 bg-cream px-5 py-14 lg:px-8 lg:py-20">
       <div className="mx-auto max-w-7xl">
         {/* Section header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="text-3xl font-black text-fudo-dark lg:text-4xl">
+          <h2 className="font-display text-3xl font-black tracking-tight text-dark lg:text-4xl">
             Каталог продукции
           </h2>
           <Link
             href="/catalog"
-            className="flex items-center gap-1 text-sm font-medium text-fudo-accent transition hover:opacity-75"
+            className="text-sm font-semibold text-coral transition hover:text-coral-hover"
           >
-            Смотреть весь каталог →
+            Весь каталог →
           </Link>
         </div>
 
         {/* Tabs */}
-        <div className="no-scrollbar mt-8 flex overflow-x-auto border-b border-fudo-border">
+        <div className="no-scrollbar mt-7 flex overflow-x-auto border-b border-black/10">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`shrink-0 border-b-2 pb-3 pr-6 text-sm font-medium whitespace-nowrap transition ${
+              className={`shrink-0 border-b-2 pb-3 pr-6 text-sm font-semibold whitespace-nowrap transition ${
                 activeTab === tab.id
-                  ? "border-fudo-accent text-fudo-accent"
-                  : "border-transparent text-fudo-muted hover:text-fudo-dark"
+                  ? "border-dark text-dark"
+                  : "border-transparent text-muted hover:text-dark"
               }`}
             >
               {tab.name}
@@ -58,16 +58,25 @@ export function HomeCatalogTabs({ categories, products }: Props) {
           ))}
         </div>
 
-        {/* Product grid */}
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Product grid — key forces remount on tab switch, triggering stagger animation */}
+        <div key={activeTab} className="product-grid mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {filtered.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
           {filtered.length === 0 && (
-            <p className="col-span-full py-16 text-center text-fudo-muted">
+            <p className="col-span-full py-16 text-center text-muted">
               В этой категории нет товаров
             </p>
           )}
+        </div>
+
+        <div className="mt-8 text-center">
+          <Link
+            href="/catalog"
+            className="inline-block border border-dark px-6 py-2.5 text-sm font-semibold text-dark transition hover:bg-dark hover:text-white"
+          >
+            Смотреть все товары
+          </Link>
         </div>
       </div>
     </section>

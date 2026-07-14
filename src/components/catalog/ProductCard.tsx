@@ -52,14 +52,14 @@ export function ProductCard({ product }: ProductCardProps) {
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
+    <article className="product-card overflow-hidden border border-black/10 bg-white transition-shadow hover:shadow-md">
       <button
         type="button"
         onClick={() => setIsSheetOpen(true)}
         className="relative block w-full cursor-pointer overflow-hidden text-left"
         aria-label={`Подробнее: ${product.name}`}
       >
-        <div className="relative aspect-square overflow-hidden">
+        <div className="relative aspect-square overflow-hidden bg-cream">
           <FallbackImage
             src={imageSrc}
             alt={product.name}
@@ -67,7 +67,7 @@ export function ProductCard({ product }: ProductCardProps) {
             categorySlug={product.category?.slug}
             fill
             sizes="(max-width: 640px) 33vw, (max-width: 1280px) 25vw, 20vw"
-            className="object-cover"
+            className="object-cover transition-transform duration-300 hover:scale-105"
           />
           {!isInStock && (
             <span className="absolute right-2 top-2">
@@ -77,9 +77,9 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </button>
 
-      <div className="p-2 sm:p-3">
+      <div className="p-2.5 sm:p-3">
         <h3
-          className="line-clamp-2 cursor-pointer text-sm font-semibold text-dark"
+          className="line-clamp-2 cursor-pointer text-sm font-semibold leading-snug text-dark"
           onClick={() => setIsSheetOpen(true)}
         >
           {product.name}
@@ -87,29 +87,29 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {product.min_qty > 1 && (
           <p className="mt-1 text-xs text-muted">
-            Мин. заказ: {product.min_qty} {product.unit}
+            Мин. {product.min_qty} {product.unit}
           </p>
         )}
 
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <p className="text-base font-bold text-coral">{priceText}</p>
+        <div className="mt-2.5 flex items-center justify-between gap-2">
+          <p className="font-data text-sm font-semibold text-coral">{priceText}</p>
 
           {inCart ? (
             <div className="flex items-center gap-0.5">
               <button
                 onClick={handleDecrease}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-xl font-bold text-coral hover:bg-coral/10 active:bg-coral/20"
+                className="flex h-7 w-7 items-center justify-center rounded border border-black/10 text-base font-bold text-dark transition hover:bg-black/5"
                 aria-label="Уменьшить количество"
               >
                 −
               </button>
-              <span className="min-w-[1.75rem] text-center text-sm font-bold text-dark">
+              <span className="min-w-[1.75rem] text-center text-sm font-bold tabular-nums text-dark">
                 {cartQty}
               </span>
               <button
                 onClick={handleIncrease}
                 disabled={cartQty >= product.stock_qty}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-coral text-white disabled:bg-gray-300"
+                className="flex h-7 w-7 items-center justify-center rounded border border-coral bg-coral text-white transition hover:bg-coral-hover disabled:border-black/10 disabled:bg-black/5 disabled:text-muted"
                 aria-label="Увеличить количество"
               >
                 +
@@ -119,7 +119,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <button
               onClick={handleAddToCart}
               disabled={!isInStock}
-              className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-coral bg-transparent text-lg font-bold text-coral hover:bg-coral-light disabled:border-gray-300 disabled:text-gray-300"
+              className="flex h-7 w-7 items-center justify-center rounded border border-coral text-base font-bold text-coral transition hover:bg-coral hover:text-white disabled:border-black/10 disabled:text-muted"
               aria-label={`Добавить в корзину: ${product.name}`}
             >
               +

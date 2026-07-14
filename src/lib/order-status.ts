@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentStatus } from "@/src/types";
+import type { ClientStatus, OrderStatus, PaymentStatus } from "@/src/types";
 
 type StatusVariant = "coral" | "burgundy" | "dark" | "neutral" | "green" | "blue" | "amber" | "red";
 
@@ -49,10 +49,29 @@ export const paymentStatusLabels: Record<PaymentStatus, string> = {
   unpaid: "Не оплачен",
   payment_link_created: "Счет готов",
   payment_link_sent: "Счет отправлен",
+  partial: "Частично оплачен",
   paid: "Оплачен",
   failed: "Ошибка оплаты",
   expired: "Ссылка истекла",
   refunded: "Возврат",
+};
+
+// Client-facing order status labels (no internal jargon)
+export const clientOrderStatusLabels: Partial<Record<OrderStatus, string>> = {
+  pending_manager_confirmation: "В производстве",
+  change_proposed: "Предложены изменения",
+  confirmed_waiting_payment: "Ожидает оплаты",
+  paid: "Оплачен",
+  delivering: "Отгружен",
+  completed: "Завершён",
+  canceled: "Отменён",
+  cancelled: "Отменён",
+};
+
+export const creditStatusLabels: Record<ClientStatus, string> = {
+  active: "Кредит активен",
+  prepay_only: "Только предоплата",
+  blocked: "Отгрузки приостановлены",
 };
 
 export function isCanonicalOrderStatus(status: OrderStatus) {

@@ -1,5 +1,6 @@
 import "server-only";
 import type {
+  Client,
   ClientOrderSummary,
   Order,
   OrderItem,
@@ -24,11 +25,13 @@ type SupabaseRestError = {
 
 type OrderConfirmationPatch = {
   confirmed_at: string;
+  due_date?: string | null;
   payment_id: string;
   payment_link_sent_at?: string | null;
   payment_provider: string;
   payment_status: string;
   payment_url: string;
+  shipment_date?: string | null;
   status: OrderStatus;
 };
 
@@ -635,6 +638,9 @@ export async function fetchAdminOrders(status?: OrderStatus) {
   return supabaseGet<Order[]>("orders", params.toString());
 }
 
+const CLIENT_EMAIL_RE = /^[^,()[\]\s]+@[^,()[\]\s]+\.[^,()[\]\s]+$/;
+const CLIENT_PHONE_RE = /^\+?\d{10,15}$/;
+
 export async function fetchClientOrderSummaries({
   email,
   phone,
@@ -642,9 +648,16 @@ export async function fetchClientOrderSummaries({
   email?: string;
   phone?: string;
 }) {
+  if (email && !CLIENT_EMAIL_RE.test(email)) {
+    throw new Error("Invalid email format");
+  }
+  if (phone && !CLIENT_PHONE_RE.test(phone)) {
+    throw new Error("Invalid phone format");
+  }
+
   const params = new URLSearchParams({
     select:
-      "id,order_number,company_name,status,payment_status,revision_note,total_amount,delivery_date,created_at,order_items(id,product_name,unit,qty,price,total_amount)",
+      "id,order_number,company_name,status,payment_status,revision_note,total_amount,delivery_date,due_date,created_at,order_items(id,product_name,unit,qty,price,total_amount)",
     order: "created_at.desc",
     limit: "20",
   });
@@ -950,4 +963,111 @@ export async function insertPaymentEvent(event: PaymentEventPayload) {
   } catch (error) {
     console.error("[payments] Failed to log payment event:", error);
   }
+}
+
+// ── Clients (B2B credit) ──────────────────────────────────────────────────────
+
+type OrderCreditRow = {
+  id: string;
+  status: string;
+  payment_status: string | null;
+  total_amount: number;
+  due_date: string | null;
+};
+
+export async function fetchClientByPhone(phone: string): Promise<Client | null> {
+  const params = new URLSearchParams({
+    phone: `eq.${encodeURIComponent(phone)}`,
+    limit: "1",
+  });
+
+  try {
+    const rows = await supabaseGet<Client[]>("clients", params.toString());
+    return rows[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchClientByEmail(email: string): Promise<Client | null> {
+  const params = new URLSearchParams({
+    email: `eq.${encodeURIComponent(email)}`,
+    limit: "1",
+  });
+
+  try {
+    const rows = await supabaseGet<Client[]>("clients", params.toString());
+    return rows[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchClientById(id: string): Promise<Client | null> {
+  const params = new URLSearchParams({
+    id: `eq.${id}`,
+    limit: "1",
+  });
+
+  try {
+    const rows = await supabaseGet<Client[]>("clients", params.toString());
+    return rows[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchAllClients(): Promise<Client[]> {
+  try {
+    return await supabaseGet<Client[]>(
+      "clients",
+      "select=*&order=name.asc",
+    );
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchClientOrdersForCredit(clientId: string): Promise<OrderCreditRow[]> {
+  const excludedStatuses = ["pending_manager_confirmation", "canceled", "cancelled"].join(",");
+  const params = new URLSearchParams({
+    select: "id,status,payment_status,total_amount,due_date",
+    client_id: `eq.${clientId}`,
+    status: `not.in.(${excludedStatuses})`,
+  });
+
+  try {
+    return await supabaseGet<OrderCreditRow[]>("orders", params.toString());
+  } catch {
+    return [];
+  }
+}
+
+export async function upsertClient(data: Partial<Client> & { name: string }): Promise<Client | null> {
+  const url = getSupabaseRestUrl("clients");
+
+  if (!url || !serviceRoleKey) {
+    throw new Error(getSupabaseAdminConfigError() ?? "Supabase is not configured");
+  }
+
+  const method = data.id ? "PATCH" : "POST";
+  const query = data.id ? `?id=eq.${data.id}` : "";
+
+  const response = await fetch(`${url}${query}`, {
+    method,
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+      Prefer: "return=representation",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseSupabaseError(response));
+  }
+
+  const rows = (await response.json()) as Client[];
+  return rows[0] ?? null;
 }

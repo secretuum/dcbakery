@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT } from "@/app/constants";
 import { fetchProducts } from "@/src/lib/catalog";
 import {
+  fetchClientByEmail,
+  fetchClientByPhone,
   getSupabaseAdminConfigError,
   insertOrderWithItems,
   updateOrderTelegramMessageId,
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
+import { canPlaceOrder } from "@/src/lib/credit";
 import { sendTelegramNotification } from "@/src/lib/telegram";
 import {
   getWhatsAppChatIdFromPhone,
@@ -19,7 +22,7 @@ import {
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 import type { Order } from "@/src/types";
 
-const OFERTA_VERSION = "2026-07-10";
+const OFERTA_VERSION = "2026-07-14";
 
 type IncomingItem = {
   price?: number;
@@ -267,6 +270,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ errors }, { status: 400 });
   }
 
+  const normalizedPhone = body.customer_phone?.replace(/\D/g, "")
+    ? `+${body.customer_phone.replace(/\D/g, "")}`
+    : null;
+  const client = normalizedPhone
+    ? await fetchClientByPhone(normalizedPhone)
+    : body.customer_email
+      ? await fetchClientByEmail(body.customer_email)
+      : null;
+
+  if (client) {
+    const creditCheck = await canPlaceOrder(client, totalAmount);
+    if (!creditCheck.allowed) {
+      return NextResponse.json(
+        { errors: [creditCheck.reason ?? "Заказ не может быть принят"] },
+        { status: 409 },
+      );
+    }
+  }
+
   const orderId = crypto.randomUUID();
   const orderNumber = generateOrderNumber();
   const orderItems = (body.items ?? []).map((item) => ({
@@ -295,6 +317,7 @@ export async function POST(request: Request) {
     payment_method: body.payment_method || null,
     request_avr: body.request_avr === true,
     comment: body.comment || null,
+    client_id: client?.id ?? null,
     status: "pending_manager_confirmation",
     total_amount: totalAmount,
     payment_status: "unpaid",

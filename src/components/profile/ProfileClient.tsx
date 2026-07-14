@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
-import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
+import { clientOrderStatusLabels, creditStatusLabels, orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
 import { useCart } from "@/src/contexts/CartContext";
-import type { ClientOrderSummary, OrderItemSummary, Product } from "@/src/types";
+import type { ClientOrderSummary, CreditState, OrderItemSummary, Product } from "@/src/types";
 
 type AdminSession = {
   email: string;
@@ -520,6 +520,47 @@ function AdminDashboard({
   );
 }
 
+function CreditBlock({ state }: { state: CreditState }) {
+  const statusColor =
+    state.status === "blocked"
+      ? "bg-red-50 border-red-200 text-red-700"
+      : state.status === "prepay_only"
+        ? "bg-amber-50 border-amber-200 text-amber-700"
+        : "bg-green-50 border-green-200 text-green-700";
+
+  return (
+    <div className={`rounded-card border p-5 ${statusColor}`}>
+      <p className="text-xs font-black uppercase opacity-70">Кредит</p>
+      <p className="mt-1 text-base font-black">
+        {creditStatusLabels[state.status]}
+      </p>
+      <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+        <div>
+          <p className="text-xs font-semibold opacity-60">Лимит</p>
+          <p className="font-black">{formatCurrency(state.limit)}</p>
+        </div>
+        <div>
+          <p className="text-xs font-semibold opacity-60">Использовано</p>
+          <p className="font-black">{formatCurrency(state.used)}</p>
+        </div>
+        <div>
+          <p className="text-xs font-semibold opacity-60">Доступно</p>
+          <p className="font-black">{formatCurrency(state.available)}</p>
+        </div>
+      </div>
+      {state.overdueDays > 0 ? (
+        <p className="mt-3 text-xs font-bold">
+          Просрочка {state.overdueDays} {state.overdueDays === 1 ? "день" : "дней"} · {formatCurrency(state.overdue)}
+        </p>
+      ) : state.nextDueDate ? (
+        <p className="mt-3 text-xs font-semibold opacity-70">
+          Ближайший платёж: {formatDate(state.nextDueDate)}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function OrderItemsList({ items }: { items: OrderItemSummary[] }) {
   return (
     <div className="mt-3 border-t border-black/10 pt-3">
@@ -541,10 +582,17 @@ function OrderItemsList({ items }: { items: OrderItemSummary[] }) {
 }
 
 function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
-  const orderStatus = orderStatusLabels[order.status] ?? order.status;
+  const orderStatus =
+    clientOrderStatusLabels[order.status] ?? orderStatusLabels[order.status] ?? order.status;
   const paymentStatus = order.payment_status
     ? paymentStatusLabels[order.payment_status]
     : "не указано";
+  const today = new Date().toISOString().slice(0, 10);
+  const isOverdue =
+    order.due_date && order.due_date < today && order.payment_status !== "paid";
+  const overdueDays = isOverdue
+    ? Math.floor((Date.now() - Date.parse(order.due_date!)) / 86_400_000)
+    : 0;
   const [actionStatus, setActionStatus] = useState<"error" | "idle" | "loading">("idle");
   const [isExpanded, setIsExpanded] = useState(false);
   const canCancel =
@@ -610,6 +658,15 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
           <p className="mt-1 text-sm font-black text-dark">{formatDate(order.delivery_date)}</p>
         </div>
       </div>
+      {isOverdue ? (
+        <p className="mt-3 rounded-btn bg-red-50 px-4 py-2 text-sm font-black text-red-700">
+          Просрочка {overdueDays} {overdueDays === 1 ? "день" : "дней"} · оплатить до {formatDate(order.due_date)}
+        </p>
+      ) : order.due_date && order.payment_status !== "paid" ? (
+        <p className="mt-3 rounded-btn bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
+          Оплатить до {formatDate(order.due_date)}
+        </p>
+      ) : null}
 
       <div className="mt-4 flex flex-wrap gap-3">
         {canAcceptRevision ? (
@@ -722,10 +779,20 @@ function ClientDashboard({
 }) {
   const [accountantPhone, setAccountantPhone] = useState(session.accountant_phone ?? "");
   const [companyName, setCompanyName] = useState(session.companyName);
+  const [creditState, setCreditState] = useState<CreditState | null>(null);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [orders, setOrders] = useState<ClientOrderSummary[]>([]);
   const [ordersError, setOrdersError] = useState("");
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/profile/credit", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data: { creditState?: CreditState | null }) => {
+        if (data.creditState) setCreditState(data.creditState);
+      })
+      .catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -813,6 +880,12 @@ function ClientDashboard({
           </Button>
         </div>
       </div>
+
+      {creditState ? (
+        <div className="mt-6">
+          <CreditBlock state={creditState} />
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <MetricCard

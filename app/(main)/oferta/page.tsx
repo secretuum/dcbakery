@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Публичная оферта — DC Bakery",
   description:
-    "Договор поставки продукции DC Bakery для B2B-клиентов. Условия заказа, оплаты, поставки и возврата. Редакция от 10 июля 2026 года.",
+    "Договор поставки продукции DC Bakery для B2B-клиентов. Условия заказа, оплаты, поставки, возврата и товарного кредита. Редакция от 14 июля 2026 года.",
 };
 
 export default function OfertaPage() {
@@ -16,7 +16,7 @@ export default function OfertaPage() {
           <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Публичная оферта</h1>
           <p className="mt-2 text-sm text-muted">о заключении договора поставки продукции DC Bakery</p>
           <div className="mt-5 rounded-btn bg-cream px-4 py-3 text-xs font-semibold text-muted">
-            Редакция от 10 июля 2026 года.&ensp;г. Алматы, Республика Казахстан.
+            Редакция от 14 июля 2026 года.&ensp;г. Алматы, Республика Казахстан.
           </div>
 
           <p className="mt-8 text-sm leading-7 text-dark/80">
@@ -264,6 +264,66 @@ export default function OfertaPage() {
             <p className="mt-5 text-sm text-muted">
               Талон о государственной регистрации ИП №KZ26TWQ02214961 от 26.01.2025.
               Контакты: тел. +7 747 727 2650; e-mail info@dc-bakery.kz; сайт dc-bakery.kz.
+            </p>
+          </div>
+
+          {/* §6 Товарный кредит */}
+          <div id="section-6" className="mt-10 border-t border-black/10 pt-8">
+            <h2 className="text-xl font-black tracking-tight">§ 6. Товарный кредит</h2>
+
+            <h3 className="mt-6 text-base font-black">6.1. Определения</h3>
+            <dl className="mt-3 space-y-3 text-sm leading-7 text-dark/80">
+              <div>
+                <dt className="inline font-black">Товарный кредит (Кредит)</dt>
+                <dd className="inline"> — право Покупателя получить Продукцию с отсрочкой платежа в пределах установленного лимита.</dd>
+              </div>
+              <div>
+                <dt className="inline font-black">Кредитный лимит</dt>
+                <dd className="inline"> — максимальная сумма неоплаченных отгрузок, которую Поставщик предоставляет Покупателю одновременно.</dd>
+              </div>
+              <div>
+                <dt className="inline font-black">Срок оплаты</dt>
+                <dd className="inline"> — 7 (семь) календарных дней с даты отгрузки, если иное не согласовано дополнительным соглашением.</dd>
+              </div>
+              <div>
+                <dt className="inline font-black">Льготный период</dt>
+                <dd className="inline"> — 3 (три) календарных дня сверх Срока оплаты, в течение которых отгрузки по новым заказам допускаются только на условиях предоплаты.</dd>
+              </div>
+              <div>
+                <dt className="inline font-black">Просрочка</dt>
+                <dd className="inline"> — неоплата отгруженной Продукции после истечения Срока оплаты.</dd>
+              </div>
+            </dl>
+
+            <h3 className="mt-6 text-base font-black">6.2. Условия предоставления кредита</h3>
+            <p className="mt-3 text-sm leading-7 text-dark/80">
+              Кредитный лимит и персональные условия устанавливаются Поставщиком индивидуально
+              для каждого Покупателя и фиксируются в личном кабинете. По умолчанию Покупатель
+              работает на условиях предоплаты (Кредитный лимит = 0).
+            </p>
+
+            <h3 className="mt-6 text-base font-black">6.3. Последствия просрочки</h3>
+            <ul className="mt-3 space-y-2 text-sm leading-7 text-dark/80">
+              <li>
+                <span className="font-black">С первого дня Просрочки</span> новые заказы принимаются
+                только при условии предоплаты до отгрузки.
+              </li>
+              <li>
+                <span className="font-black">По истечении Льготного периода</span> (т.е. более чем
+                через 10 дней с даты отгрузки) Поставщик вправе приостановить все отгрузки до
+                полного погашения просроченной задолженности.
+              </li>
+              <li>
+                Возобновление отгрузок в кредит происходит автоматически после подтверждения оплаты
+                в системе.
+              </li>
+            </ul>
+
+            <h3 className="mt-6 text-base font-black">6.4. Порядок контроля</h3>
+            <p className="mt-3 text-sm leading-7 text-dark/80">
+              Актуальное состояние кредита (использовано / доступно / ближайший платёж) отображается
+              в личном кабинете Покупателя на сайте. Поставщик уведомляет о наступлении просрочки
+              через WhatsApp.
             </p>
           </div>
 

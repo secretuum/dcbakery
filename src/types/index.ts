@@ -74,12 +74,41 @@ export type PaymentStatus =
   | "unpaid"
   | "payment_link_created"
   | "payment_link_sent"
+  | "partial"
   | "paid"
   | "failed"
   | "expired"
   | "refunded";
 
 export type PaymentProvider = "halyk" | "freedom" | "manual" | "kaspi_later";
+
+export type ClientStatus = "active" | "prepay_only" | "blocked";
+
+export type Client = {
+  id: string;
+  name: string;
+  contract_no?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  credit_limit: number;
+  payment_terms_days: number;
+  grace_days: number;
+  price_list_id?: string | null;
+  iiko_counteragent_id?: string | null;
+  status: ClientStatus;
+  created_at: string;
+  updated_at?: string;
+};
+
+export type CreditState = {
+  limit: number;
+  used: number;
+  overdue: number;
+  overdueDays: number;
+  available: number;
+  nextDueDate: string | null;
+  status: ClientStatus;
+};
 
 export type Order = {
   id: string;
@@ -112,6 +141,9 @@ export type Order = {
   whatsapp_message_id?: string | null;
   confirmed_at?: string | null;
   payment_link_sent_at?: string | null;
+  client_id?: string | null;
+  shipment_date?: string | null;
+  due_date?: string | null;
   paid_at?: string | null;
   canceled_at?: string | null;
   oferta_accepted_at?: string | null;
@@ -150,6 +182,7 @@ export type ClientOrderSummary = {
   revision_note?: string | null;
   total_amount: number;
   delivery_date?: string | null;
+  due_date?: string | null;
   payment_url?: string | null;
   created_at: string;
   order_items?: OrderItemSummary[];

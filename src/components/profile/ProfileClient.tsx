@@ -254,7 +254,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
     <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-start">
       <div>
         <p className="text-sm font-black uppercase text-raspberry">Профиль</p>
-        <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+        <h1 className="mt-3 max-w-3xl font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
           Вход в кабинет DC Bakery
         </h1>
         <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-muted">
@@ -554,52 +554,97 @@ function AdminDashboard({
 }
 
 function CreditBlock({ state }: { state: CreditState }) {
-  const statusColor =
-    state.status === "blocked"
-      ? "bg-red-50 border-red-200 text-red-700"
-      : state.status === "prepay_only"
-        ? "bg-amber-50 border-amber-200 text-amber-700"
-        : "bg-green-50 border-green-200 text-green-700";
-  const usedPct = state.limit > 0 ? Math.min(100, (state.used / state.limit) * 100) : 0;
-  const barColor =
-    usedPct > 80 ? "bg-red-500" : usedPct > 50 ? "bg-amber-400" : "bg-green-500";
+  const inTimePct =
+    state.limit > 0
+      ? Math.min(100, ((state.used - state.overdue) / state.limit) * 100)
+      : 0;
+  const overduePct =
+    state.limit > 0
+      ? Math.min(100 - inTimePct, (state.overdue / state.limit) * 100)
+      : 0;
 
   return (
-    <div className={`rounded-card border p-5 ${statusColor}`}>
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-black uppercase opacity-70">Кредит</p>
-        <p className="text-xs font-black opacity-70">{creditStatusLabels[state.status]}</p>
+    <div className="overflow-hidden rounded border border-black/10 bg-white">
+      <div className="grid divide-y divide-black/10 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
+        {/* Cell 1 — лимит + бар */}
+        <div className="p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">
+            Товарный кредит
+          </p>
+          <p className="mt-2 font-data text-2xl font-semibold leading-none">
+            {formatCurrency(state.used)}
+            <span className="ml-1.5 text-sm font-normal text-muted">
+              / {formatCurrency(state.limit)}
+            </span>
+          </p>
+          {state.limit > 0 ? (
+            <>
+              <div className="mt-3 flex h-1.5 overflow-hidden rounded-full bg-black/10">
+                <div className="h-full bg-dark" style={{ width: `${inTimePct}%` }} />
+                <div className="h-full bg-red-500" style={{ width: `${overduePct}%` }} />
+              </div>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted">
+                <span className="flex items-center gap-1">
+                  <span className="inline-block size-1.5 rounded-full bg-dark" />
+                  В срок {formatCurrency(state.used - state.overdue)}
+                </span>
+                {state.overdue > 0 && (
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block size-1.5 rounded-full bg-red-500" />
+                    Просрочено {formatCurrency(state.overdue)}
+                  </span>
+                )}
+                <span className="flex items-center gap-1">
+                  <span className="inline-block size-1.5 rounded-full bg-black/15" />
+                  Доступно {formatCurrency(state.available)}
+                </span>
+              </div>
+            </>
+          ) : null}
+        </div>
+
+        {/* Cell 2 — доступно */}
+        <div className="p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">
+            Доступно сейчас
+          </p>
+          <p className="mt-2 font-data text-2xl font-semibold leading-none text-green-700">
+            {formatCurrency(state.available)}
+          </p>
+          <p className="mt-2 text-[11px] text-muted">{creditStatusLabels[state.status]}</p>
+        </div>
+
+        {/* Cell 3 — платёж */}
+        <div className="p-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">
+            Ближайший платёж
+          </p>
+          <p
+            className={`mt-2 font-data text-2xl font-semibold leading-none ${
+              state.overdueDays > 0 ? "text-red-600" : ""
+            }`}
+          >
+            {state.nextDueDate ? formatDate(state.nextDueDate) : "—"}
+          </p>
+          {state.overdueDays > 0 ? (
+            <p className="mt-2 text-[11px] font-semibold text-red-600">
+              Просрочка {state.overdueDays} дн · {formatCurrency(state.overdue)}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-        <div>
-          <p className="text-xs font-semibold opacity-60">Лимит</p>
-          <p className="font-black">{formatCurrency(state.limit)}</p>
-        </div>
-        <div>
-          <p className="text-xs font-semibold opacity-60">Использовано</p>
-          <p className="font-black">{formatCurrency(state.used)}</p>
-        </div>
-        <div>
-          <p className="text-xs font-semibold opacity-60">Доступно</p>
-          <p className="font-black">{formatCurrency(state.available)}</p>
-        </div>
-      </div>
-      {state.limit > 0 ? (
-        <div className="mt-3 h-1.5 rounded-full bg-black/10">
-          <div
-            className={`h-1.5 rounded-full transition-all ${barColor}`}
-            style={{ width: `${usedPct}%` }}
-          />
-        </div>
-      ) : null}
+
+      {/* Алерт просрочки */}
       {state.overdueDays > 0 ? (
-        <p className="mt-2 text-xs font-bold">
-          Просрочка {state.overdueDays} {state.overdueDays === 1 ? "день" : "дней"} · {formatCurrency(state.overdue)}
-        </p>
-      ) : state.nextDueDate ? (
-        <p className="mt-2 text-xs font-semibold opacity-70">
-          Ближайший платёж: {formatDate(state.nextDueDate)}
-        </p>
+        <div className="flex items-start gap-3 border-t border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700">
+          <svg className="mt-0.5 size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" /><path d="M12 7v6M12 16.5v.5" />
+          </svg>
+          <span>
+            <b className="font-semibold">Просрочка {state.overdueDays} дн.</b>{" "}
+            Отгрузки приостановлены до погашения {formatCurrency(state.overdue)}.
+          </span>
+        </div>
       ) : null}
     </div>
   );
@@ -625,23 +670,21 @@ function OrderItemsList({ items }: { items: OrderItemSummary[] }) {
   );
 }
 
-const ORDER_STATUS_BORDER: Partial<Record<string, string>> = {
-  pending_manager_confirmation: "border-l-amber-400",
-  change_proposed: "border-l-amber-400",
-  confirmed_waiting_payment: "border-l-coral",
-  delivering: "border-l-raspberry",
-  completed: "border-l-green-500",
-  canceled: "border-l-black/20",
-  cancelled: "border-l-black/20",
+const ORDER_CHIP: Partial<Record<string, string>> = {
+  pending_manager_confirmation: "bg-amber-50 text-amber-700",
+  change_proposed: "bg-amber-50 text-amber-700",
+  confirmed_waiting_payment: "bg-coral-light text-burgundy",
+  delivering: "bg-blue-50 text-blue-700",
+  paid: "bg-green-50 text-green-700",
+  completed: "bg-green-50 text-green-700",
+  canceled: "bg-black/5 text-muted",
+  cancelled: "bg-black/5 text-muted",
 };
 
 function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   const orderStatus =
     clientOrderStatusLabels[order.status] ?? orderStatusLabels[order.status] ?? order.status;
-  const statusBorder = ORDER_STATUS_BORDER[order.status] ?? "border-l-black/10";
-  const paymentStatus = order.payment_status
-    ? paymentStatusLabels[order.payment_status]
-    : "не указано";
+  const chipClass = ORDER_CHIP[order.status] ?? "bg-black/5 text-muted";
   const today = new Date().toISOString().slice(0, 10);
   const isOverdue =
     order.due_date && order.due_date < today && order.payment_status !== "paid";
@@ -654,161 +697,136 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
     order.payment_status !== "paid" &&
     !["paid", "completed", "canceled", "cancelled"].includes(order.status);
   const canAcceptRevision = order.status === "change_proposed";
+  const showDocs = !["pending_manager_confirmation", "change_proposed", "canceled", "cancelled"].includes(order.status);
 
   async function sendClientAction(
     action: "accept_revision" | "cancel" | "request_change",
     comment?: string,
   ) {
     setActionStatus("loading");
-
     const response = await fetch(`/api/orders/${order.id}/client-action`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action, comment }),
     });
-
-    if (!response.ok) {
-      setActionStatus("error");
-      return;
-    }
-
+    if (!response.ok) { setActionStatus("error"); return; }
     window.location.reload();
   }
 
   return (
-    <article className={`rounded-card border-l-4 bg-white p-5 shadow-sm ${statusBorder}`}>
+    <article className="rounded border border-black/10 bg-white hover:border-black/20 transition-colors">
+      {/* Header row */}
       <button
         type="button"
-        className="flex w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:justify-between"
+        className="flex w-full items-center gap-3 px-4 py-3 text-left"
         onClick={() => setIsExpanded((v) => !v)}
       >
-        <div>
-          <p className="text-xs font-black uppercase text-raspberry">{order.order_number}</p>
-          <h3 className="mt-2 text-xl font-black tracking-tight">{order.company_name}</h3>
-          <p className="mt-2 text-sm font-semibold text-muted">
-            Создан: {formatDate(order.created_at)}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <p className="text-xl font-black text-coral">{formatCurrency(order.total_amount)}</p>
-          <span className="text-xs text-muted">{isExpanded ? "▲" : "▼"}</span>
-        </div>
+        <span className="font-data font-semibold text-sm">{order.order_number}</span>
+        <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[.05em] ${chipClass}`}>
+          {orderStatus}
+        </span>
+        <span className="ml-auto font-data font-semibold">{formatCurrency(order.total_amount)}</span>
+        <span className="text-[10px] text-muted">{isExpanded ? "▲" : "▼"}</span>
       </button>
 
-      {isExpanded && order.order_items && order.order_items.length > 0 ? (
-        <OrderItemsList items={order.order_items} />
-      ) : null}
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-btn bg-cream px-4 py-3">
-          <p className="text-xs font-black uppercase text-muted">Заявка</p>
-          <p className="mt-1 text-sm font-black text-dark">{orderStatus}</p>
-        </div>
-        <div className="rounded-btn bg-cream px-4 py-3">
-          <p className="text-xs font-black uppercase text-muted">Оплата</p>
-          <p className="mt-1 text-sm font-black text-dark">{paymentStatus}</p>
-        </div>
-        <div className="rounded-btn bg-cream px-4 py-3">
-          <p className="text-xs font-black uppercase text-muted">Доставка</p>
-          <p className="mt-1 text-sm font-black text-dark">{formatDate(order.delivery_date)}</p>
-        </div>
+      {/* Meta row */}
+      <div className="flex flex-wrap gap-x-5 gap-y-1 border-t border-black/5 px-4 py-2.5 text-xs text-muted">
+        {order.delivery_date ? (
+          <span>Отгрузка <b className="font-data font-medium text-dark">{formatDate(order.delivery_date)}</b></span>
+        ) : null}
+        {order.order_items?.length ? (
+          <span>Позиций <b className="font-data font-medium text-dark">{order.order_items.length}</b></span>
+        ) : null}
+        {order.due_date ? (
+          <span className={isOverdue ? "text-red-600 font-semibold" : ""}>
+            Оплата до <b className="font-data font-medium">{formatDate(order.due_date)}</b>
+            {isOverdue ? ` · просрочка ${overdueDays} дн.` : ""}
+          </span>
+        ) : null}
       </div>
-      {isOverdue ? (
-        <p className="mt-3 rounded-btn bg-red-50 px-4 py-2 text-sm font-black text-red-700">
-          Просрочка {overdueDays} {overdueDays === 1 ? "день" : "дней"} · оплатить до {formatDate(order.due_date)}
-        </p>
-      ) : order.due_date && order.payment_status !== "paid" ? (
-        <p className="mt-3 rounded-btn bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700">
-          Оплатить до {formatDate(order.due_date)}
+
+      {/* Expanded items */}
+      {isExpanded && order.order_items && order.order_items.length > 0 ? (
+        <div className="border-t border-black/5 px-4 py-3">
+          <OrderItemsList items={order.order_items} />
+        </div>
+      ) : null}
+
+      {/* Revision note */}
+      {order.revision_note ? (
+        <p className="border-t border-black/5 bg-coral-light px-4 py-2 text-sm font-semibold text-burgundy">
+          {order.revision_note}
         </p>
       ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-3">
+      {/* Actions footer */}
+      <div className="flex flex-wrap items-center gap-2 border-t border-dashed border-black/10 px-4 py-3">
         {canAcceptRevision ? (
-          <Button
+          <button
             type="button"
-            className="min-h-10 px-4 py-2"
             disabled={actionStatus === "loading"}
+            className="rounded border border-dark bg-dark px-3 py-1.5 text-xs font-semibold text-white hover:bg-dark/80 disabled:opacity-50"
             onClick={() => void sendClientAction("accept_revision")}
           >
             Принять изменения
-          </Button>
+          </button>
         ) : null}
         {canAcceptRevision ? (
-          <Button
+          <button
             type="button"
-            variant="outline"
-            className="min-h-10 px-4 py-2"
             disabled={actionStatus === "loading"}
+            className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5 disabled:opacity-50"
             onClick={() => {
               const comment = window.prompt("Что нужно изменить в заявке?");
-
-              if (comment?.trim()) {
-                void sendClientAction("request_change", comment);
-              }
+              if (comment?.trim()) void sendClientAction("request_change", comment);
             }}
           >
             Изменить
-          </Button>
+          </button>
         ) : null}
+        {order.payment_url ? (
+          <a
+            href={order.payment_url}
+            className="rounded border border-dark bg-dark px-3 py-1.5 text-xs font-semibold text-white hover:bg-dark/80"
+          >
+            Оплатить {formatCurrency(order.total_amount)}
+          </a>
+        ) : null}
+        {showDocs ? (
+          <>
+            <Link href={`/documents/invoice/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">
+              Счет PDF
+            </Link>
+            <Link href={`/documents/nakl/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">
+              Накладная PDF
+            </Link>
+            {order.status === "completed" ? (
+              <Link href={`/documents/avr/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">
+                АВР
+              </Link>
+            ) : null}
+          </>
+        ) : null}
+        <Link href="/catalog" className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">
+          Повторить
+        </Link>
         {canCancel ? (
-          <Button
+          <button
             type="button"
-            variant="ghost"
-            className="min-h-10 px-4 py-2 text-burgundy"
             disabled={actionStatus === "loading"}
+            className="rounded px-3 py-1.5 text-xs font-semibold text-muted hover:bg-black/5 disabled:opacity-50"
             onClick={() => {
               const comment = window.prompt("Причина отмены");
               void sendClientAction("cancel", comment ?? "");
             }}
           >
             Отменить
-          </Button>
+          </button>
         ) : null}
-        {order.payment_url ? (
-          <Button href={order.payment_url} className="min-h-10 px-4 py-2">
-            Оплата
-          </Button>
+        {actionStatus === "error" ? (
+          <span className="text-xs font-semibold text-red-600">Ошибка, попробуйте снова</span>
         ) : null}
-        <Button href="/catalog" variant="outline" className="min-h-10 px-4 py-2">
-          Повторить закупку
-        </Button>
       </div>
-      {!["pending_manager_confirmation", "change_proposed", "canceled", "cancelled"].includes(
-        order.status,
-      ) ? (
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-black/10 pt-3">
-          <p className="text-[10px] font-black uppercase tracking-wider text-muted">Документы</p>
-          <Link
-            href={`/documents/invoice/${order.id}`}
-            className="text-xs font-black text-raspberry hover:underline"
-          >
-            Счет
-          </Link>
-          <Link
-            href={`/documents/nakl/${order.id}`}
-            className="text-xs font-black text-dark hover:underline"
-          >
-            Накладная
-          </Link>
-          {order.status === "completed" ? (
-            <Link
-              href={`/documents/avr/${order.id}`}
-              className="text-xs font-black text-dark hover:underline"
-            >
-              АВР
-            </Link>
-          ) : null}
-        </div>
-      ) : null}
-      {order.revision_note ? (
-        <p className="mt-3 rounded-btn bg-coral-light px-4 py-3 text-sm font-bold text-burgundy">
-          {order.revision_note}
-        </p>
-      ) : null}
-      {actionStatus === "error" ? (
-        <p className="mt-3 text-sm font-bold text-red-600">Не удалось выполнить действие</p>
-      ) : null}
     </article>
   );
 }
@@ -859,6 +877,93 @@ function PopularProductsSection({ products }: { products: Product[] }) {
         ))}
       </div>
     </section>
+  );
+}
+
+function SidebarBox({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="rounded border border-black/10 bg-white p-4">
+      <p className="font-display text-[11px] font-semibold uppercase tracking-[.07em] text-dark">
+        {title}
+      </p>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
+function KvRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between border-b border-black/5 py-1.5 text-xs last:border-0">
+      <span className="text-muted">{label}</span>
+      <span className="font-data font-medium text-dark">{value}</span>
+    </div>
+  );
+}
+
+function ConditionsBox({ state }: { state: CreditState }) {
+  return (
+    <SidebarBox title="Условия">
+      <KvRow label="Кредитный лимит" value={formatCurrency(state.limit)} />
+      <KvRow label="Статус" value={creditStatusLabels[state.status]} />
+      {state.nextDueDate ? (
+        <KvRow label="Ближайший платёж" value={formatDate(state.nextDueDate)} />
+      ) : null}
+      <button
+        type="button"
+        className="mt-3 w-full rounded border border-dashed border-black/20 py-2 text-xs font-semibold text-muted transition hover:border-coral hover:text-coral"
+      >
+        Запросить увеличение лимита
+      </button>
+    </SidebarBox>
+  );
+}
+
+function RecentOrdersBox({ orders }: { orders: ClientOrderSummary[] }) {
+  const recent = orders.filter((o) => o.order_items && o.order_items.length > 0).slice(0, 2);
+  if (recent.length === 0) return null;
+
+  return (
+    <SidebarBox title="Быстрый повтор">
+      {recent.map((order) => (
+        <div
+          key={order.id}
+          className="flex items-center justify-between border-b border-dashed border-black/10 py-2 last:border-0"
+        >
+          <div>
+            <p className="text-xs font-semibold text-dark">{order.order_number}</p>
+            <p className="mt-0.5 font-data text-[11px] text-muted">
+              {order.order_items!.length} поз. · {formatCurrency(order.total_amount)}
+            </p>
+          </div>
+          <Link
+            href="/catalog"
+            className="rounded border border-dark bg-dark px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-dark/80"
+          >
+            В лист
+          </Link>
+        </div>
+      ))}
+      <Link
+        href="/catalog"
+        className="mt-3 block w-full rounded border border-dashed border-black/20 py-2 text-center text-xs font-semibold text-muted transition hover:border-coral hover:text-coral"
+      >
+        + Открыть каталог
+      </Link>
+    </SidebarBox>
+  );
+}
+
+function DeliveryBox({ orders }: { orders: ClientOrderSummary[] }) {
+  const lastWithAddress = orders.find((o) => o.delivery_address);
+  if (!lastWithAddress?.delivery_address) return null;
+
+  return (
+    <SidebarBox title="Доставка">
+      <KvRow label="Адрес" value={lastWithAddress.delivery_address} />
+      {lastWithAddress.delivery_time ? (
+        <KvRow label="Время" value={lastWithAddress.delivery_time} />
+      ) : null}
+    </SidebarBox>
   );
 }
 
@@ -964,174 +1069,132 @@ function ClientDashboard({
 
   return (
     <section className="mx-auto max-w-6xl">
-      <div className="flex flex-col gap-5 rounded-card bg-white p-6 shadow-sm lg:flex-row lg:items-center lg:justify-between lg:p-8">
+      {/* Page header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-sm font-black uppercase text-raspberry">Клиентский профиль</p>
-          <h1 className="mt-3 break-words text-2xl font-black tracking-tight sm:text-4xl">
-            {session.companyName || "Кабинет партнера"}
+          <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
+            {session.companyName || "Кабинет партнёра"}
           </h1>
-          <p className="mt-3 break-all text-sm font-semibold text-muted">{session.email}</p>
+          <p className="mt-1 text-sm text-muted">{session.email}</p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Button href="/catalog">В каталог</Button>
-          <Button href="/cart" variant="outline">
+        <div className="flex flex-wrap gap-2">
+          <Link href="/catalog" className="rounded border border-dark bg-dark px-4 py-2 text-sm font-semibold text-white hover:bg-dark/80">
+            В каталог
+          </Link>
+          <Link href="/cart" className="rounded border border-black/20 px-4 py-2 text-sm font-semibold text-dark hover:bg-black/5">
             Корзина
-          </Button>
-          <Button type="button" variant="ghost" onClick={onLogout}>
+          </Link>
+          <button type="button" onClick={onLogout} className="rounded border border-black/20 px-4 py-2 text-sm font-semibold text-muted hover:bg-black/5">
             Выйти
-          </Button>
+          </button>
         </div>
       </div>
 
+      {/* Credit block */}
       {creditState ? (
-        <div className="mt-6">
+        <div className="mt-5">
           <CreditBlock state={creditState} />
         </div>
       ) : null}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          label="Всего заказов"
-          value={isLoadingOrders ? "..." : String(orders.length)}
-          icon={
-            <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          }
-        />
-        <MetricCard
-          label="Активные заявки"
-          value={isLoadingOrders ? "..." : String(activeOrders)}
-          icon={
-            <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
-        />
-        <MetricCard
-          label="Оплачено"
-          value={isLoadingOrders ? "..." : formatCurrency(paidAmount)}
-          icon={
-            <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
-        />
-        <MetricCard
-          label="Следующая поставка"
-          value={isLoadingOrders ? "..." : (nextDelivery ? formatDate(nextDelivery) : "—")}
-          icon={
-            <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          }
-        />
-      </div>
+      {/* 2-column main layout */}
+      <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_300px] lg:items-start">
+        {/* Orders column */}
+        <div className="space-y-3">
+          <div className="flex items-baseline justify-between border-b border-black/10 pb-2">
+            <h2 className="font-display text-sm font-semibold uppercase tracking-[.05em]">Заказы</h2>
+            <button
+              type="button"
+              onClick={() => setOrdersTab(ordersTab === "active" ? "all" : "active")}
+              className="text-xs font-semibold text-coral hover:underline"
+            >
+              {ordersTab === "active" ? "Все заказы →" : "← Активные"}
+            </button>
+          </div>
 
-      <PopularProductsSection products={popularProducts} />
-
-      <div className="mt-6 grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="rounded-card bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase text-raspberry">История</p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight">Заказы</h2>
-            </div>
-            <div className="flex gap-1 rounded-btn bg-cream p-1">
-              {(["active", "all"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setOrdersTab(tab)}
-                  className={`rounded px-3 py-1.5 text-xs font-black transition ${
-                    ordersTab === tab
-                      ? "bg-white text-dark shadow-sm"
-                      : "text-muted hover:text-dark"
-                  }`}
-                >
-                  {tab === "active" ? "Активные" : "Все"}
-                </button>
+          {isLoadingOrders ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-20 animate-pulse rounded border border-black/10 bg-white" />
               ))}
             </div>
-          </div>
-          {isLoadingOrders ? (
-            <div className="mt-6 rounded-card bg-cream p-6">
-              <div className="h-28 animate-pulse rounded-card bg-white" />
-            </div>
           ) : ordersError ? (
-            <div className="mt-6 rounded-card border border-coral/30 bg-coral-light p-6">
-              <h3 className="text-xl font-black tracking-tight">Не удалось загрузить заказы</h3>
-              <p className="mt-3 text-sm font-semibold leading-6 text-burgundy/75">
-                {ordersError}
-              </p>
+            <div className="rounded border border-coral/30 bg-coral-light p-5">
+              <p className="text-sm font-semibold text-burgundy">{ordersError}</p>
             </div>
           ) : visibleOrders.length > 0 ? (
-            <div className="mt-6 space-y-4">
+            <div className="space-y-2">
               {visibleOrders.map((order) => (
                 <ClientOrderCard key={order.id} order={order} />
               ))}
             </div>
           ) : (
-            <div className="mt-6 rounded-card border border-dashed border-coral/40 bg-cream p-6">
-              <h3 className="text-xl font-black tracking-tight">Заказы пока не найдены</h3>
-              <p className="mt-3 text-sm font-semibold leading-6 text-muted">
-                История подтягивается по email и телефону из профиля. Если заказ оформлялся на другой
-                контакт, обратитесь к менеджеру.
+            <div className="rounded border border-dashed border-black/20 p-6 text-center">
+              <p className="font-display text-lg font-semibold">Заказов пока нет</p>
+              <p className="mt-2 text-sm text-muted">
+                История подтягивается по email и телефону. Если заказ оформлялся на другой контакт — обратитесь к менеджеру.
               </p>
-              <Button href="/catalog" className="mt-5">
-                Собрать первый заказ
-              </Button>
+              <Link href="/catalog" className="mt-4 inline-block rounded border border-dark bg-dark px-4 py-2 text-sm font-semibold text-white hover:bg-dark/80">
+                Открыть каталог
+              </Link>
             </div>
           )}
-        </section>
+        </div>
 
-        <section className="rounded-card bg-white p-6 shadow-sm">
-          <p className="text-xs font-black uppercase text-raspberry">Настройки</p>
-          <h2 className="mt-2 text-2xl font-black tracking-tight">Профиль компании</h2>
-          <div className="mt-5 space-y-4">
-            <label className="block">
-              <span className="text-sm font-black text-dark">Компания / заведение</span>
-              <Input
-                className="mt-2"
-                value={companyName}
-                onChange={(event) => setCompanyName(event.currentTarget.value)}
-                placeholder="Название компании"
-              />
-            </label>
-            <div className="block">
-              <span className="text-sm font-black text-dark">Email</span>
-              <p className="mt-2 rounded-xl border border-black/10 bg-cream px-3 py-2.5 text-sm font-semibold text-muted">
-                {session.email}
-              </p>
-              <p className="mt-1 text-xs font-semibold text-muted">Вход по ссылке в WhatsApp</p>
+        {/* Sidebar */}
+        <aside className="space-y-3">
+          <RecentOrdersBox orders={orders} />
+          {creditState ? <ConditionsBox state={creditState} /> : null}
+          <DeliveryBox orders={orders} />
+
+          {/* Profile settings */}
+          <SidebarBox title="Профиль">
+            <div className="space-y-3">
+              <div>
+                <p className="mb-1 text-xs font-semibold text-muted">Компания</p>
+                <Input
+                  value={companyName}
+                  onChange={(event) => setCompanyName(event.currentTarget.value)}
+                  placeholder="Название компании"
+                />
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold text-muted">Email</p>
+                <p className="rounded border border-black/10 bg-cream px-3 py-2 text-xs font-medium text-muted">
+                  {session.email}
+                </p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold text-muted">WhatsApp</p>
+                <p className="rounded border border-black/10 bg-cream px-3 py-2 text-xs font-medium text-muted">
+                  {session.phone || "Не указан"}
+                </p>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold text-muted">Телефон бухгалтера</p>
+                <Input
+                  inputMode="tel"
+                  value={accountantPhone}
+                  onChange={(event) => setAccountantPhone(event.currentTarget.value)}
+                  placeholder="+7 (___) ___-__-__"
+                />
+              </div>
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  className="rounded border border-dark bg-dark px-4 py-2 text-xs font-semibold text-white hover:bg-dark/80"
+                >
+                  Сохранить
+                </button>
+                {saved ? <span className="text-xs font-semibold text-coral">Сохранено</span> : null}
+              </div>
             </div>
-            <div className="block">
-              <span className="text-sm font-black text-dark">Телефон WhatsApp</span>
-              <p className="mt-2 rounded-xl border border-black/10 bg-cream px-3 py-2.5 text-sm font-semibold text-muted">
-                {session.phone || "Не указан"}
-              </p>
-              <p className="mt-1 text-xs font-semibold text-muted">Привязан к WhatsApp-аккаунту</p>
-            </div>
-            <label className="block">
-              <span className="text-sm font-black text-dark">Телефон бухгалтера</span>
-              <Input
-                className="mt-2"
-                inputMode="tel"
-                value={accountantPhone}
-                onChange={(event) => setAccountantPhone(event.currentTarget.value)}
-                placeholder="+7 (___) ___-__-__"
-              />
-              <p className="mt-1 text-xs font-semibold text-muted">WhatsApp для получения счетов</p>
-            </label>
-          </div>
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Button type="button" onClick={handleSave}>
-              Сохранить
-            </Button>
-            {saved ? <span className="text-sm font-black text-raspberry">Сохранено</span> : null}
-          </div>
-        </section>
+          </SidebarBox>
+        </aside>
       </div>
+
+      <PopularProductsSection products={popularProducts} />
     </section>
   );
 }

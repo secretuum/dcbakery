@@ -182,6 +182,8 @@ export type ClientOrderSummary = {
   revision_note?: string | null;
   total_amount: number;
   delivery_date?: string | null;
+  delivery_address?: string | null;
+  delivery_time?: string | null;
   due_date?: string | null;
   payment_url?: string | null;
   created_at: string;

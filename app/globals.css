@@ -40,6 +40,8 @@
   --radius-badge: var(--radius-badge);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-unbounded);
+  --font-data: var(--font-ibm-plex-mono);
 
   /* Premium design tokens */
   --color-fudo-accent: var(--fudo-accent);

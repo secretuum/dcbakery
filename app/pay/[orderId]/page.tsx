@@ -111,7 +111,8 @@ export default async function PayPage({ params }: PayPageProps) {
     !["pending_manager_confirmation", "new", "change_proposed", "canceled", "cancelled"].includes(
       order.status,
     );
-  const avrAvailable = order.request_avr === true && order.status === "completed";
+  const naklAvailable = invoiceAvailable;
+  const avrAvailable = order.status === "completed";
   const isExternalPaymentUrl =
     Boolean(order.payment_url) && !order.payment_url?.includes(`/pay/${order.id}`);
 
@@ -176,11 +177,11 @@ export default async function PayPage({ params }: PayPageProps) {
 
         <section className="mt-8 rounded-card bg-cream p-5">
           <p className="text-xs font-black uppercase text-raspberry">Документы</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-btn bg-white p-4">
               <p className="text-lg font-black">Счет на оплату</p>
               <p className="mt-2 text-sm font-semibold leading-6 text-muted">
-                Формируется автоматически после подтверждения менеджером.
+                Формируется после подтверждения менеджером.
               </p>
               {invoiceAvailable ? (
                 <Link
@@ -191,7 +192,26 @@ export default async function PayPage({ params }: PayPageProps) {
                 </Link>
               ) : (
                 <p className="mt-4 text-sm font-black text-burgundy">
-                  {hasCompanyDetails ? "Ждет подтверждения менеджера" : "Реквизиты поставщика настраиваются"}
+                  {hasCompanyDetails ? "Ждет подтверждения" : "Реквизиты настраиваются"}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-btn bg-white p-4">
+              <p className="text-lg font-black">Накладная</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+                Товарная накладная для бухгалтерии.
+              </p>
+              {naklAvailable ? (
+                <Link
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn bg-dark px-4 py-2 text-sm font-black text-white"
+                  href={`/documents/nakl/${order.id}`}
+                >
+                  Открыть накладную
+                </Link>
+              ) : (
+                <p className="mt-4 text-sm font-black text-burgundy">
+                  {hasCompanyDetails ? "Ждет подтверждения" : "Реквизиты настраиваются"}
                 </p>
               )}
             </div>
@@ -199,9 +219,7 @@ export default async function PayPage({ params }: PayPageProps) {
             <div className="rounded-btn bg-white p-4">
               <p className="text-lg font-black">АВР</p>
               <p className="mt-2 text-sm font-semibold leading-6 text-muted">
-                {order.request_avr
-                  ? "Запрошен при оформлении и будет доступен после завершения заказа."
-                  : "Не был запрошен при оформлении. Добавить его сможет менеджер."}
+                Акт выполненных работ — доступен после завершения заказа.
               </p>
               {avrAvailable ? (
                 <Link
@@ -210,7 +228,9 @@ export default async function PayPage({ params }: PayPageProps) {
                 >
                   Открыть АВР
                 </Link>
-              ) : null}
+              ) : (
+                <p className="mt-4 text-sm font-black text-burgundy">После завершения заказа</p>
+              )}
             </div>
           </div>
         </section>

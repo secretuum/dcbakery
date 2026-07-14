@@ -440,6 +440,31 @@ function AdminDashboard({
   session: AdminSession;
   onLogout: () => void;
 }) {
+  const [previewMode, setPreviewMode] = useState(false);
+
+  if (previewMode) {
+    return (
+      <div>
+        <div className="print-hidden mb-4 flex items-center justify-between rounded-card border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm font-black text-amber-700">Режим превью — вид клиента</p>
+          <Button
+            type="button"
+            variant="outline"
+            className="border-amber-300 text-amber-700 hover:bg-amber-100"
+            onClick={() => setPreviewMode(false)}
+          >
+            Выйти из превью
+          </Button>
+        </div>
+        <ClientDashboard
+          session={{ role: "client", email: session.email, phone: "", companyName: "Превью", createdAt: "" }}
+          onLogout={() => setPreviewMode(false)}
+          onUpdate={() => undefined}
+        />
+      </div>
+    );
+  }
+
   return (
     <section className="mx-auto max-w-6xl">
       <div className="flex flex-col gap-5 rounded-card bg-dark p-6 text-white shadow-sm lg:flex-row lg:items-center lg:justify-between lg:p-8">
@@ -454,6 +479,14 @@ function AdminDashboard({
           </Button>
           <Button href="/admin/products" variant="outline" className="border-white text-white hover:bg-white/10">
             Товары
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-white/80 hover:bg-white/10 hover:text-white"
+            onClick={() => setPreviewMode(true)}
+          >
+            Вид клиента
           </Button>
           <Button type="button" variant="ghost" className="text-white hover:bg-white/10" onClick={onLogout}>
             Выйти
@@ -527,13 +560,16 @@ function CreditBlock({ state }: { state: CreditState }) {
       : state.status === "prepay_only"
         ? "bg-amber-50 border-amber-200 text-amber-700"
         : "bg-green-50 border-green-200 text-green-700";
+  const usedPct = state.limit > 0 ? Math.min(100, (state.used / state.limit) * 100) : 0;
+  const barColor =
+    usedPct > 80 ? "bg-red-500" : usedPct > 50 ? "bg-amber-400" : "bg-green-500";
 
   return (
     <div className={`rounded-card border p-5 ${statusColor}`}>
-      <p className="text-xs font-black uppercase opacity-70">Кредит</p>
-      <p className="mt-1 text-base font-black">
-        {creditStatusLabels[state.status]}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-black uppercase opacity-70">Кредит</p>
+        <p className="text-xs font-black opacity-70">{creditStatusLabels[state.status]}</p>
+      </div>
       <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
         <div>
           <p className="text-xs font-semibold opacity-60">Лимит</p>
@@ -548,12 +584,20 @@ function CreditBlock({ state }: { state: CreditState }) {
           <p className="font-black">{formatCurrency(state.available)}</p>
         </div>
       </div>
+      {state.limit > 0 ? (
+        <div className="mt-3 h-1.5 rounded-full bg-black/10">
+          <div
+            className={`h-1.5 rounded-full transition-all ${barColor}`}
+            style={{ width: `${usedPct}%` }}
+          />
+        </div>
+      ) : null}
       {state.overdueDays > 0 ? (
-        <p className="mt-3 text-xs font-bold">
+        <p className="mt-2 text-xs font-bold">
           Просрочка {state.overdueDays} {state.overdueDays === 1 ? "день" : "дней"} · {formatCurrency(state.overdue)}
         </p>
       ) : state.nextDueDate ? (
-        <p className="mt-3 text-xs font-semibold opacity-70">
+        <p className="mt-2 text-xs font-semibold opacity-70">
           Ближайший платёж: {formatDate(state.nextDueDate)}
         </p>
       ) : null}
@@ -581,9 +625,20 @@ function OrderItemsList({ items }: { items: OrderItemSummary[] }) {
   );
 }
 
+const ORDER_STATUS_BORDER: Partial<Record<string, string>> = {
+  pending_manager_confirmation: "border-l-amber-400",
+  change_proposed: "border-l-amber-400",
+  confirmed_waiting_payment: "border-l-coral",
+  delivering: "border-l-raspberry",
+  completed: "border-l-green-500",
+  canceled: "border-l-black/20",
+  cancelled: "border-l-black/20",
+};
+
 function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   const orderStatus =
     clientOrderStatusLabels[order.status] ?? orderStatusLabels[order.status] ?? order.status;
+  const statusBorder = ORDER_STATUS_BORDER[order.status] ?? "border-l-black/10";
   const paymentStatus = order.payment_status
     ? paymentStatusLabels[order.payment_status]
     : "не указано";
@@ -621,7 +676,7 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   }
 
   return (
-    <article className="rounded-card bg-white p-5 shadow-sm">
+    <article className={`rounded-card border-l-4 bg-white p-5 shadow-sm ${statusBorder}`}>
       <button
         type="button"
         className="flex w-full flex-col gap-3 text-left sm:flex-row sm:items-start sm:justify-between"
@@ -812,6 +867,7 @@ function ClientDashboard({
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [orders, setOrders] = useState<ClientOrderSummary[]>([]);
   const [ordersError, setOrdersError] = useState("");
+  const [ordersTab, setOrdersTab] = useState<"active" | "all">("active");
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -870,12 +926,17 @@ function ClientDashboard({
     };
   }, [session.email, session.phone]);
 
-  const activeOrders = orders.filter(
-    (order) => !["completed", "canceled", "cancelled"].includes(order.status),
-  ).length;
+  const doneStatuses = ["completed", "canceled", "cancelled"];
+  const activeOrders = orders.filter((order) => !doneStatuses.includes(order.status)).length;
   const paidAmount = orders
     .filter((order) => order.status === "paid" || order.payment_status === "paid")
     .reduce((sum, order) => sum + order.total_amount, 0);
+  const nextDelivery =
+    orders
+      .filter((o) => o.delivery_date && !doneStatuses.includes(o.status))
+      .sort((a, b) => a.delivery_date!.localeCompare(b.delivery_date!))[0]?.delivery_date ?? null;
+  const visibleOrders =
+    ordersTab === "active" ? orders.filter((o) => !doneStatuses.includes(o.status)) : orders;
 
   function handleSave() {
     const nextSession: ClientSession = {
@@ -916,7 +977,7 @@ function ClientDashboard({
         </div>
       ) : null}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Всего заказов"
           value={isLoadingOrders ? "..." : String(orders.length)}
@@ -937,10 +998,19 @@ function ClientDashboard({
         />
         <MetricCard
           label="Оплачено"
-          value={formatCurrency(paidAmount)}
+          value={isLoadingOrders ? "..." : formatCurrency(paidAmount)}
           icon={
             <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+        />
+        <MetricCard
+          label="Следующая поставка"
+          value={isLoadingOrders ? "..." : (nextDelivery ? formatDate(nextDelivery) : "—")}
+          icon={
+            <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           }
         />
@@ -955,6 +1025,22 @@ function ClientDashboard({
               <p className="text-xs font-black uppercase text-raspberry">История</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight">Заказы</h2>
             </div>
+            <div className="flex gap-1 rounded-btn bg-cream p-1">
+              {(["active", "all"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setOrdersTab(tab)}
+                  className={`rounded px-3 py-1.5 text-xs font-black transition ${
+                    ordersTab === tab
+                      ? "bg-white text-dark shadow-sm"
+                      : "text-muted hover:text-dark"
+                  }`}
+                >
+                  {tab === "active" ? "Активные" : "Все"}
+                </button>
+              ))}
+            </div>
           </div>
           {isLoadingOrders ? (
             <div className="mt-6 rounded-card bg-cream p-6">
@@ -967,9 +1053,9 @@ function ClientDashboard({
                 {ordersError}
               </p>
             </div>
-          ) : orders.length > 0 ? (
+          ) : visibleOrders.length > 0 ? (
             <div className="mt-6 space-y-4">
-              {orders.map((order) => (
+              {visibleOrders.map((order) => (
                 <ClientOrderCard key={order.id} order={order} />
               ))}
             </div>
@@ -1000,6 +1086,13 @@ function ClientDashboard({
                 placeholder="Название компании"
               />
             </label>
+            <div className="block">
+              <span className="text-sm font-black text-dark">Email</span>
+              <p className="mt-2 rounded-xl border border-black/10 bg-cream px-3 py-2.5 text-sm font-semibold text-muted">
+                {session.email}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-muted">Вход по ссылке в WhatsApp</p>
+            </div>
             <div className="block">
               <span className="text-sm font-black text-dark">Телефон WhatsApp</span>
               <p className="mt-2 rounded-xl border border-black/10 bg-cream px-3 py-2.5 text-sm font-semibold text-muted">

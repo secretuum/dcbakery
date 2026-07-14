@@ -383,21 +383,6 @@ export function CheckoutForm() {
                 </p>
               </label>
 
-              <label className="flex items-start gap-3 rounded-btn bg-cream px-4 py-3 sm:col-span-2">
-                <input
-                  checked={form.request_avr}
-                  className="mt-1 size-4 accent-coral"
-                  type="checkbox"
-                  onChange={(event) => updateField("request_avr", event.currentTarget.checked)}
-                />
-                <span>
-                  <span className="block text-sm font-semibold text-dark">Нужен АВР</span>
-                  <span className="mt-1 block text-xs font-semibold leading-5 text-muted">
-                    Акт выполненных работ станет доступен после завершения заказа.
-                  </span>
-                </span>
-              </label>
-
               <label className="block sm:col-span-2">
                 <span className="text-sm font-semibold text-dark">Комментарий</span>
                 <textarea

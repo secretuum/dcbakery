@@ -6,6 +6,7 @@ const paymentStatusVariants: Record<PaymentStatus, "coral" | "burgundy" | "dark"
   unpaid: "neutral",
   payment_link_created: "coral",
   payment_link_sent: "burgundy",
+  partial: "coral",
   paid: "dark",
   failed: "coral",
   expired: "neutral",

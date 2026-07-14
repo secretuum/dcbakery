@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchWhatsAppClients } from "@/src/lib/whatsapp-client-store";
+import { fetchAllClients } from "@/src/lib/supabase/admin";
 
 export const metadata: Metadata = {
   title: "Клиенты | Админка DC Bakery",
@@ -14,8 +15,23 @@ function getClientHref(chatId: string) {
   return `/admin/clients/${encodeURIComponent(chatId)}`;
 }
 
+const creditDot: Record<string, string> = {
+  active: "bg-green-500",
+  prepay_only: "bg-amber-400",
+  blocked: "bg-red-500",
+};
+const creditLabel: Record<string, string> = {
+  active: "Активен",
+  prepay_only: "Предоплата",
+  blocked: "Блокирован",
+};
+
 export default async function AdminClientsPage() {
-  const clients = await fetchWhatsAppClients();
+  const [clients, creditClients] = await Promise.all([
+    fetchWhatsAppClients(),
+    fetchAllClients(),
+  ]);
+  const creditByPhone = new Map(creditClients.map((c) => [c.phone, c]));
 
   return (
     <div>
@@ -38,10 +54,15 @@ export default async function AdminClientsPage() {
                   <th className="px-5 py-4">WhatsApp</th>
                   <th className="px-5 py-4">БИН/ИП</th>
                   <th className="px-5 py-4">Адреса</th>
+                  <th className="px-5 py-4">Кредит</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/10 text-sm font-semibold">
-                {clients.map((client) => (
+                {clients.map((client) => {
+                  const credit = client.customerPhone
+                    ? creditByPhone.get(client.customerPhone) ?? null
+                    : null;
+                  return (
                   <tr key={client.chatId} className="transition hover:bg-cream">
                     <td className="px-5 py-4">
                       <Link
@@ -62,8 +83,21 @@ export default async function AdminClientsPage() {
                         ? `${client.addresses.length} адрес(а)`
                         : optional(client.deliveryAddress)}
                     </td>
+                    <td className="px-5 py-4">
+                      {credit ? (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className={`size-2 rounded-full ${creditDot[credit.status] ?? "bg-muted"}`} />
+                          <span className="text-xs font-black text-dark">
+                            {creditLabel[credit.status] ?? credit.status}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted">—</span>
+                      )}
+                    </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

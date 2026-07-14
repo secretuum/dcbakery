@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   confirmAdminOrder,
   fetchAdminOrder,
+  fetchClientById,
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
 import { createPaymentLink } from "@/src/lib/payments";
@@ -18,6 +19,12 @@ type ConfirmRouteProps = {
     id: string;
   }>;
 };
+
+function addDays(isoDate: string, days: number): string {
+  const d = new Date(isoDate);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export async function POST(request: Request, { params }: ConfirmRouteProps) {
   const { id } = await params;
@@ -37,6 +44,11 @@ export async function POST(request: Request, { params }: ConfirmRouteProps) {
 
   try {
     const origin = new URL(request.url).origin;
+    const client = order.client_id ? await fetchClientById(order.client_id) : null;
+    const shipmentDate = order.delivery_date ?? new Date().toISOString().slice(0, 10);
+    const dueDate = client
+      ? addDays(shipmentDate, client.payment_terms_days)
+      : null;
     const paymentLink = createPaymentLink(order, undefined, origin);
     const customerNotification = await sendCustomerOrderConfirmationNotification(
       order,
@@ -66,6 +78,8 @@ export async function POST(request: Request, { params }: ConfirmRouteProps) {
       payment_status: whatsappMessageId ? "payment_link_sent" : "payment_link_created",
       payment_url: paymentLink.paymentUrl,
       status: "confirmed_waiting_payment",
+      ...(shipmentDate && { shipment_date: shipmentDate }),
+      ...(dueDate && { due_date: dueDate }),
     });
     const managerMessageId = confirmedOrder
       ? await replaceWhatsAppOrderMessage(confirmedOrder, order.whatsapp_message_id).catch(() => null)

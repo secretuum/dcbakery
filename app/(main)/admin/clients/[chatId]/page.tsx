@@ -4,8 +4,12 @@ import { notFound } from "next/navigation";
 import { OrderStatusBadge } from "@/src/components/admin/OrderStatusBadge";
 import { PaymentStatusBadge } from "@/src/components/admin/PaymentStatusBadge";
 import { ClientProfileForm } from "@/src/components/admin/ClientProfileForm";
+import { ClientCreditForm } from "@/src/components/admin/ClientCreditForm";
 import { formatPrice } from "@/src/lib/format";
-import { fetchClientOrderSummaries } from "@/src/lib/supabase/admin";
+import {
+  fetchClientByPhone,
+  fetchClientOrderSummaries,
+} from "@/src/lib/supabase/admin";
 import { fetchWhatsAppClientByChatId } from "@/src/lib/whatsapp-client-store";
 
 type AdminClientPageProps = {
@@ -43,10 +47,13 @@ export default async function AdminClientPage({ params }: AdminClientPageProps) 
     notFound();
   }
 
-  const orders = await fetchClientOrderSummaries({
-    email: client.customerEmail ?? undefined,
-    phone: client.customerPhone ?? undefined,
-  });
+  const [orders, creditClient] = await Promise.all([
+    fetchClientOrderSummaries({
+      email: client.customerEmail ?? undefined,
+      phone: client.customerPhone ?? undefined,
+    }),
+    client.customerPhone ? fetchClientByPhone(client.customerPhone) : Promise.resolve(null),
+  ]);
 
   return (
     <div>
@@ -67,6 +74,11 @@ export default async function AdminClientPage({ params }: AdminClientPageProps) 
       <div className="mt-8 grid gap-6 xl:grid-cols-[1fr_420px] xl:items-start">
         <div className="space-y-6">
           <ClientProfileForm client={client} />
+          <ClientCreditForm
+            client={creditClient}
+            defaultPhone={client.customerPhone ?? ""}
+            defaultName={client.companyName ?? client.customerName ?? ""}
+          />
 
           <section className="overflow-hidden rounded-card bg-white shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
             <div className="border-b border-black/10 p-5 sm:p-6">

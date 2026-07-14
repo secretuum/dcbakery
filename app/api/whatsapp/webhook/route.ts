@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import {
   cancelOrder,
   clearProductStop,
@@ -95,22 +96,29 @@ function readNestedString(value: unknown, path: string[]) {
   return readString(current);
 }
 
+function timingSafeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a, "utf8");
+  const bufB = Buffer.from(b, "utf8");
+  return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
+}
+
 function isAuthorized(request: Request) {
   const webhookSecret = process.env.WHATSAPP_WEBHOOK_SECRET;
-  const authorizationHeader = request.headers.get("authorization")?.trim();
+  const authorizationHeader = request.headers.get("authorization")?.trim() ?? "";
   const incomingSecret =
     request.headers.get("x-whatsapp-webhook-secret") ??
     request.headers.get("x-webhook-secret") ??
-    new URL(request.url).searchParams.get("secret");
+    new URL(request.url).searchParams.get("secret") ??
+    "";
 
   if (!webhookSecret) {
     return false;
   }
 
   return (
-    incomingSecret === webhookSecret ||
-    authorizationHeader === webhookSecret ||
-    authorizationHeader === `Bearer ${webhookSecret}`
+    timingSafeCompare(incomingSecret, webhookSecret) ||
+    timingSafeCompare(authorizationHeader, webhookSecret) ||
+    timingSafeCompare(authorizationHeader, `Bearer ${webhookSecret}`)
   );
 }
 

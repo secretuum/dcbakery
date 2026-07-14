@@ -131,8 +131,9 @@ export async function POST(request: Request, { params }: ClientActionRouteProps)
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
+    console.error("[client-action]", error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to process client action" },
+      { error: "Failed to process client action" },
       { status: 500 },
     );
   }

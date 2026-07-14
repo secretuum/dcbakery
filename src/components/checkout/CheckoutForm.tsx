@@ -20,7 +20,6 @@ type CheckoutFormState = {
   delivery_date: string;
   delivery_time: string;
   payment_method: string;
-  request_avr: boolean;
   comment: string;
   oferta_accepted: boolean;
 };
@@ -135,7 +134,6 @@ export function CheckoutForm() {
     delivery_date: tomorrow,
     delivery_time: "День 12-18",
     payment_method: "Выставить счет",
-    request_avr: false,
     comment: "",
     oferta_accepted: false,
   });

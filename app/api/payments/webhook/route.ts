@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
 import {
   fetchAdminOrder,
   fetchOrderByPaymentId,
@@ -94,11 +95,13 @@ function isAuthorized(request: Request) {
   const incomingSecret =
     request.headers.get("x-payment-webhook-secret") ?? request.headers.get("x-webhook-secret");
 
-  if (!webhookSecret) {
+  if (!webhookSecret || !incomingSecret) {
     return false;
   }
 
-  return incomingSecret === webhookSecret;
+  const a = Buffer.from(incomingSecret, "utf8");
+  const b = Buffer.from(webhookSecret, "utf8");
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 export async function POST(request: Request) {

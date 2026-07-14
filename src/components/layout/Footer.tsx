@@ -3,7 +3,7 @@ import Link from "next/link";
 const contactItems = [
   { label: "Телефон", value: "+7 (705) 886-50-14", href: "tel:+77058865014" },
   { label: "WhatsApp", value: "+7 (705) 886-50-14", href: "https://wa.me/77058865014" },
-  { label: "Адрес", value: "Адрес производства уточняется", href: null },
+  { label: "Адрес", value: process.env.DC_LEGAL_ADDRESS ?? "—", href: null },
   { label: "Соцсети", value: "@dcbakery", href: null },
 ];
 

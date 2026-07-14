@@ -43,7 +43,7 @@ export async function POST(request: Request, { params }: ConfirmRouteProps) {
   }
 
   try {
-    const origin = new URL(request.url).origin;
+    const origin = (process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin).replace(/\/$/, "");
     const client = order.client_id ? await fetchClientById(order.client_id) : null;
     const shipmentDate = order.delivery_date ?? new Date().toISOString().slice(0, 10);
     const dueDate = client

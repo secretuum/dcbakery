@@ -108,11 +108,11 @@ export function Header() {
         <div className="flex items-center gap-3">
           <Link
             href="/profile"
-            className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-fudo-muted transition hover:text-fudo-dark lg:flex"
-            aria-label="Войти"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-fudo-muted transition hover:text-fudo-dark"
+            aria-label="Профиль"
           >
             <ProfileIcon />
-            Войти
+            <span className="hidden lg:inline">Войти</span>
           </Link>
 
           <Link

@@ -97,9 +97,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ошибка сервера. Попробуйте позже." }, { status: 500 });
   }
 
-  const host = request.headers.get("host") ?? "localhost:3000";
-  const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
-  const magicLink = `${proto}://${host}/api/profile/verify?token=${token}`;
+  const siteUrl = (
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    `https://${request.headers.get("host") ?? "localhost:3000"}`
+  ).replace(/\/$/, "");
+  const magicLink = `${siteUrl}/api/profile/verify?token=${token}`;
 
   const message = [
     "Вход в личный кабинет DC Bakery",

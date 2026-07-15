@@ -213,7 +213,7 @@ async function resolveItemsFromServer(items: IncomingItem[]) {
 }
 
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit({
+  const rateLimit = await checkRateLimit({
     identifier: getRequestIdentifier(request),
     limit: 10,
     namespace: "orders:create",

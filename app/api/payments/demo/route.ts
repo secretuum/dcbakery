@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Demo payments are disabled" }, { status: 404 });
   }
 
-  const rateLimit = checkRateLimit({
+  const rateLimit = await checkRateLimit({
     identifier: getRequestIdentifier(request),
     limit: 10,
     namespace: "payments:demo",

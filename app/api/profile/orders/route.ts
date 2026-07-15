@@ -11,7 +11,7 @@ const EMAIL_RE = /^[^,()[\]\s]+@[^,()[\]\s]+\.[^,()[\]\s]+$/;
 const PHONE_RE = /^\+?\d{10,15}$/;
 
 export async function POST(request: Request) {
-  const rateLimit = checkRateLimit({
+  const rateLimit = await checkRateLimit({
     identifier: getRequestIdentifier(request),
     limit: 10,
     namespace: "profile:orders",

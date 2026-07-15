@@ -12,7 +12,7 @@ function asString(v: unknown): string {
 }
 
 export async function POST(request: Request) {
-  const limited = checkRateLimit({
+  const limited = await checkRateLimit({
     identifier: getRequestIdentifier(request),
     limit: 4,
     namespace: "profile:magic-link",

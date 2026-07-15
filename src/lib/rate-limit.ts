@@ -12,6 +12,14 @@ type RateLimitOptions = {
   windowMs: number;
 };
 
+type RateLimitResult = {
+  allowed: boolean;
+  remaining: number;
+  retryAfterSeconds: number;
+};
+
+const REDIS_TIMEOUT_MS = 2000;
+
 const globalRateLimitStore = globalThis as typeof globalThis & {
   dcRateLimitStore?: Map<string, RateLimitEntry>;
 };
@@ -20,8 +28,8 @@ const store = globalRateLimitStore.dcRateLimitStore ?? new Map<string, RateLimit
 globalRateLimitStore.dcRateLimitStore = store;
 
 export function getRequestIdentifier(request: Request) {
-const forwardedFor = request.headers.get("x-forwarded-for")
-  ?.split(",").at(-1)?.trim();
+  const forwardedFor = request.headers.get("x-forwarded-for")
+    ?.split(",").at(-1)?.trim();
 
   return (
     forwardedFor ||
@@ -31,12 +39,12 @@ const forwardedFor = request.headers.get("x-forwarded-for")
   );
 }
 
-export function checkRateLimit({
+function checkRateLimitInMemory({
   identifier,
   limit,
   namespace,
   windowMs,
-}: RateLimitOptions) {
+}: RateLimitOptions): RateLimitResult {
   const now = Date.now();
   const key = `${namespace}:${identifier}`;
   const currentEntry = store.get(key);
@@ -75,4 +83,67 @@ export function checkRateLimit({
     remaining: Math.max(limit - currentEntry.count, 0),
     retryAfterSeconds: Math.max(1, Math.ceil((currentEntry.resetAt - now) / 1000)),
   };
+}
+
+async function checkRateLimitRedis(
+  restUrl: string,
+  restToken: string,
+  { identifier, limit, namespace, windowMs }: RateLimitOptions,
+): Promise<RateLimitResult> {
+  const now = Date.now();
+  const windowIndex = Math.floor(now / windowMs);
+  const key = `rl:${namespace}:${identifier}:${windowIndex}`;
+  const windowEndsAt = (windowIndex + 1) * windowMs;
+
+  const response = await fetch(`${restUrl.replace(/\/$/, "")}/pipeline`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${restToken}`,
+      "Content-Type": "application/json",
+    },
+    // TTL чуть больше окна — ключ нужен только как счётчик текущего окна
+    body: JSON.stringify([
+      ["INCR", key],
+      ["PEXPIRE", key, windowMs + 1000, "NX"],
+    ]),
+    cache: "no-store",
+    signal: AbortSignal.timeout(REDIS_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Upstash HTTP ${response.status}`);
+  }
+
+  const results = (await response.json()) as Array<{ result?: unknown; error?: string }>;
+  const incrResult = results?.[0];
+
+  if (!incrResult || incrResult.error || typeof incrResult.result !== "number") {
+    throw new Error(incrResult?.error ?? "Upstash: unexpected pipeline response");
+  }
+
+  const count = incrResult.result;
+  const retryAfterSeconds = Math.max(1, Math.ceil((windowEndsAt - now) / 1000));
+
+  return {
+    allowed: count <= limit,
+    remaining: Math.max(limit - count, 0),
+    retryAfterSeconds,
+  };
+}
+
+export async function checkRateLimit(options: RateLimitOptions): Promise<RateLimitResult> {
+  const restUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const restToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!restUrl || !restToken) {
+    return checkRateLimitInMemory(options);
+  }
+
+  try {
+    return await checkRateLimitRedis(restUrl, restToken, options);
+  } catch (error) {
+    // Redis недоступен — деградируем до per-instance лимита, не блокируем запрос
+    console.error("[rate-limit] Redis check failed, falling back to in-memory:", error);
+    return checkRateLimitInMemory(options);
+  }
 }

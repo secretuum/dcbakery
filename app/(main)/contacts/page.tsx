@@ -13,68 +13,68 @@ export default function ContactsPage() {
       <div className="mx-auto max-w-3xl space-y-6">
 
         {/* Контакты */}
-        <div className="rounded-card bg-white p-8 shadow-sm sm:p-10">
-          <p className="text-sm font-black uppercase text-raspberry">Поставщик</p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Контакты и реквизиты</h1>
+        <div className="rounded-card border border-black/10 bg-white p-8 sm:p-10">
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Поставщик</p>
+          <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">Контакты и реквизиты</h1>
           <p className="mt-2 text-sm text-muted">DC Bakery — B2B-поставки хлебобулочных и кондитерских изделий</p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-card bg-cream p-5">
-              <p className="text-xs font-black uppercase text-coral">Наименование</p>
-              <p className="mt-2 text-sm font-bold text-dark">ИП Кошкаров Асылбек Касымбекович</p>
+            <div className="rounded-card border border-black/5 bg-cream p-5">
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Наименование</p>
+              <p className="mt-2 text-sm font-semibold text-dark">ИП Кошкаров Асылбек Касымбекович</p>
             </div>
-            <div className="rounded-card bg-cream p-5">
-              <p className="text-xs font-black uppercase text-coral">БИН / ИИН</p>
-              <p className="mt-2 text-sm font-bold text-dark">810127300096</p>
+            <div className="rounded-card border border-black/5 bg-cream p-5">
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">БИН / ИИН</p>
+              <p className="mt-2 text-sm font-semibold text-dark">810127300096</p>
             </div>
-            <div className="rounded-card bg-cream p-5 sm:col-span-2">
-              <p className="text-xs font-black uppercase text-coral">Регистрация</p>
-              <p className="mt-2 text-sm font-bold text-dark">
+            <div className="rounded-card border border-black/5 bg-cream p-5 sm:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Регистрация</p>
+              <p className="mt-2 text-sm font-semibold text-dark">
                 Талон о госрегистрации ИП №KZ26TWQ02214961 от 26.01.2025
               </p>
             </div>
-            <div className="rounded-card bg-cream p-5 sm:col-span-2">
-              <p className="text-xs font-black uppercase text-coral">Адрес</p>
-              <p className="mt-2 text-sm font-bold text-dark">
+            <div className="rounded-card border border-black/5 bg-cream p-5 sm:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Адрес</p>
+              <p className="mt-2 text-sm font-semibold text-dark">
                 г. Алматы, ул. Утепова 31, блок 21, кв. 2377
               </p>
             </div>
-            <div className="rounded-card bg-cream p-5">
-              <p className="text-xs font-black uppercase text-coral">Телефон</p>
+            <div className="rounded-card border border-black/5 bg-cream p-5">
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Телефон</p>
               <a
                 href="tel:+77477272650"
-                className="mt-2 block text-sm font-bold text-dark hover:text-coral"
+                className="mt-2 block text-sm font-semibold text-dark hover:text-coral"
               >
                 +7 747 727 2650
               </a>
             </div>
-            <div className="rounded-card bg-cream p-5">
-              <p className="text-xs font-black uppercase text-coral">WhatsApp</p>
+            <div className="rounded-card border border-black/5 bg-cream p-5">
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">WhatsApp</p>
               <a
                 href="https://wa.me/77477272650"
-                className="mt-2 block text-sm font-bold text-dark hover:text-coral"
+                className="mt-2 block text-sm font-semibold text-dark hover:text-coral"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 +7 747 727 2650
               </a>
             </div>
-            <div className="rounded-card bg-cream p-5">
-              <p className="text-xs font-black uppercase text-coral">E-mail</p>
+            <div className="rounded-card border border-black/5 bg-cream p-5">
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">E-mail</p>
               <a
                 href="mailto:info@dc-bakery.kz"
-                className="mt-2 block text-sm font-bold text-dark hover:text-coral"
+                className="mt-2 block text-sm font-semibold text-dark hover:text-coral"
               >
                 info@dc-bakery.kz
               </a>
             </div>
-            <div className="rounded-card bg-cream p-5">
-              <p className="text-xs font-black uppercase text-coral">Сайт</p>
-              <p className="mt-2 text-sm font-bold text-dark">dc-bakery.kz</p>
+            <div className="rounded-card border border-black/5 bg-cream p-5">
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Сайт</p>
+              <p className="mt-2 text-sm font-semibold text-dark">dc-bakery.kz</p>
             </div>
-            <div className="rounded-card bg-cream p-5 sm:col-span-2">
-              <p className="text-xs font-black uppercase text-coral">Приём заказов</p>
-              <p className="mt-2 text-sm font-bold text-dark">
+            <div className="rounded-card border border-black/5 bg-cream p-5 sm:col-span-2">
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Приём заказов</p>
+              <p className="mt-2 text-sm font-semibold text-dark">
                 Через сайт и WhatsApp-каталог
               </p>
             </div>
@@ -82,9 +82,9 @@ export default function ContactsPage() {
         </div>
 
         {/* Банковские реквизиты */}
-        <div className="rounded-card bg-white p-8 shadow-sm sm:p-10">
-          <p className="text-sm font-black uppercase text-raspberry">Оплата по счёту</p>
-          <h2 className="mt-3 text-2xl font-black tracking-tight">Банковские реквизиты</h2>
+        <div className="rounded-card border border-black/10 bg-white p-8 sm:p-10">
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Оплата по счёту</p>
+          <h2 className="mt-3 font-display text-2xl font-semibold tracking-tight">Банковские реквизиты</h2>
           <p className="mt-2 text-sm text-muted">
             Оплата производится на счёт, соответствующий категории Продукции.{" "}
             <Link href="/oferta#section-5" className="font-bold text-coral hover:underline">
@@ -94,63 +94,63 @@ export default function ContactsPage() {
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div className="rounded-card border border-coral/20 bg-cream p-5">
-              <p className="font-black text-coral">Счёт «Пекарня»</p>
-              <p className="mt-1 text-xs font-semibold text-muted">десерты, выпечка, кондитерские изделия</p>
+              <p className="font-display font-semibold text-coral">Счёт «Пекарня»</p>
+              <p className="mt-1 text-xs text-muted">десерты, выпечка, кондитерские изделия</p>
               <dl className="mt-4 space-y-2 text-sm">
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">Наименование</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Наименование</dt>
                   <dd className="mt-0.5 font-semibold text-dark">ИП КОШКАРОВ АСЫЛБЕК КАСЫМБЕКОВИЧ</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">БИН / ИИН</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">БИН / ИИН</dt>
                   <dd className="mt-0.5 font-semibold text-dark">810127300096</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">Банк</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Банк</dt>
                   <dd className="mt-0.5 font-semibold text-dark">АО «Kaspi Bank»</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">БИК</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">БИК</dt>
                   <dd className="mt-0.5 font-semibold text-dark">CASPKZKA</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">КБе</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">КБе</dt>
                   <dd className="mt-0.5 font-semibold text-dark">19</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">IBAN</dt>
-                  <dd className="mt-0.5 font-mono font-semibold text-dark">KZ61722S000051248791</dd>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">IBAN</dt>
+                  <dd className="mt-0.5 font-data font-semibold text-dark">KZ61722S000051248791</dd>
                 </div>
               </dl>
             </div>
 
             <div className="rounded-card border border-coral/20 bg-cream p-5">
-              <p className="font-black text-coral">Счёт «Цех полуфабрикатов»</p>
-              <p className="mt-1 text-xs font-semibold text-muted">полуфабрикаты</p>
+              <p className="font-display font-semibold text-coral">Счёт «Цех полуфабрикатов»</p>
+              <p className="mt-1 text-xs text-muted">полуфабрикаты</p>
               <dl className="mt-4 space-y-2 text-sm">
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">Наименование</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Наименование</dt>
                   <dd className="mt-0.5 font-semibold text-dark">ИП КОШКАРОВ АСЫЛБЕК КАСЫМБЕКОВИЧ</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">БИН / ИИН</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">БИН / ИИН</dt>
                   <dd className="mt-0.5 font-semibold text-dark">810127300096</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">Банк</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Банк</dt>
                   <dd className="mt-0.5 font-semibold text-dark">АО «Kaspi Bank»</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">БИК</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">БИК</dt>
                   <dd className="mt-0.5 font-semibold text-dark">CASPKZKA</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">КБе</dt>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">КБе</dt>
                   <dd className="mt-0.5 font-semibold text-dark">19</dd>
                 </div>
                 <div>
-                  <dt className="text-xs font-black uppercase text-muted/70">IBAN</dt>
-                  <dd className="mt-0.5 font-mono font-semibold text-dark">KZ73722S000051742402</dd>
+                  <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">IBAN</dt>
+                  <dd className="mt-0.5 font-data font-semibold text-dark">KZ73722S000051742402</dd>
                 </div>
               </dl>
             </div>

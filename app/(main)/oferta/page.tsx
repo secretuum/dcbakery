@@ -11,9 +11,9 @@ export default function OfertaPage() {
   return (
     <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
       <article className="mx-auto max-w-3xl">
-        <div className="rounded-card bg-white p-8 shadow-sm sm:p-10">
-          <p className="text-sm font-black uppercase text-raspberry">Правовая информация</p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Публичная оферта</h1>
+        <div className="rounded-card border border-black/10 bg-white p-8 sm:p-10">
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Правовая информация</p>
+          <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">Публичная оферта</h1>
           <p className="mt-2 text-sm text-muted">о заключении договора поставки продукции DC Bakery</p>
           <div className="mt-5 rounded-btn bg-cream px-4 py-3 text-xs font-semibold text-muted">
             Редакция от 14 июля 2026 года.&ensp;г. Алматы, Республика Казахстан.
@@ -29,7 +29,7 @@ export default function OfertaPage() {
           </p>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">1. Термины и определения</h2>
+            <h2 className="font-display text-lg font-semibold">1. Термины и определения</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>1.1. Продукция — хлебобулочные и кондитерские изделия, десерты, полуфабрикаты и иная продукция Поставщика, представленная в каталоге на сайте dc-bakery.kz и/или в WhatsApp-каталоге.</p>
               <p>1.2. Сайт — интернет-ресурс Поставщика по адресу dc-bakery.kz.</p>
@@ -39,7 +39,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">2. Предмет договора</h2>
+            <h2 className="font-display text-lg font-semibold">2. Предмет договора</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>2.1. Поставщик обязуется передавать в собственность Покупателя Продукцию по подтверждённым Заказам, а Покупатель — принимать и оплачивать Продукцию на условиях настоящей Оферты.</p>
               <p>2.2. Наименование, ассортимент, количество и цена Продукции определяются в каждом Заказе и подтверждаются Поставщиком.</p>
@@ -47,7 +47,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">3. Порядок заключения договора (акцепт)</h2>
+            <h2 className="font-display text-lg font-semibold">3. Порядок заключения договора (акцепт)</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>3.1. Акцептом настоящей Оферты является оформление Покупателем Заказа на Сайте или через WhatsApp-каталог и/или оплата Продукции. С момента акцепта договор считается заключённым на условиях Оферты и имеет силу письменного договора.</p>
               <p>3.2. Акцептуя Оферту, Покупатель подтверждает, что ознакомлен и согласен с её условиями и с Политикой конфиденциальности Поставщика.</p>
@@ -56,7 +56,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">4. Оформление и подтверждение заказа</h2>
+            <h2 className="font-display text-lg font-semibold">4. Оформление и подтверждение заказа</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>4.1. Покупатель формирует Заказ через Сайт или WhatsApp-каталог, указывая наименования, количество Продукции и данные для доставки/получения.</p>
               <p>4.2. Заказ считается принятым к исполнению после его подтверждения менеджером Поставщика (на Сайте, в WhatsApp или иным согласованным способом).</p>
@@ -65,7 +65,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">5. Цена и порядок оплаты</h2>
+            <h2 className="font-display text-lg font-semibold">5. Цена и порядок оплаты</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>5.1. Цены на Продукцию указываются на Сайте и/или в выставленном счёте на оплату и действуют на момент подтверждения Заказа.</p>
               <p>5.2. Оплата производится одним из способов: (а) банковской картой на Сайте (интернет-эквайринг); (б) по счёту на оплату в безналичном порядке.</p>
@@ -78,7 +78,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">6. Акции, бонусы и подарочная продукция</h2>
+            <h2 className="font-display text-lg font-semibold">6. Акции, бонусы и подарочная продукция</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>6.1. Поставщик вправе проводить маркетинговые акции и предоставлять бонусы (в том числе дополнительную продукцию «в подарок», скидки, специальные условия), самостоятельно определяя их условия.</p>
               <p>6.2. Условия каждой акции (период проведения, перечень и количество Продукции, механика и ограничения) публикуются Поставщиком на Сайте и/или в каталоге и являются неотъемлемой частью настоящей Оферты на период проведения соответствующей акции. Пример механики: при заказе определённого количества единиц Продукции Покупателю предоставляется одна или несколько дополнительных единиц Продукции в подарок.</p>
@@ -90,7 +90,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">7. Поставка и переход рисков</h2>
+            <h2 className="font-display text-lg font-semibold">7. Поставка и переход рисков</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>7.1. Способ получения Продукции (доставка или самовывоз), сроки и стоимость доставки согласовываются Сторонами при подтверждении Заказа.</p>
               <p>7.2. Минимальная сумма одного Заказа составляет 15 000 (пятнадцать тысяч) тенге. При Заказе на сумму менее 15 000 тенге Поставщик вправе установить дополнительную плату за доставку в размере от 1 500 до 3 000 тенге по своему усмотрению. При Заказе на сумму не менее минимальной доставка осуществляется бесплатно.</p>
@@ -100,7 +100,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">8. Приёмка продукции</h2>
+            <h2 className="font-display text-lg font-semibold">8. Приёмка продукции</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>8.1. Продукция является скоропортящимся пищевым продуктом. Покупатель обязан проверить количество и качество Продукции непосредственно в момент её приёмки.</p>
               <p>8.2. Претензии по количеству (недостача) и по явным недостаткам качества предъявляются в момент приёмки и фиксируются актом либо отметкой в сопроводительном документе. После подписания товарной накладной претензии по количеству и качеству не принимаются.</p>
@@ -109,7 +109,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">9. Возврат и претензии по качеству</h2>
+            <h2 className="font-display text-lg font-semibold">9. Возврат и претензии по качеству</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>9.1. Возврат Продукции не допускается, за исключением случаев производственного брака, подтверждённого Поставщиком.</p>
               <p>9.2. При выявлении в момент приёмки недостачи или производственного брака Поставщик по согласованию с Покупателем производит замену Продукции, допоставку либо возврат её стоимости.</p>
@@ -120,7 +120,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">10. Права и обязанности сторон</h2>
+            <h2 className="font-display text-lg font-semibold">10. Права и обязанности сторон</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>10.1. Поставщик обязуется передавать Продукцию надлежащего качества в соответствии с подтверждёнными Заказами и требованиями законодательства.</p>
               <p>10.2. Покупатель обязуется своевременно принимать и оплачивать Продукцию, обеспечивать надлежащие условия приёмки и предоставлять достоверные данные при оформлении Заказа.</p>
@@ -129,7 +129,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">11. Ответственность сторон</h2>
+            <h2 className="font-display text-lg font-semibold">11. Ответственность сторон</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>11.1. За неисполнение или ненадлежащее исполнение обязательств Стороны несут ответственность в соответствии с законодательством Республики Казахстан и настоящей Офертой.</p>
               <p>11.2. За просрочку оплаты Покупатель уплачивает Поставщику пеню в размере 1% (один процент) от суммы просроченной задолженности за каждый календарный день просрочки, без ограничения максимального размера. Пеня начисляется за каждый день просрочки до даты полного погашения задолженности, подтверждённой актом сверки взаиморасчётов.</p>
@@ -140,7 +140,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">12. Обстоятельства непреодолимой силы (форс-мажор)</h2>
+            <h2 className="font-display text-lg font-semibold">12. Обстоятельства непреодолимой силы (форс-мажор)</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>12.1. Стороны освобождаются от ответственности за неисполнение обязательств, если оно вызвано обстоятельствами непреодолимой силы (стихийные бедствия, аварии, эпидемии, акты и ограничения органов власти, перебои в энергоснабжении, связи и работе платёжных систем и иные события вне разумного контроля Сторон).</p>
               <p>12.2. Сторона, для которой создалась невозможность исполнения, обязана уведомить другую Сторону в течение 10 (десяти) календарных дней с момента наступления таких обстоятельств. Наличие и продолжительность обстоятельств подтверждаются документом уполномоченного органа (в том числе сертификатом Национальной палаты предпринимателей / Торгово-промышленной палаты Республики Казахстан).</p>
@@ -149,7 +149,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">13. Персональные данные и конфиденциальность</h2>
+            <h2 className="font-display text-lg font-semibold">13. Персональные данные и конфиденциальность</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>13.1. Акцептуя Оферту, Покупатель (его представитель) даёт согласие на сбор и обработку персональных данных в целях исполнения договора в соответствии с законодательством Республики Казахстан о персональных данных и их защите.</p>
               <p>13.2. Порядок обработки и защиты персональных данных определяется <Link href="/privacy" className="font-bold text-coral hover:underline">Политикой конфиденциальности</Link>, размещённой на Сайте.</p>
@@ -158,7 +158,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">14. Срок действия и изменение условий</h2>
+            <h2 className="font-display text-lg font-semibold">14. Срок действия и изменение условий</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>14.1. Оферта вступает в силу с момента размещения на Сайте и действует до её отзыва Поставщиком.</p>
               <p>14.2. Договор, заключённый путём акцепта, действует до полного исполнения Сторонами обязательств по подтверждённым Заказам.</p>
@@ -166,7 +166,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">15. Разрешение споров и применимое право</h2>
+            <h2 className="font-display text-lg font-semibold">15. Разрешение споров и применимое право</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>15.1. К настоящей Оферте и отношениям Сторон применяется право Республики Казахстан.</p>
               <p>15.2. Споры, не урегулированные путём переговоров, подлежат рассмотрению в суде по месту нахождения Поставщика — в Бостандыкском районе города Алматы.</p>
@@ -174,7 +174,7 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">16. Заключительные положения</h2>
+            <h2 className="font-display text-lg font-semibold">16. Заключительные положения</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>16.1. Изображения Продукции на Сайте носят иллюстративный характер и могут несущественно отличаться от фактического внешнего вида Продукции.</p>
               <p>16.2. Поставщик вправе изменять ассортимент, цены и условия без индивидуального предварительного уведомления; изменения применяются к Заказам, оформленным после их публикации на Сайте.</p>
@@ -187,75 +187,75 @@ export default function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-lg font-black">17. Реквизиты Поставщика</h2>
+            <h2 className="font-display text-lg font-semibold">17. Реквизиты Поставщика</h2>
             <p className="mt-4 text-sm leading-7 text-dark/80">
               Оплата по счёту производится на счёт, соответствующий категории Продукции (п. 5.3):
             </p>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div className="rounded-card bg-cream p-5">
-                <p className="font-black text-coral">Счёт «Пекарня»</p>
+                <p className="font-display font-semibold text-coral">Счёт «Пекарня»</p>
                 <p className="mt-1 text-xs font-semibold text-muted">десерты, выпечка</p>
                 <dl className="mt-4 space-y-2 text-sm">
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">Наименование</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Наименование</dt>
                     <dd className="mt-0.5 font-semibold text-dark">ИП КОШКАРОВ АСЫЛБЕК КАСЫМБЕКОВИЧ</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">БИН / ИИН</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">БИН / ИИН</dt>
                     <dd className="mt-0.5 font-semibold text-dark">810127300096</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">Адрес</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Адрес</dt>
                     <dd className="mt-0.5 font-semibold text-dark">г. Алматы, ул. Утепова 31, блок 21, кв. 2377</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">Банк</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Банк</dt>
                     <dd className="mt-0.5 font-semibold text-dark">АО «Kaspi Bank»</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">БИК</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">БИК</dt>
                     <dd className="mt-0.5 font-semibold text-dark">CASPKZKA</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">КБе</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">КБе</dt>
                     <dd className="mt-0.5 font-semibold text-dark">19</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">IBAN</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">IBAN</dt>
                     <dd className="mt-0.5 font-mono font-semibold text-dark">KZ61722S000051248791</dd>
                   </div>
                 </dl>
               </div>
               <div className="rounded-card bg-cream p-5">
-                <p className="font-black text-coral">Счёт «Цех полуфабрикатов»</p>
+                <p className="font-display font-semibold text-coral">Счёт «Цех полуфабрикатов»</p>
                 <p className="mt-1 text-xs font-semibold text-muted">полуфабрикаты</p>
                 <dl className="mt-4 space-y-2 text-sm">
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">Наименование</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Наименование</dt>
                     <dd className="mt-0.5 font-semibold text-dark">ИП КОШКАРОВ АСЫЛБЕК КАСЫМБЕКОВИЧ</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">БИН / ИИН</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">БИН / ИИН</dt>
                     <dd className="mt-0.5 font-semibold text-dark">810127300096</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">Адрес</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Адрес</dt>
                     <dd className="mt-0.5 font-semibold text-dark">г. Алматы, мкр. Мамыр-7, дом 21</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">Банк</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Банк</dt>
                     <dd className="mt-0.5 font-semibold text-dark">АО «Kaspi Bank»</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">БИК</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">БИК</dt>
                     <dd className="mt-0.5 font-semibold text-dark">CASPKZKA</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">КБе</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">КБе</dt>
                     <dd className="mt-0.5 font-semibold text-dark">19</dd>
                   </div>
                   <div>
-                    <dt className="text-xs font-black uppercase text-muted/70">IBAN</dt>
+                    <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">IBAN</dt>
                     <dd className="mt-0.5 font-mono font-semibold text-dark">KZ73722S000051742402</dd>
                   </div>
                 </dl>
@@ -269,47 +269,47 @@ export default function OfertaPage() {
 
           {/* §6 Товарный кредит */}
           <div id="section-6" className="mt-10 border-t border-black/10 pt-8">
-            <h2 className="text-xl font-black tracking-tight">§ 6. Товарный кредит</h2>
+            <h2 className="font-display text-xl font-semibold tracking-tight">§ 6. Товарный кредит</h2>
 
-            <h3 className="mt-6 text-base font-black">6.1. Определения</h3>
+            <h3 className="mt-6 font-display text-base font-semibold">6.1. Определения</h3>
             <dl className="mt-3 space-y-3 text-sm leading-7 text-dark/80">
               <div>
-                <dt className="inline font-black">Товарный кредит (Кредит)</dt>
+                <dt className="inline font-semibold">Товарный кредит (Кредит)</dt>
                 <dd className="inline"> — право Покупателя получить Продукцию с отсрочкой платежа в пределах установленного лимита.</dd>
               </div>
               <div>
-                <dt className="inline font-black">Кредитный лимит</dt>
+                <dt className="inline font-semibold">Кредитный лимит</dt>
                 <dd className="inline"> — максимальная сумма неоплаченных отгрузок, которую Поставщик предоставляет Покупателю одновременно.</dd>
               </div>
               <div>
-                <dt className="inline font-black">Срок оплаты</dt>
+                <dt className="inline font-semibold">Срок оплаты</dt>
                 <dd className="inline"> — 7 (семь) календарных дней с даты отгрузки, если иное не согласовано дополнительным соглашением.</dd>
               </div>
               <div>
-                <dt className="inline font-black">Льготный период</dt>
+                <dt className="inline font-semibold">Льготный период</dt>
                 <dd className="inline"> — 3 (три) календарных дня сверх Срока оплаты, в течение которых отгрузки по новым заказам допускаются только на условиях предоплаты.</dd>
               </div>
               <div>
-                <dt className="inline font-black">Просрочка</dt>
+                <dt className="inline font-semibold">Просрочка</dt>
                 <dd className="inline"> — неоплата отгруженной Продукции после истечения Срока оплаты.</dd>
               </div>
             </dl>
 
-            <h3 className="mt-6 text-base font-black">6.2. Условия предоставления кредита</h3>
+            <h3 className="mt-6 font-display text-base font-semibold">6.2. Условия предоставления кредита</h3>
             <p className="mt-3 text-sm leading-7 text-dark/80">
               Кредитный лимит и персональные условия устанавливаются Поставщиком индивидуально
               для каждого Покупателя и фиксируются в личном кабинете. По умолчанию Покупатель
               работает на условиях предоплаты (Кредитный лимит = 0).
             </p>
 
-            <h3 className="mt-6 text-base font-black">6.3. Последствия просрочки</h3>
+            <h3 className="mt-6 font-display text-base font-semibold">6.3. Последствия просрочки</h3>
             <ul className="mt-3 space-y-2 text-sm leading-7 text-dark/80">
               <li>
-                <span className="font-black">С первого дня Просрочки</span> новые заказы принимаются
+                <span className="font-semibold">С первого дня Просрочки</span> новые заказы принимаются
                 только при условии предоплаты до отгрузки.
               </li>
               <li>
-                <span className="font-black">По истечении Льготного периода</span> (т.е. более чем
+                <span className="font-semibold">По истечении Льготного периода</span> (т.е. более чем
                 через 10 дней с даты отгрузки) Поставщик вправе приостановить все отгрузки до
                 полного погашения просроченной задолженности.
               </li>
@@ -319,7 +319,7 @@ export default function OfertaPage() {
               </li>
             </ul>
 
-            <h3 className="mt-6 text-base font-black">6.4. Порядок контроля</h3>
+            <h3 className="mt-6 font-display text-base font-semibold">6.4. Порядок контроля</h3>
             <p className="mt-3 text-sm leading-7 text-dark/80">
               Актуальное состояние кредита (использовано / доступно / ближайший платёж) отображается
               в личном кабинете Покупателя на сайте. Поставщик уведомляет о наступлении просрочки

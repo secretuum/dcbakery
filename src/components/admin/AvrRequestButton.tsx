@@ -39,7 +39,7 @@ export function AvrRequestButton({ orderId, requested }: AvrRequestButtonProps) 
   return (
     <div className="mt-3">
       <button
-        className="w-full rounded-btn bg-cream px-4 py-3 text-sm font-black text-dark transition hover:bg-coral-light disabled:opacity-50"
+        className="w-full rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-semibold text-dark transition hover:bg-coral-light disabled:opacity-50"
         disabled={isSaving}
         type="button"
         onClick={handleClick}
@@ -51,7 +51,7 @@ export function AvrRequestButton({ orderId, requested }: AvrRequestButtonProps) 
             : "Добавить АВР к заказу"}
       </button>
       {hasError ? (
-        <p className="mt-2 text-xs font-bold text-burgundy">
+        <p className="mt-2 text-xs font-semibold text-burgundy">
           Не удалось изменить запрос АВР. Проверьте миграцию базы.
         </p>
       ) : null}

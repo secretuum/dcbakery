@@ -87,9 +87,9 @@ export function OrderRevisionForm({
   }
 
   return (
-    <section className="rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)] sm:p-6">
-      <h2 className="text-2xl font-black tracking-tight">Предложить изменение</h2>
-      <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+    <section className="rounded-card border border-black/10 bg-white p-5 sm:p-6">
+      <h2 className="font-display text-2xl font-semibold tracking-tight">Предложить изменение</h2>
+      <p className="mt-2 text-sm leading-6 text-muted">
         Измените количество, добавьте позицию и отправьте клиенту на согласование.
       </p>
 
@@ -98,18 +98,18 @@ export function OrderRevisionForm({
           const product = productMap.get(line.productId);
 
           return (
-            <div key={`${line.productId}-${index}`} className="grid gap-3 rounded-btn bg-cream p-3 sm:grid-cols-[1fr_120px]">
+            <div key={`${line.productId}-${index}`} className="grid gap-3 rounded-btn border border-black/5 bg-cream p-3 sm:grid-cols-[1fr_120px]">
               <div>
-                <p className="text-sm font-black text-dark">
+                <p className="text-sm font-semibold text-dark">
                   {product?.name ?? items[index]?.product_name ?? line.productId}
                 </p>
-                <p className="mt-1 text-xs font-bold text-muted">{line.productId}</p>
+                <p className="mt-1 font-data text-xs text-muted">{line.productId}</p>
               </div>
               <input
                 value={line.qty}
                 onChange={(event) => updateLine(index, event.currentTarget.value)}
                 disabled={disabled || isSubmitting}
-                className="min-h-10 rounded-xl border border-black/10 bg-white px-3 text-sm font-black outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 disabled:opacity-60"
+                className="min-h-10 rounded-btn border border-black/10 bg-white px-3 font-data text-sm font-semibold outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 disabled:opacity-60"
                 inputMode="decimal"
               />
             </div>
@@ -122,7 +122,7 @@ export function OrderRevisionForm({
           value={extraProductId}
           onChange={(event) => setExtraProductId(event.currentTarget.value)}
           disabled={disabled || isSubmitting}
-          className="min-h-10 rounded-xl border border-black/10 bg-white px-3 text-sm font-bold outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 disabled:opacity-60"
+          className="min-h-10 rounded-btn border border-black/10 bg-white px-3 text-sm font-semibold outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 disabled:opacity-60"
         >
           <option value="">Добавить товар</option>
           {products.map((product) => (
@@ -135,7 +135,7 @@ export function OrderRevisionForm({
           value={extraQty}
           onChange={(event) => setExtraQty(event.currentTarget.value)}
           disabled={disabled || isSubmitting}
-          className="min-h-10 rounded-xl border border-black/10 bg-white px-3 text-sm font-black outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 disabled:opacity-60"
+          className="min-h-10 rounded-btn border border-black/10 bg-white px-3 font-data text-sm font-semibold outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 disabled:opacity-60"
           inputMode="decimal"
         />
       </div>
@@ -146,22 +146,22 @@ export function OrderRevisionForm({
         placeholder="Комментарий клиенту: например, Наполеона сейчас 11 шт., предлагаем добавить Медовик"
         rows={3}
         disabled={disabled || isSubmitting}
-        className="mt-4 w-full rounded-xl border border-black/10 bg-cream px-3 py-3 text-sm font-bold outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 disabled:opacity-60"
+        className="mt-4 w-full rounded-btn border border-black/10 bg-cream px-3 py-3 text-sm font-medium outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 disabled:opacity-60"
       />
 
       <button
         type="button"
         disabled={disabled || isSubmitting}
         onClick={handleSubmit}
-        className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn bg-coral px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-coral-hover disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn border border-coral bg-coral px-5 py-2 text-sm font-bold text-white transition hover:bg-coral-hover disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isSubmitting ? "Отправляю..." : "Отправить клиенту"}
       </button>
       {status === "success" ? (
-        <p className="mt-2 text-xs font-bold text-raspberry">Предложение отправлено</p>
+        <p className="mt-2 text-xs font-semibold text-raspberry">Предложение отправлено</p>
       ) : null}
       {status === "error" ? (
-        <p className="mt-2 text-xs font-bold text-red-600">Не удалось отправить</p>
+        <p className="mt-2 text-xs font-semibold text-burgundy">Не удалось отправить</p>
       ) : null}
     </section>
   );

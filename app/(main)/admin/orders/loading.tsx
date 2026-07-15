@@ -18,8 +18,8 @@ export default function AdminOrdersLoading() {
         ))}
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-card bg-white shadow-sm">
-        <div className="h-10 border-b border-black/10 bg-gray-50" />
+      <div className="mt-6 overflow-hidden rounded-card border border-black/10 bg-white">
+        <div className="h-10 border-b border-black/10 bg-cream" />
         {Array.from({ length: 8 }, (_, i) => (
           <div key={i} className="flex items-center gap-4 border-t border-black/10 px-4 py-3">
             <Skeleton className="h-4 w-20" />

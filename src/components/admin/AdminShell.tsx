@@ -25,12 +25,12 @@ export function AdminShell({ children }: { children: ReactNode }) {
       <aside className="border-b border-white/10 bg-dark px-5 py-4 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:border-r-white/10 lg:px-6 lg:py-6">
         <div className="flex items-center justify-between gap-4 lg:block">
           <Link href="/admin/orders" className="flex items-center gap-3">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-coral text-xs font-black text-white">
+            <span className="flex size-9 items-center justify-center rounded bg-coral font-display text-xs font-black text-white">
               DC
             </span>
             <span>
-              <span className="block text-base font-black tracking-tight text-white">DC Bakery</span>
-              <span className="block text-xs font-bold uppercase text-white/40">admin</span>
+              <span className="block font-display text-base font-black uppercase tracking-[.08em] text-white">DC Bakery</span>
+              <span className="block text-xs font-semibold uppercase tracking-[.12em] text-white/40">admin</span>
             </span>
           </Link>
         </div>
@@ -44,7 +44,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={[
-                  "shrink-0 rounded-lg px-3 py-2.5 text-sm font-semibold transition",
+                  "shrink-0 rounded px-3 py-2.5 text-sm font-semibold transition",
                   isActive
                     ? "bg-coral text-white"
                     : "text-white/60 hover:bg-white/8 hover:text-white",

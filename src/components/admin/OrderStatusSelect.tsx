@@ -55,9 +55,9 @@ export function OrderStatusSelect({ orderId, status }: OrderStatusSelectProps) {
 
   return (
     <label className="block">
-      <span className="text-xs font-black uppercase text-muted">Статус</span>
+      <span className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Статус</span>
       <select
-        className="mt-2 min-h-12 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-black text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+        className="mt-2 min-h-12 w-full rounded-btn border border-black/10 bg-white px-4 py-3 text-sm font-semibold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
         value={currentStatus}
         disabled={isSaving}
         onChange={(event) => handleChange(event.currentTarget.value as OrderStatus)}

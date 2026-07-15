@@ -50,10 +50,10 @@ export default async function AdminSettingsPage() {
 
   return (
     <div>
-      <div className="rounded-card bg-white p-8 shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
-        <p className="text-sm font-black uppercase text-raspberry">Настройки</p>
-        <h1 className="mt-3 text-4xl font-black tracking-tight">Настройки DC Bakery</h1>
-        <p className="mt-4 max-w-3xl text-sm font-semibold leading-6 text-muted">
+      <div className="rounded-card border border-black/10 bg-white p-8">
+        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Настройки</p>
+        <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">Настройки DC Bakery</h1>
+        <p className="mt-4 max-w-3xl text-sm leading-6 text-muted">
           Здесь можно временно включать и выключать нашу WhatsApp-логику без redeploy.
           Это удобно, пока к тому же номеру подключен второй бот.
         </p>
@@ -75,33 +75,33 @@ export default async function AdminSettingsPage() {
         })}
       </section>
 
-      <section className="mt-6 rounded-card bg-white p-6 shadow-sm">
-        <p className="text-sm font-black uppercase text-raspberry">Оплата и документы</p>
+      <section className="mt-6 rounded-card border border-black/10 bg-white p-6">
+        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Оплата и документы</p>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
-          <div className="rounded-btn bg-cream p-4">
-            <p className="text-xs font-black uppercase text-muted">Режим</p>
-            <p className="mt-2 text-xl font-black">{paymentModeLabels[paymentMode]}</p>
+          <div className="rounded-btn border border-black/5 bg-cream p-4">
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Режим</p>
+            <p className="mt-2 font-display text-xl font-semibold">{paymentModeLabels[paymentMode]}</p>
           </div>
-          <div className="rounded-btn bg-cream p-4">
-            <p className="text-xs font-black uppercase text-muted">Реквизиты</p>
-            <p className="mt-2 text-xl font-black">
+          <div className="rounded-btn border border-black/5 bg-cream p-4">
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Реквизиты</p>
+            <p className="mt-2 font-display text-xl font-semibold">
               {hasCompleteCompanyDetails(companyDetails) ? "Готовы" : "Не заполнены"}
             </p>
           </div>
-          <div className="rounded-btn bg-cream p-4">
-            <p className="text-xs font-black uppercase text-muted">Документы</p>
-            <p className="mt-2 text-xl font-black">Счет + АВР</p>
+          <div className="rounded-btn border border-black/5 bg-cream p-4">
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Документы</p>
+            <p className="mt-2 font-display text-xl font-semibold">Счет + АВР</p>
           </div>
         </div>
-        <p className="mt-4 text-sm font-semibold leading-6 text-muted">
+        <p className="mt-4 text-sm leading-6 text-muted">
           Демо включается через <code>PAYMENT_MODE=demo</code>. Для рабочего запуска задаются
           реальные реквизиты и режим провайдера, после чего выполняется redeploy.
         </p>
       </section>
 
-      <section className="mt-6 rounded-card bg-dark p-6 text-white shadow-sm">
-        <p className="text-xl font-black">Как временно отключать</p>
-        <p className="mt-3 text-sm font-semibold leading-6 text-white/75">
+      <section className="mt-6 rounded-card border border-dark bg-dark p-6 text-white">
+        <p className="font-display text-xl font-semibold">Как временно отключать</p>
+        <p className="mt-3 text-sm leading-6 text-white/75">
           Самый мягкий режим: выключить только клиентский бот, а менеджерские команды оставить.
           Полное отключение используйте, если второй бот должен единолично обработать все сообщения.
         </p>

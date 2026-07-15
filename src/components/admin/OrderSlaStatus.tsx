@@ -56,8 +56,8 @@ export function OrderSlaStatus({ createdAt, status }: OrderSlaStatusProps) {
         className="sla-flame inline-flex min-h-11 min-w-28 flex-col items-center justify-center bg-raspberry px-4 pb-2 pt-3 text-center text-white"
         title="Заявка не обработана более 30 минут"
       >
-        <span className="text-xs font-black uppercase">Срочно</span>
-        <span className="mt-1 text-xs font-bold">более 30 мин.</span>
+        <span className="text-xs font-bold uppercase tracking-[.08em]">Срочно</span>
+        <span className="mt-1 font-data text-xs font-semibold">более 30 мин.</span>
       </span>
     );
   }
@@ -65,7 +65,7 @@ export function OrderSlaStatus({ createdAt, status }: OrderSlaStatusProps) {
   return (
     <span className="inline-flex flex-col items-start gap-1">
       <Badge variant="coral">{orderStatusLabels[status]}</Badge>
-      <span className="text-xs font-black tabular-nums text-burgundy">
+      <span className="font-data text-xs font-semibold tabular-nums text-burgundy">
         Осталось {formatRemainingTime(remaining)}
       </span>
     </span>

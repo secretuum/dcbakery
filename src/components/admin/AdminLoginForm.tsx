@@ -64,19 +64,19 @@ export function AdminLoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-card bg-white p-6 shadow-[0_24px_80px_rgba(120,51,38,0.12)] sm:p-8"
+      className="rounded-card border border-black/10 bg-white p-6 sm:p-8"
     >
       <div>
-        <p className="text-sm font-black uppercase text-raspberry">Админка</p>
-        <h1 className="mt-3 text-4xl font-black tracking-tight">Вход в DC Bakery</h1>
-        <p className="mt-3 text-sm font-semibold leading-6 text-muted">
+        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Админка</p>
+        <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">Вход в DC Bakery</h1>
+        <p className="mt-3 text-sm leading-6 text-muted">
           Используйте email и пароль пользователя, созданного в Supabase Authentication.
         </p>
       </div>
 
       <div className="mt-7 space-y-5">
         <label className="block">
-          <span className="text-sm font-black text-dark">Email</span>
+          <span className="text-sm font-semibold text-dark">Email</span>
           <Input
             className="mt-2"
             inputMode="email"
@@ -87,7 +87,7 @@ export function AdminLoginForm() {
           />
         </label>
         <label className="block">
-          <span className="text-sm font-black text-dark">Пароль</span>
+          <span className="text-sm font-semibold text-dark">Пароль</span>
           <Input
             className="mt-2"
             type="password"
@@ -98,7 +98,7 @@ export function AdminLoginForm() {
         </label>
       </div>
 
-      {error ? <p className="mt-4 text-sm font-bold text-burgundy">{error}</p> : null}
+      {error ? <p className="mt-4 text-sm font-semibold text-burgundy">{error}</p> : null}
 
       <Button type="submit" disabled={isSubmitting} className="mt-7 w-full">
         {isSubmitting ? "Входим..." : "Войти"}

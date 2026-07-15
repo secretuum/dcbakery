@@ -57,16 +57,16 @@ export default async function AdminClientPage({ params }: AdminClientPageProps) 
 
   return (
     <div>
-      <Link href="/admin/clients" className="text-sm font-black text-muted transition hover:text-dark">
+      <Link href="/admin/clients" className="text-sm font-semibold text-muted transition hover:text-dark">
         Назад к клиентам
       </Link>
 
       <div className="mt-5">
-        <p className="text-sm font-black uppercase text-raspberry">Клиент</p>
-        <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">
+        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Клиент</p>
+        <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
           {optional(client.companyName)}
         </h1>
-        <p className="mt-3 text-sm font-semibold text-muted">
+        <p className="mt-3 font-data text-sm text-muted">
           {optional(client.customerPhone)} · {decodedChatId}
         </p>
       </div>
@@ -80,14 +80,14 @@ export default async function AdminClientPage({ params }: AdminClientPageProps) 
             defaultName={client.companyName ?? client.customerName ?? ""}
           />
 
-          <section className="overflow-hidden rounded-card bg-white shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
+          <section className="overflow-hidden rounded-card border border-black/10 bg-white">
             <div className="border-b border-black/10 p-5 sm:p-6">
-              <h2 className="text-2xl font-black tracking-tight">История заказов</h2>
+              <h2 className="font-display text-2xl font-semibold tracking-tight">История заказов</h2>
             </div>
             {orders.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="min-w-[760px] w-full border-collapse text-left">
-                  <thead className="bg-coral-light text-xs font-black uppercase text-burgundy">
+                  <thead className="bg-cream text-xs font-semibold uppercase tracking-[.06em] text-muted">
                     <tr>
                       <th className="px-5 py-4">Номер</th>
                       <th className="px-5 py-4">Сумма</th>
@@ -102,12 +102,12 @@ export default async function AdminClientPage({ params }: AdminClientPageProps) 
                         <td className="px-5 py-4">
                           <Link
                             href={`/admin/orders/${order.id}`}
-                            className="font-black text-raspberry hover:text-burgundy"
+                            className="font-data font-bold text-coral hover:text-coral-hover"
                           >
                             {order.order_number}
                           </Link>
                         </td>
-                        <td className="px-5 py-4 font-black">{formatPrice(order.total_amount)}</td>
+                        <td className="px-5 py-4 font-data font-semibold">{formatPrice(order.total_amount)}</td>
                         <td className="px-5 py-4">
                           <OrderStatusBadge status={order.status} />
                         </td>
@@ -121,13 +121,13 @@ export default async function AdminClientPage({ params }: AdminClientPageProps) 
                 </table>
               </div>
             ) : (
-              <div className="p-6 text-sm font-bold text-muted">Заказов пока нет.</div>
+              <div className="p-6 text-sm text-muted">Заказов пока нет.</div>
             )}
           </section>
         </div>
 
-        <aside className="rounded-card bg-white p-5 shadow-[0_18px_60px_rgba(120,51,38,0.10)] xl:sticky xl:top-8">
-          <h2 className="text-2xl font-black tracking-tight">Адреса</h2>
+        <aside className="rounded-card border border-black/10 bg-white p-5 xl:sticky xl:top-8">
+          <h2 className="font-display text-2xl font-semibold tracking-tight">Адреса</h2>
           <div className="mt-4 space-y-3">
             {(client.addresses?.length
               ? client.addresses
@@ -135,13 +135,13 @@ export default async function AdminClientPage({ params }: AdminClientPageProps) 
                 ? [{ address: client.deliveryAddress }]
                 : []
             ).map((address, index) => (
-              <div key={`${address.address}-${index}`} className="rounded-btn bg-cream px-4 py-3">
-                <p className="text-xs font-black uppercase text-muted">Адрес {index + 1}</p>
-                <p className="mt-1 text-sm font-black text-dark">{address.address}</p>
+              <div key={`${address.address}-${index}`} className="rounded-btn border border-black/5 bg-cream px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Адрес {index + 1}</p>
+                <p className="mt-1 text-sm font-semibold text-dark">{address.address}</p>
               </div>
             ))}
             {!client.addresses?.length && !client.deliveryAddress ? (
-              <p className="text-sm font-bold text-muted">Адреса пока не указаны.</p>
+              <p className="text-sm text-muted">Адреса пока не указаны.</p>
             ) : null}
           </div>
         </aside>

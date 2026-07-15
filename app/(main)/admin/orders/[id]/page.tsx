@@ -64,33 +64,33 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
 
   return (
     <div>
-      <Link href="/admin/orders" className="text-sm font-black text-muted transition hover:text-dark">
+      <Link href="/admin/orders" className="text-sm font-semibold text-muted transition hover:text-dark">
         Назад к заказам
       </Link>
 
       <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-sm font-black uppercase text-raspberry">Заказ</p>
+            <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Заказ</p>
             <OrderSlaStatus createdAt={order.created_at} status={order.status} />
           </div>
-          <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
+          <h1 className="mt-3 break-all font-data text-4xl font-bold tracking-tight sm:text-5xl">
             {order.order_number}
           </h1>
-          <p className="mt-3 text-sm font-semibold text-muted">
+          <p className="mt-3 text-sm text-muted">
             Создан: {formatDateTime(order.created_at)}
           </p>
         </div>
-        <div className="rounded-card bg-white p-5 shadow-sm">
-          <p className="text-xs font-black uppercase text-muted">Сумма</p>
-          <p className="mt-2 text-4xl font-black text-dark">{formatPrice(order.total_amount)}</p>
+        <div className="rounded-card border border-black/10 bg-white p-5">
+          <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Сумма</p>
+          <p className="mt-2 font-data text-4xl font-bold text-dark">{formatPrice(order.total_amount)}</p>
         </div>
       </div>
 
       <div className="mt-8 grid gap-6 xl:grid-cols-[1fr_360px] xl:items-start">
         <div className="space-y-6">
-          <section className="rounded-card bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="text-2xl font-black tracking-tight">Клиент и доставка</h2>
+          <section className="rounded-card border border-black/10 bg-white p-5 sm:p-6">
+            <h2 className="font-display text-2xl font-semibold tracking-tight">Клиент и доставка</h2>
             <dl className="mt-5 grid gap-4 sm:grid-cols-2">
               {[
                 ["Компания", order.company_name],
@@ -104,28 +104,28 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
                 ["Оплата", optional(order.payment_method)],
                 ["АВР", order.request_avr ? "запрошен" : "не требуется"],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-btn bg-cream px-4 py-3">
-                  <dt className="text-xs font-black uppercase text-muted">{label}</dt>
-                  <dd className="mt-1 text-sm font-black text-dark">{value}</dd>
+                <div key={label} className="rounded-btn border border-black/5 bg-cream px-4 py-3">
+                  <dt className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{label}</dt>
+                  <dd className="mt-1 text-sm font-semibold text-dark">{value}</dd>
                 </div>
               ))}
             </dl>
 
             {order.comment ? (
               <div className="mt-4 rounded-btn bg-coral-light px-4 py-3">
-                <p className="text-xs font-black uppercase text-muted">Комментарий</p>
-                <p className="mt-1 text-sm font-bold leading-6 text-dark">{order.comment}</p>
+                <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Комментарий</p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-dark">{order.comment}</p>
               </div>
             ) : null}
           </section>
 
-          <section className="overflow-hidden rounded-card bg-white shadow-sm">
+          <section className="overflow-hidden rounded-card border border-black/10 bg-white">
             <div className="border-b border-black/10 p-5 sm:p-6">
-              <h2 className="text-2xl font-black tracking-tight">Состав заказа</h2>
+              <h2 className="font-display text-2xl font-semibold tracking-tight">Состав заказа</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-[480px] w-full border-collapse text-left">
-                <thead className="bg-coral-light text-xs font-black uppercase text-burgundy">
+                <thead className="bg-cream text-xs font-semibold uppercase tracking-[.06em] text-muted">
                   <tr>
                     <th className="px-5 py-4">Товар</th>
                     <th className="px-5 py-4">Кол-во</th>
@@ -137,14 +137,14 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
                   {items.map((item) => (
                     <tr key={item.id}>
                       <td className="px-5 py-4">
-                        <p className="font-black text-dark">{item.product_name}</p>
+                        <p className="font-semibold text-dark">{item.product_name}</p>
                         <p className="mt-1 text-xs text-muted">{item.product_id}</p>
                       </td>
                       <td className="px-5 py-4">
                         {item.qty} {item.unit}
                       </td>
-                      <td className="px-5 py-4">{formatPrice(item.price)}</td>
-                      <td className="px-5 py-4 font-black">{formatPrice(item.total_amount)}</td>
+                      <td className="px-5 py-4 font-data">{formatPrice(item.price)}</td>
+                      <td className="px-5 py-4 font-data font-bold">{formatPrice(item.total_amount)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -160,7 +160,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
           />
         </div>
 
-        <aside className="rounded-card bg-white p-5 shadow-sm xl:sticky xl:top-8">
+        <aside className="rounded-card border border-black/10 bg-white p-5 xl:sticky xl:top-8">
           <OrderStatusSelect orderId={order.id} status={order.status} />
           <ConfirmOrderButton orderId={order.id} status={order.status} />
           <MarkOrderPaidButton
@@ -172,33 +172,33 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
           <AvrRequestButton orderId={order.id} requested={order.request_avr === true} />
 
           <div className="mt-6 space-y-2">
-            <p className="text-xs font-black uppercase text-muted">Документы</p>
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Документы</p>
             {!["pending_manager_confirmation", "change_proposed", "canceled", "cancelled"].includes(
               order.status,
             ) ? (
               <>
                 <Link
                   href={`/documents/invoice/${order.id}`}
-                  className="block rounded-btn bg-cream px-4 py-3 text-sm font-black text-dark transition hover:bg-coral-light"
+                  className="block rounded-btn border border-black/5 bg-cream px-4 py-3 text-sm font-semibold text-dark transition hover:bg-coral-light"
                 >
                   Счет на оплату →
                 </Link>
                 <Link
                   href={`/documents/nakl/${order.id}`}
-                  className="block rounded-btn bg-cream px-4 py-3 text-sm font-black text-dark transition hover:bg-coral-light"
+                  className="block rounded-btn border border-black/5 bg-cream px-4 py-3 text-sm font-semibold text-dark transition hover:bg-coral-light"
                 >
                   Накладная →
                 </Link>
               </>
             ) : (
-              <p className="rounded-btn bg-cream px-4 py-3 text-sm font-semibold text-muted">
+              <p className="rounded-btn border border-black/5 bg-cream px-4 py-3 text-sm font-semibold text-muted">
                 Доступны после подтверждения
               </p>
             )}
             {order.status === "completed" ? (
               <Link
                 href={`/documents/avr/${order.id}`}
-                className="block rounded-btn bg-cream px-4 py-3 text-sm font-black text-dark transition hover:bg-coral-light"
+                className="block rounded-btn border border-black/5 bg-cream px-4 py-3 text-sm font-semibold text-dark transition hover:bg-coral-light"
               >
                 АВР →
               </Link>
@@ -206,28 +206,28 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
           </div>
 
           <div className="mt-6 rounded-btn bg-coral-light px-4 py-3">
-            <p className="text-xs font-black uppercase text-muted">Оплата</p>
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Оплата</p>
             <div className="mt-2">
               <PaymentStatusBadge status={order.payment_status} />
             </div>
             {order.payment_url ? (
               <Link
                 href={order.payment_url}
-                className="mt-3 inline-flex text-sm font-black text-burgundy transition hover:text-dark"
+                className="mt-3 inline-flex text-sm font-semibold text-burgundy transition hover:text-dark"
               >
                 Открыть ссылку оплаты
               </Link>
             ) : null}
           </div>
-          <div className="mt-6 rounded-btn bg-cream px-4 py-3">
-            <p className="text-xs font-black uppercase text-muted">Telegram</p>
-            <p className="mt-1 text-sm font-bold text-dark">
+          <div className="mt-6 rounded-btn border border-black/5 bg-cream px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Telegram</p>
+            <p className="mt-1 font-data text-sm font-semibold text-dark">
               {order.telegram_message_id ? `ID ${order.telegram_message_id}` : "не отправлено"}
             </p>
           </div>
-          <div className="mt-3 rounded-btn bg-cream px-4 py-3">
-            <p className="text-xs font-black uppercase text-muted">WhatsApp</p>
-            <p className="mt-1 text-sm font-bold text-dark">
+          <div className="mt-3 rounded-btn border border-black/5 bg-cream px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">WhatsApp</p>
+            <p className="mt-1 font-data text-sm font-semibold text-dark">
               {order.whatsapp_message_id ? `ID ${order.whatsapp_message_id}` : "не отправлено"}
             </p>
           </div>

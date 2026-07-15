@@ -44,8 +44,8 @@ export function ClientProfileForm({ client }: ClientProfileFormProps) {
   }
 
   return (
-    <form action={handleSubmit} className="rounded-card bg-white p-5 shadow-sm">
-      <h2 className="text-2xl font-black tracking-tight">Данные клиента</h2>
+    <form action={handleSubmit} className="rounded-card border border-black/10 bg-white p-5">
+      <h2 className="font-display text-2xl font-semibold tracking-tight">Данные клиента</h2>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
         {[
@@ -58,25 +58,25 @@ export function ClientProfileForm({ client }: ClientProfileFormProps) {
           { label: "Оплата", name: "paymentMethod", value: client.paymentMethod },
         ].map((field) => (
           <label key={field.name} className="block">
-            <span className="text-xs font-black uppercase text-muted">{field.label}</span>
+            <span className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{field.label}</span>
             <input
               name={field.name}
               defaultValue={field.value ?? ""}
-              className="mt-2 min-h-11 w-full rounded-xl border border-black/10 bg-cream px-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/20"
+              className="mt-2 min-h-11 w-full rounded-btn border border-black/10 bg-cream px-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/20"
             />
           </label>
         ))}
       </div>
 
       <label className="mt-4 block">
-        <span className="text-xs font-black uppercase text-muted">
+        <span className="text-xs font-semibold uppercase tracking-[.08em] text-muted">
           Адреса, каждый с новой строки
         </span>
         <textarea
           name="addressesText"
           defaultValue={joinAddresses(client)}
           rows={5}
-          className="mt-2 w-full rounded-xl border border-black/10 bg-cream px-3 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/20"
+          className="mt-2 w-full rounded-btn border border-black/10 bg-cream px-3 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/20"
         />
       </label>
 
@@ -84,15 +84,15 @@ export function ClientProfileForm({ client }: ClientProfileFormProps) {
         <button
           type="submit"
           disabled={status === "saving"}
-          className="inline-flex min-h-11 items-center justify-center rounded-btn bg-coral px-5 py-2 text-sm font-black text-white shadow-sm transition hover:bg-coral-hover disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-h-11 items-center justify-center rounded-btn border border-coral bg-coral px-5 py-2 text-sm font-bold text-white transition hover:bg-coral-hover disabled:cursor-not-allowed disabled:opacity-60"
         >
           {status === "saving" ? "Сохраняю..." : "Сохранить"}
         </button>
         {status === "success" ? (
-          <span className="text-sm font-bold text-raspberry">Сохранено</span>
+          <span className="text-sm font-semibold text-raspberry">Сохранено</span>
         ) : null}
         {status === "error" ? (
-          <span className="text-sm font-bold text-red-600">Не удалось сохранить</span>
+          <span className="text-sm font-semibold text-burgundy">Не удалось сохранить</span>
         ) : null}
       </div>
     </form>

@@ -23,22 +23,22 @@ export default function AdminProductsLoading() {
 
       <Skeleton className="mt-6 h-28 rounded-card" />
 
-      <div className="mt-6 overflow-hidden rounded-card bg-white shadow-sm">
-        <div className="h-14 animate-pulse bg-coral-light/50" />
+      <div className="mt-6 overflow-hidden rounded-card border border-black/10 bg-white">
+        <div className="h-14 animate-pulse bg-cream" />
         {Array.from({ length: 5 }, (_, i) => (
           <div key={i} className="flex items-start gap-5 border-t border-black/10 px-5 py-4">
-            <Skeleton className="size-28 shrink-0 rounded-xl" />
+            <Skeleton className="size-28 shrink-0 rounded" />
             <div className="flex-1 space-y-2 pt-1">
-              <Skeleton className="h-9 w-full max-w-xs rounded-xl" />
+              <Skeleton className="h-9 w-full max-w-xs rounded-btn" />
               <Skeleton className="h-3 w-32" />
-              <Skeleton className="h-9 w-full max-w-xs rounded-xl" />
+              <Skeleton className="h-9 w-full max-w-xs rounded-btn" />
             </div>
             <div className="space-y-2 pt-1">
-              <Skeleton className="h-9 w-24 rounded-xl" />
+              <Skeleton className="h-9 w-24 rounded-btn" />
               <Skeleton className="h-5 w-16" />
             </div>
             <div className="pt-1">
-              <Skeleton className="h-9 w-28 rounded-xl" />
+              <Skeleton className="h-9 w-28 rounded-btn" />
             </div>
             <div className="pt-1">
               <Skeleton className="h-10 w-24 rounded-btn" />

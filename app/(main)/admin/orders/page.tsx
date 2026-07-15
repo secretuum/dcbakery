@@ -49,15 +49,15 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-black uppercase text-raspberry">Админка</p>
-          <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">Заказы</h1>
-          <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-muted">
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Админка</p>
+          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">Заказы</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
             Заявки из Supabase, отсортированные по дате создания.
           </p>
         </div>
         <Link
           href="/catalog"
-          className="inline-flex min-h-11 items-center justify-center rounded-btn bg-white px-4 py-2 text-sm font-black text-muted shadow-sm transition hover:bg-coral-light hover:text-dark"
+          className="inline-flex min-h-11 items-center justify-center rounded-btn border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-black/5"
         >
           Открыть каталог
         </Link>
@@ -72,10 +72,10 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
             <Link
               key={filter.value ?? "all"}
               href={href}
-              className={`shrink-0 rounded-btn px-4 py-2 text-sm font-black shadow-sm transition ${
+              className={`shrink-0 rounded-btn border px-4 py-2 text-sm font-semibold transition ${
                 isActive
-                  ? "bg-dark text-white"
-                  : "bg-white text-muted hover:bg-coral-light hover:text-dark"
+                  ? "border-dark bg-dark text-white"
+                  : "border-black/10 bg-white text-muted hover:bg-black/5 hover:text-dark"
               }`}
             >
               {filter.label}
@@ -84,11 +84,11 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         })}
       </nav>
 
-      <div className="mt-6 overflow-hidden rounded-card bg-white shadow-sm">
+      <div className="mt-6 overflow-hidden rounded-card border border-black/10 bg-white">
         {orders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-[640px] w-full border-collapse text-left">
-              <thead className="border-b border-black/10 bg-gray-50 text-xs font-semibold uppercase text-muted">
+              <thead className="border-b border-black/10 bg-cream text-xs font-semibold uppercase tracking-[.06em] text-muted">
                 <tr>
                   <th className="px-4 py-3">Номер</th>
                   <th className="px-4 py-3">Компания</th>
@@ -101,11 +101,11 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
               </thead>
               <tbody className="divide-y divide-black/8 text-sm font-semibold">
                 {orders.map((order) => (
-                  <tr key={order.id} className="transition hover:bg-gray-50">
+                  <tr key={order.id} className="transition hover:bg-black/2">
                     <td className="px-4 py-3">
                       <Link
                         href={`/admin/orders/${order.id}`}
-                        className="font-bold text-coral hover:text-coral-hover"
+                        className="font-data font-bold text-coral hover:text-coral-hover"
                       >
                         {order.order_number}
                       </Link>
@@ -115,7 +115,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                       <p className="mt-0.5 text-xs text-muted">{order.customer_name}</p>
                     </td>
                     <td className="hidden px-4 py-3 text-muted md:table-cell">{order.customer_phone}</td>
-                    <td className="px-4 py-3 font-semibold">{formatPrice(order.total_amount)}</td>
+                    <td className="px-4 py-3 font-data font-semibold">{formatPrice(order.total_amount)}</td>
                     <td className="px-4 py-3">
                       <OrderSlaStatus createdAt={order.created_at} status={order.status} />
                     </td>
@@ -130,8 +130,8 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           </div>
         ) : (
           <div className="p-8 text-center">
-            <h2 className="text-xl font-bold">Заказов пока нет</h2>
-            <p className="mt-3 text-sm font-semibold text-muted">
+            <h2 className="font-display text-xl font-semibold">Заказов пока нет</h2>
+            <p className="mt-3 text-sm text-muted">
               Новые заявки появятся здесь после оформления на сайте.
             </p>
           </div>

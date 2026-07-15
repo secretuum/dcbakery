@@ -75,15 +75,15 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
   }
 
   return (
-    <section className="overflow-hidden rounded-card bg-white shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
+    <section className="overflow-hidden rounded-card border border-black/10 bg-white">
       <div className="border-b border-black/10 p-5 sm:p-6">
-        <p className="text-xs font-black uppercase text-raspberry">Договорные условия</p>
-        <h2 className="mt-1 text-2xl font-black tracking-tight">Товарный кредит</h2>
+        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Договорные условия</p>
+        <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight">Товарный кредит</h2>
       </div>
 
       <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
         <label className="block">
-          <span className="text-sm font-black text-dark">Кредитный лимит (₸)</span>
+          <span className="text-sm font-semibold text-dark">Кредитный лимит (₸)</span>
           <Input
             className="mt-2"
             inputMode="numeric"
@@ -96,7 +96,7 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
         </label>
 
         <label className="block">
-          <span className="text-sm font-black text-dark">Отсрочка (дней)</span>
+          <span className="text-sm font-semibold text-dark">Отсрочка (дней)</span>
           <Input
             className="mt-2"
             inputMode="numeric"
@@ -109,7 +109,7 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
         </label>
 
         <label className="block">
-          <span className="text-sm font-black text-dark">Льготный период (дней)</span>
+          <span className="text-sm font-semibold text-dark">Льготный период (дней)</span>
           <Input
             className="mt-2"
             inputMode="numeric"
@@ -122,9 +122,9 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
         </label>
 
         <label className="block">
-          <span className="text-sm font-black text-dark">Прайс-лист</span>
+          <span className="text-sm font-semibold text-dark">Прайс-лист</span>
           <select
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark focus:outline-none focus:ring-2 focus:ring-coral/40"
+            className="mt-2 w-full rounded-btn border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark focus:outline-none focus:ring-2 focus:ring-coral/40"
             value={priceListId}
             onChange={(e) => setPriceListId(e.currentTarget.value)}
           >
@@ -135,7 +135,7 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
         </label>
 
         <label className="block sm:col-span-2">
-          <span className="text-sm font-black text-dark">ID контрагента в iiko</span>
+          <span className="text-sm font-semibold text-dark">ID контрагента в iiko</span>
           <Input
             className="mt-2"
             placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
@@ -145,9 +145,9 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
         </label>
 
         <label className="block sm:col-span-2">
-          <span className="text-sm font-black text-dark">Статус отгрузок</span>
+          <span className="text-sm font-semibold text-dark">Статус отгрузок</span>
           <select
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark focus:outline-none focus:ring-2 focus:ring-coral/40"
+            className="mt-2 w-full rounded-btn border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark focus:outline-none focus:ring-2 focus:ring-coral/40"
             value={status}
             onChange={(e) => setStatus(e.currentTarget.value as Client["status"])}
           >
@@ -155,7 +155,7 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
-          <p className="mt-1 text-xs font-semibold text-muted">
+          <p className="mt-1 text-xs text-muted">
             Статус «Активен» автоматически меняется на «Предоплата» или «Блокирован» при просрочке.
             Ручная установка переопределяет автоматику.
           </p>
@@ -166,8 +166,8 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
         <Button type="button" disabled={saving} onClick={() => void handleSave()}>
           {saving ? "Сохраняем..." : "Сохранить"}
         </Button>
-        {saved ? <span className="text-sm font-black text-raspberry">Сохранено</span> : null}
-        {error ? <span className="text-sm font-bold text-red-600">{error}</span> : null}
+        {saved ? <span className="text-sm font-semibold text-raspberry">Сохранено</span> : null}
+        {error ? <span className="text-sm font-semibold text-burgundy">{error}</span> : null}
       </div>
     </section>
   );

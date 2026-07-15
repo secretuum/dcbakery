@@ -48,7 +48,7 @@ export function ProductImageUpload({ defaultValue = "", form, inputName = "image
         type="button"
         disabled={uploading}
         onClick={() => fileRef.current?.click()}
-        className="min-h-9 rounded-btn border border-dashed border-black/20 bg-cream px-3 py-2 text-xs font-black text-muted transition hover:bg-coral-light hover:text-dark disabled:opacity-50"
+        className="min-h-9 rounded-btn border border-dashed border-black/20 bg-cream px-3 py-2 text-xs font-semibold text-muted transition hover:bg-coral-light hover:text-dark disabled:opacity-50"
       >
         {uploading ? "Загружается..." : "Загрузить фото"}
       </button>
@@ -59,9 +59,9 @@ export function ProductImageUpload({ defaultValue = "", form, inputName = "image
         className="hidden"
         onChange={handleFile}
       />
-      {error ? <p className="text-xs font-bold text-burgundy">{error}</p> : null}
+      {error ? <p className="text-xs font-semibold text-burgundy">{error}</p> : null}
       <input
-        className="rounded-xl border border-black/10 bg-white px-3 py-2 text-xs font-bold text-muted outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+        className="rounded-btn border border-black/10 bg-white px-3 py-2 text-xs font-medium text-muted outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
         placeholder="или вставить URL вручную"
         value={urlValue}
         onChange={(e) => setUrlValue(e.target.value)}

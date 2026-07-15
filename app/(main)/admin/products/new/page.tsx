@@ -15,14 +15,14 @@ export default async function NewProductPage() {
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-black uppercase text-raspberry">Каталог</p>
-          <h1 className="mt-2 text-4xl font-black tracking-tight sm:text-5xl">Новый товар</h1>
-          <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-muted">
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Каталог</p>
+          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">Новый товар</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
             После сохранения товар появится на сайте и в WhatsApp-каталоге, если он активен и не в архиве.
           </p>
         </div>
         <Link
-          className="inline-flex min-h-11 items-center justify-center rounded-btn bg-white px-4 py-2 text-sm font-black text-muted shadow-sm transition hover:bg-coral-light hover:text-dark"
+          className="inline-flex min-h-11 items-center justify-center rounded-btn border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-black/5"
           href="/admin/products"
         >
           Назад к товарам
@@ -31,30 +31,30 @@ export default async function NewProductPage() {
 
       <form
         action={createCatalogProductAction}
-        className="mt-6 grid gap-5 rounded-card bg-white p-6 shadow-sm"
+        className="mt-6 grid gap-5 rounded-card border border-black/10 bg-white p-6"
       >
         <div className="grid gap-4 lg:grid-cols-2">
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Название
             <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-12 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               name="name"
               placeholder="Например: Шу с манго"
               required
             />
           </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Slug
             <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-12 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               name="slug"
               placeholder="Можно оставить пустым"
             />
           </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Категория
             <select
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-12 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               name="category_slug"
               required
             >
@@ -65,18 +65,18 @@ export default async function NewProductPage() {
               ))}
             </select>
           </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Подкатегория
             <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-12 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               name="subcategory"
               placeholder="Пирожные, Стейки, Заморозка"
             />
           </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Цена
             <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-12 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               max={10000}
               min="0"
               name="price"
@@ -84,10 +84,10 @@ export default async function NewProductPage() {
               type="number"
             />
           </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Остаток
             <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-12 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               max={100}
               min="0"
               name="stock_qty"
@@ -95,18 +95,18 @@ export default async function NewProductPage() {
               type="number"
             />
           </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Вес на витрине
             <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-12 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               name="weight_label"
               placeholder="95 г, 1 кг, ~250 грамм"
             />
           </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Граммы
             <input
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-12 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               max={2000}
               min="0"
               name="weight_grams"
@@ -114,47 +114,47 @@ export default async function NewProductPage() {
               type="number"
             />
           </label>
-          <div className="grid gap-1 text-sm font-black text-dark">
+          <div className="grid gap-1 text-sm font-semibold text-dark">
             Картинка
             <ProductImageUpload inputName="image" />
           </div>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Описание
             <textarea
-              className="min-h-32 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-32 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               name="description"
             />
           </label>
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Состав
             <textarea
-              className="min-h-32 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-32 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               name="composition"
             />
           </label>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <label className="grid gap-2 text-sm font-black text-dark">
+          <label className="grid gap-2 text-sm font-semibold text-dark">
             Популярность
             <select
-              className="min-h-12 rounded-xl border border-black/10 bg-cream px-4 py-3 text-sm font-bold outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+              className="min-h-12 rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-medium outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
               name="is_popular"
             >
               <option value="false">Обычный</option>
               <option value="true">Популярный</option>
             </select>
           </label>
-          <div className="rounded-xl bg-coral-light px-4 py-3 text-sm font-black text-coral">
+          <div className="rounded-btn bg-coral-light px-4 py-3 text-sm font-semibold text-coral">
             Единица заказа: шт. Вес задается отдельно для каждого товара.
           </div>
         </div>
 
         <button
-          className="min-h-12 rounded-btn bg-coral px-5 py-3 text-sm font-black text-white transition hover:bg-coral-hover"
+          className="min-h-12 rounded-btn border border-coral bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
           type="submit"
         >
           Создать товар

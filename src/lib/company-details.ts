@@ -5,6 +5,8 @@ export type CompanyDetails = {
   address: string;
   bankBic: string;
   bankIban: string;
+  /** Счёт «Цех полуфабрикатов»; пустая строка — второй счёт не настроен, всё идёт на основной */
+  bankIbanPf: string;
   bankName: string;
   bin: string;
   directorName: string;
@@ -17,6 +19,7 @@ const demoCompanyDetails = {
   address: "г. Алматы, ул. Демо, 15",
   bankBic: "DEMOKZKX",
   bankIban: "KZ00DEMO000000000001",
+  bankIbanPf: "KZ00DEMO000000000002",
   bankName: "АО «Учебный банк»",
   bin: "000000000000",
   directorName: "Тестовый руководитель",
@@ -31,6 +34,8 @@ export function getCompanyDetails(): CompanyDetails {
     address: process.env.DC_LEGAL_ADDRESS?.trim() || (isDemo ? demoCompanyDetails.address : ""),
     bankBic: process.env.DC_BANK_BIC?.trim() || (isDemo ? demoCompanyDetails.bankBic : ""),
     bankIban: process.env.DC_BANK_IBAN?.trim() || (isDemo ? demoCompanyDetails.bankIban : ""),
+    bankIbanPf:
+      process.env.DC_BANK_IBAN_PF?.trim() || (isDemo ? demoCompanyDetails.bankIbanPf : ""),
     bankName: process.env.DC_BANK_NAME?.trim() || (isDemo ? demoCompanyDetails.bankName : ""),
     bin: process.env.DC_LEGAL_BIN?.trim() || (isDemo ? demoCompanyDetails.bin : ""),
     directorName:

@@ -12,7 +12,7 @@ export type PaymentLink = {
 export function getPaymentMode(): PaymentMode {
   const mode = process.env.PAYMENT_MODE?.trim().toLowerCase();
 
-  if (mode === "demo" || mode === "freedom" || mode === "halyk") {
+  if (mode === "demo" || mode === "freedom" || mode === "halyk" || mode === "manual") {
     return mode;
   }
 

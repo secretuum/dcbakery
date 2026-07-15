@@ -30,18 +30,18 @@ export function CartSummary() {
   }
 
   return (
-    <aside className="rounded-card bg-white p-5 shadow-sm lg:sticky lg:top-28">
-      <p className="text-sm font-black uppercase text-raspberry">Корзина</p>
-      <h2 className="mt-2 text-lg font-semibold tracking-tight">Итого по заявке</h2>
+    <aside className="rounded-card border border-black/10 bg-white p-5 lg:sticky lg:top-28">
+      <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Корзина</p>
+      <h2 className="mt-2 font-display text-lg font-semibold tracking-tight">Итого по заявке</h2>
 
-      <div className="mt-6 space-y-3 text-sm font-bold">
+      <div className="mt-6 space-y-3 text-sm font-semibold">
         <div className="flex items-center justify-between gap-4">
           <span className="text-muted">Товаров</span>
-          <span>{totalItems}</span>
+          <span className="font-data">{totalItems}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
           <span className="text-muted">Подытог</span>
-          <span>{formatPrice(totalAmount)}</span>
+          <span className="font-data">{formatPrice(totalAmount)}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
           <span className="text-muted">Доставка</span>
@@ -50,15 +50,15 @@ export function CartSummary() {
         <div className="border-t border-black/10 pt-4">
           <div className="flex items-end justify-between gap-4">
             <span className="text-muted">Итого</span>
-            <span className="text-xl font-black text-coral">{formatPrice(totalAmount)}</span>
+            <span className="font-data text-xl font-bold text-coral">{formatPrice(totalAmount)}</span>
           </div>
         </div>
       </div>
 
       <div className="mt-6">
-        <div className="flex items-center justify-between gap-3 text-xs font-black uppercase text-muted">
+        <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[.08em] text-muted">
           <span>Минимальный заказ</span>
-          <span>{formatPrice(MIN_ORDER_AMOUNT)}</span>
+          <span className="font-data">{formatPrice(MIN_ORDER_AMOUNT)}</span>
         </div>
         <div className="mt-3 h-3 overflow-hidden rounded-badge bg-coral-light">
           <div
@@ -66,7 +66,7 @@ export function CartSummary() {
             style={{ width: `${progress}%` }}
           />
         </div>
-        <p className="mt-3 text-sm font-semibold leading-6 text-muted">
+        <p className="mt-3 text-sm leading-6 text-muted">
           {canCheckout
             ? "Минимальная сумма набрана, заявку можно оформлять."
             : `До минимального заказа осталось ${formatPrice(missingAmount)}.`}

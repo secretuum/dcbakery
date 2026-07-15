@@ -53,7 +53,7 @@ export function QuantitySelector({
         type="button"
         disabled={disabled || value <= safeMin}
         onClick={() => onChange(normalizeQty(value - safeStep, safeMin, safeStep, safeMax))}
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xl font-black text-coral transition hover:bg-coral/10 active:bg-coral/20 disabled:pointer-events-none disabled:opacity-40"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded border border-black/10 text-xl font-bold text-dark transition hover:bg-black/5 disabled:pointer-events-none disabled:opacity-40"
         aria-label="Уменьшить количество"
       >
         −
@@ -71,10 +71,10 @@ export function QuantitySelector({
               normalizeQty(Number(event.currentTarget.value), safeMin, safeStep, safeMax),
             )
           }
-          className="w-full bg-transparent text-center text-base font-black text-dark outline-none"
+          className="w-full bg-transparent text-center font-data text-base font-semibold text-dark outline-none"
           aria-label={`Количество, ${unit}`}
         />
-        <span className="ml-1 text-sm font-bold text-muted">{unit}</span>
+        <span className="ml-1 text-sm font-semibold text-muted">{unit}</span>
       </label>
       <button
         type="button"
@@ -82,7 +82,7 @@ export function QuantitySelector({
         onClick={() =>
           onChange(normalizeQty(value + safeStep, safeMin, safeStep, safeMax))
         }
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-coral text-xl font-black text-white transition hover:bg-coral-hover disabled:pointer-events-none disabled:bg-gray-300"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded border border-coral bg-coral text-xl font-bold text-white transition hover:bg-coral-hover disabled:pointer-events-none disabled:border-black/10 disabled:bg-black/5 disabled:text-muted"
         aria-label="Увеличить количество"
       >
         +

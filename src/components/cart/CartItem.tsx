@@ -18,10 +18,10 @@ export function CartItem({ item }: CartItemProps) {
   const lineTotal = product.price * qty;
 
   return (
-    <article className="grid grid-cols-[80px_1fr] gap-4 rounded-2xl bg-white p-4 shadow-sm sm:grid-cols-[112px_1fr] sm:p-5">
+    <article className="grid grid-cols-[80px_1fr] gap-4 rounded-card border border-black/10 bg-white p-4 sm:grid-cols-[112px_1fr] sm:p-5">
       <Link
         href={`/product/${product.slug}`}
-        className="relative aspect-square self-start overflow-hidden rounded-xl bg-coral-light"
+        className="relative aspect-square self-start overflow-hidden rounded border border-black/10 bg-cream"
       >
         <FallbackImage
           src={imageSrc}
@@ -35,7 +35,7 @@ export function CartItem({ item }: CartItemProps) {
       <div className="min-w-0">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-black uppercase text-raspberry">
+            <p className="text-xs font-semibold uppercase tracking-[.1em] text-muted">
               {product.category?.name ?? "Каталог"}
             </p>
             <Link href={`/product/${product.slug}`} className="mt-1 block">
@@ -43,7 +43,7 @@ export function CartItem({ item }: CartItemProps) {
                 {product.name}
               </h2>
             </Link>
-            <p className="mt-2 text-sm font-semibold text-muted">
+            <p className="mt-2 text-sm text-muted">
               Фасовка: {product.weightLabel ?? "уточняется"}
             </p>
           </div>
@@ -68,10 +68,10 @@ export function CartItem({ item }: CartItemProps) {
           />
 
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 md:justify-end">
-            <p className="text-sm font-semibold text-muted">
+            <p className="font-data text-sm text-muted">
               {formatProductPrice(product.price)} / ед.
             </p>
-            <p className="text-lg font-bold text-coral">
+            <p className="font-data text-lg font-bold text-dark">
               {product.price > 0 ? formatPrice(lineTotal) : "Цена уточняется"}
             </p>
           </div>

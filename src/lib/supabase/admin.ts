@@ -286,26 +286,6 @@ async function deleteSupabaseOrder(orderId: string) {
   });
 }
 
-async function deleteSupabaseOrderItems(orderId: string) {
-  const url = getSupabaseRestUrl("order_items");
-
-  if (!url || !serviceRoleKey) {
-    throw new Error(getSupabaseAdminConfigError() ?? "Supabase is not configured");
-  }
-
-  const response = await fetch(`${url}?order_id=eq.${encodeURIComponent(orderId)}`, {
-    method: "DELETE",
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(await parseSupabaseError(response));
-  }
-}
-
 export async function updateOrderTelegramMessageId(orderId: string, telegramMessageId: string) {
   const url = getSupabaseRestUrl("orders");
 

@@ -2,7 +2,7 @@ import "server-only";
 import type { Order, OrderItem } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
-import { formatResponsibleBlock, getOrderResponsibleContext } from "@/src/lib/responsibles";
+import { formatResponsibleBlock } from "@/src/lib/responsibles";
 import {
   fetchWhatsAppClientByChatId,
   isWhatsAppClientProfileComplete,
@@ -89,21 +89,6 @@ export function formatWhatsAppNotification(order: Order, items: OrderItem[]) {
   ]
     .filter(Boolean)
     .join("\n");
-}
-
-function getResponsibleChatIds(items: OrderItem[]) {
-  return Array.from(
-    new Set(
-      getOrderResponsibleContext(items).people.flatMap((person) => {
-        if (person.phone) {
-          const chatId = getWhatsAppChatIdFromPhone(person.phone);
-          return chatId ? [chatId] : [];
-        }
-
-        return [];
-      }),
-    ),
-  );
 }
 
 export function formatResponsibleDirectNotification(order: Order, items: OrderItem[]) {

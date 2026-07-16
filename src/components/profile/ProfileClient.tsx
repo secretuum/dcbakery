@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/src/components/ui/Button";
+import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { Input } from "@/src/components/ui/Input";
-import { clientOrderStatusLabels, creditStatusLabels, orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
+import { clientOrderStatusLabels, creditStatusLabels, orderStatusLabels } from "@/src/lib/order-status";
 import { useCart } from "@/src/contexts/CartContext";
 import type { ClientOrderSummary, CreditState, OrderItemSummary, Product } from "@/src/types";
 
@@ -689,7 +690,7 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   const isOverdue =
     order.due_date && order.due_date < today && order.payment_status !== "paid";
   const overdueDays = isOverdue
-    ? Math.floor((Date.now() - Date.parse(order.due_date!)) / 86_400_000)
+    ? Math.floor((Date.parse(today) - Date.parse(order.due_date!)) / 86_400_000)
     : 0;
   const [actionStatus, setActionStatus] = useState<"error" | "idle" | "loading">("idle");
   const [isExpanded, setIsExpanded] = useState(false);
@@ -847,15 +848,15 @@ function PopularProductsSection({ products }: { products: Product[] }) {
             className="flex items-center gap-3 rounded-xl bg-cream p-3"
           >
             <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-white">
-              {product.images[0] ? (
-                <img
-                  src={product.images[0]}
-                  alt={product.name}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-coral-light" />
-              )}
+              <FallbackImage
+                src={product.images[0]}
+                alt={product.name}
+                categoryId={product.category_id}
+                categorySlug={product.category?.slug}
+                fill
+                sizes="56px"
+                className="object-cover"
+              />
             </div>
             <div className="min-w-0 flex-1">
               <p className="line-clamp-2 text-sm font-black leading-tight text-dark">
@@ -1044,14 +1045,6 @@ function ClientDashboard({
   }, [session.email, session.phone]);
 
   const doneStatuses = ["completed", "canceled", "cancelled"];
-  const activeOrders = orders.filter((order) => !doneStatuses.includes(order.status)).length;
-  const paidAmount = orders
-    .filter((order) => order.status === "paid" || order.payment_status === "paid")
-    .reduce((sum, order) => sum + order.total_amount, 0);
-  const nextDelivery =
-    orders
-      .filter((o) => o.delivery_date && !doneStatuses.includes(o.status))
-      .sort((a, b) => a.delivery_date!.localeCompare(b.delivery_date!))[0]?.delivery_date ?? null;
   const visibleOrders =
     ordersTab === "active" ? orders.filter((o) => !doneStatuses.includes(o.status)) : orders;
 

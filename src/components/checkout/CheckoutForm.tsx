@@ -315,13 +315,13 @@ export function CheckoutForm() {
           </p>
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px] lg:items-start">
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
           <form
             onSubmit={handleSubmit}
-            className="rounded-card border border-black/10 bg-white p-5 sm:p-6"
+            className="min-w-0 rounded-card border border-black/10 bg-white p-5 sm:p-6"
           >
             <p className="font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">Контакты</p>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <label className="block sm:col-span-2">
                 <span className="text-sm font-semibold text-dark">Название компании / заведения</span>
                 <Input
@@ -383,7 +383,7 @@ export function CheckoutForm() {
             </div>
 
             <p className="mt-6 border-t border-black/5 pt-6 font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">Доставка</p>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <label className="block sm:col-span-2">
                 <span className="text-sm font-semibold text-dark">Адрес доставки</span>
                 <Input
@@ -394,10 +394,10 @@ export function CheckoutForm() {
                 />
               </label>
 
-              <div className="sm:col-span-2">
+              <div className="min-w-0 sm:col-span-2">
                 <span className="text-sm font-semibold text-dark">Дата доставки</span>
                 {deliveryOptions ? (
-                  <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto pb-1">
+                  <div className="no-scrollbar mt-2 flex max-w-full gap-2 overflow-x-auto pb-1">
                     {deliveryOptions.map((option) => {
                       const isSelected = selectedDeliveryDate === option.value;
 
@@ -452,7 +452,7 @@ export function CheckoutForm() {
             </div>
 
             <p className="mt-6 border-t border-black/5 pt-6 font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">Оплата и документы</p>
-            <div className="mt-4 grid gap-5 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <label className="block sm:col-span-2">
                 <span className="text-sm font-semibold text-dark">Способ оплаты</span>
                 <select

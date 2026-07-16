@@ -16,7 +16,7 @@ const contactItems = [
   },
   {
     label: "Адрес",
-    value: process.env.DC_LEGAL_ADDRESS ?? "г. Алматы, ул. Жамбыла 154",
+    value: "г. Алматы, ул. Жамбыла 154",
     href: null,
     icon: null,
   },

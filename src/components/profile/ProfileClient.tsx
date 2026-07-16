@@ -58,45 +58,6 @@ function formatDate(value?: string | null) {
   }).format(new Date(value));
 }
 
-function AdminIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <path d="M12 3 4 6v6c0 5 3.4 8 8 9 4.6-1 8-4 8-9V6l-8-3Z" />
-      <path d="m9 12 2 2 4-5" />
-    </svg>
-  );
-}
-
-function ClientIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      viewBox="0 0 24 24"
-    >
-      <path d="M3 21h18" />
-      <path d="M5 21V7l8-4 6 4v14" />
-      <path d="M9 21v-7h6v7" />
-      <path d="M9 9h.01" />
-      <path d="M15 9h.01" />
-    </svg>
-  );
-}
-
 function MetricCard({
   label,
   value,
@@ -251,43 +212,16 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
   }
 
   return (
-    <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-start">
-      <div>
-        <p className="text-sm font-bold uppercase text-raspberry">Профиль</p>
-        <h1 className="mt-3 max-w-3xl font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-          Вход в кабинет DC Bakery
-        </h1>
-        <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-muted">
-          Клиенты входят по номеру WhatsApp — ссылка для входа придёт в чат. Менеджеры — через Supabase Authentication.
-        </p>
+    <section className="mx-auto max-w-md">
+      <p className="text-sm font-bold uppercase text-raspberry">Профиль</p>
+      <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+        Вход в кабинет
+      </h1>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2">
-          <div className="rounded-card bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3 text-raspberry">
-              <ClientIcon />
-              <p className="text-sm font-bold">Клиент</p>
-            </div>
-            <p className="mt-3 text-sm font-semibold leading-6 text-muted">
-              История заказов, повтор закупки, настройки компании и документы.
-            </p>
-          </div>
-          <div className="rounded-card bg-coral-light p-5 shadow-sm">
-            <div className="flex items-center gap-3 text-burgundy">
-              <AdminIcon />
-              <p className="text-sm font-bold">Админ</p>
-            </div>
-            <p className="mt-3 text-sm font-semibold leading-6 text-burgundy/75">
-              Заказы, товары, оплаты, остатки и настройки маркетплейса.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-4">
+      <div className="mt-8 grid gap-4">
         {/* Client magic link */}
         <div className="rounded-card bg-white p-6 shadow-sm">
-          <p className="text-sm font-bold uppercase text-raspberry">Клиентский кабинет</p>
-          <h2 className="mt-3 text-2xl font-bold tracking-tight">Войти по WhatsApp</h2>
+          <h2 className="text-2xl font-bold tracking-tight">По номеру телефона</h2>
 
           {clientStep === "sent" ? (
             <div className="mt-5 rounded-xl bg-green-50 p-4">
@@ -399,8 +333,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
 
         {/* Admin form */}
         <form onSubmit={(e) => void handleAdminSubmit(e)} className="rounded-card bg-white p-6 shadow-sm">
-          <p className="text-sm font-bold uppercase text-muted">Для менеджеров</p>
-          <h2 className="mt-2 text-4xl font-bold tracking-tight">Email и пароль</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Email и пароль</h2>
           <div className="mt-4 space-y-3">
             <label className="block">
               <span className="text-sm font-bold text-dark">Email</span>

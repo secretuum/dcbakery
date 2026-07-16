@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { InstagramIcon, WhatsAppIcon } from "@/src/components/ui/BrandIcons";
 
 export const metadata: Metadata = {
   title: "Контакты и реквизиты — DC Bakery",
@@ -36,27 +37,31 @@ export default function ContactsPage() {
             <div className="rounded-card border border-black/5 bg-cream p-5 sm:col-span-2">
               <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Адрес</p>
               <p className="mt-2 text-sm font-semibold text-dark">
-                г. Алматы, ул. Утепова 31, блок 21, кв. 2377
+                г. Алматы, ул. Жамбыла 154
               </p>
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Телефон</p>
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Телефон / WhatsApp</p>
               <a
-                href="tel:+77477272650"
-                className="mt-2 block text-sm font-semibold text-dark hover:text-coral"
+                href="https://wa.me/77477272650"
+                className="mt-2 flex items-center gap-2 text-sm font-semibold text-dark hover:text-coral"
+                target="_blank"
+                rel="noopener noreferrer"
               >
+                <WhatsAppIcon className="h-4 w-4 shrink-0 text-coral" />
                 +7 747 727 2650
               </a>
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5">
-              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">WhatsApp</p>
+              <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Instagram</p>
               <a
-                href="https://wa.me/77477272650"
-                className="mt-2 block text-sm font-semibold text-dark hover:text-coral"
+                href="https://www.instagram.com/dcbakery"
+                className="mt-2 flex items-center gap-2 text-sm font-semibold text-dark hover:text-coral"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                +7 747 727 2650
+                <InstagramIcon className="h-4 w-4 shrink-0 text-coral" />
+                @dcbakery
               </a>
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5">

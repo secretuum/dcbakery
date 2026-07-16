@@ -1,10 +1,25 @@
 import Link from "next/link";
+import { InstagramIcon, WhatsAppIcon } from "@/src/components/ui/BrandIcons";
 
 const contactItems = [
-  { label: "Телефон", value: "+7 (705) 886-50-14", href: "tel:+77058865014" },
-  { label: "WhatsApp", value: "+7 (705) 886-50-14", href: "https://wa.me/77058865014" },
-  { label: "Адрес", value: process.env.DC_LEGAL_ADDRESS ?? "—", href: null },
-  { label: "Соцсети", value: "@dcbakery", href: null },
+  {
+    label: "Телефон / WhatsApp",
+    value: "+7 747 727 2650",
+    href: "https://wa.me/77477272650",
+    icon: WhatsAppIcon,
+  },
+  {
+    label: "Instagram",
+    value: "@dcbakery",
+    href: "https://www.instagram.com/dcbakery",
+    icon: InstagramIcon,
+  },
+  {
+    label: "Адрес",
+    value: process.env.DC_LEGAL_ADDRESS ?? "г. Алматы, ул. Жамбыла 154",
+    href: null,
+    icon: null,
+  },
 ];
 
 export function Footer() {
@@ -13,7 +28,7 @@ export function Footer() {
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[1.2fr_1.8fr] lg:px-8">
         <div>
           <Link href="/" className="inline-block" aria-label="DC Bakery">
-            <span className="font-display text-xl font-black uppercase tracking-[.12em] text-dark">
+            <span className="font-display text-xl font-bold uppercase tracking-[.12em] text-dark">
               DC BAKERY
             </span>
           </Link>
@@ -23,12 +38,18 @@ export function Footer() {
           </p>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {contactItems.map((item) => (
             <div key={item.label} className="border border-black/10 bg-cream p-4">
               <p className="text-[10px] font-bold uppercase tracking-[.1em] text-coral">{item.label}</p>
               {item.href ? (
-                <a className="mt-2 block text-sm font-semibold text-dark hover:text-coral" href={item.href}>
+                <a
+                  className="mt-2 flex items-center gap-2 text-sm font-semibold text-dark hover:text-coral"
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {item.icon ? <item.icon className="h-4 w-4 shrink-0" /> : null}
                   {item.value}
                 </a>
               ) : (

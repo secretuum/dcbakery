@@ -111,7 +111,7 @@ export default function PrivacyPage() {
             <h2 className="font-display text-lg font-semibold">12. Контакты Оператора</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>ИП Кошкаров Асылбек Касымбекович, ИИН/БИН 810127300096.</p>
-              <p>Адрес: г. Алматы, ул. Утепова 31, блок 21, кв. 2377.</p>
+              <p>Адрес: г. Алматы, ул. Жамбыла 154.</p>
               <p>
                 E-mail:{" "}
                 <a href="mailto:info@dc-bakery.kz" className="font-bold text-coral hover:underline">

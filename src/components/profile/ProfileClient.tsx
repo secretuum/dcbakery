@@ -85,12 +85,18 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
   const [adminError, setAdminError] = useState("");
   const [isAdminSubmitting, setIsAdminSubmitting] = useState(false);
 
-  // Client magic link section state
-  const [clientEmail, setClientEmail] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
-  const [clientCompany, setClientCompany] = useState("");
+  // Client login/registration state
+  const [clientLogin, setClientLogin] = useState("");
+  const [clientPassword, setClientPassword] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regCompany, setRegCompany] = useState("");
+  const [regBin, setRegBin] = useState("");
+  const [regName, setRegName] = useState("");
   const [clientError, setClientError] = useState("");
-  const [clientStep, setClientStep] = useState<"idle" | "sending" | "sent" | "needs_registration" | "registering">("idle");
+  const [clientNotice, setClientNotice] = useState("");
+  const [clientStep, setClientStep] = useState<"idle" | "signing_in" | "register" | "registering">("idle");
 
   async function handleAdminSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -132,53 +138,95 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
     }
   }
 
-  async function handleClientMagicLink() {
-    const phoneDigits = clientPhone.replace(/\D/g, "");
+  function openRegistration(prefillLogin?: string) {
+    if (prefillLogin) {
+      if (prefillLogin.includes("@")) {
+        setRegEmail(prefillLogin.trim().toLowerCase());
+      } else {
+        setRegPhone(prefillLogin.trim());
+      }
+    }
 
-    if (phoneDigits.length < 11) {
-      setClientError("Введите полный номер телефона WhatsApp");
+    setClientError("");
+    setClientStep("register");
+  }
+
+  async function handleClientLogin() {
+    if (!clientLogin.trim() || !clientPassword) {
+      setClientError("Введите логин и пароль");
       return;
     }
 
     setClientError("");
-    setClientStep("sending");
+    setClientStep("signing_in");
 
     try {
-      const response = await fetch("/api/profile/magic-link", {
+      const response = await fetch("/api/profile/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: clientPhone }),
+        body: JSON.stringify({ login: clientLogin.trim(), password: clientPassword }),
       });
 
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
-        needsRegistration?: boolean;
+        notRegistered?: boolean;
+        ok?: boolean;
+        email?: string;
+        phone?: string;
+        companyName?: string;
+        accountantPhone?: string;
       };
 
-      if (response.ok && data.needsRegistration) {
-        // Номер не найден — предлагаем зарегистрироваться по email
-        setClientStep("needs_registration");
+      if (response.ok && data.notRegistered) {
+        // Аккаунта нет в базе — не пропускаем и переводим на регистрацию
+        setClientNotice("Такой аккаунт не найден. Заполните регистрацию — и сразу попадёте в кабинет.");
+        openRegistration(clientLogin);
         return;
       }
 
-      if (!response.ok) {
-        setClientError(data.error ?? "Не удалось отправить ссылку");
+      if (!response.ok || !data.ok) {
+        setClientError(data.error ?? "Не удалось войти");
         setClientStep("idle");
         return;
       }
 
-      setClientStep("sent");
+      onLogin({
+        role: "client",
+        email: data.email ?? "",
+        phone: data.phone ?? "",
+        companyName: data.companyName ?? "",
+        accountant_phone: data.accountantPhone || undefined,
+        createdAt: "",
+      });
     } catch {
-      setClientError("Не удалось отправить ссылку. Проверьте соединение");
+      setClientError("Не удалось войти. Проверьте соединение");
       setClientStep("idle");
     }
   }
 
-  async function handleRegistration() {
-    const normalizedEmail = clientEmail.trim().toLowerCase();
-
-    if (!normalizedEmail.includes("@")) {
+  async function handleClientRegister() {
+    if (!regEmail.includes("@")) {
       setClientError("Введите корректный email");
+      return;
+    }
+
+    if (regPhone.replace(/\D/g, "").length < 11) {
+      setClientError("Введите полный номер телефона");
+      return;
+    }
+
+    if (regPassword.length < 8) {
+      setClientError("Пароль должен быть не короче 8 символов");
+      return;
+    }
+
+    if (!regCompany.trim()) {
+      setClientError("Укажите название компании");
+      return;
+    }
+
+    if (regBin.replace(/\D/g, "").length !== 12) {
+      setClientError("БИН/ИИН — 12 цифр");
       return;
     }
 
@@ -186,28 +234,43 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
     setClientStep("registering");
 
     try {
-      const response = await fetch("/api/profile/magic-link", {
+      const response = await fetch("/api/profile/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: normalizedEmail,
-          phone: clientPhone,
-          companyName: clientCompany,
+          email: regEmail.trim().toLowerCase(),
+          phone: regPhone,
+          password: regPassword,
+          companyName: regCompany,
+          customerBin: regBin,
+          customerName: regName,
         }),
       });
 
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        ok?: boolean;
+        email?: string;
+        phone?: string;
+        companyName?: string;
+      };
 
-      if (!response.ok) {
+      if (!response.ok || !data.ok) {
         setClientError(data.error ?? "Не удалось создать аккаунт");
-        setClientStep("needs_registration");
+        setClientStep("register");
         return;
       }
 
-      setClientStep("sent");
+      onLogin({
+        role: "client",
+        email: data.email ?? "",
+        phone: data.phone ?? "",
+        companyName: data.companyName ?? "",
+        createdAt: "",
+      });
     } catch {
-      setClientError("Не удалось отправить ссылку. Проверьте соединение");
-      setClientStep("needs_registration");
+      setClientError("Не удалось создать аккаунт. Проверьте соединение");
+      setClientStep("register");
     }
   }
 
@@ -219,26 +282,16 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       </h1>
 
       <div className="mt-8 grid gap-4">
-        {/* Client magic link */}
+        {/* Client login / registration */}
         <div className="rounded-card bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-bold tracking-tight">По номеру телефона</h2>
-
-          {clientStep === "sent" ? (
-            <div className="mt-5 rounded-xl bg-green-50 p-4">
-              <p className="text-sm font-bold text-green-700">Ссылка отправлена в WhatsApp</p>
-              <p className="mt-1 text-sm font-semibold text-green-600/80">
-                Откройте WhatsApp и перейдите по ссылке. Она действует 15 минут.
-              </p>
-            </div>
-          ) : clientStep === "needs_registration" || clientStep === "registering" ? (
+          {clientStep === "register" || clientStep === "registering" ? (
             <>
-              <div className="mt-4 rounded-xl border border-coral/20 bg-coral-light px-4 py-3">
-                <p className="text-xs font-bold uppercase text-burgundy">Новый партнёр</p>
-                <p className="mt-1 text-sm font-semibold text-dark/80">
-                  Номер <span className="font-bold">{clientPhone}</span> ещё не зарегистрирован.
-                  Укажите email для регистрации — дальше вход будет просто по номеру.
-                </p>
-              </div>
+              <h2 className="text-2xl font-bold tracking-tight">Регистрация</h2>
+              {clientNotice ? (
+                <div className="mt-4 rounded-xl border border-coral/20 bg-coral-light px-4 py-3">
+                  <p className="text-sm font-semibold text-dark/80">{clientNotice}</p>
+                </div>
+              ) : null}
               <div className="mt-4 space-y-3">
                 <label className="block">
                   <span className="text-sm font-bold text-dark">Email</span>
@@ -246,25 +299,65 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                     className="mt-2"
                     inputMode="email"
                     type="email"
-                    value={clientEmail}
-                    onChange={(e) => setClientEmail(e.currentTarget.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void handleRegistration();
-                      }
-                    }}
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.currentTarget.value)}
                     placeholder="company@example.com"
                     autoFocus
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-bold text-dark">Телефон WhatsApp</span>
+                  <Input
+                    className="mt-2"
+                    inputMode="tel"
+                    type="tel"
+                    value={regPhone}
+                    onChange={(e) => setRegPhone(e.currentTarget.value)}
+                    placeholder="+7 (747) 000-00-00"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-bold text-dark">Пароль</span>
+                  <Input
+                    className="mt-2"
+                    type="password"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.currentTarget.value)}
+                    placeholder="Минимум 8 символов"
                   />
                 </label>
                 <label className="block">
                   <span className="text-sm font-bold text-dark">Компания / заведение</span>
                   <Input
                     className="mt-2"
-                    value={clientCompany}
-                    onChange={(e) => setClientCompany(e.currentTarget.value)}
+                    value={regCompany}
+                    onChange={(e) => setRegCompany(e.currentTarget.value)}
                     placeholder="Название компании"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-bold text-dark">БИН / ИИН</span>
+                  <Input
+                    className="mt-2"
+                    inputMode="numeric"
+                    value={regBin}
+                    onChange={(e) => setRegBin(e.currentTarget.value)}
+                    placeholder="12 цифр"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-bold text-dark">Контактное лицо</span>
+                  <Input
+                    className="mt-2"
+                    value={regName}
+                    onChange={(e) => setRegName(e.currentTarget.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void handleClientRegister();
+                      }
+                    }}
+                    placeholder="Имя и фамилия"
                   />
                 </label>
               </div>
@@ -276,9 +369,9 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   type="button"
                   disabled={clientStep === "registering"}
                   className="flex-1"
-                  onClick={() => void handleRegistration()}
+                  onClick={() => void handleClientRegister()}
                 >
-                  {clientStep === "registering" ? "Создаём аккаунт..." : "Создать и войти"}
+                  {clientStep === "registering" ? "Создаём аккаунт..." : "Зарегистрироваться"}
                 </Button>
                 <Button
                   type="button"
@@ -286,6 +379,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   onClick={() => {
                     setClientStep("idle");
                     setClientError("");
+                    setClientNotice("");
                   }}
                 >
                   Назад
@@ -294,39 +388,55 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
             </>
           ) : (
             <>
-              <div className="mt-5">
+              <h2 className="text-2xl font-bold tracking-tight">Вход</h2>
+              <div className="mt-4 space-y-3">
                 <label className="block">
-                  <span className="text-sm font-bold text-dark">Номер WhatsApp</span>
+                  <span className="text-sm font-bold text-dark">Почта или номер телефона</span>
                   <Input
                     className="mt-2"
-                    inputMode="tel"
-                    type="tel"
-                    value={clientPhone}
-                    onChange={(e) => setClientPhone(e.currentTarget.value)}
+                    value={clientLogin}
+                    onChange={(e) => setClientLogin(e.currentTarget.value)}
+                    placeholder="company@example.com или +7 (747) 000-00-00"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-sm font-bold text-dark">Пароль</span>
+                  <Input
+                    className="mt-2"
+                    type="password"
+                    value={clientPassword}
+                    onChange={(e) => setClientPassword(e.currentTarget.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        void handleClientMagicLink();
+                        void handleClientLogin();
                       }
                     }}
-                    placeholder="+7 (747) 000-00-00"
+                    placeholder="••••••••"
                   />
                 </label>
-                <p className="mt-2 text-xs font-semibold leading-5 text-muted">
-                  Ссылка для входа придёт в WhatsApp на этот номер.
-                </p>
               </div>
               {clientError ? (
                 <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
               ) : null}
-              <Button
-                type="button"
-                disabled={clientStep === "sending"}
-                className="mt-5 w-full"
-                onClick={() => void handleClientMagicLink()}
-              >
-                {clientStep === "sending" ? "Проверяем..." : "Войти по WhatsApp"}
-              </Button>
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <Button
+                  type="button"
+                  disabled={clientStep === "signing_in"}
+                  className="flex-1"
+                  onClick={() => void handleClientLogin()}
+                >
+                  {clientStep === "signing_in" ? "Проверяем..." : "Войти"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => openRegistration()}
+                >
+                  Зарегистрироваться
+                </Button>
+              </div>
             </>
           )}
         </div>

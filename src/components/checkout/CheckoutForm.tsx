@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT } from "@/app/constants";
@@ -29,12 +29,57 @@ type CheckoutFormErrors = Partial<Record<keyof CheckoutFormState, string>>;
 const fieldClassName =
   "min-h-12 w-full rounded-btn border border-black/10 bg-white px-4 py-3 text-sm font-medium text-dark outline-none transition placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/25";
 
-function getTomorrowDate() {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
+const ORDER_CUTOFF_HOUR = 18;
+const DELIVERY_WINDOW_DAYS = 14;
+
+function toDateString(input: Date) {
+  const date = new Date(input);
   date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
   return date.toISOString().slice(0, 10);
 }
+
+// Заявки после 18:00 обрабатываются на следующий день; воскресенье — выходной
+function getFirstDeliveryDate() {
+  const now = new Date();
+  const first = new Date(now);
+  first.setDate(first.getDate() + (now.getHours() >= ORDER_CUTOFF_HOUR ? 2 : 1));
+  while (first.getDay() === 0) {
+    first.setDate(first.getDate() + 1);
+  }
+  return first;
+}
+
+type DeliveryDateOption = {
+  value: string;
+  isSunday: boolean;
+  weekdayLabel: string;
+  dayLabel: string;
+};
+
+const weekdayFormat = new Intl.DateTimeFormat("ru-RU", { weekday: "short" });
+const dayFormat = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" });
+
+function getDeliveryDateOptions(): DeliveryDateOption[] {
+  const first = getFirstDeliveryDate();
+
+  return Array.from({ length: DELIVERY_WINDOW_DAYS }, (_, i) => {
+    const date = new Date(first);
+    date.setDate(first.getDate() + i);
+
+    return {
+      value: toDateString(date),
+      isSunday: date.getDay() === 0,
+      weekdayLabel: weekdayFormat.format(date),
+      dayLabel: dayFormat.format(date).replace(".", ""),
+    };
+  });
+}
+
+function isSundayDate(value: string) {
+  return new Date(`${value}T00:00:00`).getDay() === 0;
+}
+
+const emptySubscribe = () => () => {};
 
 function formatPhone(value: string) {
   const digits = value.replace(/\D/g, "");
@@ -79,7 +124,7 @@ function formatPhone(value: string) {
 function validateForm(form: CheckoutFormState) {
   const errors: CheckoutFormErrors = {};
   const phoneDigits = form.customer_phone.replace(/\D/g, "");
-  const tomorrow = getTomorrowDate();
+  const minDeliveryDate = toDateString(getFirstDeliveryDate());
 
   if (!form.company_name.trim()) {
     errors.company_name = "Укажите название компании или заведения";
@@ -95,8 +140,10 @@ function validateForm(form: CheckoutFormState) {
 
   if (!form.delivery_date) {
     errors.delivery_date = "Выберите дату доставки";
-  } else if (form.delivery_date < tomorrow) {
-    errors.delivery_date = "Дата должна быть не раньше завтра";
+  } else if (isSundayDate(form.delivery_date)) {
+    errors.delivery_date = "Воскресенье — выходной, выберите другой день";
+  } else if (form.delivery_date < minDeliveryDate) {
+    errors.delivery_date = "Эта дата уже недоступна, выберите более позднюю";
   }
 
   if (!form.oferta_accepted) {
@@ -118,7 +165,14 @@ export function CheckoutForm() {
   const router = useRouter();
   const { clear, isReady, items, totalAmount, totalItems } = useCart();
   const { showToast } = useToast();
-  const tomorrow = useMemo(() => getTomorrowDate(), []);
+  // Даты считаем только на клиенте: страница пререндерится статически, и дата из билда
+  // не совпала бы с датой клиента при гидрации
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const deliveryOptions = useMemo(
+    () => (isMounted ? getDeliveryDateOptions() : null),
+    [isMounted],
+  );
+  const firstAvailableDate = deliveryOptions?.find((option) => !option.isSunday)?.value ?? "";
   const hasQuoteItems = items.some((item) => item.product.price <= 0);
   const canCheckout = totalAmount >= MIN_ORDER_AMOUNT;
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
@@ -131,7 +185,7 @@ export function CheckoutForm() {
     customer_name: "",
     customer_phone: "",
     delivery_address: "",
-    delivery_date: tomorrow,
+    delivery_date: "",
     delivery_time: "День 12-18",
     payment_method: "Выставить счет",
     comment: "",
@@ -144,6 +198,9 @@ export function CheckoutForm() {
     }
   }, [isReady, items.length, router]);
 
+  // Пока пользователь не выбрал дату сам — подставляется ближайшая доступная
+  const selectedDeliveryDate = form.delivery_date || firstAvailableDate;
+
   function updateField<Field extends keyof CheckoutFormState>(
     field: Field,
     value: CheckoutFormState[Field],
@@ -155,7 +212,8 @@ export function CheckoutForm() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const nextErrors = validateForm(form);
+    const submission = { ...form, delivery_date: selectedDeliveryDate };
+    const nextErrors = validateForm(submission);
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -177,7 +235,7 @@ export function CheckoutForm() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          ...form,
+          ...submission,
           items: items.map((item) => ({
             price: item.product.price,
             product_id: item.product.id,
@@ -336,17 +394,47 @@ export function CheckoutForm() {
                 />
               </label>
 
-              <label className="block">
+              <div className="sm:col-span-2">
                 <span className="text-sm font-semibold text-dark">Дата доставки</span>
-                <Input
-                  className="mt-2"
-                  min={tomorrow}
-                  type="date"
-                  value={form.delivery_date}
-                  onChange={(event) => updateField("delivery_date", event.currentTarget.value)}
-                />
+                {deliveryOptions ? (
+                  <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto pb-1">
+                    {deliveryOptions.map((option) => {
+                      const isSelected = selectedDeliveryDate === option.value;
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          disabled={option.isSunday}
+                          onClick={() => updateField("delivery_date", option.value)}
+                          aria-pressed={isSelected}
+                          title={option.isSunday ? "Воскресенье — выходной" : undefined}
+                          className={`flex min-w-16 shrink-0 flex-col items-center rounded-btn border px-3 py-2 transition ${
+                            isSelected
+                              ? "border-coral bg-coral text-white"
+                              : option.isSunday
+                                ? "cursor-not-allowed border-black/5 bg-black/5 text-muted/50 line-through"
+                                : "border-black/10 bg-white text-dark hover:border-coral"
+                          }`}
+                        >
+                          <span className="text-[10px] font-semibold uppercase tracking-[.08em]">
+                            {option.weekdayLabel}
+                          </span>
+                          <span className="mt-0.5 whitespace-nowrap text-sm font-semibold">
+                            {option.dayLabel}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="mt-2 h-[3.75rem] rounded-btn border border-black/5 bg-black/5" />
+                )}
+                <p className="mt-2 text-xs font-semibold leading-5 text-muted">
+                  Приём заявок до 18:00, после — обработка на следующий день. Воскресенье — выходной.
+                </p>
                 <FieldError>{errors.delivery_date}</FieldError>
-              </label>
+              </div>
 
               <label className="block">
                 <span className="text-sm font-semibold text-dark">Время</span>
@@ -450,7 +538,7 @@ export function CheckoutForm() {
               </div>
               <div className="flex items-end justify-between gap-4 border-t border-black/10 pt-4">
                 <span className="text-muted">Итого</span>
-                <span className="font-data text-xl font-bold text-coral">{formatPrice(totalAmount)}</span>
+                <span className="font-data text-xl font-semibold text-coral">{formatPrice(totalAmount)}</span>
               </div>
             </div>
 

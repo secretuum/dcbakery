@@ -82,6 +82,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Сервис входа недоступен. Попробуйте позже." }, { status: 503 });
   }
 
+  if (check === "unconfirmed") {
+    return NextResponse.json(
+      { error: "Почта не подтверждена. Откройте письмо со ссылкой подтверждения и попробуйте снова." },
+      { status: 403 },
+    );
+  }
+
   if (check === "invalid") {
     return NextResponse.json(
       { error: "Неверный логин или пароль. Если вы ещё не создавали пароль — зарегистрируйтесь." },

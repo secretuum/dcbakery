@@ -6,7 +6,7 @@ import {
   fetchWhatsAppClientByChatId,
   saveWhatsAppClientProfile,
 } from "@/src/lib/whatsapp-client-store";
-import { createClientAuthUser } from "@/src/lib/client-auth";
+import { signUpClientAuthUser } from "@/src/lib/client-auth";
 import {
   signClientSession,
   CLIENT_SESSION_COOKIE,
@@ -103,7 +103,12 @@ export async function POST(request: Request) {
     );
   }
 
-  const created = await createClientAuthUser(email, password);
+  const siteUrl = (
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    `https://${request.headers.get("host") ?? "localhost:3000"}`
+  ).replace(/\/$/, "");
+
+  const created = await signUpClientAuthUser(email, password, `${siteUrl}/profile`);
 
   if (created === "unavailable") {
     return NextResponse.json(
@@ -135,7 +140,12 @@ export async function POST(request: Request) {
     );
   }
 
-  // Сразу пропускаем в личный кабинет
+  // Почта требует подтверждения — в кабинет пустим после клика по ссылке из письма
+  if (created === "created_unconfirmed") {
+    return NextResponse.json({ ok: true, needsEmailConfirm: true, email });
+  }
+
+  // Подтверждение выключено в Supabase — сразу пропускаем в личный кабинет
   const payload: ClientSessionPayload = {
     email,
     phone,

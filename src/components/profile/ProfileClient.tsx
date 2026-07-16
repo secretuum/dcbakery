@@ -94,9 +94,12 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
   const [regCompany, setRegCompany] = useState("");
   const [regBin, setRegBin] = useState("");
   const [regName, setRegName] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
   const [clientError, setClientError] = useState("");
   const [clientNotice, setClientNotice] = useState("");
-  const [clientStep, setClientStep] = useState<"idle" | "signing_in" | "register" | "registering">("idle");
+  const [clientStep, setClientStep] = useState<
+    "idle" | "signing_in" | "register" | "registering" | "confirm_sent" | "forgot" | "sending_reset" | "reset_sent"
+  >("idle");
 
   async function handleAdminSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -250,6 +253,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
         ok?: boolean;
+        needsEmailConfirm?: boolean;
         email?: string;
         phone?: string;
         companyName?: string;
@@ -258,6 +262,12 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       if (!response.ok || !data.ok) {
         setClientError(data.error ?? "Не удалось создать аккаунт");
         setClientStep("register");
+        return;
+      }
+
+      if (data.needsEmailConfirm) {
+        // Аккаунт создан, но почту нужно подтвердить по письму
+        setClientStep("confirm_sent");
         return;
       }
 
@@ -274,6 +284,37 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
     }
   }
 
+  async function handleForgotPassword() {
+    if (!resetEmail.includes("@")) {
+      setClientError("Введите email, указанный при регистрации");
+      return;
+    }
+
+    setClientError("");
+    setClientStep("sending_reset");
+
+    try {
+      const response = await fetch("/api/profile/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetEmail.trim().toLowerCase() }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as { error?: string; ok?: boolean };
+
+      if (!response.ok || !data.ok) {
+        setClientError(data.error ?? "Не удалось отправить письмо");
+        setClientStep("forgot");
+        return;
+      }
+
+      setClientStep("reset_sent");
+    } catch {
+      setClientError("Не удалось отправить письмо. Проверьте соединение");
+      setClientStep("forgot");
+    }
+  }
+
   return (
     <section className="mx-auto max-w-md">
       <p className="text-sm font-bold uppercase text-raspberry">Профиль</p>
@@ -284,7 +325,100 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       <div className="mt-8 grid gap-4">
         {/* Client login / registration */}
         <div className="rounded-card bg-white p-6 shadow-sm">
-          {clientStep === "register" || clientStep === "registering" ? (
+          {clientStep === "confirm_sent" ? (
+            <>
+              <h2 className="text-2xl font-bold tracking-tight">Подтвердите почту</h2>
+              <div className="mt-4 rounded-xl bg-green-50 p-4">
+                <p className="text-sm font-bold text-green-700">Аккаунт создан</p>
+                <p className="mt-1 text-sm font-semibold text-green-600/80">
+                  Мы отправили письмо на <span className="font-bold">{regEmail}</span>.
+                  Перейдите по ссылке из письма, затем войдите с паролем.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-5 w-full"
+                onClick={() => {
+                  setClientStep("idle");
+                  setClientError("");
+                  setClientNotice("");
+                }}
+              >
+                К форме входа
+              </Button>
+            </>
+          ) : clientStep === "reset_sent" ? (
+            <>
+              <h2 className="text-2xl font-bold tracking-tight">Проверьте почту</h2>
+              <div className="mt-4 rounded-xl bg-green-50 p-4">
+                <p className="text-sm font-bold text-green-700">Письмо отправлено</p>
+                <p className="mt-1 text-sm font-semibold text-green-600/80">
+                  Если почта <span className="font-bold">{resetEmail}</span> зарегистрирована,
+                  на неё придёт ссылка для установки нового пароля.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-5 w-full"
+                onClick={() => {
+                  setClientStep("idle");
+                  setClientError("");
+                }}
+              >
+                К форме входа
+              </Button>
+            </>
+          ) : clientStep === "forgot" || clientStep === "sending_reset" ? (
+            <>
+              <h2 className="text-2xl font-bold tracking-tight">Сброс пароля</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+                Укажите почту, на которую регистрировались, — пришлём ссылку для нового пароля.
+              </p>
+              <label className="mt-4 block">
+                <span className="text-sm font-bold text-dark">Email</span>
+                <Input
+                  className="mt-2"
+                  inputMode="email"
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void handleForgotPassword();
+                    }
+                  }}
+                  placeholder="company@example.com"
+                  autoFocus
+                />
+              </label>
+              {clientError ? (
+                <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
+              ) : null}
+              <div className="mt-5 flex gap-3">
+                <Button
+                  type="button"
+                  disabled={clientStep === "sending_reset"}
+                  className="flex-1"
+                  onClick={() => void handleForgotPassword()}
+                >
+                  {clientStep === "sending_reset" ? "Отправляем..." : "Отправить письмо"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setClientStep("idle");
+                    setClientError("");
+                  }}
+                >
+                  Назад
+                </Button>
+              </div>
+            </>
+          ) : clientStep === "register" || clientStep === "registering" ? (
             <>
               <h2 className="text-2xl font-bold tracking-tight">Регистрация</h2>
               {clientNotice ? (
@@ -437,6 +571,19 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   Зарегистрироваться
                 </Button>
               </div>
+              <button
+                type="button"
+                className="mt-4 text-sm font-semibold text-muted underline-offset-2 hover:text-dark hover:underline"
+                onClick={() => {
+                  if (clientLogin.includes("@")) {
+                    setResetEmail(clientLogin.trim().toLowerCase());
+                  }
+                  setClientError("");
+                  setClientStep("forgot");
+                }}
+              >
+                Забыли пароль?
+              </button>
             </>
           )}
         </div>

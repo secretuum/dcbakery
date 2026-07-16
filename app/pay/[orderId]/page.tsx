@@ -118,55 +118,55 @@ export default async function PayPage({ params }: PayPageProps) {
 
   return (
     <main className="min-h-screen bg-cream px-5 py-10 text-dark lg:px-8 lg:py-16">
-      <section className="mx-auto max-w-4xl rounded-card bg-white p-5 shadow-sm sm:p-8 lg:p-10">
+      <section className="mx-auto max-w-4xl rounded-card border border-black/10 bg-white p-5 sm:p-8 lg:p-10">
         {order.status === "pending_manager_confirmation" || order.status === "new" ? (
           <PaymentStatusRefresh />
         ) : null}
-        <p className="text-sm font-black uppercase text-raspberry">{state.eyebrow}</p>
-        <h1 className="mt-3 break-all text-3xl font-black tracking-tight sm:text-5xl">
+        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{state.eyebrow}</p>
+        <h1 className="mt-3 break-all font-data text-3xl font-bold tracking-tight sm:text-5xl">
           {order.order_number}
         </h1>
-        <p className="mt-4 text-base font-semibold leading-7 text-muted">{state.text}</p>
+        <p className="mt-4 text-base leading-7 text-muted">{state.text}</p>
 
         {isDemoMode ? (
-          <p className="mt-5 rounded-btn bg-coral-light px-4 py-3 text-sm font-bold text-burgundy">
+          <p className="mt-5 rounded-btn bg-coral-light px-4 py-3 text-sm font-semibold text-burgundy">
             Демо-режим: реквизиты и платежи тестовые, реальные деньги не используются.
           </p>
         ) : null}
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-btn bg-cream px-4 py-3">
-            <p className="text-xs font-semibold uppercase text-muted">Сумма</p>
-            <p className="mt-1 text-xl font-black">{formatPrice(order.total_amount)}</p>
+          <div className="rounded-btn border border-black/5 bg-cream px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Сумма</p>
+            <p className="mt-1 font-data text-xl font-bold">{formatPrice(order.total_amount)}</p>
           </div>
-          <div className="rounded-btn bg-cream px-4 py-3">
-            <p className="text-xs font-semibold uppercase text-muted">Статус</p>
-            <p className="mt-1 text-sm font-black">{orderStatusLabels[order.status]}</p>
+          <div className="rounded-btn border border-black/5 bg-cream px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Статус</p>
+            <p className="mt-1 text-sm font-semibold">{orderStatusLabels[order.status]}</p>
           </div>
-          <div className="rounded-btn bg-cream px-4 py-3">
-            <p className="text-xs font-semibold uppercase text-muted">Оплата</p>
-            <p className="mt-1 text-sm font-black">
+          <div className="rounded-btn border border-black/5 bg-cream px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Оплата</p>
+            <p className="mt-1 text-sm font-semibold">
               {order.payment_status ? paymentStatusLabels[order.payment_status] : "Не оплачен"}
             </p>
           </div>
         </div>
 
         {orderItems.length > 0 ? (
-          <section className="mt-8 rounded-card bg-cream p-5">
-            <p className="text-xs font-black uppercase text-raspberry">Состав заказа</p>
+          <section className="mt-8 rounded-card border border-black/5 bg-cream p-5">
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Состав заказа</p>
             <ul className="mt-4 space-y-2">
               {orderItems.map((item) => (
                 <li
                   key={item.id}
-                  className="flex items-baseline justify-between gap-3 rounded-btn bg-white px-4 py-3 text-sm"
+                  className="flex items-baseline justify-between gap-3 rounded-btn border border-black/5 bg-white px-4 py-3 text-sm"
                 >
-                  <span className="font-bold text-dark">
+                  <span className="font-semibold text-dark">
                     {item.product_name}{" "}
-                    <span className="font-semibold text-muted">
+                    <span className="font-data text-muted">
                       × {item.qty} {item.unit}
                     </span>
                   </span>
-                  <span className="shrink-0 font-black text-dark">
+                  <span className="shrink-0 font-data font-bold text-dark">
                     {formatPrice(item.total_amount)}
                   </span>
                 </li>
@@ -175,61 +175,61 @@ export default async function PayPage({ params }: PayPageProps) {
           </section>
         ) : null}
 
-        <section className="mt-8 rounded-card bg-cream p-5">
-          <p className="text-xs font-black uppercase text-raspberry">Документы</p>
+        <section className="mt-8 rounded-card border border-black/5 bg-cream p-5">
+          <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Документы</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-btn bg-white p-4">
-              <p className="text-lg font-black">Счет на оплату</p>
-              <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+            <div className="rounded-btn border border-black/5 bg-white p-4">
+              <p className="font-display text-base font-semibold">Счет на оплату</p>
+              <p className="mt-2 text-sm leading-6 text-muted">
                 Формируется после подтверждения менеджером.
               </p>
               {invoiceAvailable ? (
                 <Link
-                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn bg-coral px-4 py-2 text-sm font-black text-white"
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn border border-coral bg-coral px-4 py-2 text-sm font-bold text-white transition hover:bg-coral-hover"
                   href={`/documents/invoice/${order.id}`}
                 >
                   Открыть счет
                 </Link>
               ) : (
-                <p className="mt-4 text-sm font-black text-burgundy">
+                <p className="mt-4 text-sm font-semibold text-burgundy">
                   {hasCompanyDetails ? "Ждет подтверждения" : "Реквизиты настраиваются"}
                 </p>
               )}
             </div>
 
-            <div className="rounded-btn bg-white p-4">
-              <p className="text-lg font-black">Накладная</p>
-              <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+            <div className="rounded-btn border border-black/5 bg-white p-4">
+              <p className="font-display text-base font-semibold">Накладная</p>
+              <p className="mt-2 text-sm leading-6 text-muted">
                 Товарная накладная для бухгалтерии.
               </p>
               {naklAvailable ? (
                 <Link
-                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn bg-dark px-4 py-2 text-sm font-black text-white"
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn border border-dark bg-dark px-4 py-2 text-sm font-bold text-white transition hover:bg-dark/80"
                   href={`/documents/nakl/${order.id}`}
                 >
                   Открыть накладную
                 </Link>
               ) : (
-                <p className="mt-4 text-sm font-black text-burgundy">
+                <p className="mt-4 text-sm font-semibold text-burgundy">
                   {hasCompanyDetails ? "Ждет подтверждения" : "Реквизиты настраиваются"}
                 </p>
               )}
             </div>
 
-            <div className="rounded-btn bg-white p-4">
-              <p className="text-lg font-black">АВР</p>
-              <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+            <div className="rounded-btn border border-black/5 bg-white p-4">
+              <p className="font-display text-base font-semibold">АВР</p>
+              <p className="mt-2 text-sm leading-6 text-muted">
                 Акт выполненных работ — доступен после завершения заказа.
               </p>
               {avrAvailable ? (
                 <Link
-                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn bg-dark px-4 py-2 text-sm font-black text-white"
+                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn border border-dark bg-dark px-4 py-2 text-sm font-bold text-white transition hover:bg-dark/80"
                   href={`/documents/avr/${order.id}`}
                 >
                   Открыть АВР
                 </Link>
               ) : (
-                <p className="mt-4 text-sm font-black text-burgundy">После завершения заказа</p>
+                <p className="mt-4 text-sm font-semibold text-burgundy">После завершения заказа</p>
               )}
             </div>
           </div>
@@ -245,7 +245,7 @@ export default async function PayPage({ params }: PayPageProps) {
         ) : null}
 
         {order.payment_status === "failed" ? (
-          <p className="mt-6 rounded-btn bg-raspberry/10 px-4 py-3 text-sm font-bold text-raspberry">
+          <p className="mt-6 rounded-btn bg-raspberry/10 px-4 py-3 text-sm font-semibold text-raspberry">
             Последняя попытка оплаты не прошла. Деньги не списаны, попробуйте еще раз.
           </p>
         ) : null}
@@ -254,14 +254,14 @@ export default async function PayPage({ params }: PayPageProps) {
           {isExternalPaymentUrl ? (
             <a
               href={order.payment_url ?? "#"}
-              className="inline-flex min-h-12 items-center justify-center rounded-btn bg-coral px-5 py-3 text-sm font-black text-white transition hover:bg-coral-hover"
+              className="inline-flex min-h-12 items-center justify-center rounded-btn border border-coral bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
             >
               Оплатить
             </a>
           ) : null}
           <Link
             href="/catalog"
-            className="inline-flex min-h-12 items-center justify-center rounded-btn bg-coral-light px-5 py-3 text-sm font-black text-burgundy transition hover:bg-white"
+            className="inline-flex min-h-12 items-center justify-center rounded-btn border border-black/15 bg-white px-5 py-3 text-sm font-semibold text-dark transition hover:bg-black/5"
           >
             Вернуться в каталог
           </Link>

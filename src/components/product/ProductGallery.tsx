@@ -14,7 +14,7 @@ export function ProductGallery({ alt, images }: ProductGalleryProps) {
 
   return (
     <div className="space-y-4">
-      <div className="relative aspect-square overflow-hidden rounded-2xl bg-coral-light shadow-sm">
+      <div className="relative aspect-square overflow-hidden rounded-card border border-black/10 bg-cream">
         <FallbackImage
           src={activeImage}
           alt={alt}

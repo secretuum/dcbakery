@@ -40,15 +40,15 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
   }
 
   return (
-    <div className="rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+    <div className="rounded-card border border-black/10 bg-white p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-black uppercase text-muted">Количество</p>
-          <p className="mt-1 text-sm font-semibold text-muted">
+          <p className="font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">Количество</p>
+          <p className="mt-1 text-sm text-muted">
             Минимум {product.min_qty} {product.unit}
           </p>
         </div>
-        <p className="rounded-badge bg-coral-light px-3 py-1 text-xs font-black text-coral">
+        <p className="rounded-badge bg-coral-light px-3 py-1 font-data text-xs font-semibold text-coral">
           {product.stock_qty} {product.unit} в наличии
         </p>
       </div>
@@ -64,13 +64,13 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
         value={qty}
       />
 
-      <div className="mt-5 flex items-end justify-between gap-4 rounded-btn bg-cream px-4 py-3">
-        <span className="text-sm font-bold text-muted">Итого</span>
-        <span className="text-xl font-black text-coral">{totalText}</span>
+      <div className="mt-5 flex items-end justify-between gap-4 rounded-btn border border-black/5 bg-cream px-4 py-3">
+        <span className="text-sm font-semibold text-muted">Итого</span>
+        <span className="font-data text-xl font-bold text-coral">{totalText}</span>
       </div>
 
       {!isInStock && cartQty >= product.stock_qty ? (
-        <p className="mt-4 text-sm font-bold text-burgundy">
+        <p className="mt-4 text-sm font-semibold text-burgundy">
           В корзине уже весь доступный остаток.
         </p>
       ) : null}

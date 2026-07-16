@@ -65,25 +65,25 @@ export default async function ProductPage({ params }: ProductPageProps) {
           <div className="flex flex-wrap items-center gap-3">
             <Link
               href={categoryHref}
-              className="rounded-badge bg-white px-3 py-1 text-xs font-black text-muted shadow-sm transition hover:bg-coral-light hover:text-dark"
+              className="rounded-badge border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-muted transition hover:bg-black/5 hover:text-dark"
             >
               {product.category?.name ?? "Каталог"}
             </Link>
             <Badge variant="burgundy">B2B</Badge>
           </div>
 
-          <h1 className="mt-5 break-words text-2xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
+          <h1 className="mt-5 break-words font-display text-2xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
             {product.name}
           </h1>
-          <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-muted">
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-muted">
             {product.description}
           </p>
 
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             {details.map(([label, value]) => (
-              <div key={label} className="rounded-card bg-white p-4 shadow-sm">
-                <p className="text-xs font-black uppercase text-muted">{label}</p>
-                <p className="mt-2 text-lg font-black text-dark">{value}</p>
+              <div key={label} className="rounded-card border border-black/10 bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{label}</p>
+                <p className="mt-2 text-base font-semibold text-dark">{value}</p>
               </div>
             ))}
           </div>

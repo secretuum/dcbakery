@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 import { createMagicLinkToken, fetchWhatsAppClientByEmail } from "@/src/lib/magic-link-store";
 import { sendGreenApiTextMessage, getWhatsAppChatIdFromPhone } from "@/src/lib/whatsapp";
-import { saveWhatsAppClientProfile } from "@/src/lib/whatsapp-client-store";
+import { fetchWhatsAppClientByChatId, saveWhatsAppClientProfile } from "@/src/lib/whatsapp-client-store";
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
 const TOKEN_TTL_MS = 15 * 60 * 1000;
@@ -41,41 +41,53 @@ export async function POST(request: Request) {
   const phone = asString(raw.phone);
   const companyName = asString(raw.companyName);
 
-  if (!EMAIL_RE.test(email)) {
-    return NextResponse.json({ error: "Введите корректный email" }, { status: 400 });
+  // Телефон — основной идентификатор входа
+  const phoneDigits = phone.replace(/\D/g, "");
+  if (phoneDigits.length < 11) {
+    return NextResponse.json(
+      { error: "Введите полный номер телефона" },
+      { status: 422 },
+    );
   }
 
-  // Look up existing client by email
-  const existingClient = await fetchWhatsAppClientByEmail(email).catch(() => null);
-  let chatId: string | null = existingClient?.chat_id ?? null;
-
+  const chatId = getWhatsAppChatIdFromPhone(phone);
   if (!chatId) {
-    // New client — need phone to register
-    if (!phone) {
+    return NextResponse.json({ error: "Неверный номер телефона" }, { status: 422 });
+  }
+
+  const profile = await fetchWhatsAppClientByChatId(chatId).catch(() => null);
+  const storedEmail = profile?.customerEmail?.trim().toLowerCase() ?? "";
+  let tokenEmail: string;
+
+  if (EMAIL_RE.test(storedEmail)) {
+    // Клиент прошёл полную регистрацию — входит просто по номеру.
+    // Почту из запроса игнорируем: перепривязать email существующего клиента отсюда нельзя.
+    tokenEmail = storedEmail;
+  } else {
+    // Номер не найден (или профиль без почты) — нужна регистрация с email
+    if (!email) {
       // Tell the UI to show the registration form
       return NextResponse.json({ needsRegistration: true });
     }
 
-    const phoneDigits = phone.replace(/\D/g, "");
-    if (phoneDigits.length < 11) {
+    if (!EMAIL_RE.test(email)) {
+      return NextResponse.json({ error: "Введите корректный email" }, { status: 400 });
+    }
+
+    const emailOwner = await fetchWhatsAppClientByEmail(email).catch(() => null);
+    if (emailOwner && emailOwner.chat_id !== chatId) {
       return NextResponse.json(
-        { error: "Введите корректный номер телефона" },
+        { error: "Этот email уже привязан к другому номеру" },
         { status: 422 },
       );
     }
 
-    chatId = getWhatsAppChatIdFromPhone(phone);
-    if (!chatId) {
-      return NextResponse.json({ error: "Неверный номер телефона" }, { status: 422 });
-    }
-
-    // Create a free-client record in whatsapp_clients
     try {
       await saveWhatsAppClientProfile({
         chatId,
         customerEmail: email,
         customerPhone: phone,
-        companyName: companyName || null,
+        companyName: companyName || undefined,
       });
     } catch {
       return NextResponse.json(
@@ -83,6 +95,8 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
+
+    tokenEmail = email;
   }
 
   // Generate 32-byte cryptographically secure token
@@ -92,7 +106,7 @@ export async function POST(request: Request) {
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
 
   try {
-    await createMagicLinkToken({ email, token, expiresAt });
+    await createMagicLinkToken({ email: tokenEmail, token, expiresAt });
   } catch {
     return NextResponse.json({ error: "Ошибка сервера. Попробуйте позже." }, { status: 500 });
   }

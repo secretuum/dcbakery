@@ -172,10 +172,10 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
   }
 
   async function handleClientMagicLink() {
-    const normalizedEmail = clientEmail.trim().toLowerCase();
+    const phoneDigits = clientPhone.replace(/\D/g, "");
 
-    if (!normalizedEmail) {
-      setClientError("Введите email");
+    if (phoneDigits.length < 11) {
+      setClientError("Введите полный номер телефона WhatsApp");
       return;
     }
 
@@ -186,7 +186,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       const response = await fetch("/api/profile/magic-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: normalizedEmail }),
+        body: JSON.stringify({ phone: clientPhone }),
       });
 
       const data = (await response.json().catch(() => ({}))) as {
@@ -195,7 +195,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       };
 
       if (response.ok && data.needsRegistration) {
-        // New client — show registration form
+        // Номер не найден — предлагаем зарегистрироваться по email
         setClientStep("needs_registration");
         return;
       }
@@ -215,10 +215,9 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
 
   async function handleRegistration() {
     const normalizedEmail = clientEmail.trim().toLowerCase();
-    const phoneDigits = clientPhone.replace(/\D/g, "");
 
-    if (phoneDigits.length < 11) {
-      setClientError("Введите корректный номер телефона WhatsApp");
+    if (!normalizedEmail.includes("@")) {
+      setClientError("Введите корректный email");
       return;
     }
 
@@ -259,7 +258,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
           Вход в кабинет DC Bakery
         </h1>
         <p className="mt-5 max-w-2xl text-base font-semibold leading-7 text-muted">
-          Клиенты входят по ссылке в WhatsApp. Менеджеры — через Supabase Authentication.
+          Клиенты входят по номеру WhatsApp — ссылка для входа придёт в чат. Менеджеры — через Supabase Authentication.
         </p>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -302,26 +301,26 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
               <div className="mt-4 rounded-xl border border-coral/20 bg-coral-light px-4 py-3">
                 <p className="text-xs font-bold uppercase text-burgundy">Новый партнёр</p>
                 <p className="mt-1 text-sm font-semibold text-dark/80">
-                  Аккаунт для <span className="font-bold">{clientEmail}</span> не найден.
-                  Укажите номер WhatsApp для регистрации — ссылка для входа придёт туда.
+                  Номер <span className="font-bold">{clientPhone}</span> ещё не зарегистрирован.
+                  Укажите email для регистрации — дальше вход будет просто по номеру.
                 </p>
               </div>
               <div className="mt-4 space-y-3">
                 <label className="block">
-                  <span className="text-sm font-bold text-dark">Телефон WhatsApp</span>
+                  <span className="text-sm font-bold text-dark">Email</span>
                   <Input
                     className="mt-2"
-                    inputMode="tel"
-                    type="tel"
-                    value={clientPhone}
-                    onChange={(e) => setClientPhone(e.currentTarget.value)}
+                    inputMode="email"
+                    type="email"
+                    value={clientEmail}
+                    onChange={(e) => setClientEmail(e.currentTarget.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
                         void handleRegistration();
                       }
                     }}
-                    placeholder="+7 (705) 000-00-00"
+                    placeholder="company@example.com"
                     autoFocus
                   />
                 </label>
@@ -363,22 +362,25 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
             <>
               <div className="mt-5">
                 <label className="block">
-                  <span className="text-sm font-bold text-dark">Email</span>
+                  <span className="text-sm font-bold text-dark">Номер WhatsApp</span>
                   <Input
                     className="mt-2"
-                    inputMode="email"
-                    type="email"
-                    value={clientEmail}
-                    onChange={(e) => setClientEmail(e.currentTarget.value)}
+                    inputMode="tel"
+                    type="tel"
+                    value={clientPhone}
+                    onChange={(e) => setClientPhone(e.currentTarget.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
                         void handleClientMagicLink();
                       }
                     }}
-                    placeholder="company@example.com"
+                    placeholder="+7 (747) 000-00-00"
                   />
                 </label>
+                <p className="mt-2 text-xs font-semibold leading-5 text-muted">
+                  Ссылка для входа придёт в WhatsApp на этот номер.
+                </p>
               </div>
               {clientError ? (
                 <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>

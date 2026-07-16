@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
@@ -70,7 +71,9 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
     ] as Array<[string, string | null | undefined]>
   ).filter((row): row is [string, string] => Boolean(row[1]) && row[1] !== "уточняется");
 
-  return (
+  // Портал: у карточек бывает transform (анимация появления), который делает их
+  // containing block для fixed — без портала шторка прибивается к карточке.
+  return createPortal(
     <div className="fixed inset-0 z-[60] flex items-end justify-center" role="dialog" aria-modal="true" aria-label={product.name}>
       {/* Backdrop */}
       <div className="animate-fade-in-bg absolute inset-0 bg-black/40" onClick={onClose} />
@@ -111,7 +114,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
             <p className="text-xs font-semibold uppercase tracking-[.1em] text-muted">
               {product.weightLabel ?? product.unit}
             </p>
-            <h2 className="mt-1.5 font-display text-xl font-black leading-snug text-dark">
+            <h2 className="mt-1.5 font-display text-xl font-bold leading-snug text-dark">
               {product.name}
             </h2>
             <p className="mt-2 font-data text-xl font-semibold text-coral">
@@ -171,7 +174,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
               </div>
               <div className="text-right">
                 <p className="text-[10px] font-semibold uppercase tracking-[.08em] text-muted">В корзине</p>
-                <p className="font-data text-xl font-bold leading-tight text-dark">
+                <p className="font-data text-xl font-semibold leading-tight text-dark">
                   {formatPrice(product.price * cartQty)}
                 </p>
               </div>
@@ -188,6 +191,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

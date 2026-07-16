@@ -31,7 +31,6 @@
   --radius-btn: var(--radius-btn);
   --radius-badge: var(--radius-badge);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
   --font-display: var(--font-montserrat);
   --font-data: var(--font-ibm-plex-mono);
 }
@@ -92,9 +91,10 @@ html {
   animation: fade-in-bg 0.2s ease-out both;
 }
 
-/* Staggered product cards — article.product-card inside .product-grid */
+/* Staggered product cards — article.product-card inside .product-grid.
+   backwards, не both: постоянный transform делал бы карточку containing block для fixed-шторки */
 .product-card {
-  animation: fade-up 0.35s ease-out both;
+  animation: fade-up 0.35s ease-out backwards;
 }
 .product-grid > .product-card:nth-child(1)  { animation-delay: 0ms; }
 .product-grid > .product-card:nth-child(2)  { animation-delay: 55ms; }

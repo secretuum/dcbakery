@@ -206,7 +206,7 @@ export default function OfertaPage() {
                   </div>
                   <div>
                     <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Адрес</dt>
-                    <dd className="mt-0.5 font-semibold text-dark">г. Алматы, ул. Утепова 31, блок 21, кв. 2377</dd>
+                    <dd className="mt-0.5 font-semibold text-dark">г. Алматы, ул. Жамбыла 154</dd>
                   </div>
                   <div>
                     <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">Банк</dt>
@@ -222,7 +222,7 @@ export default function OfertaPage() {
                   </div>
                   <div>
                     <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">IBAN</dt>
-                    <dd className="mt-0.5 font-mono font-semibold text-dark">KZ61722S000051248791</dd>
+                    <dd className="mt-0.5 font-data font-semibold text-dark">KZ61722S000051248791</dd>
                   </div>
                 </dl>
               </div>
@@ -256,7 +256,7 @@ export default function OfertaPage() {
                   </div>
                   <div>
                     <dt className="text-xs font-semibold uppercase tracking-[.06em] text-muted/70">IBAN</dt>
-                    <dd className="mt-0.5 font-mono font-semibold text-dark">KZ73722S000051742402</dd>
+                    <dd className="mt-0.5 font-data font-semibold text-dark">KZ73722S000051742402</dd>
                   </div>
                 </dl>
               </div>

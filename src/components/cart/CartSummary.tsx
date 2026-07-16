@@ -50,7 +50,7 @@ export function CartSummary() {
         <div className="border-t border-black/10 pt-4">
           <div className="flex items-end justify-between gap-4">
             <span className="text-muted">Итого</span>
-            <span className="font-data text-xl font-bold text-coral">{formatPrice(totalAmount)}</span>
+            <span className="font-data text-xl font-semibold text-coral">{formatPrice(totalAmount)}</span>
           </div>
         </div>
       </div>

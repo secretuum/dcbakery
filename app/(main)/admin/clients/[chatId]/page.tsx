@@ -102,7 +102,7 @@ export default async function AdminClientPage({ params }: AdminClientPageProps) 
                         <td className="px-5 py-4">
                           <Link
                             href={`/admin/orders/${order.id}`}
-                            className="font-data font-bold text-coral hover:text-coral-hover"
+                            className="font-data font-semibold text-coral hover:text-coral-hover"
                           >
                             {order.order_number}
                           </Link>

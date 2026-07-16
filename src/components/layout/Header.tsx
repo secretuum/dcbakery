@@ -49,7 +49,7 @@ export function Header() {
 
         {/* Logo */}
         <Link href="/" aria-label="DC Bakery"
-          className="font-display text-[15px] font-black uppercase tracking-[.12em] text-dark transition hover:opacity-60">
+          className="font-display text-[15px] font-bold uppercase tracking-[.12em] text-dark transition hover:opacity-60">
           DC BAKERY
         </Link>
 

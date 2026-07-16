@@ -254,7 +254,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
   return (
     <section className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_0.9fr] lg:items-start">
       <div>
-        <p className="text-sm font-black uppercase text-raspberry">Профиль</p>
+        <p className="text-sm font-bold uppercase text-raspberry">Профиль</p>
         <h1 className="mt-3 max-w-3xl font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
           Вход в кабинет DC Bakery
         </h1>
@@ -266,7 +266,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
           <div className="rounded-card bg-white p-5 shadow-sm">
             <div className="flex items-center gap-3 text-raspberry">
               <ClientIcon />
-              <p className="text-sm font-black">Клиент</p>
+              <p className="text-sm font-bold">Клиент</p>
             </div>
             <p className="mt-3 text-sm font-semibold leading-6 text-muted">
               История заказов, повтор закупки, настройки компании и документы.
@@ -275,7 +275,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
           <div className="rounded-card bg-coral-light p-5 shadow-sm">
             <div className="flex items-center gap-3 text-burgundy">
               <AdminIcon />
-              <p className="text-sm font-black">Админ</p>
+              <p className="text-sm font-bold">Админ</p>
             </div>
             <p className="mt-3 text-sm font-semibold leading-6 text-burgundy/75">
               Заказы, товары, оплаты, остатки и настройки маркетплейса.
@@ -287,12 +287,12 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       <div className="grid gap-4">
         {/* Client magic link */}
         <div className="rounded-card bg-white p-6 shadow-sm">
-          <p className="text-sm font-black uppercase text-raspberry">Клиентский кабинет</p>
-          <h2 className="mt-3 text-2xl font-black tracking-tight">Войти по WhatsApp</h2>
+          <p className="text-sm font-bold uppercase text-raspberry">Клиентский кабинет</p>
+          <h2 className="mt-3 text-2xl font-bold tracking-tight">Войти по WhatsApp</h2>
 
           {clientStep === "sent" ? (
             <div className="mt-5 rounded-xl bg-green-50 p-4">
-              <p className="text-sm font-black text-green-700">Ссылка отправлена в WhatsApp</p>
+              <p className="text-sm font-bold text-green-700">Ссылка отправлена в WhatsApp</p>
               <p className="mt-1 text-sm font-semibold text-green-600/80">
                 Откройте WhatsApp и перейдите по ссылке. Она действует 15 минут.
               </p>
@@ -300,15 +300,15 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
           ) : clientStep === "needs_registration" || clientStep === "registering" ? (
             <>
               <div className="mt-4 rounded-xl border border-coral/20 bg-coral-light px-4 py-3">
-                <p className="text-xs font-black uppercase text-burgundy">Новый партнёр</p>
+                <p className="text-xs font-bold uppercase text-burgundy">Новый партнёр</p>
                 <p className="mt-1 text-sm font-semibold text-dark/80">
-                  Аккаунт для <span className="font-black">{clientEmail}</span> не найден.
+                  Аккаунт для <span className="font-bold">{clientEmail}</span> не найден.
                   Укажите номер WhatsApp для регистрации — ссылка для входа придёт туда.
                 </p>
               </div>
               <div className="mt-4 space-y-3">
                 <label className="block">
-                  <span className="text-sm font-black text-dark">Телефон WhatsApp</span>
+                  <span className="text-sm font-bold text-dark">Телефон WhatsApp</span>
                   <Input
                     className="mt-2"
                     inputMode="tel"
@@ -326,7 +326,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-black text-dark">Компания / заведение</span>
+                  <span className="text-sm font-bold text-dark">Компания / заведение</span>
                   <Input
                     className="mt-2"
                     value={clientCompany}
@@ -363,7 +363,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
             <>
               <div className="mt-5">
                 <label className="block">
-                  <span className="text-sm font-black text-dark">Email</span>
+                  <span className="text-sm font-bold text-dark">Email</span>
                   <Input
                     className="mt-2"
                     inputMode="email"
@@ -397,11 +397,11 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
 
         {/* Admin form */}
         <form onSubmit={(e) => void handleAdminSubmit(e)} className="rounded-card bg-white p-6 shadow-sm">
-          <p className="text-sm font-black uppercase text-muted">Для менеджеров</p>
-          <h2 className="mt-2 text-4xl font-black tracking-tight">Email и пароль</h2>
+          <p className="text-sm font-bold uppercase text-muted">Для менеджеров</p>
+          <h2 className="mt-2 text-4xl font-bold tracking-tight">Email и пароль</h2>
           <div className="mt-4 space-y-3">
             <label className="block">
-              <span className="text-sm font-black text-dark">Email</span>
+              <span className="text-sm font-bold text-dark">Email</span>
               <Input
                 className="mt-1.5"
                 inputMode="email"
@@ -412,7 +412,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
               />
             </label>
             <label className="block">
-              <span className="text-sm font-black text-dark">Пароль</span>
+              <span className="text-sm font-bold text-dark">Пароль</span>
               <Input
                 className="mt-1.5"
                 type="password"
@@ -447,7 +447,7 @@ function AdminDashboard({
     return (
       <div>
         <div className="print-hidden mb-4 flex items-center justify-between rounded-card border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm font-black text-amber-700">Режим превью — вид клиента</p>
+          <p className="text-sm font-bold text-amber-700">Режим превью — вид клиента</p>
           <Button
             type="button"
             variant="outline"
@@ -470,8 +470,8 @@ function AdminDashboard({
     <section className="mx-auto max-w-6xl">
       <div className="flex flex-col gap-5 rounded-card bg-dark p-6 text-white shadow-sm lg:flex-row lg:items-center lg:justify-between lg:p-8">
         <div>
-          <p className="text-sm font-black uppercase text-coral">Админ-профиль</p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">DC Bakery Manager</h1>
+          <p className="text-sm font-bold uppercase text-coral">Админ-профиль</p>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">DC Bakery Manager</h1>
           <p className="mt-3 break-all text-sm font-semibold text-white/70">{session.email}</p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -523,8 +523,8 @@ function AdminDashboard({
           href="/admin/orders"
           className="rounded-card bg-white p-6 shadow-sm transition hover:-translate-y-0.5"
         >
-          <p className="text-xs font-black uppercase text-raspberry">Операции</p>
-          <h2 className="mt-3 text-2xl font-black tracking-tight">Заказы</h2>
+          <p className="text-xs font-bold uppercase text-raspberry">Операции</p>
+          <h2 className="mt-3 text-2xl font-bold tracking-tight">Заказы</h2>
           <p className="mt-3 text-sm font-semibold leading-6 text-muted">
             Новые заявки, подтверждение, ссылка оплаты и статусы доставки.
           </p>
@@ -533,8 +533,8 @@ function AdminDashboard({
           href="/admin/products"
           className="rounded-card bg-white p-6 shadow-sm transition hover:-translate-y-0.5"
         >
-          <p className="text-xs font-black uppercase text-raspberry">Каталог</p>
-          <h2 className="mt-3 text-2xl font-black tracking-tight">Товары</h2>
+          <p className="text-xs font-bold uppercase text-raspberry">Каталог</p>
+          <h2 className="mt-3 text-2xl font-bold tracking-tight">Товары</h2>
           <p className="mt-3 text-sm font-semibold leading-6 text-muted">
             Наличие, цены, активность товаров и подготовка к единой базе остатков.
           </p>
@@ -543,8 +543,8 @@ function AdminDashboard({
           href="/admin/settings"
           className="rounded-card bg-white p-6 shadow-sm transition hover:-translate-y-0.5"
         >
-          <p className="text-xs font-black uppercase text-raspberry">Система</p>
-          <h2 className="mt-3 text-2xl font-black tracking-tight">Настройки</h2>
+          <p className="text-xs font-bold uppercase text-raspberry">Система</p>
+          <h2 className="mt-3 text-2xl font-bold tracking-tight">Настройки</h2>
           <p className="mt-3 text-sm font-semibold leading-6 text-muted">
             Параметры сайта, платежей и будущих интеграций.
           </p>
@@ -663,7 +663,7 @@ function OrderItemsList({ items }: { items: OrderItemSummary[] }) {
                 × {item.qty} {item.unit}
               </span>
             </span>
-            <span className="shrink-0 font-black text-dark">{formatCurrency(item.total_amount)}</span>
+            <span className="shrink-0 font-bold text-dark">{formatCurrency(item.total_amount)}</span>
           </li>
         ))}
       </ul>
@@ -839,8 +839,8 @@ function PopularProductsSection({ products }: { products: Product[] }) {
 
   return (
     <section className="mt-6 rounded-card bg-white p-6 shadow-sm">
-      <p className="text-xs font-black uppercase text-raspberry">Рекомендуем</p>
-      <h2 className="mt-2 text-2xl font-black tracking-tight">Популярное у клиентов</h2>
+      <p className="text-xs font-bold uppercase text-raspberry">Рекомендуем</p>
+      <h2 className="mt-2 text-2xl font-bold tracking-tight">Популярное у клиентов</h2>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
           <div
@@ -859,17 +859,17 @@ function PopularProductsSection({ products }: { products: Product[] }) {
               />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="line-clamp-2 text-sm font-black leading-tight text-dark">
+              <p className="line-clamp-2 text-sm font-bold leading-tight text-dark">
                 {product.name}
               </p>
-              <p className="mt-1 text-base font-black text-coral">
+              <p className="mt-1 text-base font-bold text-coral">
                 {product.price > 0 ? formatCurrency(product.price) : "По запросу"}
               </p>
             </div>
             <button
               type="button"
               aria-label={`Добавить ${product.name} в корзину`}
-              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-coral text-sm font-black text-white transition hover:bg-coral-hover"
+              className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-coral text-sm font-bold text-white transition hover:bg-coral-hover"
               onClick={() => add(product, product.min_qty)}
             >
               +

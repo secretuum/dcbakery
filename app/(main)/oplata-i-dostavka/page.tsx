@@ -28,7 +28,7 @@ export default function OplataIDostavkaPage() {
             <h2 className="font-display text-xl font-semibold">Оплата</h2>
             <div className="mt-5 space-y-4">
               <div className="flex gap-4 rounded-card border border-black/5 bg-cream p-5">
-                <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded bg-coral font-data text-sm font-bold text-white">
+                <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded bg-coral font-data text-sm font-semibold text-white">
                   1
                 </div>
                 <div>
@@ -41,7 +41,7 @@ export default function OplataIDostavkaPage() {
                 </div>
               </div>
               <div className="flex gap-4 rounded-card border border-black/5 bg-cream p-5">
-                <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded bg-coral font-data text-sm font-bold text-white">
+                <div className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded bg-coral font-data text-sm font-semibold text-white">
                   2
                 </div>
                 <div>
@@ -64,15 +64,15 @@ export default function OplataIDostavkaPage() {
           <h2 className="font-display text-xl font-semibold">Доставка</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-bold text-coral">15 000 ₸</p>
+              <p className="font-data text-2xl font-semibold text-coral">15 000 ₸</p>
               <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">Минимальный заказ</p>
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-bold text-coral">0 ₸</p>
+              <p className="font-data text-2xl font-semibold text-coral">0 ₸</p>
               <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">Доставка от минимума</p>
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-bold text-coral">1 500–3 000 ₸</p>
+              <p className="font-data text-2xl font-semibold text-coral">1 500–3 000 ₸</p>
               <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">Доставка ниже минимума</p>
             </div>
           </div>

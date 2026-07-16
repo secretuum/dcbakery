@@ -127,15 +127,15 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
       <section className="mt-7 grid gap-3 sm:grid-cols-3">
         <div className="rounded-card border border-black/10 bg-white p-5">
           <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Всего товаров</p>
-          <p className="mt-2 font-data text-3xl font-bold">{products.length}</p>
+          <p className="mt-2 font-data text-3xl font-semibold">{products.length}</p>
         </div>
         <div className="rounded-card border border-black/10 bg-white p-5">
           <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">С указанной ценой</p>
-          <p className="mt-2 font-data text-3xl font-bold">{pricedProductsCount}</p>
+          <p className="mt-2 font-data text-3xl font-semibold">{pricedProductsCount}</p>
         </div>
         <div className="rounded-card border border-black/10 bg-white p-5">
           <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Архив</p>
-          <p className="mt-2 font-data text-3xl font-bold">{archivedProductsCount}</p>
+          <p className="mt-2 font-data text-3xl font-semibold">{archivedProductsCount}</p>
           <p className="mt-1 text-xs text-muted">Остаток всего: {totalStock}</p>
         </div>
       </section>

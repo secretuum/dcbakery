@@ -105,7 +105,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                     <td className="px-4 py-3">
                       <Link
                         href={`/admin/orders/${order.id}`}
-                        className="font-data font-bold text-coral hover:text-coral-hover"
+                        className="font-data font-semibold text-coral hover:text-coral-hover"
                       >
                         {order.order_number}
                       </Link>

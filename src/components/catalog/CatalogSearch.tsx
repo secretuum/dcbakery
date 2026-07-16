@@ -81,7 +81,7 @@ export function CatalogSearch({ products, categories, popularProducts }: Props) 
             <div>
               <h2
                 id="cat-popular"
-                className="mb-6 text-3xl font-black tracking-tight text-dark"
+                className="mb-6 text-3xl font-bold tracking-tight text-dark"
               >
                 Популярное
               </h2>
@@ -101,7 +101,7 @@ export function CatalogSearch({ products, categories, popularProducts }: Props) 
               <div key={category.id}>
                 <h2
                   id={`cat-${category.slug}`}
-                  className="mb-6 text-3xl font-black tracking-tight text-dark"
+                  className="mb-6 text-3xl font-bold tracking-tight text-dark"
                 >
                   {category.name}
                 </h2>

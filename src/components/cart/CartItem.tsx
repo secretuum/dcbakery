@@ -71,7 +71,7 @@ export function CartItem({ item }: CartItemProps) {
             <p className="font-data text-sm text-muted">
               {formatProductPrice(product.price)} / ед.
             </p>
-            <p className="font-data text-lg font-bold text-dark">
+            <p className="font-data text-lg font-semibold text-dark">
               {product.price > 0 ? formatPrice(lineTotal) : "Цена уточняется"}
             </p>
           </div>

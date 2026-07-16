@@ -66,7 +66,7 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
 
       <div className="mt-5 flex items-end justify-between gap-4 rounded-btn border border-black/5 bg-cream px-4 py-3">
         <span className="text-sm font-semibold text-muted">Итого</span>
-        <span className="font-data text-xl font-bold text-coral">{totalText}</span>
+        <span className="font-data text-xl font-semibold text-coral">{totalText}</span>
       </div>
 
       {!isInStock && cartQty >= product.stock_qty ? (

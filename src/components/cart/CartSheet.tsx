@@ -75,7 +75,7 @@ export default function CartSheet() {
             className="absolute inset-y-0 left-0 transition-[width] duration-500 ease-out"
             style={{ width: `${pillFillPct}%`, background: PILL_STRIPES, opacity: 0.3 }}
           />
-          <span className="relative whitespace-nowrap font-data text-lg font-bold text-dark">
+          <span className="relative whitespace-nowrap font-data text-lg font-semibold text-dark">
             {formatPrice(totalAmount)}
           </span>
           <span className="relative flex items-center">
@@ -96,7 +96,7 @@ export default function CartSheet() {
               </span>
             ))}
             {items.length > 3 && (
-              <span className="-ml-3 flex h-10 w-10 items-center justify-center rounded border-2 border-white bg-cream font-data text-xs font-bold text-dark">
+              <span className="-ml-3 flex h-10 w-10 items-center justify-center rounded border-2 border-white bg-cream font-data text-xs font-semibold text-dark">
                 +{items.length - 3}
               </span>
             )}
@@ -165,7 +165,7 @@ export default function CartSheet() {
                 />
               </svg>
             </button>
-            <h2 className="flex-1 text-center font-display text-sm font-black uppercase tracking-[.08em] text-dark">
+            <h2 className="flex-1 text-center font-display text-sm font-bold uppercase tracking-[.08em] text-dark">
               Ваша корзина
             </h2>
             <button
@@ -228,7 +228,7 @@ export default function CartSheet() {
                       <p className="truncate text-base font-semibold text-dark">
                         {product.name}
                       </p>
-                      <p className="mt-1 font-data text-base font-bold text-dark">
+                      <p className="mt-1 font-data text-base font-semibold text-dark">
                         {formatPrice(product.price * qty)}
                       </p>
                     </div>
@@ -270,7 +270,7 @@ export default function CartSheet() {
             {/* Popular products */}
             {popular.length > 0 && (
               <div>
-                <p className="mb-3 font-display text-base font-black text-dark">Часто добавляют</p>
+                <p className="mb-3 font-display text-base font-bold text-dark">Часто добавляют</p>
                 <div className="flex gap-3 overflow-x-auto pb-1">
                   {popular.map((p) => (
                     <div
@@ -290,7 +290,7 @@ export default function CartSheet() {
                         {p.name}
                       </p>
                       <div className="mt-auto flex items-center justify-between pt-2">
-                        <p className="font-data text-sm font-bold text-dark">{formatPrice(p.price)}</p>
+                        <p className="font-data text-sm font-semibold text-dark">{formatPrice(p.price)}</p>
                         <button
                           type="button"
                           onClick={() => add(p, 1)}
@@ -317,7 +317,7 @@ export default function CartSheet() {
                 <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">
                   Итого
                 </p>
-                <p className="font-data text-2xl font-bold leading-tight text-dark">
+                <p className="font-data text-2xl font-semibold leading-tight text-dark">
                   {formatPrice(totalAmount)}
                 </p>
               </div>

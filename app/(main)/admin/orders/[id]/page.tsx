@@ -74,7 +74,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
             <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Заказ</p>
             <OrderSlaStatus createdAt={order.created_at} status={order.status} />
           </div>
-          <h1 className="mt-3 break-all font-data text-4xl font-bold tracking-tight sm:text-5xl">
+          <h1 className="mt-3 break-all font-data text-4xl font-semibold tracking-tight sm:text-5xl">
             {order.order_number}
           </h1>
           <p className="mt-3 text-sm text-muted">
@@ -83,7 +83,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
         </div>
         <div className="rounded-card border border-black/10 bg-white p-5">
           <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Сумма</p>
-          <p className="mt-2 font-data text-4xl font-bold text-dark">{formatPrice(order.total_amount)}</p>
+          <p className="mt-2 font-data text-4xl font-semibold text-dark">{formatPrice(order.total_amount)}</p>
         </div>
       </div>
 
@@ -144,7 +144,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
                         {item.qty} {item.unit}
                       </td>
                       <td className="px-5 py-4 font-data">{formatPrice(item.price)}</td>
-                      <td className="px-5 py-4 font-data font-bold">{formatPrice(item.total_amount)}</td>
+                      <td className="px-5 py-4 font-data font-semibold">{formatPrice(item.total_amount)}</td>
                     </tr>
                   ))}
                 </tbody>

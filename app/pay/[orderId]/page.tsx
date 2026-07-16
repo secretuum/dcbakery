@@ -123,7 +123,7 @@ export default async function PayPage({ params }: PayPageProps) {
           <PaymentStatusRefresh />
         ) : null}
         <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{state.eyebrow}</p>
-        <h1 className="mt-3 break-all font-data text-3xl font-bold tracking-tight sm:text-5xl">
+        <h1 className="mt-3 break-all font-data text-3xl font-semibold tracking-tight sm:text-5xl">
           {order.order_number}
         </h1>
         <p className="mt-4 text-base leading-7 text-muted">{state.text}</p>
@@ -137,7 +137,7 @@ export default async function PayPage({ params }: PayPageProps) {
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           <div className="rounded-btn border border-black/5 bg-cream px-4 py-3">
             <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Сумма</p>
-            <p className="mt-1 font-data text-xl font-bold">{formatPrice(order.total_amount)}</p>
+            <p className="mt-1 font-data text-xl font-semibold">{formatPrice(order.total_amount)}</p>
           </div>
           <div className="rounded-btn border border-black/5 bg-cream px-4 py-3">
             <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Статус</p>
@@ -166,7 +166,7 @@ export default async function PayPage({ params }: PayPageProps) {
                       × {item.qty} {item.unit}
                     </span>
                   </span>
-                  <span className="shrink-0 font-data font-bold text-dark">
+                  <span className="shrink-0 font-data font-semibold text-dark">
                     {formatPrice(item.total_amount)}
                   </span>
                 </li>

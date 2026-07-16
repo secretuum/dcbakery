@@ -33,10 +33,10 @@ export function CategoryCard({ category, className, eyebrow, href }: CategoryCar
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-coral/20" />
       <div className="absolute inset-x-0 bottom-0 p-5 sm:p-6">
-        <span className="inline-flex rounded-badge bg-white/90 px-3 py-1 text-xs font-black text-burgundy shadow-sm">
+        <span className="inline-flex rounded-badge bg-white/90 px-3 py-1 text-xs font-bold text-burgundy shadow-sm">
           {eyebrow ?? "категория"}
         </span>
-        <h3 className="mt-4 text-3xl font-black tracking-tight">{category.name}</h3>
+        <h3 className="mt-4 text-3xl font-bold tracking-tight">{category.name}</h3>
         {category.description ? (
           <p className="mt-2 max-w-sm text-sm font-semibold leading-6 text-white/85">
             {category.description}

@@ -39,7 +39,7 @@ export default async function AdminStopListPage() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Сейчас на стопе</p>
-            <p className="mt-2 font-data text-3xl font-bold">{activeEvents.length}</p>
+            <p className="mt-2 font-data text-3xl font-semibold">{activeEvents.length}</p>
           </div>
           <Badge variant={activeEvents.length > 0 ? "burgundy" : "coral"}>
             {activeEvents.length > 0 ? "Есть стоп" : "Чисто"}

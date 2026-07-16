@@ -32,7 +32,7 @@ export default function CartPage() {
   }
 
   return (
-    <main className="min-h-screen bg-cream px-5 pb-28 pt-10 text-dark lg:px-8 lg:pb-16 lg:pt-14">
+    <main className="min-h-screen bg-cream px-5 pb-24 pt-10 text-dark lg:px-8 lg:pb-16 lg:pt-14">
       <section className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>

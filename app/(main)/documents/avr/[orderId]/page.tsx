@@ -68,7 +68,15 @@ export default async function AvrPage({ params }: AvrPageProps) {
           <Link className="text-sm font-bold text-burgundy" href={`/pay/${order.id}`}>
             Вернуться к заказу
           </Link>
-          <DocumentPrintButton />
+          <div className="flex flex-wrap gap-3">
+            <a
+              className="inline-flex min-h-10 items-center justify-center rounded-btn border border-coral bg-coral px-4 py-2 text-sm font-bold text-white transition hover:bg-coral-hover"
+              href={`/documents/avr/${order.id}/xlsx`}
+            >
+              Скачать Excel
+            </a>
+            <DocumentPrintButton />
+          </div>
         </div>
 
         {company.isDemo ? (

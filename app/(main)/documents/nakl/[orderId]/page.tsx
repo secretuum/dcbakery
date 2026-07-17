@@ -101,6 +101,12 @@ export default async function NaklPage({ params, searchParams }: NaklPageProps) 
               {isSplit ? "Одна накладная" : "Разделить: Пекарня + Полуфабрикаты"}
             </Link>
           ) : null}
+          <a
+            className="inline-flex min-h-10 items-center justify-center rounded-btn border border-coral bg-coral px-4 py-2 text-sm font-bold text-white transition hover:bg-coral-hover"
+            href={`/documents/nakl/${order.id}/xlsx${isSplit ? "?split=1" : ""}`}
+          >
+            Скачать Excel
+          </a>
           <DocumentPrintButton />
         </div>
 

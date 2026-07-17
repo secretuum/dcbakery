@@ -118,8 +118,28 @@ function filterOrdersByPeriod(orders: Order[], from: string, to: string, confirm
   });
 }
 
-/** Заказы за период: одна строка CSV = одна позиция заказа. */
-export async function buildOrdersCsv(from: string, to: string, confirmedOnly: boolean) {
+export type ExportOrder = {
+  number: string;
+  date: string;
+  status: string;
+  payment: string;
+  company: string;
+  bin: string;
+  contact: string;
+  phone: string;
+  email: string;
+  address: string;
+  deliveryDate: string;
+  total: number;
+  items: Array<{ name: string; qty: number; unit: string; price: number; sum: number }>;
+};
+
+/** Структурированные заказы за период — общий источник для CSV и JSON-эндпоинта 1С. */
+export async function collectOrders(
+  from: string,
+  to: string,
+  confirmedOnly: boolean,
+): Promise<ExportOrder[]> {
   const [allOrders, allItems] = await Promise.all([fetchAdminOrders(), fetchAllOrderItems()]);
   const orders = filterOrdersByPeriod(allOrders, from, to, confirmedOnly);
   const itemsByOrderId = new Map<string, OrderItemRow[]>();
@@ -132,6 +152,35 @@ export async function buildOrdersCsv(from: string, to: string, confirmedOnly: bo
     list.push(item);
     itemsByOrderId.set(item.order_id, list);
   }
+
+  return orders.map((order) => ({
+    number: order.order_number,
+    date: order.created_at,
+    status: orderStatusLabels[order.status] ?? order.status,
+    payment: order.payment_status
+      ? paymentLabels[order.payment_status] ?? order.payment_status
+      : "",
+    company: order.company_name,
+    bin: order.customer_bin ?? "",
+    contact: order.customer_name,
+    phone: order.customer_phone,
+    email: order.customer_email ?? "",
+    address: order.delivery_address ?? "",
+    deliveryDate: order.delivery_date ?? "",
+    total: order.total_amount,
+    items: (itemsByOrderId.get(order.id) ?? []).map((item) => ({
+      name: item.product_name ?? "",
+      qty: item.qty ?? 0,
+      unit: item.unit ?? "шт",
+      price: item.price ?? 0,
+      sum: item.total_amount ?? 0,
+    })),
+  }));
+}
+
+/** Заказы за период: одна строка CSV = одна позиция заказа. */
+export async function buildOrdersCsv(from: string, to: string, confirmedOnly: boolean) {
+  const orders = await collectOrders(from, to, confirmedOnly);
 
   const rows: unknown[][] = [
     [
@@ -156,51 +205,27 @@ export async function buildOrdersCsv(from: string, to: string, confirmedOnly: bo
   ];
 
   for (const order of orders) {
-    const items = itemsByOrderId.get(order.id) ?? [];
+    const base = [
+      order.number,
+      formatDate(order.date),
+      order.status,
+      order.payment,
+      order.company,
+      order.bin,
+      order.contact,
+      order.phone,
+      order.email,
+      order.address,
+      formatDate(order.deliveryDate),
+    ];
 
-    if (items.length === 0) {
-      rows.push([
-        order.order_number,
-        formatDate(order.created_at),
-        orderStatusLabels[order.status] ?? order.status,
-        order.payment_status ? paymentLabels[order.payment_status] ?? order.payment_status : "",
-        order.company_name,
-        order.customer_bin ?? "",
-        order.customer_name,
-        order.customer_phone,
-        order.customer_email ?? "",
-        order.delivery_address ?? "",
-        formatDate(order.delivery_date),
-        "(позиции не найдены)",
-        "",
-        "",
-        "",
-        "",
-        order.total_amount,
-      ]);
+    if (order.items.length === 0) {
+      rows.push([...base, "(позиции не найдены)", "", "", "", "", order.total]);
       continue;
     }
 
-    for (const item of items) {
-      rows.push([
-        order.order_number,
-        formatDate(order.created_at),
-        orderStatusLabels[order.status] ?? order.status,
-        order.payment_status ? paymentLabels[order.payment_status] ?? order.payment_status : "",
-        order.company_name,
-        order.customer_bin ?? "",
-        order.customer_name,
-        order.customer_phone,
-        order.customer_email ?? "",
-        order.delivery_address ?? "",
-        formatDate(order.delivery_date),
-        item.product_name ?? "",
-        item.qty ?? "",
-        item.unit ?? "шт",
-        item.price ?? "",
-        item.total_amount ?? "",
-        order.total_amount,
-      ]);
+    for (const item of order.items) {
+      rows.push([...base, item.name, item.qty, item.unit, item.price, item.sum, order.total]);
     }
   }
 

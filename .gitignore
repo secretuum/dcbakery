@@ -34,6 +34,9 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# iiko data dumps (fetched by scripts/iiko-probe.mjs)
+/.iiko-cache/
+
 # vercel
 .vercel
 

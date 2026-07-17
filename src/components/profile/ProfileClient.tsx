@@ -58,26 +58,6 @@ function formatDate(value?: string | null) {
   }).format(new Date(value));
 }
 
-function MetricCard({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: string;
-  icon?: ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-4 rounded-xl border border-black/10 bg-white p-5">
-      {icon && <div className="shrink-0">{icon}</div>}
-      <div>
-        <p className="text-2xl font-bold tracking-tight text-dark">{value}</p>
-        <p className="mt-0.5 text-xs text-muted">{label}</p>
-      </div>
-    </div>
-  );
-}
-
 function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void }) {
   // Admin section state
   const [adminEmail, setAdminEmail] = useState("");
@@ -660,23 +640,16 @@ function AdminDashboard({
 
   return (
     <section className="mx-auto max-w-6xl">
-      <div className="flex flex-col gap-5 rounded-card bg-dark p-6 text-white shadow-sm lg:flex-row lg:items-center lg:justify-between lg:p-8">
-        <div>
-          <p className="text-sm font-bold uppercase text-coral">Админ-профиль</p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">DC Bakery Manager</h1>
-          <p className="mt-3 break-all text-sm font-semibold text-white/70">{session.email}</p>
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-dark px-5 py-4 text-white shadow-sm">
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase text-coral">Админ-профиль</p>
+          <p className="mt-1 break-all text-sm font-semibold text-white/70">{session.email}</p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Button href="/admin/orders" className="bg-white text-dark hover:bg-coral-light">
-            Заказы
-          </Button>
-          <Button href="/admin/products" variant="outline" className="border-white text-white hover:bg-white/10">
-            Товары
-          </Button>
+        <div className="flex flex-wrap gap-2">
           <Button
             type="button"
-            variant="ghost"
-            className="text-white/80 hover:bg-white/10 hover:text-white"
+            variant="outline"
+            className="border-white text-white hover:bg-white/10"
             onClick={() => setPreviewMode(true)}
           >
             Вид клиента
@@ -687,58 +660,65 @@ function AdminDashboard({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard label="Заявки" value="Заказы" icon={
-          <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-        } />
-        <MetricCard label="Оплата" value="Контроль" icon={
-          <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-          </svg>
-        } />
-        <MetricCard label="Каталог" value="Товары" icon={
-          <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-          </svg>
-        } />
-        <MetricCard label="Каналы" value="WA/TG" icon={
-          <svg className="h-5 w-5 text-coral" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-        } />
-      </div>
-
-      <div className="mt-6 grid gap-5 lg:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/admin/orders"
-          className="rounded-card bg-white p-6 shadow-sm transition hover:-translate-y-0.5"
+          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
           <p className="text-xs font-bold uppercase text-raspberry">Операции</p>
-          <h2 className="mt-3 text-2xl font-bold tracking-tight">Заказы</h2>
-          <p className="mt-3 text-sm font-semibold leading-6 text-muted">
-            Новые заявки, подтверждение, ссылка оплаты и статусы доставки.
+          <h2 className="mt-2 text-xl font-bold tracking-tight">Заказы</h2>
+          <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+            Новые заявки, подтверждение, оплата и статусы доставки.
+          </p>
+        </Link>
+        <Link
+          href="/admin/documents"
+          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
+        >
+          <p className="text-xs font-bold uppercase text-raspberry">Документы</p>
+          <h2 className="mt-2 text-xl font-bold tracking-tight">Накладные и счета</h2>
+          <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+            Счёт, накладная и АВР по каждому заказу в один клик.
+          </p>
+        </Link>
+        <Link
+          href="/admin/clients"
+          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
+        >
+          <p className="text-xs font-bold uppercase text-raspberry">Партнёры</p>
+          <h2 className="mt-2 text-xl font-bold tracking-tight">Наши клиенты</h2>
+          <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+            Компании, контакты, лимиты и история заказов.
           </p>
         </Link>
         <Link
           href="/admin/products"
-          className="rounded-card bg-white p-6 shadow-sm transition hover:-translate-y-0.5"
+          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
           <p className="text-xs font-bold uppercase text-raspberry">Каталог</p>
-          <h2 className="mt-3 text-2xl font-bold tracking-tight">Товары</h2>
-          <p className="mt-3 text-sm font-semibold leading-6 text-muted">
-            Наличие, цены, активность товаров и подготовка к единой базе остатков.
+          <h2 className="mt-2 text-xl font-bold tracking-tight">Товары</h2>
+          <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+            Цены, остатки, фото и активность позиций.
+          </p>
+        </Link>
+        <Link
+          href="/admin/stop-list"
+          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
+        >
+          <p className="text-xs font-bold uppercase text-raspberry">Наличие</p>
+          <h2 className="mt-2 text-xl font-bold tracking-tight">Стоп-лист</h2>
+          <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+            Временно снятые с продажи позиции.
           </p>
         </Link>
         <Link
           href="/admin/settings"
-          className="rounded-card bg-white p-6 shadow-sm transition hover:-translate-y-0.5"
+          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
           <p className="text-xs font-bold uppercase text-raspberry">Система</p>
-          <h2 className="mt-3 text-2xl font-bold tracking-tight">Настройки</h2>
-          <p className="mt-3 text-sm font-semibold leading-6 text-muted">
-            Параметры сайта, платежей и будущих интеграций.
+          <h2 className="mt-2 text-xl font-bold tracking-tight">Настройки</h2>
+          <p className="mt-2 text-sm font-semibold leading-6 text-muted">
+            Контент сайта, режим редактирования и платежи.
           </p>
         </Link>
       </div>

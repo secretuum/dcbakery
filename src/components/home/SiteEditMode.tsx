@@ -1,12 +1,52 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import type { SiteContent } from "@/src/lib/site-content";
 
-// Режим «редактирование сайта» для суперадмина: плавающая кнопка-тумблер
-// и карандашики у редактируемых текстов. Сохранение — в app_settings
+// Режим «редактирование сайта» для суперадмина: включается тумблером
+// в Админке → Настройки (хранится в localStorage), после чего у редактируемых
+// текстов на страницах появляются карандашики. Сохранение — в app_settings
 // через /api/admin/settings (ключ site_content), затем router.refresh().
+
+export const SITE_EDIT_STORAGE_KEY = "dc_site_edit";
+
+export function readSiteEditFlag() {
+  try {
+    return window.localStorage.getItem(SITE_EDIT_STORAGE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function writeSiteEditFlag(enabled: boolean) {
+  try {
+    window.localStorage.setItem(SITE_EDIT_STORAGE_KEY, enabled ? "1" : "0");
+    window.dispatchEvent(new Event("dc-site-edit-change"));
+  } catch {
+    // localStorage может быть недоступен — режим просто не включится
+  }
+}
+
+function subscribeSiteEditFlag(callback: () => void) {
+  window.addEventListener("storage", callback);
+  window.addEventListener("dc-site-edit-change", callback);
+
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener("dc-site-edit-change", callback);
+  };
+}
+
+export function useSiteEditFlag() {
+  return useSyncExternalStore(subscribeSiteEditFlag, readSiteEditFlag, () => false);
+}
 
 type EditableField =
   | "contactWhatsapp"
@@ -34,7 +74,8 @@ type ProviderProps = {
 
 export function SiteEditProvider({ isSuperAdmin, content: initialContent, children }: ProviderProps) {
   const router = useRouter();
-  const [editMode, setEditMode] = useState(false);
+  // Режим включается в Админке → Настройки; здесь только читаем флаг из localStorage
+  const editMode = useSiteEditFlag() && isSuperAdmin;
   const [content, setContent] = useState(initialContent);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,26 +112,24 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
     <SiteEditContext.Provider value={{ content, editMode, save }}>
       {children}
 
-      {/* Плавающий тумблер режима редактирования */}
-      <div className="print-hidden fixed bottom-24 right-4 z-50 flex flex-col items-end gap-2">
-        {error && editMode ? (
-          <p className="max-w-60 border border-burgundy bg-white px-3 py-2 text-xs font-semibold text-burgundy shadow-lg">
-            {error}
-          </p>
-        ) : null}
-        <button
-          type="button"
-          onClick={() => setEditMode((prev) => !prev)}
-          className={`flex items-center gap-2 border px-4 py-2.5 text-sm font-bold shadow-lg transition ${
-            editMode
-              ? "border-coral bg-coral text-white"
-              : "border-dark bg-dark text-white hover:bg-dark/85"
-          }`}
-        >
-          <span aria-hidden>✎</span>
-          {editMode ? "Редактирование: вкл" : "Редактировать сайт"}
-        </button>
-      </div>
+      {editMode ? (
+        <div className="print-hidden fixed bottom-24 right-4 z-50 flex flex-col items-end gap-2">
+          {error ? (
+            <p className="max-w-60 border border-burgundy bg-white px-3 py-2 text-xs font-semibold text-burgundy shadow-lg">
+              {error}
+            </p>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => writeSiteEditFlag(false)}
+            className="flex items-center gap-2 border border-coral bg-coral px-4 py-2.5 text-sm font-bold text-white shadow-lg transition hover:bg-coral-hover"
+            title="Выключить можно и здесь, и в Настройках"
+          >
+            <span aria-hidden>✎</span>
+            Режим редактирования — выключить
+          </button>
+        </div>
+      ) : null}
     </SiteEditContext.Provider>
   );
 }

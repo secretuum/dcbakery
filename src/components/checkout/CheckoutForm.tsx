@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT } from "@/app/constants";
+import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
 import { useCart } from "@/src/contexts/CartContext";
@@ -493,21 +493,13 @@ export function CheckoutForm({
 
             <p className="mt-6 border-t border-black/5 pt-6 font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">Оплата и документы</p>
             <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">Способ оплаты</span>
-                <select
-                  className={`${fieldClassName} mt-2`}
-                  value={form.payment_method}
-                  onChange={(event) => updateField("payment_method", event.currentTarget.value)}
-                >
-                  {B2B_PAYMENT_METHODS.map((paymentMethod) => (
-                    <option key={paymentMethod}>{paymentMethod}</option>
-                  ))}
-                </select>
-                <p className="mt-2 text-xs font-semibold leading-5 text-muted">
-                  После подтверждения заявки система подготовит страницу счета.
-                </p>
-              </label>
+              {/* Оплата всегда по счёту — выбор не показываем, значение уходит в заявку по умолчанию */}
+              <p className="rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-semibold text-dark sm:col-span-2">
+                Оплата — по счёту на оплату.
+                <span className="mt-1 block text-xs font-semibold leading-5 text-muted">
+                  После подтверждения заявки менеджер выставит счёт с реквизитами.
+                </span>
+              </p>
 
               <label className="block sm:col-span-2">
                 <span className="text-sm font-semibold text-dark">Комментарий</span>

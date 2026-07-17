@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSiteEditFlag, writeSiteEditFlag } from "@/src/components/home/SiteEditMode";
 import type { SiteContent } from "@/src/lib/site-content";
 
 // Форма суперадмина: контакты, тексты главной и график поставок.
@@ -27,6 +28,11 @@ export function SiteContentForm({ initialContent }: Props) {
   const [content, setContent] = useState(initialContent);
   const [state, setState] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const editMode = useSiteEditFlag();
+
+  function toggleEditMode() {
+    writeSiteEditFlag(!editMode);
+  }
 
   function update<Key extends keyof SiteContent>(key: Key, value: SiteContent[Key]) {
     setContent((current) => ({ ...current, [key]: value }));
@@ -73,10 +79,23 @@ export function SiteContentForm({ initialContent }: Props) {
           <p className="text-xs font-semibold uppercase tracking-[.15em] text-coral">Суперадмин</p>
           <h2 className="mt-1 font-display text-2xl font-semibold">Контент сайта</h2>
         </div>
-        <p className="max-w-sm text-xs leading-5 text-muted">
-          Эти же тексты можно менять карандашиком прямо на главной: откройте сайт под
-          админом и нажмите «Редактировать сайт» в правом нижнем углу.
-        </p>
+        <div className="flex flex-col items-end gap-1.5">
+          <button
+            type="button"
+            onClick={toggleEditMode}
+            aria-pressed={editMode}
+            className={`min-h-11 rounded-btn border px-5 py-2 text-sm font-bold transition ${
+              editMode
+                ? "border-coral bg-coral text-white hover:bg-coral-hover"
+                : "border-black/15 bg-white text-dark hover:bg-black/5"
+            }`}
+          >
+            ✎ Редактирование на страницах: {editMode ? "включено" : "выключено"}
+          </button>
+          <p className="max-w-xs text-right text-xs leading-4 text-muted">
+            Включите и откройте сайт — у текстов появятся карандашики.
+          </p>
+        </div>
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">

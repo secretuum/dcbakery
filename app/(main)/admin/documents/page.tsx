@@ -16,10 +16,18 @@ function formatDate(value: string) {
 // показываем всё, кроме отменённых, свежие сверху.
 const HIDDEN_STATUSES = new Set(["canceled", "cancelled"]);
 
+function toDateInputValue(date: Date) {
+  const shifted = new Date(date);
+  shifted.setMinutes(shifted.getMinutes() - shifted.getTimezoneOffset());
+  return shifted.toISOString().slice(0, 10);
+}
+
 export default async function AdminDocumentsPage() {
   const orders = (await fetchAdminOrders()).filter(
     (order) => !HIDDEN_STATUSES.has(order.status),
   );
+  const today = new Date();
+  const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
   return (
     <div>
@@ -33,6 +41,64 @@ export default async function AdminDocumentsPage() {
           Смешанные заказы автоматически делятся на два счёта по цехам.
         </p>
       </div>
+
+      {/* Выгрузка для 1С Бухгалтерии: CSV открывается в Excel двойным кликом */}
+      <section className="mt-6 rounded-card border border-black/10 bg-white p-5">
+        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Выгрузка для 1С</p>
+        <form
+          action="/api/admin/export/1c"
+          method="get"
+          target="_blank"
+          className="mt-3 flex flex-wrap items-end gap-3"
+        >
+          <label className="grid gap-1.5 text-sm font-semibold text-dark">
+            С даты
+            <input
+              className="min-h-11 rounded-btn border border-black/10 bg-cream px-3 py-2 text-sm font-medium text-dark outline-none focus:border-coral"
+              type="date"
+              name="from"
+              defaultValue={toDateInputValue(monthStart)}
+              required
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-dark">
+            По дату
+            <input
+              className="min-h-11 rounded-btn border border-black/10 bg-cream px-3 py-2 text-sm font-medium text-dark outline-none focus:border-coral"
+              type="date"
+              name="to"
+              defaultValue={toDateInputValue(today)}
+              required
+            />
+          </label>
+          <label className="flex min-h-11 items-center gap-2 text-sm font-semibold text-dark">
+            <input className="size-4 accent-coral" type="checkbox" name="confirmed" value="1" defaultChecked />
+            Только подтверждённые
+          </label>
+          <button
+            className="min-h-11 rounded-btn border border-coral bg-coral px-5 py-2 text-sm font-bold text-white transition hover:bg-coral-hover"
+            type="submit"
+            name="type"
+            value="orders"
+          >
+            Скачать заказы (CSV)
+          </button>
+          <button
+            className="min-h-11 rounded-btn border border-black/15 bg-white px-5 py-2 text-sm font-semibold text-dark transition hover:bg-black/5"
+            type="submit"
+            name="type"
+            value="clients"
+          >
+            Скачать клиентов (CSV)
+          </button>
+        </form>
+        <p className="mt-3 text-xs leading-5 text-muted">
+          Заказы: одна строка = одна позиция заказа (контрагент, БИН, товар, количество, цена,
+          суммы). Клиенты: заготовка справочника контрагентов. Файлы в UTF-8 — Excel откроет
+          двойным кликом. Галочка «Только подтверждённые» скрывает неподтверждённые заявки,
+          отменённые не выгружаются никогда.
+        </p>
+      </section>
 
       <div className="mt-6 overflow-hidden rounded-card border border-black/10 bg-white">
         {orders.length > 0 ? (

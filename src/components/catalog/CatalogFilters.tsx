@@ -9,15 +9,26 @@ type Props = {
   categories: Category[];
   products: Product[];
   popularProducts: Product[];
+  orderCounts?: Record<string, number>;
 };
 
-export function CatalogFilters({ categories, products, popularProducts }: Props) {
+type SortMode = "default" | "popular" | "price_asc" | "price_desc";
+
+const sortOptions: Array<{ value: SortMode; label: string }> = [
+  { value: "default", label: "По умолчанию" },
+  { value: "popular", label: "По популярности" },
+  { value: "price_asc", label: "Цена: по возрастанию" },
+  { value: "price_desc", label: "Цена: по убыванию" },
+];
+
+export function CatalogFilters({ categories, products, popularProducts, orderCounts = {} }: Props) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [query, setQuery] = useState("");
+  const [sortMode, setSortMode] = useState<SortMode>("default");
 
   const maxProductPrice = useMemo(
     () => Math.max(...products.map((p) => p.price), 0),
@@ -45,7 +56,7 @@ export function CatalogFilters({ categories, products, popularProducts }: Props)
     const max = priceMax !== "" ? Number(priceMax) : null;
     const q = query.trim().toLowerCase();
 
-    return products.filter((p) => {
+    const result = products.filter((p) => {
       if (selectedCategories.length > 0 && !selectedCategories.includes(p.category_id)) return false;
       if (inStockOnly && p.stock_qty <= 0) return false;
       if (min !== null && p.price < min) return false;
@@ -53,9 +64,25 @@ export function CatalogFilters({ categories, products, popularProducts }: Props)
       if (q && !p.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [products, selectedCategories, inStockOnly, priceMin, priceMax, query]);
 
-  const isFiltering = hasActiveFilters || query.trim().length > 0;
+    if (sortMode === "price_asc") {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sortMode === "price_desc") {
+      result.sort((a, b) => b.price - a.price);
+    } else if (sortMode === "popular") {
+      // Сначала реально заказанные (сумма заказанных единиц), потом ручной ранг
+      result.sort(
+        (a, b) =>
+          (orderCounts[b.id] ?? 0) - (orderCounts[a.id] ?? 0) ||
+          (b.popularity_rank ?? 0) - (a.popularity_rank ?? 0) ||
+          a.sort_order - b.sort_order,
+      );
+    }
+
+    return result;
+  }, [products, selectedCategories, inStockOnly, priceMin, priceMax, query, sortMode, orderCounts]);
+
+  const isFiltering = hasActiveFilters || query.trim().length > 0 || sortMode !== "default";
 
   const sidebar = (
     <div className="flex flex-col gap-6">
@@ -195,9 +222,9 @@ export function CatalogFilters({ categories, products, popularProducts }: Props)
         </aside>
 
         <div className="flex-1 min-w-0">
-          {/* Search + mobile filter button */}
-          <div className="mb-6 flex gap-3">
-            <div className="relative flex-1 max-w-md">
+          {/* Search + sort + mobile filter button */}
+          <div className="mb-6 flex flex-wrap gap-3">
+            <div className="relative min-w-40 flex-1 max-w-md">
               <svg
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                 width="18"
@@ -228,6 +255,18 @@ export function CatalogFilters({ categories, products, popularProducts }: Props)
                 </button>
               )}
             </div>
+            <select
+              value={sortMode}
+              onChange={(e) => setSortMode(e.currentTarget.value as SortMode)}
+              aria-label="Сортировка"
+              className="rounded border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               onClick={() => setIsMobileOpen(true)}

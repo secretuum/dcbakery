@@ -84,7 +84,7 @@ function getCatalogProductPatch(formData: FormData) {
     min_qty: Math.round(getNumber(formData, "min_qty") ?? 1),
     name: getString(formData, "name"),
     package_type: getString(formData, "package_type"),
-    price: Math.min(getNumber(formData, "price") ?? 0, 10000),
+    price: Math.min(getNumber(formData, "price") ?? 0, 20000),
     shelf_life: getString(formData, "shelf_life"),
     slug: getString(formData, "slug") || slugify(getString(formData, "name")),
     step_qty: 1,

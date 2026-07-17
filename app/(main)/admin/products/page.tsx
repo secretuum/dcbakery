@@ -7,7 +7,7 @@ import {
 import { ProductImageUpload } from "@/src/components/admin/ProductImageUpload";
 import { Badge } from "@/src/components/ui/Badge";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
-import { fetchAdminProducts, fetchCategories } from "@/src/lib/catalog";
+import { fetchAdminCategories, fetchAdminProducts } from "@/src/lib/catalog";
 import { formatProductPrice } from "@/src/lib/format";
 import type { Product } from "@/src/types";
 
@@ -77,7 +77,7 @@ function getStockTone(stockQty: number) {
 export default async function AdminProductsPage({ searchParams }: AdminProductsPageProps) {
   const [{ category, q, view, created }, categories, products] = await Promise.all([
     searchParams,
-    fetchCategories(),
+    fetchAdminCategories(),
     fetchAdminProducts(),
   ]);
   const selectedCategory = getParam(category);
@@ -357,7 +357,7 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
                           className="h-9 w-32 rounded-btn border border-black/10 bg-white px-3 py-2 font-data text-sm font-semibold text-coral outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
                           defaultValue={product.price}
                           form={formId}
-                          max={10000}
+                          max={20000}
                           min="0"
                           name="price"
                           step="1"

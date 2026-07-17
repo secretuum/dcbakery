@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { SiteContentForm } from "@/src/components/admin/SiteContentForm";
 import { WhatsAppSettingControl } from "@/src/components/admin/WhatsAppSettingControl";
 import { getCompanyDetails, hasCompleteCompanyDetails } from "@/src/lib/company-details";
 import { getPaymentMode } from "@/src/lib/payments";
+import { getSiteContent } from "@/src/lib/site-content";
+import { getIsSuperAdmin } from "@/src/lib/superadmin";
 import { fetchAppSettings } from "@/src/lib/supabase/admin";
 
 type SettingControl = {
@@ -37,7 +40,11 @@ function isEnabled(value: string | null | undefined) {
 }
 
 export default async function AdminSettingsPage() {
-  const settings = await fetchAppSettings();
+  const [settings, siteContent, isSuperAdmin] = await Promise.all([
+    fetchAppSettings(),
+    getSiteContent(),
+    getIsSuperAdmin(),
+  ]);
   const values = new Map(settings.map((setting) => [setting.key, setting.value]));
   const paymentMode = getPaymentMode();
   const companyDetails = getCompanyDetails();
@@ -54,26 +61,16 @@ export default async function AdminSettingsPage() {
         <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Настройки</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">Настройки DC Bakery</h1>
         <p className="mt-4 max-w-3xl text-sm leading-6 text-muted">
-          Здесь можно временно включать и выключать нашу WhatsApp-логику без redeploy.
-          Это удобно, пока к тому же номеру подключен второй бот.
+          Контакты, тексты главной и график поставок меняются здесь и применяются сразу.
+          Служебные переключатели WhatsApp собраны внизу.
         </p>
       </div>
 
-      <section className="mt-6 grid gap-4">
-        {settingControls.map((setting) => {
-          const enabled = isEnabled(values.get(setting.key));
-
-          return (
-            <WhatsAppSettingControl
-              description={setting.description}
-              initialValue={enabled}
-              key={setting.key}
-              label={setting.label}
-              settingKey={setting.key}
-            />
-          );
-        })}
-      </section>
+      {isSuperAdmin ? (
+        <div className="mt-6">
+          <SiteContentForm initialContent={siteContent} />
+        </div>
+      ) : null}
 
       <section className="mt-6 rounded-card border border-black/10 bg-white p-6">
         <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Оплата и документы</p>
@@ -99,13 +96,30 @@ export default async function AdminSettingsPage() {
         </p>
       </section>
 
-      <section className="mt-6 rounded-card border border-dark bg-dark p-6 text-white">
-        <p className="font-display text-xl font-semibold">Как временно отключать</p>
-        <p className="mt-3 text-sm leading-6 text-white/75">
-          Самый мягкий режим: выключить только клиентский бот, а менеджерские команды оставить.
-          Полное отключение используйте, если второй бот должен единолично обработать все сообщения.
+      <details className="mt-6 rounded-card border border-black/10 bg-white p-6">
+        <summary className="cursor-pointer font-display text-xl font-semibold text-dark">
+          Служебное: переключатели WhatsApp-бота
+        </summary>
+        <p className="mt-3 text-sm leading-6 text-muted">
+          Временное включение и выключение WhatsApp-логики без redeploy. Самый мягкий режим —
+          выключить только клиентский бот, оставив команды менеджера. Обычно трогать не нужно.
         </p>
-      </section>
+        <div className="mt-4 grid gap-4">
+          {settingControls.map((setting) => {
+            const enabled = isEnabled(values.get(setting.key));
+
+            return (
+              <WhatsAppSettingControl
+                description={setting.description}
+                initialValue={enabled}
+                key={setting.key}
+                label={setting.label}
+                settingKey={setting.key}
+              />
+            );
+          })}
+        </div>
+      </details>
     </div>
   );
 }

@@ -47,20 +47,12 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
 
   return (
     <div>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Админка</p>
-          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">Заказы</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-            Заявки из Supabase, отсортированные по дате создания.
-          </p>
-        </div>
-        <Link
-          href="/catalog"
-          className="inline-flex min-h-11 items-center justify-center rounded-btn border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-black/5"
-        >
-          Открыть каталог
-        </Link>
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Админка</p>
+        <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">Заказы</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+          Все заявки с сайта и из WhatsApp, свежие сверху.
+        </p>
       </div>
 
       <nav className="mt-7 flex gap-2 overflow-x-auto pb-2" aria-label="Фильтр статуса">

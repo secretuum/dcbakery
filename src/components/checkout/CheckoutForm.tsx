@@ -29,8 +29,17 @@ type CheckoutFormErrors = Partial<Record<keyof CheckoutFormState, string>>;
 const fieldClassName =
   "min-h-12 w-full rounded-btn border border-black/10 bg-white px-4 py-3 text-sm font-medium text-dark outline-none transition placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/25";
 
-const ORDER_CUTOFF_HOUR = 18;
 const DELIVERY_WINDOW_DAYS = 14;
+// Дефолты дублируют defaultSiteContent — используются, пока настройки не загрузились
+const DEFAULT_DELIVERY_DAYS = [2, 4, 6];
+const DEFAULT_CUTOFF_HOUR = 18;
+
+type DeliverySchedule = {
+  /** Дни доставки: 0 = воскресенье … 6 = суббота */
+  deliveryDays: number[];
+  /** Приём заявок до этого часа накануне дня доставки */
+  cutoffHour: number;
+};
 
 function toDateString(input: Date) {
   const date = new Date(input);
@@ -38,45 +47,56 @@ function toDateString(input: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-// Заявки после 18:00 обрабатываются на следующий день; воскресенье — выходной
-function getFirstDeliveryDate() {
-  const now = new Date();
-  const first = new Date(now);
-  first.setDate(first.getDate() + (now.getHours() >= ORDER_CUTOFF_HOUR ? 2 : 1));
-  while (first.getDay() === 0) {
-    first.setDate(first.getDate() + 1);
-  }
-  return first;
-}
-
 type DeliveryDateOption = {
   value: string;
-  isSunday: boolean;
+  disabled: boolean;
+  reason?: string;
   weekdayLabel: string;
   dayLabel: string;
 };
 
 const weekdayFormat = new Intl.DateTimeFormat("ru-RU", { weekday: "short" });
 const dayFormat = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" });
+const shortDayLabels = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
 
-function getDeliveryDateOptions(): DeliveryDateOption[] {
-  const first = getFirstDeliveryDate();
+export function formatShortDeliveryDays(days: number[]) {
+  return days
+    .slice()
+    .sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b))
+    .map((d) => shortDayLabels[d] ?? "")
+    .filter(Boolean)
+    .join(" · ");
+}
+
+// Доставка в день X возможна, если заявка успевает до отсечки накануне:
+// сегодня минимум за 2 дня до X, либо ровно накануне и сейчас раньше cutoffHour.
+function getDeliveryDateOptions(schedule: DeliverySchedule): DeliveryDateOption[] {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(start.getDate() + 1);
 
   return Array.from({ length: DELIVERY_WINDOW_DAYS }, (_, i) => {
-    const date = new Date(first);
-    date.setDate(first.getDate() + i);
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+    const isDeliveryDay = schedule.deliveryDays.includes(date.getDay());
+    const beforeCutoff = i >= 1 || now.getHours() < schedule.cutoffHour;
 
     return {
       value: toDateString(date),
-      isSunday: date.getDay() === 0,
+      disabled: !isDeliveryDay || !beforeCutoff,
+      reason: !isDeliveryDay
+        ? "В этот день доставки нет"
+        : !beforeCutoff
+          ? `Приём заявок на эту дату закрыт в ${schedule.cutoffHour}:00`
+          : undefined,
       weekdayLabel: weekdayFormat.format(date),
       dayLabel: dayFormat.format(date).replace(".", ""),
     };
   });
 }
 
-function isSundayDate(value: string) {
-  return new Date(`${value}T00:00:00`).getDay() === 0;
+function isDeliveryDayDate(value: string, schedule: DeliverySchedule) {
+  return schedule.deliveryDays.includes(new Date(`${value}T00:00:00`).getDay());
 }
 
 const emptySubscribe = () => () => {};
@@ -121,10 +141,10 @@ function formatPhone(value: string) {
   return formatted;
 }
 
-function validateForm(form: CheckoutFormState) {
+function validateForm(form: CheckoutFormState, schedule: DeliverySchedule) {
   const errors: CheckoutFormErrors = {};
   const phoneDigits = form.customer_phone.replace(/\D/g, "");
-  const minDeliveryDate = toDateString(getFirstDeliveryDate());
+  const minDeliveryDate = getDeliveryDateOptions(schedule).find((option) => !option.disabled)?.value ?? "";
 
   if (!form.company_name.trim()) {
     errors.company_name = "Укажите название компании или заведения";
@@ -140,9 +160,9 @@ function validateForm(form: CheckoutFormState) {
 
   if (!form.delivery_date) {
     errors.delivery_date = "Выберите дату доставки";
-  } else if (isSundayDate(form.delivery_date)) {
-    errors.delivery_date = "Воскресенье — выходной, выберите другой день";
-  } else if (form.delivery_date < minDeliveryDate) {
+  } else if (!isDeliveryDayDate(form.delivery_date, schedule)) {
+    errors.delivery_date = `Доставка по этим дням: ${formatShortDeliveryDays(schedule.deliveryDays)}`;
+  } else if (!minDeliveryDate || form.delivery_date < minDeliveryDate) {
     errors.delivery_date = "Эта дата уже недоступна, выберите более позднюю";
   }
 
@@ -161,18 +181,37 @@ function FieldError({ children }: { children?: string }) {
   return <p className="mt-2 text-xs font-bold text-burgundy">{children}</p>;
 }
 
-export function CheckoutForm() {
+type CheckoutFormProps = {
+  deliveryDays?: number[];
+  cutoffHour?: number;
+};
+
+export function CheckoutForm({
+  deliveryDays = DEFAULT_DELIVERY_DAYS,
+  cutoffHour = DEFAULT_CUTOFF_HOUR,
+}: CheckoutFormProps) {
   const router = useRouter();
   const { clear, isReady, items, totalAmount, totalItems } = useCart();
   const { showToast } = useToast();
+  // Массив с сервера пересоздаётся на каждый рендер — мемоизируем по содержимому
+  const deliveryDaysKey = deliveryDays.join(",");
+  const schedule = useMemo<DeliverySchedule>(
+    () => ({
+      deliveryDays: deliveryDaysKey
+        ? deliveryDaysKey.split(",").map(Number)
+        : DEFAULT_DELIVERY_DAYS,
+      cutoffHour,
+    }),
+    [deliveryDaysKey, cutoffHour],
+  );
   // Даты считаем только на клиенте: страница пререндерится статически, и дата из билда
   // не совпала бы с датой клиента при гидрации
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const deliveryOptions = useMemo(
-    () => (isMounted ? getDeliveryDateOptions() : null),
-    [isMounted],
+    () => (isMounted ? getDeliveryDateOptions(schedule) : null),
+    [isMounted, schedule],
   );
-  const firstAvailableDate = deliveryOptions?.find((option) => !option.isSunday)?.value ?? "";
+  const firstAvailableDate = deliveryOptions?.find((option) => !option.disabled)?.value ?? "";
   const hasQuoteItems = items.some((item) => item.product.price <= 0);
   const canCheckout = totalAmount >= MIN_ORDER_AMOUNT;
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
@@ -213,7 +252,7 @@ export function CheckoutForm() {
     event.preventDefault();
 
     const submission = { ...form, delivery_date: selectedDeliveryDate };
-    const nextErrors = validateForm(submission);
+    const nextErrors = validateForm(submission, schedule);
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
@@ -405,14 +444,14 @@ export function CheckoutForm() {
                         <button
                           key={option.value}
                           type="button"
-                          disabled={option.isSunday}
+                          disabled={option.disabled}
                           onClick={() => updateField("delivery_date", option.value)}
                           aria-pressed={isSelected}
-                          title={option.isSunday ? "Воскресенье — выходной" : undefined}
+                          title={option.reason}
                           className={`flex min-w-16 shrink-0 flex-col items-center rounded-btn border px-3 py-2 transition ${
                             isSelected
                               ? "border-coral bg-coral text-white"
-                              : option.isSunday
+                              : option.disabled
                                 ? "cursor-not-allowed border-black/5 bg-black/5 text-muted/50 line-through"
                                 : "border-black/10 bg-white text-dark hover:border-coral"
                           }`}
@@ -431,7 +470,8 @@ export function CheckoutForm() {
                   <div className="mt-2 h-[3.75rem] rounded-btn border border-black/5 bg-black/5" />
                 )}
                 <p className="mt-2 text-xs font-semibold leading-5 text-muted">
-                  Приём заявок до 18:00, после — обработка на следующий день. Воскресенье — выходной.
+                  Доставка: {formatShortDeliveryDays(schedule.deliveryDays)}. Приём заявок до{" "}
+                  {schedule.cutoffHour}:00 накануне дня доставки.
                 </p>
                 <FieldError>{errors.delivery_date}</FieldError>
               </div>

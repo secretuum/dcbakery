@@ -1,3 +1,4 @@
+import { BANQUET_DESSERTS_ENABLED, READY_MEALS_ENABLED } from "@/app/constants";
 import {
   productCategories,
   products as sourceProducts,
@@ -8,6 +9,7 @@ import {
   fetchCatalogProductOverrides,
   type CatalogProductOverride,
 } from "@/src/lib/supabase/admin";
+import { fetchProductOrderCounts } from "@/src/lib/supabase/popularity";
 import type { Category, Product } from "@/src/types";
 
 function bySortOrder<T extends { sort_order: number }>(a: T, b: T) {
@@ -16,7 +18,7 @@ function bySortOrder<T extends { sort_order: number }>(a: T, b: T) {
 
 const categoryDetails: Record<
   SourceProductCategory,
-  Pick<Category, "id" | "slug" | "description" | "image" | "sort_order">
+  Pick<Category, "id" | "slug" | "description" | "image" | "sort_order" | "is_active">
 > = {
   Десерты: {
     id: "cat-desserts",
@@ -24,6 +26,7 @@ const categoryDetails: Record<
     description: "Порционные десерты, торты и позиции для витрины кофеен, ресторанов и магазинов.",
     image: "/product-placeholder.png",
     sort_order: 10,
+    is_active: true,
   },
   Полуфабрикаты: {
     id: "cat-semi",
@@ -31,6 +34,7 @@ const categoryDetails: Record<
     description: "Заморозка и заготовки для стабильной кухни, быстрых завтраков и витрин.",
     image: "/product-placeholder.png",
     sort_order: 20,
+    is_active: true,
   },
   Мясо: {
     id: "cat-meat",
@@ -38,6 +42,23 @@ const categoryDetails: Record<
     description: "Мясные позиции для меню, доставки, бизнес-ланчей и продуктовой полки.",
     image: "/product-placeholder.png",
     sort_order: 30,
+    is_active: true,
+  },
+  "Готовые обеды": {
+    id: "cat-lunch",
+    slug: "gotovye-obedy",
+    description: "Готовые обеды и ланч-боксы для офисов, магазинов и заведений без кухни.",
+    image: "/product-placeholder.png",
+    sort_order: 40,
+    is_active: READY_MEALS_ENABLED,
+  },
+  "Банкетные десерты": {
+    id: "cat-banquet",
+    slug: "banketnye-deserty",
+    description: "Порционные банкетные форматы тортов для мероприятий и фуршетов, цена за 1 шт.",
+    image: "/product-placeholder.png",
+    sort_order: 50,
+    is_active: BANQUET_DESSERTS_ENABLED,
   },
 };
 
@@ -48,7 +69,6 @@ function toCategory(name: SourceProductCategory): Category {
     ...details,
     name,
     parent_id: null,
-    is_active: true,
   };
 }
 
@@ -277,6 +297,11 @@ export async function fetchCategories(): Promise<Category[]> {
   return getActiveCategories();
 }
 
+// Все категории, включая скрытые с витрины (для админки).
+export async function fetchAdminCategories(): Promise<Category[]> {
+  return productCategories.map(toCategory).sort(bySortOrder);
+}
+
 export async function fetchCategoryBySlug(slug: string): Promise<Category | null> {
   return getActiveCategories().find((category) => category.slug === slug) ?? null;
 }
@@ -294,20 +319,25 @@ export async function fetchAdminProducts({
 }
 
 export async function fetchPopularProducts(limit = 4): Promise<Product[]> {
-  const activeProducts = await getCatalogProducts();
-  const hasAnyRank = activeProducts.some((p) => p.popularity_rank != null);
+  const [activeProducts, orderCounts] = await Promise.all([
+    getCatalogProducts(),
+    fetchProductOrderCounts(),
+  ]);
+  const hasSignal = activeProducts.some(
+    (p) => (orderCounts[p.id] ?? 0) > 0 || p.popularity_rank != null,
+  );
 
-  if (!hasAnyRank) {
+  if (!hasSignal) {
     return activeProducts.slice(0, limit);
   }
 
+  // Реальные заказы важнее ручного ранга; ранг решает при равенстве
   return [...activeProducts]
-    .sort((a, b) => {
-      if (a.popularity_rank == null && b.popularity_rank == null) return 0;
-      if (a.popularity_rank == null) return 1;
-      if (b.popularity_rank == null) return -1;
-      return b.popularity_rank - a.popularity_rank;
-    })
+    .sort(
+      (a, b) =>
+        (orderCounts[b.id] ?? 0) - (orderCounts[a.id] ?? 0) ||
+        (b.popularity_rank ?? 0) - (a.popularity_rank ?? 0),
+    )
     .slice(0, limit);
 }
 

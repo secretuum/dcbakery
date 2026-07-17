@@ -1,28 +1,47 @@
 import Link from "next/link";
 import { InstagramIcon, WhatsAppIcon } from "@/src/components/ui/BrandIcons";
+import { formatDeliveryDaysLabel, getSiteContent } from "@/src/lib/site-content";
 
-const contactItems = [
-  {
-    label: "Телефон / WhatsApp",
-    value: "+7 747 727 2650",
-    href: "https://wa.me/77477272650",
-    icon: WhatsAppIcon,
-  },
-  {
-    label: "Instagram",
-    value: "@dcbakery",
-    href: "https://www.instagram.com/dcbakery",
-    icon: InstagramIcon,
-  },
-  {
-    label: "Адрес",
-    value: "г. Алматы, ул. Жамбыла 154",
-    href: null,
-    icon: null,
-  },
-];
+// Единый блок контактов сайта (дубль на главной удалён — контакты живут здесь).
+// Значения редактируются суперадмином: Настройки → «Контент сайта» или карандашиком на главной.
 
-export function Footer() {
+function digits(value: string) {
+  return value.replace(/\D/g, "");
+}
+
+export async function Footer() {
+  const content = await getSiteContent();
+
+  const contactItems = [
+    {
+      label: "WhatsApp",
+      value: content.contactWhatsapp,
+      href: `https://wa.me/${digits(content.contactWhatsapp)}`,
+      icon: WhatsAppIcon,
+    },
+    {
+      label: "Телефон",
+      value: content.contactPhone,
+      href: `tel:+${digits(content.contactPhone)}`,
+      icon: WhatsAppIcon,
+    },
+    {
+      label: "Instagram",
+      value: "@bakery.dc",
+      href: "https://www.instagram.com/bakery.dc",
+      icon: InstagramIcon,
+    },
+    { label: "Адрес", value: content.address, href: null, icon: null },
+    { label: "Режим работы", value: content.workHours, href: null, icon: null },
+    {
+      label: "График поставок",
+      value: formatDeliveryDaysLabel(content.deliveryDays),
+      hint: `Приём заявок до ${content.orderCutoffHour}:00 накануне`,
+      href: null,
+      icon: null,
+    },
+  ];
+
   return (
     <footer className="print-hidden border-t border-black/10 bg-white">
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[1.2fr_1.8fr] lg:px-8">
@@ -55,6 +74,9 @@ export function Footer() {
               ) : (
                 <p className="mt-2 text-sm font-semibold text-dark">{item.value}</p>
               )}
+              {"hint" in item && item.hint ? (
+                <p className="mt-1 text-xs text-muted">{item.hint}</p>
+              ) : null}
             </div>
           ))}
         </div>

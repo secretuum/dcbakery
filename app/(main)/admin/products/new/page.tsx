@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createCatalogProductAction } from "@/app/(main)/admin/products/actions";
 import { ProductImageUpload } from "@/src/components/admin/ProductImageUpload";
-import { fetchCategories } from "@/src/lib/catalog";
+import { fetchAdminCategories } from "@/src/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Новый товар | Админка DC Bakery",
 };
 
 export default async function NewProductPage() {
-  const categories = await fetchCategories();
+  const categories = await fetchAdminCategories();
 
   return (
     <div>

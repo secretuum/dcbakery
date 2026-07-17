@@ -7,7 +7,8 @@ import { AdminLogoutButton } from "@/src/components/admin/AdminLogoutButton";
 
 const adminNavItems = [
   { href: "/admin/orders", label: "Заказы" },
-  { href: "/admin/clients", label: "Клиенты" },
+  { href: "/admin/documents", label: "Накладные и счета" },
+  { href: "/admin/clients", label: "Наши клиенты" },
   { href: "/admin/products", label: "Товары" },
   { href: "/admin/stop-list", label: "Стоп-лист" },
   { href: "/admin/settings", label: "Настройки" },
@@ -44,10 +45,10 @@ export function AdminShell({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={[
-                  "shrink-0 rounded px-3 py-2.5 text-sm font-semibold transition",
+                  "shrink-0 rounded px-3 py-2.5 text-sm font-bold transition",
                   isActive
                     ? "bg-coral text-white"
-                    : "text-white/60 hover:bg-white/8 hover:text-white",
+                    : "text-white/85 hover:bg-white/10 hover:text-white",
                 ].join(" ")}
               >
                 {item.label}

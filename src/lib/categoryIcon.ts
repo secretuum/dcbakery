@@ -2,9 +2,13 @@ const CATEGORY_ICONS: Record<string, string> = {
   "cat-desserts": "/category-icons/deserty.svg",
   "cat-semi": "/category-icons/polufabrikaty.svg",
   "cat-meat": "/category-icons/myaso.svg",
+  "cat-lunch": "/category-icons/gotovye-obedy.svg",
+  "cat-banquet": "/category-icons/deserty.svg",
   deserty: "/category-icons/deserty.svg",
   polufabrikaty: "/category-icons/polufabrikaty.svg",
   myaso: "/category-icons/myaso.svg",
+  "gotovye-obedy": "/category-icons/gotovye-obedy.svg",
+  "banketnye-deserty": "/category-icons/deserty.svg",
 };
 
 /** Returns true when `src` is an auto-generated SVG placeholder from /products/ */

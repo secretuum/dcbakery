@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { InstagramIcon, WhatsAppIcon } from "@/src/components/ui/BrandIcons";
+import { getSiteContent } from "@/src/lib/site-content";
 
 export const metadata: Metadata = {
   title: "Контакты и реквизиты — DC Bakery",
@@ -8,7 +9,10 @@ export const metadata: Metadata = {
     "Контактная информация и банковские реквизиты DC Bakery. ИП Кошкаров А.К., г. Алматы. Телефон, e-mail, WhatsApp.",
 };
 
-export default function ContactsPage() {
+export default async function ContactsPage() {
+  const content = await getSiteContent();
+  const whatsappDigits = content.contactWhatsapp.replace(/\D/g, "");
+  const phoneDigits = content.contactPhone.replace(/\D/g, "");
   return (
     <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
       <div className="mx-auto max-w-3xl space-y-6">
@@ -37,31 +41,38 @@ export default function ContactsPage() {
             <div className="rounded-card border border-black/5 bg-cream p-5 sm:col-span-2">
               <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Адрес</p>
               <p className="mt-2 text-sm font-semibold text-dark">
-                г. Алматы, ул. Жамбыла 154
+                {content.address}
               </p>
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Телефон / WhatsApp</p>
               <a
-                href="https://wa.me/77477272650"
+                href={`https://wa.me/${whatsappDigits}`}
                 className="mt-2 flex items-center gap-2 text-sm font-semibold text-dark hover:text-coral"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <WhatsAppIcon className="h-4 w-4 shrink-0 text-coral" />
-                +7 747 727 2650
+                {content.contactWhatsapp}
+              </a>
+              <a
+                href={`tel:+${phoneDigits}`}
+                className="mt-2 flex items-center gap-2 text-sm font-semibold text-dark hover:text-coral"
+              >
+                <WhatsAppIcon className="h-4 w-4 shrink-0 text-coral" />
+                {content.contactPhone}
               </a>
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Instagram</p>
               <a
-                href="https://www.instagram.com/dcbakery"
+                href="https://www.instagram.com/bakery.dc"
                 className="mt-2 flex items-center gap-2 text-sm font-semibold text-dark hover:text-coral"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <InstagramIcon className="h-4 w-4 shrink-0 text-coral" />
-                @dcbakery
+                @bakery.dc
               </a>
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5">

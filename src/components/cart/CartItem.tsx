@@ -5,6 +5,7 @@ import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { QuantitySelector } from "@/src/components/product/QuantitySelector";
 import { useCart } from "@/src/contexts/CartContext";
 import { formatPrice, formatProductPrice } from "@/src/lib/format";
+import { useT } from "@/src/i18n/client";
 import type { CartItem as CartItemType } from "@/src/types";
 
 type CartItemProps = {
@@ -12,6 +13,7 @@ type CartItemProps = {
 };
 
 export function CartItem({ item }: CartItemProps) {
+  const t = useT();
   const { remove, updateQty } = useCart();
   const { product, qty } = item;
   const imageSrc = product.images[0] ?? "/product-placeholder.png";
@@ -52,9 +54,7 @@ export function CartItem({ item }: CartItemProps) {
             type="button"
             onClick={() => remove(product.id)}
             className="self-start rounded-btn px-3 py-2 text-sm font-semibold text-muted transition hover:bg-coral-light hover:text-dark"
-          >
-            Удалить
-          </button>
+          >{t("Удалить")}</button>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-[minmax(180px,240px)_1fr] md:items-center">

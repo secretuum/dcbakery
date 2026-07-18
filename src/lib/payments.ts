@@ -69,13 +69,24 @@ export function createPaymentLink(
     throw new Error("Kaspi provider is reserved for a future integration");
   }
 
-  if (paymentMode === "halyk" || paymentMode === "freedom") {
+  if (paymentMode === "freedom") {
     throw new Error(
-      `${paymentMode} payment provider is selected but its credentials and adapter are not configured`,
+      "freedom payment provider is selected but its credentials and adapter are not configured",
     );
   }
 
   const normalizedOrigin = origin.replace(/\/$/, "");
+
+  // Halyk: ссылка ведёт на нашу страницу заказа — кнопка «Оплатить картой»
+  // создаёт попытку и открывает платёжную страницу Halyk (см. /pay/[orderId]/card)
+  if (paymentMode === "halyk") {
+    return {
+      paymentId: `halyk-${order.order_number}`,
+      paymentProvider: "halyk",
+      paymentUrl: `${normalizedOrigin}/pay/${order.id}`,
+    };
+  }
+
   const isDemo = paymentMode === "demo";
 
   return {

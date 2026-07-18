@@ -78,6 +78,16 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
       order.status,
     );
 
+  // Срок действия счёта: от даты подтверждения, DC_INVOICE_VALID_DAYS дней (по умолчанию 5)
+  const validDaysRaw = Number(process.env.DC_INVOICE_VALID_DAYS);
+  const validDays =
+    Number.isInteger(validDaysRaw) && validDaysRaw > 0 && validDaysRaw <= 60 ? validDaysRaw : 5;
+  const invoiceValidUntil = (() => {
+    const date = new Date(order.confirmed_at ?? order.created_at);
+    date.setDate(date.getDate() + validDays);
+    return date.toISOString();
+  })();
+
   if (!canIssueInvoice) {
     return (
       <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
@@ -107,6 +117,12 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
               Заказ содержит продукцию обоих цехов — сформировано два счета.
             </p>
           ) : null}
+          <a
+            className="inline-flex min-h-10 items-center justify-center rounded-btn border border-coral bg-coral px-4 py-2 text-sm font-bold text-white transition hover:bg-coral-hover"
+            href={`/documents/invoice/${order.id}/xlsx`}
+          >
+            Скачать Excel
+          </a>
           <DocumentPrintButton />
         </div>
 
@@ -125,7 +141,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
               <p className="text-sm font-bold uppercase text-muted">DC Bakery</p>
               <h1 className="mt-3 text-4xl font-bold">Счет на оплату № {invoice.number}</h1>
               <p className="mt-2 text-sm font-semibold">
-                от {formatDate(order.created_at)}
+                от {formatDate(order.confirmed_at ?? order.created_at)}
                 {invoices.length > 1 ? ` · ${invoice.label}` : ""}
               </p>
             </header>
@@ -188,6 +204,9 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
             <div className="mt-6 ml-auto max-w-md border-t-2 border-dark pt-4 text-right">
               <p className="text-2xl font-bold">Итого: {formatPrice(invoice.totalAmount)}</p>
               <p className="mt-2 text-sm font-bold">{company.taxNote}</p>
+              <p className="mt-2 text-sm font-bold">
+                Счет действителен до {formatDate(invoiceValidUntil)}
+              </p>
             </div>
 
             <footer className="mt-16 flex justify-between gap-8 border-t border-black/15 pt-6 text-sm">

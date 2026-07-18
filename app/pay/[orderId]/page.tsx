@@ -14,6 +14,8 @@ import {
   createDemoPaymentToken,
   isDemoPaymentMode,
 } from "@/src/lib/payments";
+import { isHalykConfigured } from "@/src/lib/providers/halyk";
+import { getT } from "@/src/i18n/server";
 
 type PayPageProps = {
   params: Promise<{
@@ -76,6 +78,7 @@ function getPayState(status: string, paymentStatus?: string | null) {
 }
 
 export default async function PayPage({ params }: PayPageProps) {
+  const t = await getT();
   const { orderId } = await params;
 
   if (!isUuid(orderId)) {
@@ -115,6 +118,11 @@ export default async function PayPage({ params }: PayPageProps) {
   const avrAvailable = order.status === "completed";
   const isExternalPaymentUrl =
     Boolean(order.payment_url) && !order.payment_url?.includes(`/pay/${order.id}`);
+  // Оплата картой доступна, когда Halyk настроен и заказ подтверждён, но не оплачен
+  const cardPaymentAvailable =
+    isHalykConfigured() &&
+    order.status === "confirmed_waiting_payment" &&
+    order.payment_status !== "paid";
 
   return (
     <main className="min-h-screen bg-cream px-5 py-10 text-dark lg:px-8 lg:py-16">
@@ -122,38 +130,36 @@ export default async function PayPage({ params }: PayPageProps) {
         {order.status === "pending_manager_confirmation" || order.status === "new" ? (
           <PaymentStatusRefresh />
         ) : null}
-        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{state.eyebrow}</p>
+        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t(state.eyebrow)}</p>
         <h1 className="mt-3 break-all font-data text-3xl font-semibold tracking-tight sm:text-5xl">
           {order.order_number}
         </h1>
-        <p className="mt-4 text-base leading-7 text-muted">{state.text}</p>
+        <p className="mt-4 text-base leading-7 text-muted">{t(state.text)}</p>
 
         {isDemoMode ? (
-          <p className="mt-5 rounded-btn bg-coral-light px-4 py-3 text-sm font-semibold text-burgundy">
-            Демо-режим: реквизиты и платежи тестовые, реальные деньги не используются.
-          </p>
+          <p className="mt-5 rounded-btn bg-coral-light px-4 py-3 text-sm font-semibold text-burgundy">{t("Демо-режим: реквизиты и платежи тестовые, реальные деньги не используются.")}</p>
         ) : null}
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           <div className="rounded-btn border border-black/5 bg-cream px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Сумма</p>
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Сумма")}</p>
             <p className="mt-1 font-data text-xl font-semibold">{formatPrice(order.total_amount)}</p>
           </div>
           <div className="rounded-btn border border-black/5 bg-cream px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Статус</p>
-            <p className="mt-1 text-sm font-semibold">{orderStatusLabels[order.status]}</p>
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Статус")}</p>
+            <p className="mt-1 text-sm font-semibold">{t(orderStatusLabels[order.status])}</p>
           </div>
           <div className="rounded-btn border border-black/5 bg-cream px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Оплата</p>
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Оплата")}</p>
             <p className="mt-1 text-sm font-semibold">
-              {order.payment_status ? paymentStatusLabels[order.payment_status] : "Не оплачен"}
+              {t(order.payment_status ? paymentStatusLabels[order.payment_status] : "Не оплачен")}
             </p>
           </div>
         </div>
 
         {orderItems.length > 0 ? (
           <section className="mt-8 rounded-card border border-black/5 bg-cream p-5">
-            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Состав заказа</p>
+            <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Состав заказа")}</p>
             <ul className="mt-4 space-y-2">
               {orderItems.map((item) => (
                 <li
@@ -176,20 +182,16 @@ export default async function PayPage({ params }: PayPageProps) {
         ) : null}
 
         <section className="mt-8 rounded-card border border-black/5 bg-cream p-5">
-          <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Документы</p>
+          <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Документы")}</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <div className="rounded-btn border border-black/5 bg-white p-4">
-              <p className="font-display text-base font-semibold">Счет на оплату</p>
-              <p className="mt-2 text-sm leading-6 text-muted">
-                Формируется после подтверждения менеджером.
-              </p>
+              <p className="font-display text-base font-semibold">{t("Счет на оплату")}</p>
+              <p className="mt-2 text-sm leading-6 text-muted">{t("Формируется после подтверждения менеджером.")}</p>
               {invoiceAvailable ? (
                 <Link
                   className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn border border-coral bg-coral px-4 py-2 text-sm font-bold text-white transition hover:bg-coral-hover"
                   href={`/documents/invoice/${order.id}`}
-                >
-                  Открыть счет
-                </Link>
+                >{t("Открыть счет")}</Link>
               ) : (
                 <p className="mt-4 text-sm font-semibold text-burgundy">
                   {hasCompanyDetails ? "Ждет подтверждения" : "Реквизиты настраиваются"}
@@ -198,17 +200,13 @@ export default async function PayPage({ params }: PayPageProps) {
             </div>
 
             <div className="rounded-btn border border-black/5 bg-white p-4">
-              <p className="font-display text-base font-semibold">Накладная</p>
-              <p className="mt-2 text-sm leading-6 text-muted">
-                Товарная накладная для бухгалтерии.
-              </p>
+              <p className="font-display text-base font-semibold">{t("Накладная")}</p>
+              <p className="mt-2 text-sm leading-6 text-muted">{t("Товарная накладная для бухгалтерии.")}</p>
               {naklAvailable ? (
                 <Link
                   className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn border border-dark bg-dark px-4 py-2 text-sm font-bold text-white transition hover:bg-dark/80"
                   href={`/documents/nakl/${order.id}`}
-                >
-                  Открыть накладную
-                </Link>
+                >{t("Открыть накладную")}</Link>
               ) : (
                 <p className="mt-4 text-sm font-semibold text-burgundy">
                   {hasCompanyDetails ? "Ждет подтверждения" : "Реквизиты настраиваются"}
@@ -217,19 +215,15 @@ export default async function PayPage({ params }: PayPageProps) {
             </div>
 
             <div className="rounded-btn border border-black/5 bg-white p-4">
-              <p className="font-display text-base font-semibold">АВР</p>
-              <p className="mt-2 text-sm leading-6 text-muted">
-                Акт выполненных работ — доступен после завершения заказа.
-              </p>
+              <p className="font-display text-base font-semibold">{t("АВР")}</p>
+              <p className="mt-2 text-sm leading-6 text-muted">{t("Акт выполненных работ — доступен после завершения заказа.")}</p>
               {avrAvailable ? (
                 <Link
                   className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn border border-dark bg-dark px-4 py-2 text-sm font-bold text-white transition hover:bg-dark/80"
                   href={`/documents/avr/${order.id}`}
-                >
-                  Открыть АВР
-                </Link>
+                >{t("Открыть АВР")}</Link>
               ) : (
-                <p className="mt-4 text-sm font-semibold text-burgundy">После завершения заказа</p>
+                <p className="mt-4 text-sm font-semibold text-burgundy">{t("После завершения заказа")}</p>
               )}
             </div>
           </div>
@@ -245,26 +239,28 @@ export default async function PayPage({ params }: PayPageProps) {
         ) : null}
 
         {order.payment_status === "failed" ? (
-          <p className="mt-6 rounded-btn bg-raspberry/10 px-4 py-3 text-sm font-semibold text-raspberry">
-            Последняя попытка оплаты не прошла. Деньги не списаны, попробуйте еще раз.
-          </p>
+          <p className="mt-6 rounded-btn bg-raspberry/10 px-4 py-3 text-sm font-semibold text-raspberry">{t("Последняя попытка оплаты не прошла. Деньги не списаны, попробуйте еще раз.")}</p>
         ) : null}
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          {cardPaymentAvailable ? (
+            <Link
+              href={`/pay/${order.id}/card`}
+              className="inline-flex min-h-12 items-center justify-center rounded-btn border border-coral bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
+            >
+              Оплатить банковской картой
+            </Link>
+          ) : null}
           {isExternalPaymentUrl ? (
             <a
               href={order.payment_url ?? "#"}
               className="inline-flex min-h-12 items-center justify-center rounded-btn border border-coral bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
-            >
-              Оплатить
-            </a>
+            >{t("Оплатить")}</a>
           ) : null}
           <Link
             href="/catalog"
             className="inline-flex min-h-12 items-center justify-center rounded-btn border border-black/15 bg-white px-5 py-3 text-sm font-semibold text-dark transition hover:bg-black/5"
-          >
-            Вернуться в каталог
-          </Link>
+          >{t("Вернуться в каталог")}</Link>
         </div>
       </section>
     </main>

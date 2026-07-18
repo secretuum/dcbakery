@@ -9,6 +9,7 @@ import { Input } from "@/src/components/ui/Input";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatPrice } from "@/src/lib/format";
+import { useT } from "@/src/i18n/client";
 
 type CheckoutFormState = {
   company_name: string;
@@ -174,11 +175,13 @@ function validateForm(form: CheckoutFormState, schedule: DeliverySchedule) {
 }
 
 function FieldError({ children }: { children?: string }) {
+  const t = useT();
+
   if (!children) {
     return null;
   }
 
-  return <p className="mt-2 text-xs font-bold text-burgundy">{children}</p>;
+  return <p className="mt-2 text-xs font-bold text-burgundy">{t(children)}</p>;
 }
 
 type CheckoutFormProps = {
@@ -191,6 +194,7 @@ export function CheckoutForm({
   cutoffHour = DEFAULT_CUTOFF_HOUR,
 }: CheckoutFormProps) {
   const router = useRouter();
+  const t = useT();
   const { clear, isReady, items, totalAmount, totalItems } = useCart();
   const { showToast } = useToast();
   // Массив с сервера пересоздаётся на каждый рендер — мемоизируем по содержимому
@@ -310,11 +314,9 @@ export function CheckoutForm({
     return (
       <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
         <section className="mx-auto max-w-2xl rounded-card border border-black/10 bg-white p-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Оформление</p>
-          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">Проверяем корзину</h1>
-          <p className="mt-4 text-sm leading-6 text-muted">
-            Если корзина пуста, вернем вас в каталог.
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Оформление")}</p>
+          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">{t("Проверяем корзину")}</h1>
+          <p className="mt-4 text-sm leading-6 text-muted">{t("Если корзина пуста, вернем вас в каталог.")}</p>
         </section>
       </main>
     );
@@ -324,17 +326,15 @@ export function CheckoutForm({
     return (
       <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
         <section className="mx-auto max-w-2xl rounded-card border border-black/10 bg-white p-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Минимальный заказ</p>
-          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">Нужно добрать корзину</h1>
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Минимальный заказ")}</p>
+          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">{t("Нужно добрать корзину")}</h1>
           <p className="mt-4 text-sm leading-6 text-muted">
             Для B2B-заявки минимальная сумма составляет {formatPrice(MIN_ORDER_AMOUNT)}.
           </p>
           <Link
             href="/cart"
             className="mt-6 inline-flex min-h-12 items-center justify-center rounded-btn border border-coral bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
-          >
-            Вернуться в корзину
-          </Link>
+          >{t("Вернуться в корзину")}</Link>
         </section>
       </main>
     );
@@ -344,14 +344,9 @@ export function CheckoutForm({
     <main className="min-h-screen bg-cream px-5 pb-24 pt-10 text-dark lg:px-8 lg:pb-14 lg:pt-14">
       <section className="mx-auto max-w-7xl">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Оформление заявки</p>
-          <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-            Контакты и доставка
-          </h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-            Заполните контакты и удобное время доставки — менеджер подтвердит заявку и пришлёт
-            счёт в WhatsApp.
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Оформление заявки")}</p>
+          <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">{t("Контакты и доставка")}</h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-muted">{t("Заполните контакты и удобное время доставки — менеджер подтвердит заявку и пришлёт счёт в WhatsApp.")}</p>
         </div>
 
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
@@ -359,42 +354,42 @@ export function CheckoutForm({
             onSubmit={handleSubmit}
             className="min-w-0 rounded-card border border-black/10 bg-white p-5 sm:p-6"
           >
-            <p className="font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">Контакты</p>
+            <p className="font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">{t("Контакты")}</p>
             <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">Название компании / заведения</span>
+                <span className="text-sm font-semibold text-dark">{t("Название компании / заведения")}</span>
                 <Input
                   className="mt-2"
                   value={form.company_name}
                   onChange={(event) => updateField("company_name", event.currentTarget.value)}
-                  placeholder="Например, Coffee Point"
+                  placeholder={t("Например, Coffee Point")}
                 />
                 <FieldError>{errors.company_name}</FieldError>
               </label>
 
               <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">БИН / ИП</span>
+                <span className="text-sm font-semibold text-dark">{t("БИН / ИП")}</span>
                 <Input
                   className="mt-2"
                   value={form.customer_bin}
                   onChange={(event) => updateField("customer_bin", event.currentTarget.value)}
-                  placeholder="Например, 123456789012"
+                  placeholder={t("Например, 123456789012")}
                 />
               </label>
 
               <label className="block">
-                <span className="text-sm font-semibold text-dark">Контактное лицо</span>
+                <span className="text-sm font-semibold text-dark">{t("Контактное лицо")}</span>
                 <Input
                   className="mt-2"
                   value={form.customer_name}
                   onChange={(event) => updateField("customer_name", event.currentTarget.value)}
-                  placeholder="Имя менеджера"
+                  placeholder={t("Имя менеджера")}
                 />
                 <FieldError>{errors.customer_name}</FieldError>
               </label>
 
               <label className="block">
-                <span className="text-sm font-semibold text-dark">Телефон</span>
+                <span className="text-sm font-semibold text-dark">{t("Телефон")}</span>
                 <Input
                   className="mt-2"
                   inputMode="tel"
@@ -408,7 +403,7 @@ export function CheckoutForm({
               </label>
 
               <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">Email для документов</span>
+                <span className="text-sm font-semibold text-dark">{t("Email для документов")}</span>
                 <Input
                   className="mt-2"
                   inputMode="email"
@@ -421,20 +416,20 @@ export function CheckoutForm({
 
             </div>
 
-            <p className="mt-6 border-t border-black/5 pt-6 font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">Доставка</p>
+            <p className="mt-6 border-t border-black/5 pt-6 font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">{t("Доставка")}</p>
             <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">Адрес доставки</span>
+                <span className="text-sm font-semibold text-dark">{t("Адрес доставки")}</span>
                 <Input
                   className="mt-2"
                   value={form.delivery_address}
                   onChange={(event) => updateField("delivery_address", event.currentTarget.value)}
-                  placeholder="Город, улица, дом, точка"
+                  placeholder={t("Город, улица, дом, точка")}
                 />
               </label>
 
               <div className="min-w-0 sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">Дата доставки</span>
+                <span className="text-sm font-semibold text-dark">{t("Дата доставки")}</span>
                 {deliveryOptions ? (
                   <div className="no-scrollbar mt-2 flex max-w-full gap-2 overflow-x-auto pb-1">
                     {deliveryOptions.map((option) => {
@@ -477,21 +472,21 @@ export function CheckoutForm({
               </div>
 
               <label className="block">
-                <span className="text-sm font-semibold text-dark">Время</span>
+                <span className="text-sm font-semibold text-dark">{t("Время")}</span>
                 <select
                   className={`${fieldClassName} mt-2`}
                   value={form.delivery_time}
                   onChange={(event) => updateField("delivery_time", event.currentTarget.value)}
                 >
-                  <option>Утро 8-12</option>
-                  <option>День 12-18</option>
-                  <option>Договориться с менеджером</option>
+                  <option>{t("Утро 8-12")}</option>
+                  <option>{t("День 12-18")}</option>
+                  <option>{t("Договориться с менеджером")}</option>
                 </select>
               </label>
 
             </div>
 
-            <p className="mt-6 border-t border-black/5 pt-6 font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">Оплата и документы</p>
+            <p className="mt-6 border-t border-black/5 pt-6 font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">{t("Оплата и документы")}</p>
             <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
               {/* Оплата всегда по счёту — выбор не показываем, значение уходит в заявку по умолчанию */}
               <p className="rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-semibold text-dark sm:col-span-2">
@@ -502,12 +497,12 @@ export function CheckoutForm({
               </p>
 
               <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">Комментарий</span>
+                <span className="text-sm font-semibold text-dark">{t("Комментарий")}</span>
                 <textarea
                   className={`${fieldClassName} mt-2 min-h-32 resize-y`}
                   value={form.comment}
                   onChange={(event) => updateField("comment", event.currentTarget.value)}
-                  placeholder="Особые условия, удобный контакт, детали доставки"
+                  placeholder={t("Особые условия, удобный контакт, детали доставки")}
                 />
               </label>
             </div>
@@ -528,9 +523,7 @@ export function CheckoutForm({
                     rel="noopener noreferrer"
                     className="font-bold text-coral hover:underline"
                     onClick={(e) => e.stopPropagation()}
-                  >
-                    Публичной оферты
-                  </a>{" "}
+                  >{t("Публичной оферты")}</a>{" "}
                   и{" "}
                   <a
                     href="/privacy"
@@ -538,18 +531,14 @@ export function CheckoutForm({
                     rel="noopener noreferrer"
                     className="font-bold text-coral hover:underline"
                     onClick={(e) => e.stopPropagation()}
-                  >
-                    Политики конфиденциальности
-                  </a>
+                  >{t("Политики конфиденциальности")}</a>
                 </span>
               </label>
               <FieldError>{errors.oferta_accepted}</FieldError>
             </div>
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Link href="/cart" className="inline-flex min-h-11 items-center text-sm font-semibold text-muted transition hover:text-dark">
-                Вернуться в корзину
-              </Link>
+              <Link href="/cart" className="inline-flex min-h-11 items-center text-sm font-semibold text-muted transition hover:text-dark">{t("Вернуться в корзину")}</Link>
               <Button type="submit" disabled={isSubmitting} className="min-h-12 px-6">
                 {isSubmitting ? "Отправляем..." : "Отправить заявку"}
               </Button>
@@ -557,27 +546,25 @@ export function CheckoutForm({
           </form>
 
           <aside className="rounded-card border border-black/10 bg-white p-5 lg:sticky lg:top-28">
-            <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Сводка</p>
-            <h2 className="mt-2 font-display text-lg font-semibold tracking-tight">Ваш заказ</h2>
+            <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Сводка")}</p>
+            <h2 className="mt-2 font-display text-lg font-semibold tracking-tight">{t("Ваш заказ")}</h2>
             <div className="mt-6 space-y-3 text-sm font-semibold">
               <div className="flex items-center justify-between gap-4">
-                <span className="text-muted">Товаров</span>
+                <span className="text-muted">{t("Товаров")}</span>
                 <span className="font-data">{totalItems}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-muted">Позиций</span>
+                <span className="text-muted">{t("Позиций")}</span>
                 <span className="font-data">{items.length}</span>
               </div>
               <div className="flex items-end justify-between gap-4 border-t border-black/10 pt-4">
-                <span className="text-muted">Итого</span>
+                <span className="text-muted">{t("Итого")}</span>
                 <span className="font-data text-xl font-semibold text-coral">{formatPrice(totalAmount)}</span>
               </div>
             </div>
 
             {hasQuoteItems ? (
-              <p className="mt-5 rounded-btn bg-coral-light px-4 py-3 text-xs font-semibold leading-5 text-burgundy">
-                В заявке есть товары с ценой по запросу. Менеджер подтвердит их стоимость отдельно.
-              </p>
+              <p className="mt-5 rounded-btn bg-coral-light px-4 py-3 text-xs font-semibold leading-5 text-burgundy">{t("В заявке есть товары с ценой по запросу. Менеджер подтвердит их стоимость отдельно.")}</p>
             ) : null}
           </aside>
         </div>

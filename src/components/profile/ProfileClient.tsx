@@ -8,6 +8,7 @@ import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { Input } from "@/src/components/ui/Input";
 import { clientOrderStatusLabels, creditStatusLabels, orderStatusLabels } from "@/src/lib/order-status";
 import { useCart } from "@/src/contexts/CartContext";
+import { useT } from "@/src/i18n/client";
 import type { ClientOrderSummary, CreditState, OrderItemSummary, Product } from "@/src/types";
 
 type AdminSession = {
@@ -59,6 +60,7 @@ function formatDate(value?: string | null) {
 }
 
 function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void }) {
+  const t = useT();
   // Admin section state
   const [adminEmail, setAdminEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -297,23 +299,18 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
 
   return (
     <section className="mx-auto max-w-md">
-      <p className="text-sm font-bold uppercase text-raspberry">Профиль</p>
-      <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
-        Вход в кабинет
-      </h1>
+      <p className="text-sm font-bold uppercase text-raspberry">{t("Профиль")}</p>
+      <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{t("Вход в кабинет")}</h1>
 
       <div className="mt-8 grid gap-4">
         {/* Client login / registration */}
         <div className="rounded-card bg-white p-6 shadow-sm">
           {clientStep === "confirm_sent" ? (
             <>
-              <h2 className="text-2xl font-bold tracking-tight">Подтвердите почту</h2>
+              <h2 className="text-2xl font-bold tracking-tight">{t("Подтвердите почту")}</h2>
               <div className="mt-4 rounded-xl bg-green-50 p-4">
-                <p className="text-sm font-bold text-green-700">Аккаунт создан</p>
-                <p className="mt-1 text-sm font-semibold text-green-600/80">
-                  Мы отправили письмо на <span className="font-bold">{regEmail}</span>.
-                  Перейдите по ссылке из письма, затем войдите с паролем.
-                </p>
+                <p className="text-sm font-bold text-green-700">{t("Аккаунт создан")}</p>
+                <p className="mt-1 text-sm font-semibold text-green-600/80">{t("Мы отправили письмо на")}<span className="font-bold">{regEmail}</span>{t(". Перейдите по ссылке из письма, затем войдите с паролем.")}</p>
               </div>
               <Button
                 type="button"
@@ -324,19 +321,14 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   setClientError("");
                   setClientNotice("");
                 }}
-              >
-                К форме входа
-              </Button>
+              >{t("К форме входа")}</Button>
             </>
           ) : clientStep === "reset_sent" ? (
             <>
-              <h2 className="text-2xl font-bold tracking-tight">Проверьте почту</h2>
+              <h2 className="text-2xl font-bold tracking-tight">{t("Проверьте почту")}</h2>
               <div className="mt-4 rounded-xl bg-green-50 p-4">
-                <p className="text-sm font-bold text-green-700">Письмо отправлено</p>
-                <p className="mt-1 text-sm font-semibold text-green-600/80">
-                  Если почта <span className="font-bold">{resetEmail}</span> зарегистрирована,
-                  на неё придёт ссылка для установки нового пароля.
-                </p>
+                <p className="text-sm font-bold text-green-700">{t("Письмо отправлено")}</p>
+                <p className="mt-1 text-sm font-semibold text-green-600/80">{t("Если почта")}<span className="font-bold">{resetEmail}</span>{t("зарегистрирована, на неё придёт ссылка для установки нового пароля.")}</p>
               </div>
               <Button
                 type="button"
@@ -346,16 +338,12 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   setClientStep("idle");
                   setClientError("");
                 }}
-              >
-                К форме входа
-              </Button>
+              >{t("К форме входа")}</Button>
             </>
           ) : clientStep === "forgot" || clientStep === "sending_reset" ? (
             <>
-              <h2 className="text-2xl font-bold tracking-tight">Сброс пароля</h2>
-              <p className="mt-2 text-sm font-semibold leading-6 text-muted">
-                Укажите почту, на которую регистрировались, — пришлём ссылку для нового пароля.
-              </p>
+              <h2 className="text-2xl font-bold tracking-tight">{t("Сброс пароля")}</h2>
+              <p className="mt-2 text-sm font-semibold leading-6 text-muted">{t("Укажите почту, на которую регистрировались, — пришлём ссылку для нового пароля.")}</p>
               <label className="mt-4 block">
                 <span className="text-sm font-bold text-dark">Email</span>
                 <Input
@@ -393,14 +381,12 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                     setClientStep("idle");
                     setClientError("");
                   }}
-                >
-                  Назад
-                </Button>
+                >{t("Назад")}</Button>
               </div>
             </>
           ) : clientStep === "register" || clientStep === "registering" ? (
             <>
-              <h2 className="text-2xl font-bold tracking-tight">Регистрация</h2>
+              <h2 className="text-2xl font-bold tracking-tight">{t("Регистрация")}</h2>
               {clientNotice ? (
                 <div className="mt-4 rounded-xl border border-coral/20 bg-coral-light px-4 py-3">
                   <p className="text-sm font-semibold text-dark/80">{clientNotice}</p>
@@ -420,7 +406,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-bold text-dark">Телефон WhatsApp</span>
+                  <span className="text-sm font-bold text-dark">{t("Телефон WhatsApp")}</span>
                   <Input
                     className="mt-2"
                     inputMode="tel"
@@ -431,36 +417,36 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-bold text-dark">Пароль</span>
+                  <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
                   <Input
                     className="mt-2"
                     type="password"
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.currentTarget.value)}
-                    placeholder="Минимум 8 символов"
+                    placeholder={t("Минимум 8 символов")}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-bold text-dark">Компания / заведение</span>
+                  <span className="text-sm font-bold text-dark">{t("Компания / заведение")}</span>
                   <Input
                     className="mt-2"
                     value={regCompany}
                     onChange={(e) => setRegCompany(e.currentTarget.value)}
-                    placeholder="Название компании"
+                    placeholder={t("Название компании")}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-bold text-dark">БИН / ИИН</span>
+                  <span className="text-sm font-bold text-dark">{t("БИН / ИИН")}</span>
                   <Input
                     className="mt-2"
                     inputMode="numeric"
                     value={regBin}
                     onChange={(e) => setRegBin(e.currentTarget.value)}
-                    placeholder="12 цифр"
+                    placeholder={t("12 цифр")}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-bold text-dark">Контактное лицо</span>
+                  <span className="text-sm font-bold text-dark">{t("Контактное лицо")}</span>
                   <Input
                     className="mt-2"
                     value={regName}
@@ -471,7 +457,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                         void handleClientRegister();
                       }
                     }}
-                    placeholder="Имя и фамилия"
+                    placeholder={t("Имя и фамилия")}
                   />
                 </label>
               </div>
@@ -495,26 +481,24 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                     setClientError("");
                     setClientNotice("");
                   }}
-                >
-                  Назад
-                </Button>
+                >{t("Назад")}</Button>
               </div>
             </>
           ) : (
             <>
-              <h2 className="text-2xl font-bold tracking-tight">Вход</h2>
+              <h2 className="text-2xl font-bold tracking-tight">{t("Вход")}</h2>
               <div className="mt-4 space-y-3">
                 <label className="block">
-                  <span className="text-sm font-bold text-dark">Почта или номер телефона</span>
+                  <span className="text-sm font-bold text-dark">{t("Почта или номер телефона")}</span>
                   <Input
                     className="mt-2"
                     value={clientLogin}
                     onChange={(e) => setClientLogin(e.currentTarget.value)}
-                    placeholder="company@example.com или +7 (747) 000-00-00"
+                    placeholder={t("company@example.com или +7 (747) 000-00-00")}
                   />
                 </label>
                 <label className="block">
-                  <span className="text-sm font-bold text-dark">Пароль</span>
+                  <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
                   <Input
                     className="mt-2"
                     type="password"
@@ -547,9 +531,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   variant="outline"
                   className="flex-1"
                   onClick={() => openRegistration()}
-                >
-                  Зарегистрироваться
-                </Button>
+                >{t("Зарегистрироваться")}</Button>
               </div>
               <button
                 type="button"
@@ -561,16 +543,14 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   setClientError("");
                   setClientStep("forgot");
                 }}
-              >
-                Забыли пароль?
-              </button>
+              >{t("Забыли пароль?")}</button>
             </>
           )}
         </div>
 
         {/* Admin form */}
         <form onSubmit={(e) => void handleAdminSubmit(e)} className="rounded-card bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-bold tracking-tight">Email и пароль</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("Email и пароль")}</h2>
           <div className="mt-4 space-y-3">
             <label className="block">
               <span className="text-sm font-bold text-dark">Email</span>
@@ -584,7 +564,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
               />
             </label>
             <label className="block">
-              <span className="text-sm font-bold text-dark">Пароль</span>
+              <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
               <Input
                 className="mt-1.5"
                 type="password"
@@ -613,21 +593,20 @@ function AdminDashboard({
   session: AdminSession;
   onLogout: () => void;
 }) {
+  const t = useT();
   const [previewMode, setPreviewMode] = useState(false);
 
   if (previewMode) {
     return (
       <div>
         <div className="print-hidden mb-4 flex items-center justify-between rounded-card border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm font-bold text-amber-700">Режим превью — вид клиента</p>
+          <p className="text-sm font-bold text-amber-700">{t("Режим превью — вид клиента")}</p>
           <Button
             type="button"
             variant="outline"
             className="border-amber-300 text-amber-700 hover:bg-amber-100"
             onClick={() => setPreviewMode(false)}
-          >
-            Выйти из превью
-          </Button>
+          >{t("Выйти из превью")}</Button>
         </div>
         <ClientDashboard
           session={{ role: "client", email: session.email, phone: "", companyName: "Превью", createdAt: "" }}
@@ -642,7 +621,7 @@ function AdminDashboard({
     <section className="mx-auto max-w-6xl">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-dark px-5 py-4 text-white shadow-sm">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase text-coral">Админ-профиль</p>
+          <p className="text-xs font-bold uppercase text-coral">{t("Админ-профиль")}</p>
           <p className="mt-1 break-all text-sm font-semibold text-white/70">{session.email}</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -651,12 +630,8 @@ function AdminDashboard({
             variant="outline"
             className="border-white text-white hover:bg-white/10"
             onClick={() => setPreviewMode(true)}
-          >
-            Вид клиента
-          </Button>
-          <Button type="button" variant="ghost" className="text-white hover:bg-white/10" onClick={onLogout}>
-            Выйти
-          </Button>
+          >{t("Вид клиента")}</Button>
+          <Button type="button" variant="ghost" className="text-white hover:bg-white/10" onClick={onLogout}>{t("Выйти")}</Button>
         </div>
       </div>
 
@@ -665,8 +640,8 @@ function AdminDashboard({
           href="/admin/orders"
           className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">Операции</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">Заказы</h2>
+          <p className="text-xs font-bold uppercase text-raspberry">{t("Операции")}</p>
+          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Заказы")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Новые заявки, подтверждение, оплата и статусы доставки.
           </p>
@@ -675,7 +650,7 @@ function AdminDashboard({
           href="/admin/documents"
           className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">Документы</p>
+          <p className="text-xs font-bold uppercase text-raspberry">{t("Документы")}</p>
           <h2 className="mt-2 text-xl font-bold tracking-tight">Накладные и счета</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Счёт, накладная и АВР по каждому заказу в один клик.
@@ -695,8 +670,8 @@ function AdminDashboard({
           href="/admin/products"
           className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">Каталог</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">Товары</h2>
+          <p className="text-xs font-bold uppercase text-raspberry">{t("Каталог")}</p>
+          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Товары")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Цены, остатки, фото и активность позиций.
           </p>
@@ -705,7 +680,7 @@ function AdminDashboard({
           href="/admin/stop-list"
           className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">Наличие</p>
+          <p className="text-xs font-bold uppercase text-raspberry">{t("Наличие")}</p>
           <h2 className="mt-2 text-xl font-bold tracking-tight">Стоп-лист</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Временно снятые с продажи позиции.
@@ -715,8 +690,8 @@ function AdminDashboard({
           href="/admin/settings"
           className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">Система</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">Настройки</h2>
+          <p className="text-xs font-bold uppercase text-raspberry">{t("Система")}</p>
+          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Настройки")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Контент сайта, режим редактирования и платежи.
           </p>
@@ -727,6 +702,7 @@ function AdminDashboard({
 }
 
 function CreditBlock({ state }: { state: CreditState }) {
+  const t = useT();
   const inTimePct =
     state.limit > 0
       ? Math.min(100, ((state.used - state.overdue) / state.limit) * 100)
@@ -741,9 +717,7 @@ function CreditBlock({ state }: { state: CreditState }) {
       <div className="grid divide-y divide-black/10 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         {/* Cell 1 — лимит + бар */}
         <div className="p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">
-            Товарный кредит
-          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">{t("Товарный кредит")}</p>
           <p className="mt-2 font-data text-2xl font-semibold leading-none">
             {formatCurrency(state.used)}
             <span className="ml-1.5 text-sm font-normal text-muted">
@@ -778,20 +752,16 @@ function CreditBlock({ state }: { state: CreditState }) {
 
         {/* Cell 2 — доступно */}
         <div className="p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">
-            Доступно сейчас
-          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">{t("Доступно сейчас")}</p>
           <p className="mt-2 font-data text-2xl font-semibold leading-none text-green-700">
             {formatCurrency(state.available)}
           </p>
-          <p className="mt-2 text-[11px] text-muted">{creditStatusLabels[state.status]}</p>
+          <p className="mt-2 text-[11px] text-muted">{t(creditStatusLabels[state.status])}</p>
         </div>
 
         {/* Cell 3 — платёж */}
         <div className="p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">
-            Ближайший платёж
-          </p>
+          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">{t("Ближайший платёж")}</p>
           <p
             className={`mt-2 font-data text-2xl font-semibold leading-none ${
               state.overdueDays > 0 ? "text-red-600" : ""
@@ -855,8 +825,9 @@ const ORDER_CHIP: Partial<Record<string, string>> = {
 };
 
 function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
+  const t = useT();
   const orderStatus =
-    clientOrderStatusLabels[order.status] ?? orderStatusLabels[order.status] ?? order.status;
+    t(clientOrderStatusLabels[order.status] ?? orderStatusLabels[order.status] ?? order.status);
   const chipClass = ORDER_CHIP[order.status] ?? "bg-black/5 text-muted";
   const today = new Date().toISOString().slice(0, 10);
   const isOverdue =
@@ -905,14 +876,13 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
       {/* Meta row */}
       <div className="flex flex-wrap gap-x-5 gap-y-1 border-t border-black/5 px-4 py-2.5 text-xs text-muted">
         {order.delivery_date ? (
-          <span>Отгрузка <b className="font-data font-medium text-dark">{formatDate(order.delivery_date)}</b></span>
+          <span>{t("Отгрузка")}<b className="font-data font-medium text-dark">{formatDate(order.delivery_date)}</b></span>
         ) : null}
         {order.order_items?.length ? (
-          <span>Позиций <b className="font-data font-medium text-dark">{order.order_items.length}</b></span>
+          <span>{t("Позиций")}<b className="font-data font-medium text-dark">{order.order_items.length}</b></span>
         ) : null}
         {order.due_date ? (
-          <span className={isOverdue ? "text-red-600 font-semibold" : ""}>
-            Оплата до <b className="font-data font-medium">{formatDate(order.due_date)}</b>
+          <span className={isOverdue ? "text-red-600 font-semibold" : ""}>{t("Оплата до")}<b className="font-data font-medium">{formatDate(order.due_date)}</b>
             {isOverdue ? ` · просрочка ${overdueDays} дн.` : ""}
           </span>
         ) : null}
@@ -940,9 +910,7 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
             disabled={actionStatus === "loading"}
             className="rounded border border-dark bg-dark px-3 py-1.5 text-xs font-semibold text-white hover:bg-dark/80 disabled:opacity-50"
             onClick={() => void sendClientAction("accept_revision")}
-          >
-            Принять изменения
-          </button>
+          >{t("Принять изменения")}</button>
         ) : null}
         {canAcceptRevision ? (
           <button
@@ -953,9 +921,7 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
               const comment = window.prompt("Что нужно изменить в заявке?");
               if (comment?.trim()) void sendClientAction("request_change", comment);
             }}
-          >
-            Изменить
-          </button>
+          >{t("Изменить")}</button>
         ) : null}
         {order.payment_url ? (
           <a
@@ -967,22 +933,14 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
         ) : null}
         {showDocs ? (
           <>
-            <Link href={`/documents/invoice/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">
-              Счет PDF
-            </Link>
-            <Link href={`/documents/nakl/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">
-              Накладная PDF
-            </Link>
+            <Link href={`/documents/invoice/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("Счет PDF")}</Link>
+            <Link href={`/documents/nakl/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("Накладная PDF")}</Link>
             {order.status === "completed" ? (
-              <Link href={`/documents/avr/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">
-                АВР
-              </Link>
+              <Link href={`/documents/avr/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("АВР")}</Link>
             ) : null}
           </>
         ) : null}
-        <Link href="/catalog" className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">
-          Повторить
-        </Link>
+        <Link href="/catalog" className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("Повторить")}</Link>
         {canCancel ? (
           <button
             type="button"
@@ -992,12 +950,10 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
               const comment = window.prompt("Причина отмены");
               void sendClientAction("cancel", comment ?? "");
             }}
-          >
-            Отменить
-          </button>
+          >{t("Отменить")}</button>
         ) : null}
         {actionStatus === "error" ? (
-          <span className="text-xs font-semibold text-red-600">Ошибка, попробуйте снова</span>
+          <span className="text-xs font-semibold text-red-600">{t("Ошибка, попробуйте снова")}</span>
         ) : null}
       </div>
     </article>
@@ -1005,14 +961,15 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
 }
 
 function PopularProductsSection({ products }: { products: Product[] }) {
+  const t = useT();
   const { add } = useCart();
 
   if (products.length === 0) return null;
 
   return (
     <section className="mt-6 rounded-card bg-white p-6 shadow-sm">
-      <p className="text-xs font-bold uppercase text-raspberry">Рекомендуем</p>
-      <h2 className="mt-2 text-2xl font-bold tracking-tight">Популярное у клиентов</h2>
+      <p className="text-xs font-bold uppercase text-raspberry">{t("Рекомендуем")}</p>
+      <h2 className="mt-2 text-2xl font-bold tracking-tight">{t("Популярное у клиентов")}</h2>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
           <div
@@ -1074,29 +1031,29 @@ function KvRow({ label, value }: { label: string; value: string }) {
 }
 
 function ConditionsBox({ state }: { state: CreditState }) {
+  const t = useT();
   return (
-    <SidebarBox title="Условия">
-      <KvRow label="Кредитный лимит" value={formatCurrency(state.limit)} />
-      <KvRow label="Статус" value={creditStatusLabels[state.status]} />
+    <SidebarBox title={t("Условия")}>
+      <KvRow label={t("Кредитный лимит")} value={formatCurrency(state.limit)} />
+      <KvRow label={t("Статус")} value={t(creditStatusLabels[state.status])} />
       {state.nextDueDate ? (
-        <KvRow label="Ближайший платёж" value={formatDate(state.nextDueDate)} />
+        <KvRow label={t("Ближайший платёж")} value={formatDate(state.nextDueDate)} />
       ) : null}
       <button
         type="button"
         className="mt-3 w-full rounded border border-dashed border-black/20 py-2 text-xs font-semibold text-muted transition hover:border-coral hover:text-coral"
-      >
-        Запросить увеличение лимита
-      </button>
+      >{t("Запросить увеличение лимита")}</button>
     </SidebarBox>
   );
 }
 
 function RecentOrdersBox({ orders }: { orders: ClientOrderSummary[] }) {
+  const t = useT();
   const recent = orders.filter((o) => o.order_items && o.order_items.length > 0).slice(0, 2);
   if (recent.length === 0) return null;
 
   return (
-    <SidebarBox title="Быстрый повтор">
+    <SidebarBox title={t("Быстрый повтор")}>
       {recent.map((order) => (
         <div
           key={order.id}
@@ -1111,30 +1068,27 @@ function RecentOrdersBox({ orders }: { orders: ClientOrderSummary[] }) {
           <Link
             href="/catalog"
             className="rounded border border-dark bg-dark px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-dark/80"
-          >
-            В лист
-          </Link>
+          >{t("В лист")}</Link>
         </div>
       ))}
       <Link
         href="/catalog"
         className="mt-3 block w-full rounded border border-dashed border-black/20 py-2 text-center text-xs font-semibold text-muted transition hover:border-coral hover:text-coral"
-      >
-        + Открыть каталог
-      </Link>
+      >{t("+ Открыть каталог")}</Link>
     </SidebarBox>
   );
 }
 
 function DeliveryBox({ orders }: { orders: ClientOrderSummary[] }) {
+  const t = useT();
   const lastWithAddress = orders.find((o) => o.delivery_address);
   if (!lastWithAddress?.delivery_address) return null;
 
   return (
-    <SidebarBox title="Доставка">
-      <KvRow label="Адрес" value={lastWithAddress.delivery_address} />
+    <SidebarBox title={t("Доставка")}>
+      <KvRow label={t("Адрес")} value={lastWithAddress.delivery_address} />
       {lastWithAddress.delivery_time ? (
-        <KvRow label="Время" value={lastWithAddress.delivery_time} />
+        <KvRow label={t("Время")} value={lastWithAddress.delivery_time} />
       ) : null}
     </SidebarBox>
   );
@@ -1151,6 +1105,7 @@ function ClientDashboard({
   onUpdate: (session: ClientSession) => void;
   popularProducts?: Product[];
 }) {
+  const t = useT();
   const [accountantPhone, setAccountantPhone] = useState(session.accountant_phone ?? "");
   const [companyName, setCompanyName] = useState(session.companyName);
   const [creditState, setCreditState] = useState<CreditState | null>(null);
@@ -1243,15 +1198,9 @@ function ClientDashboard({
           <p className="mt-1 text-sm text-muted">{session.email}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/catalog" className="rounded border border-dark bg-dark px-4 py-2 text-sm font-semibold text-white hover:bg-dark/80">
-            В каталог
-          </Link>
-          <Link href="/cart" className="rounded border border-black/20 px-4 py-2 text-sm font-semibold text-dark hover:bg-black/5">
-            Корзина
-          </Link>
-          <button type="button" onClick={onLogout} className="rounded border border-black/20 px-4 py-2 text-sm font-semibold text-muted hover:bg-black/5">
-            Выйти
-          </button>
+          <Link href="/catalog" className="rounded border border-dark bg-dark px-4 py-2 text-sm font-semibold text-white hover:bg-dark/80">{t("В каталог")}</Link>
+          <Link href="/cart" className="rounded border border-black/20 px-4 py-2 text-sm font-semibold text-dark hover:bg-black/5">{t("Корзина")}</Link>
+          <button type="button" onClick={onLogout} className="rounded border border-black/20 px-4 py-2 text-sm font-semibold text-muted hover:bg-black/5">{t("Выйти")}</button>
         </div>
       </div>
 
@@ -1267,7 +1216,7 @@ function ClientDashboard({
         {/* Orders column */}
         <div className="space-y-3">
           <div className="flex items-baseline justify-between border-b border-black/10 pb-2">
-            <h2 className="font-display text-sm font-semibold uppercase tracking-[.05em]">Заказы</h2>
+            <h2 className="font-display text-sm font-semibold uppercase tracking-[.05em]">{t("Заказы")}</h2>
             <button
               type="button"
               onClick={() => setOrdersTab(ordersTab === "active" ? "all" : "active")}
@@ -1295,13 +1244,9 @@ function ClientDashboard({
             </div>
           ) : (
             <div className="rounded border border-dashed border-black/20 p-6 text-center">
-              <p className="font-display text-lg font-semibold">Заказов пока нет</p>
-              <p className="mt-2 text-sm text-muted">
-                История подтягивается по email и телефону. Если заказ оформлялся на другой контакт — обратитесь к менеджеру.
-              </p>
-              <Link href="/catalog" className="mt-4 inline-block rounded border border-dark bg-dark px-4 py-2 text-sm font-semibold text-white hover:bg-dark/80">
-                Открыть каталог
-              </Link>
+              <p className="font-display text-lg font-semibold">{t("Заказов пока нет")}</p>
+              <p className="mt-2 text-sm text-muted">{t("История подтягивается по email и телефону. Если заказ оформлялся на другой контакт — обратитесь к менеджеру.")}</p>
+              <Link href="/catalog" className="mt-4 inline-block rounded border border-dark bg-dark px-4 py-2 text-sm font-semibold text-white hover:bg-dark/80">{t("Открыть каталог")}</Link>
             </div>
           )}
         </div>
@@ -1313,14 +1258,14 @@ function ClientDashboard({
           <DeliveryBox orders={orders} />
 
           {/* Profile settings */}
-          <SidebarBox title="Профиль">
+          <SidebarBox title={t("Профиль")}>
             <div className="space-y-3">
               <div>
-                <p className="mb-1 text-xs font-semibold text-muted">Компания</p>
+                <p className="mb-1 text-xs font-semibold text-muted">{t("Компания")}</p>
                 <Input
                   value={companyName}
                   onChange={(event) => setCompanyName(event.currentTarget.value)}
-                  placeholder="Название компании"
+                  placeholder={t("Название компании")}
                 />
               </div>
               <div>
@@ -1336,7 +1281,7 @@ function ClientDashboard({
                 </p>
               </div>
               <div>
-                <p className="mb-1 text-xs font-semibold text-muted">Телефон бухгалтера</p>
+                <p className="mb-1 text-xs font-semibold text-muted">{t("Телефон бухгалтера")}</p>
                 <Input
                   inputMode="tel"
                   value={accountantPhone}
@@ -1349,10 +1294,8 @@ function ClientDashboard({
                   type="button"
                   onClick={handleSave}
                   className="rounded border border-dark bg-dark px-4 py-2 text-xs font-semibold text-white hover:bg-dark/80"
-                >
-                  Сохранить
-                </button>
-                {saved ? <span className="text-xs font-semibold text-coral">Сохранено</span> : null}
+                >{t("Сохранить")}</button>
+                {saved ? <span className="text-xs font-semibold text-coral">{t("Сохранено")}</span> : null}
               </div>
             </div>
           </SidebarBox>

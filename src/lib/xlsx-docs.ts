@@ -298,6 +298,148 @@ export async function buildNaklWorkbook(
   return wb.xlsx.writeBuffer();
 }
 
+// ── Счёт на оплату (свободная форма РК, реквизитная шапка как в 1С) ──
+
+export type InvoiceSection = {
+  label: string | null;
+  number: string;
+  iban: string;
+  items: OrderItem[];
+  totalAmount: number;
+};
+
+export type InvoiceOptions = {
+  issuedAt: string;
+  validUntil: string;
+  /** Кбе бенефициара, если задан бухгалтером (env DC_KBE) */
+  kbe?: string;
+  /** Код назначения платежа, если задан бухгалтером (env DC_KNP) */
+  knp?: string;
+};
+
+export async function buildInvoiceWorkbook(
+  order: Order,
+  invoices: InvoiceSection[],
+  company: CompanyDetails,
+  options: InvoiceOptions,
+) {
+  const wb = new ExcelJS.Workbook();
+
+  for (const invoice of invoices) {
+    const ws = wb.addWorksheet(invoice.label ?? "Счет", {
+      properties: { defaultRowHeight: 14 },
+    });
+    setupPage(ws);
+    ws.columns = [
+      { width: 5 },   // A №
+      { width: 42 },  // B наименование
+      { width: 9 },   // C ед.
+      { width: 10 },  // D кол-во
+      { width: 13 },  // E цена
+      { width: 15 },  // F сумма
+    ];
+
+    ws.mergeCells("A1:F1");
+    setCell(
+      ws,
+      "A1",
+      "Внимание! Оплата данного счета означает согласие с условиями поставки товара (публичная оферта dc-bakery.kz/oferta).",
+      { size: 8, wrap: true, italic: true },
+    );
+
+    // Реквизитная шапка бенефициара
+    ws.mergeCells("A3:D3");
+    setCell(ws, "A3", `Бенефициар: ${company.legalName}, БИН ${company.bin}`, { border: true, wrap: true, bold: true });
+    ws.mergeCells("E3:F3");
+    setCell(ws, "E3", `ИИК: ${invoice.iban}`, { border: true, wrap: true, bold: true });
+    ws.mergeCells("A4:D4");
+    setCell(ws, "A4", `Банк бенефициара: ${company.bankName}`, { border: true, wrap: true });
+    ws.mergeCells("E4:F4");
+    setCell(
+      ws,
+      "E4",
+      `БИК: ${company.bankBic}${options.kbe ? `   Кбе: ${options.kbe}` : ""}${options.knp ? `   КНП: ${options.knp}` : ""}`,
+      { border: true, wrap: true },
+    );
+
+    ws.mergeCells("A6:F6");
+    setCell(ws, "A6", `СЧЕТ НА ОПЛАТУ № ${invoice.number} от ${formatDateRu(options.issuedAt)}`, {
+      bold: true, size: 13, align: "center",
+    });
+    if (invoice.label) {
+      ws.mergeCells("A7:F7");
+      setCell(ws, "A7", invoice.label, { align: "center", size: 10 });
+    }
+
+    ws.mergeCells("A9:F9");
+    setCell(ws, "A9", `Поставщик: ${company.legalName}, БИН ${company.bin}, ${company.address}`, { wrap: true });
+    ws.mergeCells("A10:F10");
+    setCell(
+      ws,
+      "A10",
+      `Покупатель: ${order.company_name}${order.customer_bin ? `, БИН/ИИН ${order.customer_bin}` : ""}${order.delivery_address ? `, ${order.delivery_address}` : ""}`,
+      { wrap: true },
+    );
+    ws.mergeCells("A11:F11");
+    setCell(
+      ws,
+      "A11",
+      `Основание: заявка № ${order.order_number}${order.delivery_date ? `, дата поставки ${formatDateRu(order.delivery_date)}` : ""}`,
+    );
+
+    const headRow = 13;
+    const headers = ["№", "Наименование", "Ед. изм.", "Кол-во", "Цена, ₸", "Сумма, ₸"];
+    headers.forEach((title, index) => {
+      tableCell(ws, headRow, index + 1, title, { bold: true, align: "center" });
+    });
+    ws.getRow(headRow).height = 22;
+
+    let row = headRow + 1;
+    invoice.items.forEach((item, index) => {
+      tableCell(ws, row, 1, index + 1, { align: "center" });
+      tableCell(ws, row, 2, item.product_name);
+      tableCell(ws, row, 3, item.unit || "шт", { align: "center" });
+      tableCell(ws, row, 4, item.qty, { align: "center" });
+      tableCell(ws, row, 5, money(item.price), { align: "right", numFmt: NUM_FMT });
+      tableCell(ws, row, 6, money(item.total_amount), { align: "right", numFmt: NUM_FMT });
+      row++;
+    });
+
+    ws.mergeCells(`A${row}:E${row}`);
+    tableCell(ws, row, 1, "Итого к оплате", { bold: true, align: "right" });
+    tableCell(ws, row, 6, money(invoice.totalAmount), { bold: true, align: "right", numFmt: NUM_FMT });
+    row += 2;
+
+    ws.mergeCells(`A${row}:F${row}`);
+    setCell(
+      ws,
+      `A${row}`,
+      `Всего наименований ${invoice.items.length}, на сумму: ${amountInWordsKzt(invoice.totalAmount)}`,
+      { wrap: true, italic: true },
+    );
+    row++;
+    ws.mergeCells(`A${row}:F${row}`);
+    setCell(ws, `A${row}`, company.taxNote, { size: 9 });
+    row++;
+    ws.mergeCells(`A${row}:F${row}`);
+    setCell(ws, `A${row}`, `Счет действителен до ${formatDateRu(options.validUntil)}.`, { bold: true });
+    row += 3;
+
+    setCell(ws, `A${row}`, "Исполнитель:", { bold: true });
+    ws.mergeCells(`B${row}:D${row}`);
+    setCell(ws, `B${row}`, `____________________ ${company.directorName}`);
+    ws.mergeCells(`E${row}:F${row}`);
+    setCell(ws, `E${row}`, "М.П.", { align: "right" });
+
+    if (company.isDemo) {
+      ws.mergeCells("A2:F2");
+      setCell(ws, "A2", "ДЕМО-ДОКУМЕНТ. НЕ ОПЛАЧИВАТЬ", { bold: true, align: "center", size: 11 });
+    }
+  }
+
+  return wb.xlsx.writeBuffer();
+}
+
 // ── Акт выполненных работ / оказанных услуг (форма Р-1) ──
 
 export async function buildAvrWorkbook(order: Order, items: OrderItem[], company: CompanyDetails) {

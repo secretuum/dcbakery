@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { WHATSAPP_SUPPORT_NUMBER } from "@/app/constants";
+import { getT } from "@/src/i18n/server";
 
 type OrderSuccessPageProps = {
   searchParams: Promise<{
@@ -23,6 +24,7 @@ function getOrderNumber(value: string | string[] | undefined) {
 }
 
 export default async function OrderSuccessPage({ searchParams }: OrderSuccessPageProps) {
+  const t = await getT();
   const { id, n } = await searchParams;
   const orderNumber = getOrderNumber(n);
   const orderId = getOrderNumber(id);
@@ -34,35 +36,26 @@ export default async function OrderSuccessPage({ searchParams }: OrderSuccessPag
         <div className="mx-auto flex size-20 items-center justify-center rounded border border-black/10 bg-coral-light">
           <span className="block size-10 rounded bg-coral" />
         </div>
-        <p className="mt-8 text-xs font-semibold uppercase tracking-[.15em] text-muted">Заявка отправлена</p>
+        <p className="mt-8 text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Заявка отправлена")}</p>
         <h1 className="mt-3 break-all font-data text-3xl font-semibold tracking-tight sm:text-5xl">{orderNumber}</h1>
-        <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-muted">
-          Менеджер свяжется с вами в ближайшее время — уточнит наличие, итоговую сумму и детали
-          доставки. Счёт придёт в WhatsApp сразу после подтверждения.
-        </p>
+        <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-muted">{t("Менеджер свяжется с вами в ближайшее время — уточнит наличие, итоговую сумму и детали доставки. Счёт придёт в WhatsApp сразу после подтверждения.")}</p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
             href="/catalog"
             className="inline-flex min-h-12 items-center justify-center rounded-btn border border-coral bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
-          >
-            Вернуться в каталог
-          </Link>
+          >{t("Вернуться в каталог")}</Link>
           <a
             href={`https://wa.me/${WHATSAPP_SUPPORT_NUMBER}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex min-h-12 items-center justify-center rounded-btn border border-coral bg-white px-5 py-3 text-sm font-bold text-coral transition hover:bg-coral hover:text-white"
-          >
-            Написать в WhatsApp
-          </a>
+          >{t("Написать в WhatsApp")}</a>
           {hasOrderId ? (
             <Link
               href={`/pay/${orderId}`}
               className="inline-flex min-h-12 items-center justify-center rounded-btn border border-black/15 bg-white px-5 py-3 text-sm font-semibold text-dark transition hover:bg-black/5"
-            >
-              Посмотреть заказ
-            </Link>
+            >{t("Посмотреть заказ")}</Link>
           ) : null}
         </div>
       </section>

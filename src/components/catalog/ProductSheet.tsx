@@ -6,6 +6,7 @@ import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatPrice, formatProductPrice } from "@/src/lib/format";
+import { useT } from "@/src/i18n/client";
 import type { Product } from "@/src/types";
 
 type ProductSheetProps = {
@@ -14,6 +15,7 @@ type ProductSheetProps = {
 };
 
 export function ProductSheet({ product, onClose }: ProductSheetProps) {
+  const t = useT();
   const { add, remove, updateQty, isReady, items } = useCart();
   const { showToast } = useToast();
   const imageSrc = product.images[0] ?? "/product-placeholder.png";
@@ -97,16 +99,14 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
               type="button"
               onClick={onClose}
               className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center border border-black/10 bg-white text-dark transition hover:bg-black/5"
-              aria-label="Закрыть"
+              aria-label={t("Закрыть")}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
             {!isInStock && (
-              <span className="absolute left-3 top-3 border border-black/20 bg-white px-3 py-1 text-xs font-bold text-dark">
-                нет в наличии
-              </span>
+              <span className="absolute left-3 top-3 border border-black/20 bg-white px-3 py-1 text-xs font-bold text-dark">{t("нет в наличии")}</span>
             )}
           </div>
 
@@ -139,7 +139,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
 
             {product.composition ? (
               <details className="mt-3 border border-black/8 bg-cream px-4 py-3">
-                <summary className="cursor-pointer text-sm font-semibold text-dark">Состав</summary>
+                <summary className="cursor-pointer text-sm font-semibold text-dark">{t("Состав")}</summary>
                 <p className="mt-2 text-sm leading-6 text-muted">{product.composition}</p>
               </details>
             ) : null}
@@ -155,7 +155,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
                   type="button"
                   onClick={handleDecrease}
                   className="flex h-11 w-11 items-center justify-center border border-black/10 text-xl font-bold text-dark transition hover:bg-black/5"
-                  aria-label="Уменьшить количество"
+                  aria-label={t("Уменьшить количество")}
                 >
                   −
                 </button>
@@ -167,13 +167,13 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
                   onClick={handleIncrease}
                   disabled={cartQty >= product.stock_qty}
                   className="flex h-11 w-11 items-center justify-center border border-coral bg-coral text-xl font-bold text-white transition hover:bg-coral-hover disabled:border-black/10 disabled:bg-black/5 disabled:text-muted"
-                  aria-label="Увеличить количество"
+                  aria-label={t("Увеличить количество")}
                 >
                   +
                 </button>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-semibold uppercase tracking-[.08em] text-muted">В корзине</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[.08em] text-muted">{t("В корзине")}</p>
                 <p className="font-data text-xl font-semibold leading-tight text-dark">
                   {formatPrice(product.price * cartQty)}
                 </p>

@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import {
   confirmAdminOrder,
   fetchAdminOrder,
+  fetchAdminOrderItems,
   fetchClientById,
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
+import { saveInvoiceSnapshot } from "@/src/lib/supabase/invoice-snapshots";
 import { createPaymentLink } from "@/src/lib/payments";
 import {
   getWhatsAppChatIdFromPhone,
@@ -87,6 +89,12 @@ export async function POST(request: Request, { params }: ConfirmRouteProps) {
 
     if (confirmedOrder && managerMessageId) {
       await updateOrderWhatsAppMessageId(confirmedOrder.id, managerMessageId).catch(() => undefined);
+    }
+
+    // Фиксируем версию заказа, на которую выставлен счёт (ошибки не роняют подтверждение)
+    if (confirmedOrder) {
+      const items = await fetchAdminOrderItems(confirmedOrder.id).catch(() => []);
+      await saveInvoiceSnapshot(confirmedOrder, items, now);
     }
 
     return NextResponse.json({

@@ -6,6 +6,7 @@ import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { useCart } from "@/src/contexts/CartContext";
 import { formatPrice } from "@/src/lib/format";
 import { MIN_ORDER_AMOUNT } from "@/app/constants";
+import { useT } from "@/src/i18n/client";
 import type { Product } from "@/src/types";
 
 const PROGRESS_MAX = 100_000;
@@ -23,6 +24,7 @@ const PILL_STRIPES =
   "repeating-linear-gradient(45deg, #c2531f 0 12px, #fff8f6 12px 20px, #96401a 20px 32px, #fff8f6 32px 40px)";
 
 export default function CartSheet() {
+  const t = useT();
   const { items, totalAmount, totalItems, remove, updateQty, add, clear } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [popular, setPopular] = useState<Product[]>([]);
@@ -154,7 +156,7 @@ export default function CartSheet() {
               onClick={clear}
               disabled={items.length === 0}
               className="flex h-9 w-9 items-center justify-center border border-black/10 text-muted transition hover:bg-black/5 hover:text-coral disabled:opacity-40"
-              aria-label="Очистить корзину"
+              aria-label={t("Очистить корзину")}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -165,14 +167,12 @@ export default function CartSheet() {
                 />
               </svg>
             </button>
-            <h2 className="flex-1 text-center font-display text-sm font-bold uppercase tracking-[.08em] text-dark">
-              Ваша корзина
-            </h2>
+            <h2 className="flex-1 text-center font-display text-sm font-bold uppercase tracking-[.08em] text-dark">{t("Ваша корзина")}</h2>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
               className="flex h-9 w-9 items-center justify-center border border-black/10 text-dark transition hover:bg-black/5"
-              aria-label="Закрыть"
+              aria-label={t("Закрыть")}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
@@ -206,7 +206,7 @@ export default function CartSheet() {
 
             {/* Items */}
             {items.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted">Корзина пуста</p>
+              <p className="py-10 text-center text-sm text-muted">{t("Корзина пуста")}</p>
             ) : (
               <ul className="divide-y divide-black/5">
                 {items.map(({ product, qty }) => (
@@ -238,7 +238,7 @@ export default function CartSheet() {
                         type="button"
                         onClick={() => updateQty(product.id, qty - product.step_qty)}
                         className="flex h-9 w-9 items-center justify-center border border-black/10 text-lg font-bold text-dark transition hover:bg-black/5"
-                        aria-label="Уменьшить количество"
+                        aria-label={t("Уменьшить количество")}
                       >
                         −
                       </button>
@@ -249,7 +249,7 @@ export default function CartSheet() {
                         type="button"
                         onClick={() => updateQty(product.id, qty + product.step_qty)}
                         className="flex h-9 w-9 items-center justify-center border border-coral bg-coral text-lg font-bold text-white transition hover:bg-coral-hover"
-                        aria-label="Увеличить количество"
+                        aria-label={t("Увеличить количество")}
                       >
                         +
                       </button>
@@ -270,7 +270,7 @@ export default function CartSheet() {
             {/* Popular products */}
             {popular.length > 0 && (
               <div>
-                <p className="mb-3 font-display text-base font-bold text-dark">Часто добавляют</p>
+                <p className="mb-3 font-display text-base font-bold text-dark">{t("Часто добавляют")}</p>
                 <div className="flex gap-3 overflow-x-auto pb-1">
                   {popular.map((p) => (
                     <div
@@ -314,9 +314,7 @@ export default function CartSheet() {
                 {totalItems > 0 ? `${totalItems} ${pluralItems(totalItems)}` : ""}
               </span>
               <div className="text-right">
-                <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">
-                  Итого
-                </p>
+                <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Итого")}</p>
                 <p className="font-data text-2xl font-semibold leading-tight text-dark">
                   {formatPrice(totalAmount)}
                 </p>
@@ -327,9 +325,7 @@ export default function CartSheet() {
                 href="/checkout"
                 onClick={() => setIsOpen(false)}
                 className="block w-full border border-coral bg-coral py-3.5 text-center text-sm font-bold uppercase tracking-[.08em] text-white transition-colors hover:bg-coral-hover"
-              >
-                Оформить заказ
-              </Link>
+              >{t("Оформить заказ")}</Link>
             ) : (
               <button
                 disabled

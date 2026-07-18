@@ -16,7 +16,9 @@ export function getPaymentMode(): PaymentMode {
     return mode;
   }
 
-  return "demo";
+  // Безопасный дефолт: без явного PAYMENT_MODE работаем «по счёту», а не демо-шлюзом.
+  // Демо включается только осознанно: PAYMENT_MODE=demo.
+  return "manual";
 }
 
 export function isDemoPaymentMode() {

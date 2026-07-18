@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import {
   fetchAdminOrder,
+  insertPaymentEvent,
   markOrderPaid,
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
+import { getAdminEmail } from "@/src/lib/admin-identity";
 import { replaceWhatsAppOrderMessage } from "@/src/lib/whatsapp";
 
 type MarkPaidRouteProps = {
@@ -36,6 +38,23 @@ export async function POST(_request: Request, { params }: MarkPaidRouteProps) {
     if (!paidOrder) {
       return NextResponse.json({ order });
     }
+
+    // Журнал ручного действия: кто и когда отметил оплату
+    const adminEmail = await getAdminEmail();
+    await insertPaymentEvent({
+      amount: Number(paidOrder.total_amount),
+      event_id: `admin-mark-paid-${crypto.randomUUID()}`,
+      order_id: paidOrder.id,
+      payment_id: paidOrder.payment_id ?? null,
+      provider: paidOrder.payment_provider ?? "manual",
+      raw_payload: {
+        action: "mark_paid",
+        admin_email: adminEmail,
+        order_number: paidOrder.order_number,
+        source: "admin",
+      },
+      status: "paid",
+    });
 
     const managerMessageId = await replaceWhatsAppOrderMessage(
       paidOrder,

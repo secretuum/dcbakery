@@ -4,6 +4,7 @@ import { AvrRequestButton } from "@/src/components/admin/AvrRequestButton";
 import Link from "next/link";
 import { ConfirmOrderButton } from "@/src/components/admin/ConfirmOrderButton";
 import { MarkOrderPaidButton } from "@/src/components/admin/MarkOrderPaidButton";
+import { UnmarkOrderPaidButton } from "@/src/components/admin/UnmarkOrderPaidButton";
 import { notFound } from "next/navigation";
 import { OrderSlaStatus } from "@/src/components/admin/OrderSlaStatus";
 import { OrderStatusSelect } from "@/src/components/admin/OrderStatusSelect";
@@ -164,6 +165,11 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
           <OrderStatusSelect orderId={order.id} status={order.status} />
           <ConfirmOrderButton orderId={order.id} status={order.status} />
           <MarkOrderPaidButton
+            orderId={order.id}
+            paymentStatus={order.payment_status}
+            status={order.status}
+          />
+          <UnmarkOrderPaidButton
             orderId={order.id}
             paymentStatus={order.payment_status}
             status={order.status}

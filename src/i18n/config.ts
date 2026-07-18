@@ -1,11 +1,12 @@
 // Языки сайта. Русский — исходный язык интерфейса, словари kk/en
 // построены по нему (ключ карты = русская строка).
 
-export const LOCALES = ["ru", "kk", "en"] as const;
+export const LOCALES = ["kk", "ru", "en"] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
-export const DEFAULT_LOCALE: Locale = "ru";
+// Язык по умолчанию — казахский; выбор пользователя хранится в cookie
+export const DEFAULT_LOCALE: Locale = "kk";
 
 export const LOCALE_COOKIE = "NEXT_LOCALE";
 

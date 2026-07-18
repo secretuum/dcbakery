@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { InstagramIcon, WhatsAppIcon } from "@/src/components/ui/BrandIcons";
 import { formatDeliveryDaysLabel, getSiteContent } from "@/src/lib/site-content";
+import { getT } from "@/src/i18n/server";
 
 // Единый блок контактов сайта (дубль на главной удалён — контакты живут здесь).
 // Значения редактируются суперадмином: Настройки → «Контент сайта» или карандашиком на главной.
@@ -10,7 +11,11 @@ function digits(value: string) {
 }
 
 export async function Footer() {
-  const content = await getSiteContent();
+  const [content, t] = await Promise.all([getSiteContent(), getT()]);
+  const deliveryDaysLabel = formatDeliveryDaysLabel(content.deliveryDays)
+    .split(" · ")
+    .map((day) => t(day))
+    .join(" · ");
 
   const contactItems = [
     {
@@ -20,7 +25,7 @@ export async function Footer() {
       icon: WhatsAppIcon,
     },
     {
-      label: "Телефон",
+      label: t("Телефон"),
       value: content.contactPhone,
       href: `tel:+${digits(content.contactPhone)}`,
       icon: WhatsAppIcon,
@@ -31,12 +36,14 @@ export async function Footer() {
       href: "https://www.instagram.com/bakery.dc",
       icon: InstagramIcon,
     },
-    { label: "Адрес", value: content.address, href: null, icon: null },
-    { label: "Режим работы", value: content.workHours, href: null, icon: null },
+    { label: t("Адрес"), value: content.address, href: null, icon: null },
+    { label: t("Режим работы"), value: content.workHours, href: null, icon: null },
     {
-      label: "График поставок",
-      value: formatDeliveryDaysLabel(content.deliveryDays),
-      hint: `Приём заявок до ${content.orderCutoffHour}:00 накануне`,
+      label: t("График поставок"),
+      value: deliveryDaysLabel,
+      hint: t("Приём заявок до ${content.orderCutoffHour}:00 накануне", {
+        "content.orderCutoffHour": content.orderCutoffHour,
+      }),
       href: null,
       icon: null,
     },
@@ -52,8 +59,9 @@ export async function Footer() {
             </span>
           </Link>
           <p className="mt-4 max-w-md text-sm leading-6 text-muted">
-            B2B-каталог десертов, полуфабрикатов и мясных позиций для кофеен,
-            ресторанов, магазинов и отелей.
+            {t(
+              "B2B-каталог десертов, полуфабрикатов и мясных позиций для кофеен, ресторанов, магазинов и отелей.",
+            )}
           </p>
         </div>
 
@@ -85,11 +93,11 @@ export async function Footer() {
       <div className="border-t border-black/10 px-5 pb-20 pt-4">
         <div className="mx-auto max-w-7xl space-y-3">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-[.1em] text-muted/60">Правовая информация</p>
-            <Link href="/oferta" className="text-sm text-muted transition hover:text-dark">Публичная оферта</Link>
-            <Link href="/privacy" className="text-sm text-muted transition hover:text-dark">Политика конфиденциальности</Link>
-            <Link href="/oplata-i-dostavka" className="text-sm text-muted transition hover:text-dark">Оплата и доставка</Link>
-            <Link href="/contacts" className="text-sm text-muted transition hover:text-dark">Контакты и реквизиты</Link>
+            <p className="text-[10px] font-bold uppercase tracking-[.1em] text-muted/60">{t("Правовая информация")}</p>
+            <Link href="/oferta" className="text-sm text-muted transition hover:text-dark">{t("Публичная оферта")}</Link>
+            <Link href="/privacy" className="text-sm text-muted transition hover:text-dark">{t("Политика конфиденциальности")}</Link>
+            <Link href="/oplata-i-dostavka" className="text-sm text-muted transition hover:text-dark">{t("Оплата и доставка")}</Link>
+            <Link href="/contacts" className="text-sm text-muted transition hover:text-dark">{t("Контакты и реквизиты")}</Link>
           </div>
           <p className="text-sm text-muted">© {new Date().getFullYear()} DC Bakery</p>
         </div>

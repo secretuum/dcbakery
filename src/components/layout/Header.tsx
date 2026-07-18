@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/src/contexts/CartContext";
+import { LanguageSwitcher } from "@/src/components/layout/LanguageSwitcher";
+import { useT } from "@/src/i18n/client";
 
 const navItems = [
   { label: "Каталог", href: "/catalog" },
@@ -25,6 +27,7 @@ function CartIcon() {
 }
 
 export function Header() {
+  const t = useT();
   const { totalItems } = useCart();
   const badgeText = totalItems > 99 ? "99+" : totalItems.toString();
   const [scrolled, setScrolled] = useState(false);
@@ -63,7 +66,7 @@ export function Header() {
                     ? "bg-dark text-white"
                     : "text-muted hover:bg-black/5 hover:text-dark"
                 }`}>
-                {item.label}
+                {t(item.label)}
               </Link>
             ))}
           </div>
@@ -71,22 +74,24 @@ export function Header() {
 
         {/* Right actions */}
         <div className="ml-auto flex items-center gap-2">
+          <LanguageSwitcher />
+
           {/* Стать партнёром → /profile */}
           <Link href="/profile"
             className="hidden rounded border border-dark bg-dark px-3.5 py-1.5 text-sm font-semibold text-white transition hover:bg-dark/80 sm:block">
-            Стать партнёром
+            {t("Стать партнёром")}
           </Link>
 
           {/* Кабинет */}
           <Link href="/profile"
             className="rounded border border-black/15 px-3 py-1.5 text-sm font-medium text-dark transition hover:bg-black/5">
-            Кабинет
+            {t("Кабинет")}
           </Link>
 
           {/* Cart */}
           <Link href="/cart"
             className="relative flex size-9 items-center justify-center rounded border border-black/15 text-dark transition hover:bg-black/5"
-            aria-label={`Корзина, товаров: ${totalItems}`}>
+            aria-label={t("Корзина, товаров: ${totalItems}", { totalItems })}>
             <CartIcon />
             {totalItems > 0 && (
               <span className="absolute -right-1 -top-1 flex min-w-4 items-center justify-center rounded-full bg-coral px-0.5 py-px text-[9px] font-bold leading-none text-white">

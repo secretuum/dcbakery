@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { ProductCard } from "@/src/components/catalog/ProductCard";
+import { useT } from "@/src/i18n/client";
 import type { Category, Product } from "@/src/types";
 
 type Props = {
@@ -15,6 +16,7 @@ const MAX_VISIBLE = 8;
 type Tab = { id: string; name: string };
 
 export function HomeCatalogTabs({ categories, products }: Props) {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<string>("all");
 
   const tabs: Tab[] = [{ id: "all", name: "Все продукты" }, ...categories];
@@ -30,13 +32,13 @@ export function HomeCatalogTabs({ categories, products }: Props) {
         {/* Section header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="font-display text-3xl font-bold tracking-tight text-dark lg:text-4xl">
-            Каталог продукции
+            {t("Каталог продукции")}
           </h2>
           <Link
             href="/catalog"
             className="text-sm font-semibold text-coral transition hover:text-coral-hover"
           >
-            Весь каталог →
+            {t("Весь каталог →")}
           </Link>
         </div>
 
@@ -53,7 +55,7 @@ export function HomeCatalogTabs({ categories, products }: Props) {
                   : "border-transparent text-muted hover:text-dark"
               }`}
             >
-              {tab.name}
+              {t(tab.name)}
             </button>
           ))}
         </div>
@@ -65,7 +67,7 @@ export function HomeCatalogTabs({ categories, products }: Props) {
           ))}
           {filtered.length === 0 && (
             <p className="col-span-full py-16 text-center text-muted">
-              В этой категории нет товаров
+              {t("В этой категории нет товаров")}
             </p>
           )}
         </div>
@@ -75,7 +77,7 @@ export function HomeCatalogTabs({ categories, products }: Props) {
             href="/catalog"
             className="inline-block border border-dark px-6 py-2.5 text-sm font-semibold text-dark transition hover:bg-dark hover:text-white"
           >
-            Смотреть все товары
+            {t("Смотреть все товары")}
           </Link>
         </div>
       </div>

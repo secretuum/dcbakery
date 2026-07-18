@@ -1,5 +1,6 @@
 "use client";
 
+import { useT } from "@/src/i18n/client";
 import type { Category } from "@/src/types";
 
 type Props = {
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export function CategoryNavBar({ categories, popularCount }: Props) {
+  const t = useT();
   function scrollTo(slug: string) {
     document.getElementById(`cat-${slug}`)?.scrollIntoView({ behavior: "smooth" });
   }
@@ -21,7 +23,7 @@ export function CategoryNavBar({ categories, popularCount }: Props) {
               onClick={() => scrollTo("popular")}
               className="shrink-0 rounded-badge bg-cream px-4 py-1.5 text-sm font-bold text-dark transition hover:bg-coral-light hover:text-coral active:scale-95"
             >
-              Популярное
+              {t("Популярное")}
             </button>
           ) : null}
           {categories.map((cat) => (
@@ -30,7 +32,7 @@ export function CategoryNavBar({ categories, popularCount }: Props) {
               onClick={() => scrollTo(cat.slug)}
               className="shrink-0 rounded-badge bg-cream px-4 py-1.5 text-sm font-bold text-dark transition hover:bg-coral-light hover:text-coral active:scale-95"
             >
-              {cat.name}
+              {t(cat.name)}
             </button>
           ))}
         </div>

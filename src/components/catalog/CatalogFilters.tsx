@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Category, Product } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
+import { useT } from "@/src/i18n/client";
 import { ProductCard } from "./ProductCard";
 
 type Props = {
@@ -22,6 +23,7 @@ const sortOptions: Array<{ value: SortMode; label: string }> = [
 ];
 
 export function CatalogFilters({ categories, products, popularProducts, orderCounts = {} }: Props) {
+  const t = useT();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
@@ -87,21 +89,21 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
   const sidebar = (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold uppercase text-dark">Фильтры</h2>
+        <h2 className="text-sm font-bold uppercase text-dark">{t("Фильтры")}</h2>
         {hasActiveFilters && (
           <button
             type="button"
             onClick={resetFilters}
             className="text-xs font-bold text-coral hover:text-coral-hover"
           >
-            Сбросить всё
+            {t("Сбросить всё")}
           </button>
         )}
       </div>
 
       {/* Categories */}
       <div>
-        <p className="mb-3 text-xs font-bold uppercase text-muted">Категории</p>
+        <p className="mb-3 text-xs font-bold uppercase text-muted">{t("Категории")}</p>
         <div className="space-y-2">
           {categories.map((cat) => (
             <label key={cat.id} className="flex cursor-pointer items-center gap-2">
@@ -111,7 +113,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
                 onChange={() => toggleCategory(cat.id)}
                 className="h-4 w-4 accent-coral"
               />
-              <span className="text-sm font-semibold text-dark">{cat.name}</span>
+              <span className="text-sm font-semibold text-dark">{t(cat.name)}</span>
             </label>
           ))}
         </div>
@@ -119,7 +121,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
 
       {/* Stock */}
       <div>
-        <p className="mb-3 text-xs font-bold uppercase text-muted">Наличие</p>
+        <p className="mb-3 text-xs font-bold uppercase text-muted">{t("Наличие")}</p>
         <label className="flex cursor-pointer items-center gap-2">
           <input
             type="checkbox"
@@ -127,13 +129,13 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
             onChange={(e) => setInStockOnly(e.target.checked)}
             className="h-4 w-4 accent-coral"
           />
-          <span className="text-sm font-semibold text-dark">Только в наличии</span>
+          <span className="text-sm font-semibold text-dark">{t("Только в наличии")}</span>
         </label>
       </div>
 
       {/* Price */}
       <div>
-        <p className="mb-3 text-xs font-bold uppercase text-muted">Цена</p>
+        <p className="mb-3 text-xs font-bold uppercase text-muted">{t("Цена")}</p>
         <input
           type="range"
           min={0}
@@ -147,21 +149,21 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
             type="number"
             value={priceMin}
             onChange={(e) => setPriceMin(e.target.value)}
-            placeholder="от"
+            placeholder={t("от")}
             className="w-full rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-dark placeholder-muted outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
           />
           <input
             type="number"
             value={priceMax}
             onChange={(e) => setPriceMax(e.target.value)}
-            placeholder="до"
+            placeholder={t("до")}
             className="w-full rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-dark placeholder-muted outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
           />
         </div>
         {(priceMin !== "" || priceMax !== "") && (
           <p className="mt-1.5 text-xs text-muted">
             {priceMin !== "" ? formatPrice(Number(priceMin)) : "0"} —{" "}
-            {priceMax !== "" ? formatPrice(Number(priceMax)) : "без ограничений"}
+            {priceMax !== "" ? formatPrice(Number(priceMax)) : t("без ограничений")}
           </p>
         )}
       </div>
@@ -193,12 +195,12 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <span className="font-bold text-dark">Фильтры</span>
+          <span className="font-bold text-dark">{t("Фильтры")}</span>
           <button
             type="button"
             onClick={() => setIsMobileOpen(false)}
             className="flex h-8 w-8 items-center justify-center border border-black/10 bg-white text-dark hover:bg-black/5"
-            aria-label="Закрыть"
+            aria-label={t("Закрыть")}
           >
             ✕
           </button>
@@ -210,7 +212,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
             onClick={() => { resetFilters(); setIsMobileOpen(false); }}
             className="mt-6 w-full rounded bg-dark py-2.5 text-sm font-bold text-white"
           >
-            Сбросить и закрыть
+            {t("Сбросить и закрыть")}
           </button>
         )}
       </div>
@@ -243,7 +245,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Найти товар..."
+                placeholder={t("Найти товар...")}
                 className="w-full rounded border border-black/10 bg-white py-2.5 pl-10 pr-8 text-sm text-dark placeholder-gray-400 outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
               />
               {query && (
@@ -258,12 +260,12 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.currentTarget.value as SortMode)}
-              aria-label="Сортировка"
+              aria-label={t("Сортировка")}
               className="rounded border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {t(option.label)}
                 </option>
               ))}
             </select>
@@ -275,7 +277,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 12h10M11 20h2" />
               </svg>
-              Фильтры
+              {t("Фильтры")}
               {hasActiveFilters && (
                 <span className="flex h-5 w-5 items-center justify-center bg-coral text-[10px] font-bold text-white">
                   {selectedCategories.length + (inStockOnly ? 1 : 0) + (priceMin !== "" || priceMax !== "" ? 1 : 0)}
@@ -287,7 +289,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
           {/* Products */}
           {isFiltering ? (
             filtered.length === 0 ? (
-              <p className="py-10 text-gray-500">Ничего не найдено по выбранным фильтрам</p>
+              <p className="py-10 text-gray-500">{t("Ничего не найдено по выбранным фильтрам")}</p>
             ) : (
               productGrid(filtered)
             )
@@ -296,7 +298,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
               {popularProducts.length > 0 && (
                 <div>
                   <h2 id="cat-popular" className="mb-6 text-3xl font-bold tracking-tight text-dark">
-                    Популярное
+                    {t("Популярное")}
                   </h2>
                   {productGrid(popularProducts)}
                 </div>
@@ -310,7 +312,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
                       id={`cat-${category.slug}`}
                       className="mb-6 text-3xl font-bold tracking-tight text-dark"
                     >
-                      {category.name}
+                      {t(category.name)}
                     </h2>
                     {productGrid(catProducts)}
                   </div>

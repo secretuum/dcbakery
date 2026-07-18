@@ -5,26 +5,28 @@ import { CartItem } from "@/src/components/cart/CartItem";
 import { CartSummary } from "@/src/components/cart/CartSummary";
 import { Button } from "@/src/components/ui/Button";
 import { useCart } from "@/src/contexts/CartContext";
+import { useT } from "@/src/i18n/client";
 
 export default function CartPage() {
+  const t = useT();
   const { clear, items } = useCart();
 
   if (items.length === 0) {
     return (
       <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8">
         <section className="mx-auto max-w-3xl rounded-card border border-black/10 bg-white p-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Корзина</p>
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Корзина")}</p>
           <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-            В корзине пока пусто
+            {t("В корзине пока пусто")}
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base leading-7 text-muted">
-            Выберите товары в каталоге, а затем соберите B2B-заявку от минимальной суммы заказа.
+            {t("Выберите товары в каталоге, а затем соберите B2B-заявку от минимальной суммы заказа.")}
           </p>
           <Link
             href="/catalog"
             className="mt-6 inline-flex min-h-12 items-center justify-center rounded-btn border border-coral bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
           >
-            Перейти в каталог
+            {t("Перейти в каталог")}
           </Link>
         </section>
       </main>
@@ -36,18 +38,17 @@ export default function CartPage() {
       <section className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Корзина DC Bakery</p>
+            <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Корзина DC Bakery")}</p>
             <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-              Ваша B2B-заявка
+              {t("Ваша B2B-заявка")}
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-              Проверьте количество, фасовку и сумму. Менеджер подтвердит наличие, доставку и товары
-              с ценой по запросу.
+              {t("Проверьте количество, фасовку и сумму. Менеджер подтвердит наличие, доставку и товары с ценой по запросу.")}
             </p>
           </div>
 
           <Button variant="ghost" onClick={clear} className="self-start border border-black/15 bg-white">
-            Очистить корзину
+            {t("Очистить корзину")}
           </Button>
         </div>
 

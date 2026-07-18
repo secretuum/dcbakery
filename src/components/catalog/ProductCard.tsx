@@ -7,6 +7,7 @@ import { ProductSheet } from "@/src/components/catalog/ProductSheet";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatProductPrice } from "@/src/lib/format";
+import { useT } from "@/src/i18n/client";
 import type { Product } from "@/src/types";
 
 type ProductCardProps = {
@@ -14,6 +15,7 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product }: ProductCardProps) {
+  const t = useT();
   const { add, remove, updateQty, isReady, items } = useCart();
   const { showToast } = useToast();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -27,16 +29,16 @@ export function ProductCard({ product }: ProductCardProps) {
 
   function handleAddToCart() {
     if (cartQty >= product.stock_qty) {
-      showToast("В корзине уже весь доступный остаток", "info");
+      showToast(t("В корзине уже весь доступный остаток"), "info");
       return;
     }
     add(product, Math.max(1, product.min_qty ?? product.step_qty ?? 1));
-    showToast("Товар добавлен в корзину", "success");
+    showToast(t("Товар добавлен в корзину"), "success");
   }
 
   function handleIncrease() {
     if (cartQty >= product.stock_qty) {
-      showToast("В корзине уже весь доступный остаток", "info");
+      showToast(t("В корзине уже весь доступный остаток"), "info");
       return;
     }
     updateQty(product.id, cartQty + step);
@@ -71,7 +73,7 @@ export function ProductCard({ product }: ProductCardProps) {
           />
           {!isInStock && (
             <span className="absolute right-2 top-2">
-              <Badge variant="dark">нет</Badge>
+              <Badge variant="dark">{t("нет")}</Badge>
             </span>
           )}
         </div>
@@ -87,7 +89,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {product.min_qty > 1 && (
           <p className="mt-1 text-xs text-muted">
-            Мин. {product.min_qty} {product.unit}
+            {t("Мин.")} {product.min_qty} {t(product.unit)}
           </p>
         )}
 

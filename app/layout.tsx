@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Montserrat, IBM_Plex_Mono } from "next/font/google";
 import { CartProvider } from "@/src/contexts/CartContext";
 import { ToastProvider } from "@/src/contexts/ToastContext";
+import { LocaleProvider } from "@/src/i18n/client";
+import { getLocale } from "@/src/i18n/server";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,22 +37,26 @@ export const metadata: Metadata = {
   description: "B2B-каталог десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
     <html
-      lang="ru"
+      lang={locale}
       className={`${geistSans.variable} ${montserrat.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <CartProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
-        </CartProvider>
+        <LocaleProvider locale={locale}>
+          <CartProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </CartProvider>
+        </LocaleProvider>
       </body>
     </html>
   );

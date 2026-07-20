@@ -1,7 +1,7 @@
 import "server-only";
-import { fetchAdminOrders, fetchAllClients } from "@/src/lib/supabase/admin";
+import { fetchAllClients } from "@/src/lib/supabase/admin";
 import { orderStatusLabels } from "@/src/lib/order-status";
-import type { Order } from "@/src/types";
+import type { ClientStatus, Order } from "@/src/types";
 
 // Выгрузка для 1С Бухгалтерии (фаза 0): плоские CSV-файлы, которые бухгалтер
 // открывает в Excel или загружает обработкой. UTF-8 с BOM и разделителем «;» —
@@ -57,6 +57,49 @@ function formatDate(value?: string | null) {
 
 const PAGE_SIZE = 1000;
 const MAX_PAGES = 30;
+
+// fetchAdminOrders из admin.ts отдаёт урезанный набор колонок (без customer_bin
+// и client_id) и максимум 100 заказов — для бухгалтерской выгрузки берём заказы
+// сами, с полным набором полей и пагинацией.
+const ORDER_EXPORT_COLUMNS =
+  "id,order_number,client_id,company_name,customer_bin,customer_name,customer_phone,customer_email,delivery_address,delivery_date,status,payment_status,total_amount,created_at";
+
+async function fetchOrdersForExport(): Promise<Order[]> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return [];
+  }
+
+  const baseUrl = `${supabaseUrl.replace(/\/$/, "")}/rest/v1/orders?select=${ORDER_EXPORT_COLUMNS}&order=created_at.desc`;
+  const rows: Order[] = [];
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const from = page * PAGE_SIZE;
+    const response = await fetch(baseUrl, {
+      headers: {
+        apikey: serviceRoleKey,
+        Authorization: `Bearer ${serviceRoleKey}`,
+        Range: `${from}-${from + PAGE_SIZE - 1}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      break;
+    }
+
+    const batch = (await response.json()) as Order[];
+    rows.push(...batch);
+
+    if (batch.length < PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return rows;
+}
 
 async function fetchAllOrderItems(): Promise<OrderItemRow[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -120,6 +163,7 @@ function filterOrdersByPeriod(orders: Order[], from: string, to: string, confirm
 
 export type ExportOrder = {
   number: string;
+  clientId: string;
   date: string;
   status: string;
   payment: string;
@@ -140,7 +184,7 @@ export async function collectOrders(
   to: string,
   confirmedOnly: boolean,
 ): Promise<ExportOrder[]> {
-  const [allOrders, allItems] = await Promise.all([fetchAdminOrders(), fetchAllOrderItems()]);
+  const [allOrders, allItems] = await Promise.all([fetchOrdersForExport(), fetchAllOrderItems()]);
   const orders = filterOrdersByPeriod(allOrders, from, to, confirmedOnly);
   const itemsByOrderId = new Map<string, OrderItemRow[]>();
 
@@ -155,6 +199,7 @@ export async function collectOrders(
 
   return orders.map((order) => ({
     number: order.order_number,
+    clientId: order.client_id ?? "",
     date: order.created_at,
     status: orderStatusLabels[order.status] ?? order.status,
     payment: order.payment_status
@@ -232,9 +277,25 @@ export async function buildOrdersCsv(from: string, to: string, confirmedOnly: bo
   return { csv: toCsv(rows), ordersCount: orders.length };
 }
 
-/** Клиенты сайта — заготовка справочника контрагентов. БИН берём из последнего заказа компании. */
-export async function buildClientsCsv() {
-  const [clients, orders] = await Promise.all([fetchAllClients(), fetchAdminOrders()]);
+export type ExportClient = {
+  /** id аккаунта на сайте — ключ связки «аккаунт ↔ контрагент 1С» */
+  id: string;
+  name: string;
+  bin: string;
+  phone: string;
+  email: string;
+  contractNo: string;
+  /** official = есть БИН/ИИН (безнал по счёту), private = частник */
+  type: "official" | "private";
+  status: ClientStatus;
+  creditLimit: number;
+  paymentTermsDays: number;
+  registeredAt: string;
+};
+
+/** Клиенты сайта — источник справочника контрагентов. БИН берём из последнего заказа компании. */
+export async function collectClients(): Promise<ExportClient[]> {
+  const [clients, orders] = await Promise.all([fetchAllClients(), fetchOrdersForExport()]);
 
   const binByClientId = new Map<string, string>();
   const binByCompany = new Map<string, string>();
@@ -252,6 +313,32 @@ export async function buildClientsCsv() {
     }
   }
 
+  return clients.map((client) => {
+    const bin =
+      binByClientId.get(client.id) ??
+      binByCompany.get(client.name.trim().toLowerCase()) ??
+      "";
+
+    return {
+      id: client.id,
+      name: client.name,
+      bin,
+      phone: client.phone ?? "",
+      email: client.email ?? "",
+      contractNo: client.contract_no ?? "",
+      type: bin ? ("official" as const) : ("private" as const),
+      status: client.status,
+      creditLimit: client.credit_limit,
+      paymentTermsDays: client.payment_terms_days,
+      registeredAt: client.created_at,
+    };
+  });
+}
+
+/** Клиенты сайта — CSV-заготовка справочника контрагентов для ручной загрузки. */
+export async function buildClientsCsv() {
+  const clients = await collectClients();
+
   const rows: unknown[][] = [
     [
       "Наименование",
@@ -267,21 +354,16 @@ export async function buildClientsCsv() {
   ];
 
   for (const client of clients) {
-    const bin =
-      binByClientId.get(client.id) ??
-      binByCompany.get(client.name.trim().toLowerCase()) ??
-      "";
-
     rows.push([
       client.name,
-      bin,
-      client.phone ?? "",
-      client.email ?? "",
-      client.contract_no ?? "",
-      client.credit_limit,
-      client.payment_terms_days,
+      client.bin,
+      client.phone,
+      client.email,
+      client.contractNo,
+      client.creditLimit,
+      client.paymentTermsDays,
       client.status === "active" ? "Активен" : client.status === "blocked" ? "Заблокирован" : "Только предоплата",
-      formatDate(client.created_at),
+      formatDate(client.registeredAt),
     ]);
   }
 

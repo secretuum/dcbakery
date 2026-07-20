@@ -12,7 +12,8 @@
 //   node scripts/generate-descriptions.mjs --limit=5  — первые N товаров (для пробы)
 //
 // Требует в .env.local: OPENAI_API_KEY, NEXT_PUBLIC_SUPABASE_URL,
-// SUPABASE_SERVICE_ROLE_KEY. Модель: OPENAI_MODEL (по умолчанию gpt-4o-mini).
+// SUPABASE_SERVICE_ROLE_KEY. Модель: OPENAI_MODEL (по умолчанию gpt-4o —
+// казахский у mini заметно хуже, а kk у нас локаль по умолчанию).
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -43,7 +44,7 @@ function loadEnv(file) {
 
 const env = loadEnv(resolve(SITE, ".env.local"));
 const OPENAI_KEY = env.OPENAI_API_KEY;
-const MODEL = env.OPENAI_MODEL || "gpt-4o-mini";
+const MODEL = env.OPENAI_MODEL || "gpt-4o";
 const SB_URL = (env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/$/, "");
 const SB_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -124,39 +125,80 @@ function score(a, b) {
 
 const live = nomenclature.filter((x) => !x.deleted && ["DISH", "PREPARED", "GOODS"].includes(x.type));
 
-// Ингредиенты ТТК с разворачиванием заготовок (глубина 2)
-function collectIngredients(productId, depth = 0) {
+// Ингредиенты ТТК с разворачиванием заготовок. Вложенные п/ф в iiko бывают и
+// PREPARED, и DISH («п/ф … с фасовкой»), поэтому идём вглубь по любому узлу,
+// у которого есть своя ТТК; упаковку и приборы отбрасываем сразу.
+const PACKAGING_RE =
+  /контейнер|крышк|пакет|лоток|этикет|стакан|ведро|ложк|вилк|емкость|упаков|коробк|салфет|наклейк|плёнк|пленк|бумаг|зубочист|палочк|трубочк|скотч|перчатк|баночк/i;
+
+function collectIngredients(productId, depth = 0, path = new Set()) {
+  if (depth > 6 || path.has(productId)) return null;
   const chart = chartsByProduct.get(productId);
   if (!chart) return null;
+  const nextPath = new Set(path).add(productId);
   const names = [];
   for (const item of chart.items ?? []) {
     const ingredient = byId.get(item.productId);
     if (!ingredient) continue;
     if (ingredient.type === "MODIFIER" || ingredient.type === "SERVICE") continue;
-    if (ingredient.type === "PREPARED" && depth < 2) {
-      const nested = collectIngredients(ingredient.id, depth + 1);
-      if (nested && nested.length > 0) {
-        names.push(...nested);
-        continue;
-      }
+    if (PACKAGING_RE.test(ingredient.name)) continue;
+    const nested = collectIngredients(ingredient.id, depth + 1, nextPath);
+    if (nested && nested.length > 0) {
+      names.push(...nested);
+    } else {
+      names.push(ingredient.name.trim());
     }
-    names.push(ingredient.name.trim());
   }
   return names;
 }
 
+// Виды мяса/рыбы: если в названии товара заявлен один вид, а в ТТК кандидата —
+// только другой, значит в iiko чарт привязан с ошибкой (реальный случай:
+// «ОПТ Котлеты говяжьи» → «п/ф Котлета куриная»). Такого кандидата пропускаем.
+const MEAT_KINDS = {
+  beef: /говяж|говядин|телят/i,
+  chicken: /куриц|курин|цыпл|окорочк/i,
+  turkey: /индей/i,
+  lamb: /баран|ягнят/i,
+  horse: /конин|казы/i,
+  fish: /рыб|лосос|судак|минтай|горбуш|семг|форел/i,
+};
+function meatKinds(text) {
+  return Object.keys(MEAT_KINDS).filter((k) => MEAT_KINDS[k].test(text));
+}
+
+// ЧОКО/Вендинг — готовые блюда на доставку/в зал: их ТТК включают приготовление и
+// подачу (сметана, орехи, украшения), которых нет в B2B-полуфабрикате — исключаем.
+// Каспи-чарты ссылаются на чистые п/ф (торт в коробке), но при равных даём фору
+// П/Ф-, К- и ОПТ-версиям штрафом к скору.
+// \b не работает с кириллицей в JS — границу задаём пробелом.
+// Звёздочки на конце названия — блюда зала (тоже с подачей), например
+// «Сырники с иримшиком**».
+const EXCLUDED_PREFIX_RE = /^\s*(чоко|вендинг)(\s|$)/i;
+const EXCLUDED_SUFFIX_RE = /\*+$/;
+const KASPI_PREFIX_RE = /^\s*каспи(\s|$)/i;
+
 function findIngredientsForProduct(siteName) {
   const candidates = live
-    .map((c) => ({ c, s: score(siteName, c.name) }))
+    .filter((c) => !EXCLUDED_PREFIX_RE.test(c.name) && !EXCLUDED_SUFFIX_RE.test(c.name.trim()))
+    .map((c) => ({ c, s: score(siteName, c.name) - (KASPI_PREFIX_RE.test(c.name) ? 0.35 : 0) }))
     .filter((x) => x.s >= 1.15)
     .sort((a, b) => b.s - a.s)
     .slice(0, 12);
 
+  const nameKinds = meatKinds(siteName);
   for (const { c } of candidates) {
     const ingredients = collectIngredients(c.id);
-    if (ingredients && ingredients.length >= 2) {
-      return { source: c.name.trim(), ingredients: [...new Set(ingredients)] };
+    if (!ingredients || ingredients.length < 2) continue;
+    if (nameKinds.length) {
+      // яйцо куриное — не «курица», убираем перед сверкой видов
+      const ingKinds = meatKinds(ingredients.join(" ").replace(/яйцо\s+курин\w*/gi, ""));
+      if (ingKinds.length && !nameKinds.some((k) => ingKinds.includes(k))) {
+        console.log(`  ! ТТК «${c.name.trim()}» — другой вид мяса, пропускаю`);
+        continue;
+      }
     }
+    return { source: c.name.trim(), ingredients: [...new Set(ingredients)] };
   }
   return null;
 }
@@ -186,11 +228,13 @@ async function generateContent(product, ingredients) {
   "name_en": "название товара на английском"
 }
 Жёсткие правила:
-- Состав собирай ТОЛЬКО из «ингредиенты_из_техкарты» и «текущий_состав»; ничего не выдумывай. Технические названия (например «*ПФ тесто 1», «инг», цифры партий) преврати в нормальные пищевые названия.
-- Служебные слова (упаковка, лоток, вода для мытья) не включай.
-- Если ингредиентов нет вовсе — составь состав из «текущий_состав» как есть (нормализовав), а при его отсутствии верни в полях состава пустую строку.
+- Главный источник состава — «ингредиенты_из_техкарты»: включи ВСЕ пищевые позиции из него, ничего не выдумывай и не добавляй от себя. Особенно нельзя терять аллергены и значимые ингредиенты: яйцо, сливки, молоко, сливочное масло, крахмал, орехи.
+- «текущий_состав» используй только если техкарты нет (тогда нормализуй его), либо для уточнения формулировок отдельных ингредиентов. Ингредиенты, которых нет в техкарте, из него не переноси.
+- Технические названия преврати в пищевые: «*ПФ Лук репчатый чищенный 1» → «лук репчатый», «вода вспомогательное» → «вода», «сливки 15% Кухня» → «сливки», «Жир говяжий инг» → «говяжий жир». Пометки цехов, цифры партий, «инг», «(кухня)» убирай.
+- Служебные позиции (упаковка, контейнеры, приборы) не включай.
 - Не упоминай цены, сертификаты, сроки годности.
-- Названия «name_kk»/«name_en» — перевод названия, бренды и слова вроде «чизкейк», «дениш» транслитерируй естественно.`;
+- Названия «name_kk»/«name_en» — перевод названия, бренды и слова вроде «чизкейк», «дениш» транслитерируй естественно.
+- Казахские тексты пиши на литературном казахском без русизмов: переводи все ингредиенты (например «панировочные сухари» → «кептірілген нан үгіндісі»), русских слов в полях *_kk быть не должно, фразы должны звучать естественно, а не как калька с русского.`;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -215,7 +259,11 @@ async function generateContent(product, ingredients) {
 
   const data = await response.json();
   const text = data.choices?.[0]?.message?.content ?? "{}";
-  return JSON.parse(text);
+  const parsed = JSON.parse(text);
+  for (const key of Object.keys(parsed)) {
+    if (typeof parsed[key] === "string") parsed[key] = parsed[key].trim();
+  }
+  return parsed;
 }
 
 // ── Существующие overrides (чтобы не затирать ручные правки) ──
@@ -267,7 +315,10 @@ for (const product of products) {
     let entry = results[product.slug];
 
     if (!entry || FORCE || ONLY) {
-      const ingredients = findIngredientsForProduct(product.name);
+      // У ланч-боксов номера отбрасываются при матчинге, и все 30 цепляют одну
+      // случайную ТТК — состав у них и так описан в products.ts
+      const ingredients =
+        product.category === "Готовые обеды" ? null : findIngredientsForProduct(product.name);
       const content = await generateContent(product, ingredients);
       entry = {
         name: product.name,

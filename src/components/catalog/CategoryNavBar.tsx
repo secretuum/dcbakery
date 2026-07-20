@@ -15,7 +15,7 @@ export function CategoryNavBar({ categories, popularCount }: Props) {
   }
 
   return (
-    <div className="sticky top-0 z-40 bg-white shadow-sm">
+    <div className="sticky top-[60px] z-20 bg-white shadow-sm">
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <div className="flex gap-2 overflow-x-auto whitespace-nowrap py-2 [&::-webkit-scrollbar]:hidden">
           {popularCount && popularCount > 0 ? (

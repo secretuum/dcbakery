@@ -7,7 +7,8 @@ import { ProductSheet } from "@/src/components/catalog/ProductSheet";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatProductPrice } from "@/src/lib/format";
-import { useT } from "@/src/i18n/client";
+import { useLocale, useT } from "@/src/i18n/client";
+import { localizeProduct } from "@/src/i18n/product";
 import type { Product } from "@/src/types";
 
 type ProductCardProps = {
@@ -16,6 +17,8 @@ type ProductCardProps = {
 
 export function ProductCard({ product }: ProductCardProps) {
   const t = useT();
+  const locale = useLocale();
+  const localized = localizeProduct(product, locale);
   const { add, remove, updateQty, isReady, items } = useCart();
   const { showToast } = useToast();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -59,12 +62,12 @@ export function ProductCard({ product }: ProductCardProps) {
         type="button"
         onClick={() => setIsSheetOpen(true)}
         className="relative block w-full cursor-pointer overflow-hidden text-left"
-        aria-label={`Подробнее: ${product.name}`}
+        aria-label={`${t("Подробнее:")} ${localized.name}`}
       >
         <div className="relative aspect-square overflow-hidden bg-cream">
           <FallbackImage
             src={imageSrc}
-            alt={product.name}
+            alt={localized.name}
             categoryId={product.category_id}
             categorySlug={product.category?.slug}
             fill
@@ -84,7 +87,7 @@ export function ProductCard({ product }: ProductCardProps) {
           className="line-clamp-2 cursor-pointer text-sm font-semibold leading-snug text-dark"
           onClick={() => setIsSheetOpen(true)}
         >
-          {product.name}
+          {localized.name}
         </h3>
 
         {product.min_qty > 1 && (
@@ -122,7 +125,7 @@ export function ProductCard({ product }: ProductCardProps) {
               onClick={handleAddToCart}
               disabled={!isInStock}
               className="flex h-7 w-7 items-center justify-center rounded border border-coral text-base font-bold text-coral transition hover:bg-coral hover:text-white disabled:border-black/10 disabled:text-muted"
-              aria-label={`Добавить в корзину: ${product.name}`}
+              aria-label={`${t("Добавить в корзину:")} ${localized.name}`}
             >
               +
             </button>

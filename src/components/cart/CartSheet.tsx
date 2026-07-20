@@ -6,7 +6,8 @@ import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { useCart } from "@/src/contexts/CartContext";
 import { formatPrice } from "@/src/lib/format";
 import { MIN_ORDER_AMOUNT } from "@/app/constants";
-import { useT } from "@/src/i18n/client";
+import { useLocale, useT } from "@/src/i18n/client";
+import { localizeProduct } from "@/src/i18n/product";
 import type { Product } from "@/src/types";
 
 const PROGRESS_MAX = 100_000;
@@ -25,6 +26,7 @@ const PILL_STRIPES =
 
 export default function CartSheet() {
   const t = useT();
+  const locale = useLocale();
   const { items, totalAmount, totalItems, remove, updateQty, add, clear } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const [popular, setPopular] = useState<Product[]>([]);
@@ -223,10 +225,10 @@ export default function CartSheet() {
 
                     <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold uppercase tracking-[.06em] text-muted">
-                        {product.unit}
+                        {t(product.unit)}
                       </p>
                       <p className="truncate text-base font-semibold text-dark">
-                        {product.name}
+                        {localizeProduct(product, locale).name}
                       </p>
                       <p className="mt-1 font-data text-base font-semibold text-dark">
                         {formatPrice(product.price * qty)}
@@ -287,7 +289,7 @@ export default function CartSheet() {
                         />
                       </div>
                       <p className="mt-2 line-clamp-2 text-xs font-semibold text-dark">
-                        {p.name}
+                        {localizeProduct(p, locale).name}
                       </p>
                       <div className="mt-auto flex items-center justify-between pt-2">
                         <p className="font-data text-sm font-semibold text-dark">{formatPrice(p.price)}</p>

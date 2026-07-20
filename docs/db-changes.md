@@ -68,3 +68,18 @@ create index if not exists idx_payments_status on payments(status);
 alter table payments enable row level security;
 create policy "admin_read_payments" on payments for select to authenticated using (true);
 ```
+
+## 2026-07-18 — локализация карточек товаров (kk/en)
+
+Nullable-колонки в catalog_product_overrides для названий/описаний на казахском
+и английском (заполняются конвейером генерации описаний, каз. состав уже был
+в composition_kz).
+
+```sql
+alter table catalog_product_overrides
+  add column if not exists name_kk text,
+  add column if not exists name_en text,
+  add column if not exists description_kk text,
+  add column if not exists description_en text,
+  add column if not exists composition_en text;
+```

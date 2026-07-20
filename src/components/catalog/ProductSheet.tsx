@@ -6,7 +6,8 @@ import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatPrice, formatProductPrice } from "@/src/lib/format";
-import { useT } from "@/src/i18n/client";
+import { useLocale, useT } from "@/src/i18n/client";
+import { localizeProduct } from "@/src/i18n/product";
 import type { Product } from "@/src/types";
 
 type ProductSheetProps = {
@@ -16,6 +17,8 @@ type ProductSheetProps = {
 
 export function ProductSheet({ product, onClose }: ProductSheetProps) {
   const t = useT();
+  const locale = useLocale();
+  const localized = localizeProduct(product, locale);
   const { add, remove, updateQty, isReady, items } = useCart();
   const { showToast } = useToast();
   const imageSrc = product.images[0] ?? "/product-placeholder.png";
@@ -38,16 +41,16 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
 
   function handleAdd() {
     if (cartQty >= product.stock_qty) {
-      showToast("В корзине уже весь доступный остаток", "info");
+      showToast(t("В корзине уже весь доступный остаток"), "info");
       return;
     }
     add(product, Math.max(1, product.min_qty ?? product.step_qty ?? 1));
-    showToast("Товар добавлен в корзину", "success");
+    showToast(t("Товар добавлен в корзину"), "success");
   }
 
   function handleIncrease() {
     if (cartQty >= product.stock_qty) {
-      showToast("В корзине уже весь доступный остаток", "info");
+      showToast(t("В корзине уже весь доступный остаток"), "info");
       return;
     }
     updateQty(product.id, cartQty + step);
@@ -76,7 +79,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
   // Портал: у карточек бывает transform (анимация появления), который делает их
   // containing block для fixed — без портала шторка прибивается к карточке.
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-end justify-center" role="dialog" aria-modal="true" aria-label={product.name}>
+    <div className="fixed inset-0 z-[60] flex items-end justify-center" role="dialog" aria-modal="true" aria-label={localized.name}>
       {/* Backdrop */}
       <div className="animate-fade-in-bg absolute inset-0 bg-black/40" onClick={onClose} />
 
@@ -90,7 +93,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
           <div className="relative aspect-square w-full bg-cream">
             <FallbackImage
               src={imageSrc}
-              alt={product.name}
+              alt={localized.name}
               fill
               sizes="(max-width: 640px) 100vw, 512px"
               className="object-cover"
@@ -115,14 +118,14 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
               {product.weightLabel ?? product.unit}
             </p>
             <h2 className="mt-1.5 font-display text-xl font-bold leading-snug text-dark">
-              {product.name}
+              {localized.name}
             </h2>
             <p className="mt-2 font-data text-xl font-semibold text-coral">
               {formatProductPrice(product.price)}
             </p>
 
-            {product.description ? (
-              <p className="mt-3 text-sm leading-6 text-muted">{product.description}</p>
+            {localized.description ? (
+              <p className="mt-3 text-sm leading-6 text-muted">{localized.description}</p>
             ) : null}
 
             {details.length > 0 ? (
@@ -130,17 +133,17 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
                 {details.map(([label, value], i) => (
                   <div key={label}
                     className={`flex items-baseline justify-between gap-4 px-4 py-2.5 ${i < details.length - 1 ? "border-b border-black/5" : ""}`}>
-                    <span className="text-xs font-semibold text-muted">{label}</span>
+                    <span className="text-xs font-semibold text-muted">{t(label)}</span>
                     <span className="text-right text-sm font-semibold text-dark">{value}</span>
                   </div>
                 ))}
               </div>
             ) : null}
 
-            {product.composition ? (
+            {localized.composition ? (
               <details className="mt-3 border border-black/8 bg-cream px-4 py-3">
                 <summary className="cursor-pointer text-sm font-semibold text-dark">{t("Состав")}</summary>
-                <p className="mt-2 text-sm leading-6 text-muted">{product.composition}</p>
+                <p className="mt-2 text-sm leading-6 text-muted">{localized.composition}</p>
               </details>
             ) : null}
           </div>

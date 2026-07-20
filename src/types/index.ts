@@ -19,6 +19,11 @@ export type Product = {
   description: string;
   composition?: string;
   compositionKz?: string;
+  compositionEn?: string;
+  nameKk?: string;
+  nameEn?: string;
+  descriptionKk?: string;
+  descriptionEn?: string;
   category_id: string;
   category?: Category;
   price: number;

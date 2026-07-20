@@ -9,6 +9,16 @@ import {
   fetchCatalogProductOverrides,
   type CatalogProductOverride,
 } from "@/src/lib/supabase/admin";
+
+// Локализованные поля живут в тех же строках overrides (колонки добавлены
+// в БД, тип в admin.ts намеренно не расширяем — читаем через каст).
+type LocalizedOverride = CatalogProductOverride & {
+  name_kk?: string | null;
+  name_en?: string | null;
+  description_kk?: string | null;
+  description_en?: string | null;
+  composition_en?: string | null;
+};
 import { fetchProductOrderCounts } from "@/src/lib/supabase/popularity";
 import type { Category, Product } from "@/src/types";
 
@@ -147,12 +157,19 @@ function applyOverride(
       : product.category;
   const image = override.image?.trim();
 
+  const localized = override as LocalizedOverride;
+
   return {
     ...product,
     category,
     category_id: category?.id ?? product.category_id,
     composition: override.composition ?? product.composition,
     compositionKz: override.composition_kz ?? product.compositionKz,
+    compositionEn: localized.composition_en ?? product.compositionEn,
+    nameKk: localized.name_kk ?? product.nameKk,
+    nameEn: localized.name_en ?? product.nameEn,
+    descriptionKk: localized.description_kk ?? product.descriptionKk,
+    descriptionEn: localized.description_en ?? product.descriptionEn,
     description: override.description ?? product.description,
     images: image ? [image] : product.images,
     is_active: override.is_active ?? product.is_active,
@@ -198,12 +215,18 @@ function toCustomProduct(
   }
 
   const image = override.image?.trim();
+  const localized = override as LocalizedOverride;
 
   return {
     category,
     category_id: category.id,
     composition: override.composition ?? undefined,
     compositionKz: override.composition_kz ?? undefined,
+    compositionEn: localized.composition_en ?? undefined,
+    nameKk: localized.name_kk ?? undefined,
+    nameEn: localized.name_en ?? undefined,
+    descriptionKk: localized.description_kk ?? undefined,
+    descriptionEn: localized.description_en ?? undefined,
     description: override.description ?? "",
     id: override.product_id,
     images: [image || "/product-placeholder.png"],

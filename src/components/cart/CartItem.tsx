@@ -5,7 +5,8 @@ import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { QuantitySelector } from "@/src/components/product/QuantitySelector";
 import { useCart } from "@/src/contexts/CartContext";
 import { formatPrice, formatProductPrice } from "@/src/lib/format";
-import { useT } from "@/src/i18n/client";
+import { useLocale, useT } from "@/src/i18n/client";
+import { localizeProduct } from "@/src/i18n/product";
 import type { CartItem as CartItemType } from "@/src/types";
 
 type CartItemProps = {
@@ -14,8 +15,10 @@ type CartItemProps = {
 
 export function CartItem({ item }: CartItemProps) {
   const t = useT();
+  const locale = useLocale();
   const { remove, updateQty } = useCart();
   const { product, qty } = item;
+  const localizedName = localizeProduct(product, locale).name;
   const imageSrc = product.images[0] ?? "/product-placeholder.png";
   const lineTotal = product.price * qty;
 
@@ -27,7 +30,7 @@ export function CartItem({ item }: CartItemProps) {
       >
         <FallbackImage
           src={imageSrc}
-          alt={product.name}
+          alt={localizedName}
           fill
           sizes="112px"
           className="object-cover"
@@ -42,7 +45,7 @@ export function CartItem({ item }: CartItemProps) {
             </p>
             <Link href={`/product/${product.slug}`} className="mt-1 block">
               <h2 className="text-base font-semibold leading-6 text-dark">
-                {product.name}
+                {localizedName}
               </h2>
             </Link>
             <p className="mt-2 text-sm text-muted">

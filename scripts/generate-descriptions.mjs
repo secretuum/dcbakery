@@ -32,17 +32,20 @@ const ONLY = onlyArg ? new Set(onlyArg.slice(7).split(",").map((s) => s.trim()))
 const limitArg = args.find((a) => a.startsWith("--limit="));
 const LIMIT = limitArg ? Number(limitArg.slice(8)) : Infinity;
 
-// ── env ──
-function loadEnv(file) {
-  const env = {};
-  for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
-    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
-    if (m) env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+// ── env: process.env (Render/CI) с фолбэком на .env.local (локальный запуск) ──
+function loadEnv() {
+  const env = { ...process.env };
+  const file = resolve(SITE, ".env.local");
+  if (existsSync(file)) {
+    for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+      if (m && !(m[1] in process.env)) env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+    }
   }
   return env;
 }
 
-const env = loadEnv(resolve(SITE, ".env.local"));
+const env = loadEnv();
 const OPENAI_KEY = env.OPENAI_API_KEY;
 const MODEL = env.OPENAI_MODEL || "gpt-4o";
 const SB_URL = (env.NEXT_PUBLIC_SUPABASE_URL || "").replace(/\/$/, "");

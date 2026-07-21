@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/src/i18n/client";
+
 type QuantitySelectorProps = {
   className?: string;
   disabled?: boolean;
@@ -40,6 +42,7 @@ export function QuantitySelector({
   unit,
   value,
 }: QuantitySelectorProps) {
+  const t = useT();
   const safeMin = Math.max(minQty, 1);
   const safeStep = Math.max(stepQty, 1);
   const safeMax =
@@ -54,7 +57,7 @@ export function QuantitySelector({
         disabled={disabled || value <= safeMin}
         onClick={() => onChange(normalizeQty(value - safeStep, safeMin, safeStep, safeMax))}
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded border border-black/10 text-xl font-bold text-dark transition hover:bg-black/5 disabled:pointer-events-none disabled:opacity-40"
-        aria-label="Уменьшить количество"
+        aria-label={t("Уменьшить количество")}
       >
         −
       </button>
@@ -72,7 +75,7 @@ export function QuantitySelector({
             )
           }
           className="w-full bg-transparent text-center font-data text-base font-semibold text-dark outline-none"
-          aria-label={`Количество, ${unit}`}
+          aria-label={t("Количество, ${unit}", { unit })}
         />
         <span className="ml-1 text-sm font-semibold text-muted">{unit}</span>
       </label>
@@ -83,7 +86,7 @@ export function QuantitySelector({
           onChange(normalizeQty(value + safeStep, safeMin, safeStep, safeMax))
         }
         className="flex h-11 w-11 shrink-0 items-center justify-center rounded border border-coral bg-coral text-xl font-bold text-white transition hover:bg-coral-hover disabled:pointer-events-none disabled:border-black/10 disabled:bg-black/5 disabled:text-muted"
-        aria-label="Увеличить количество"
+        aria-label={t("Увеличить количество")}
       >
         +
       </button>

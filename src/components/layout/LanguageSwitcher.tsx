@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { LOCALES, LOCALE_COOKIE, localeLabels } from "@/src/i18n/config";
-import { useLocale } from "@/src/i18n/client";
+import { useLocale, useT } from "@/src/i18n/client";
 
 function writeLocaleCookie(next: string) {
   document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
@@ -11,6 +11,7 @@ function writeLocaleCookie(next: string) {
 export function LanguageSwitcher() {
   const router = useRouter();
   const locale = useLocale();
+  const t = useT();
 
   function switchTo(next: string) {
     writeLocaleCookie(next);
@@ -18,7 +19,7 @@ export function LanguageSwitcher() {
   }
 
   return (
-    <div className="flex items-center rounded border border-black/15" role="group" aria-label="Язык">
+    <div className="flex items-center rounded border border-black/15" role="group" aria-label={t("Язык")}>
       {LOCALES.map((item) => (
         <button
           key={item}

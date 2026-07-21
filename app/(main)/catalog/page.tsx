@@ -7,6 +7,7 @@ import { fetchProductOrderCounts } from "@/src/lib/supabase/popularity";
 export const metadata: Metadata = {
   title: "Каталог | DC Bakery",
   description: "B2B-каталог DC Bakery: десерты, полуфабрикаты и мясо.",
+  alternates: { canonical: "/catalog" },
 };
 
 export default async function CatalogPage() {

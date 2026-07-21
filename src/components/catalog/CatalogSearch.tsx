@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Product, Category } from "@/src/types";
+import { useT } from "@/src/i18n/client";
 import { ProductCard } from "./ProductCard";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function CatalogSearch({ products, categories, popularProducts }: Props) {
+  const t = useT();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -48,7 +50,7 @@ export function CatalogSearch({ products, categories, popularProducts }: Props) 
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Найти товар..."
+          placeholder={t("Найти товар...")}
           className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-10 pr-10 text-sm text-dark placeholder-gray-400 shadow-sm outline-none focus:border-coral focus:ring-2 focus:ring-coral/20"
         />
         {query && (
@@ -65,7 +67,7 @@ export function CatalogSearch({ products, categories, popularProducts }: Props) 
         <div>
           {filtered.length === 0 ? (
             <p className="text-gray-500">
-              Ничего не найдено по запросу «{debouncedQuery}»
+              {t("Ничего не найдено по запросу «${query}»", { query: debouncedQuery })}
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
@@ -83,7 +85,7 @@ export function CatalogSearch({ products, categories, popularProducts }: Props) 
                 id="cat-popular"
                 className="mb-6 text-3xl font-bold tracking-tight text-dark"
               >
-                Популярное
+                {t("Популярное")}
               </h2>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {popularProducts.map((p) => (
@@ -103,7 +105,7 @@ export function CatalogSearch({ products, categories, popularProducts }: Props) 
                   id={`cat-${category.slug}`}
                   className="mb-6 text-3xl font-bold tracking-tight text-dark"
                 >
-                  {category.name}
+                  {t(category.name)}
                 </h2>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                   {categoryProducts.map((p) => (

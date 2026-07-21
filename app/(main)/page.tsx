@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "DC Bakery — B2B поставщик продуктов питания",
   description:
     "Поставки десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые B2B-цены, халал сертификаты, натуральные ингредиенты.",
+  alternates: { canonical: "/" },
 };
 
 const stats = [

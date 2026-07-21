@@ -8,17 +8,27 @@ import { formatPrice } from "@/src/lib/format";
 import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { useLocale, useT } from "@/src/i18n/client";
 import { localizeProduct } from "@/src/i18n/product";
+import type { Locale } from "@/src/i18n/config";
 import type { Product } from "@/src/types";
 
 const PROGRESS_MAX = 100_000;
 
-function pluralItems(n: number) {
+// Счётчик товаров с числом. В казахском существительное после числа не
+// склоняется («5 тауар»), в английском item/items, в русском — полные формы.
+function itemCountLabel(n: number, locale: Locale) {
+  if (locale === "en") return `${n} ${n === 1 ? "item" : "items"}`;
+  if (locale === "kk") return `${n} тауар`;
   const last = n % 10;
   const lastTwo = n % 100;
-  if (lastTwo >= 11 && lastTwo <= 19) return "товаров";
-  if (last === 1) return "товар";
-  if (last >= 2 && last <= 4) return "товара";
-  return "товаров";
+  const word =
+    lastTwo >= 11 && lastTwo <= 19
+      ? "товаров"
+      : last === 1
+        ? "товар"
+        : last >= 2 && last <= 4
+          ? "товара"
+          : "товаров";
+  return `${n} ${word}`;
 }
 
 const PILL_STRIPES =
@@ -141,8 +151,8 @@ export default function CartSheet() {
           >
             <span className="text-sm font-semibold text-muted">
               {totalItems > 0
-                ? `${totalItems} ${pluralItems(totalItems)}`
-                : "Корзина пуста"}
+                ? itemCountLabel(totalItems, locale)
+                : t("Корзина пуста")}
             </span>
           </button>
         </div>
@@ -313,7 +323,7 @@ export default function CartSheet() {
           <div className="shrink-0 border-t border-black/10 px-4 pb-6 pt-4">
             <div className="mb-3 flex items-end justify-between">
               <span className="pb-1 text-sm text-muted">
-                {totalItems > 0 ? `${totalItems} ${pluralItems(totalItems)}` : ""}
+                {totalItems > 0 ? itemCountLabel(totalItems, locale) : ""}
               </span>
               <div className="text-right">
                 <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Итого")}</p>

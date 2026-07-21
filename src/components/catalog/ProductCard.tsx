@@ -104,7 +104,7 @@ export function ProductCard({ product }: ProductCardProps) {
               <button
                 onClick={handleDecrease}
                 className="flex h-7 w-7 items-center justify-center rounded border border-black/10 text-base font-bold text-dark transition hover:bg-black/5"
-                aria-label="Уменьшить количество"
+                aria-label={t("Уменьшить количество")}
               >
                 −
               </button>
@@ -115,7 +115,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 onClick={handleIncrease}
                 disabled={cartQty >= product.stock_qty}
                 className="flex h-7 w-7 items-center justify-center rounded border border-coral bg-coral text-white transition hover:bg-coral-hover disabled:border-black/10 disabled:bg-black/5 disabled:text-muted"
-                aria-label="Увеличить количество"
+                aria-label={t("Увеличить количество")}
               >
                 +
               </button>

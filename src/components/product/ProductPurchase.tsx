@@ -5,6 +5,7 @@ import { Button } from "@/src/components/ui/Button";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatProductPrice } from "@/src/lib/format";
+import { useT } from "@/src/i18n/client";
 import type { Product } from "@/src/types";
 import { QuantitySelector } from "./QuantitySelector";
 
@@ -13,6 +14,7 @@ type ProductPurchaseProps = {
 };
 
 export function ProductPurchase({ product }: ProductPurchaseProps) {
+  const t = useT();
   const [qty, setQty] = useState(Math.min(product.min_qty, product.stock_qty));
   const { add, isReady, items } = useCart();
   const { showToast } = useToast();
@@ -20,21 +22,21 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
   const availableToAdd = Math.max(product.stock_qty - cartQty, 0);
   const isInStock = isReady && product.stock_qty >= product.min_qty && availableToAdd > 0;
   const totalAmount = product.price * qty;
-  const totalText = product.price > 0 ? formatProductPrice(totalAmount) : "Цена уточняется";
+  const totalText = product.price > 0 ? formatProductPrice(totalAmount) : t("Цена уточняется");
 
   function handleAddToCart() {
     const nextQty = Math.min(qty, availableToAdd);
 
     if (nextQty <= 0) {
-      showToast("В корзине уже весь доступный остаток", "info");
+      showToast(t("В корзине уже весь доступный остаток"), "info");
       return;
     }
 
     add(product, nextQty);
     showToast(
       nextQty < qty
-        ? `Добавлено ${nextQty} шт. с учетом остатка`
-        : "Товар добавлен в корзину",
+        ? t("Добавлено ${nextQty} шт. с учетом остатка", { nextQty })
+        : t("Товар добавлен в корзину"),
       "success",
     );
   }
@@ -43,13 +45,13 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
     <div className="rounded-card border border-black/10 bg-white p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">Количество</p>
+          <p className="font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">{t("Количество")}</p>
           <p className="mt-1 text-sm text-muted">
-            Минимум {product.min_qty} {product.unit}
+            {t("Минимум")} {product.min_qty} {product.unit}
           </p>
         </div>
         <p className="rounded-badge bg-coral-light px-3 py-1 font-data text-xs font-semibold text-coral">
-          {product.stock_qty} {product.unit} в наличии
+          {t("${count} ${unit} в наличии", { count: product.stock_qty, unit: product.unit })}
         </p>
       </div>
 
@@ -65,18 +67,18 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
       />
 
       <div className="mt-5 flex items-end justify-between gap-4 rounded-btn border border-black/5 bg-cream px-4 py-3">
-        <span className="text-sm font-semibold text-muted">Итого</span>
+        <span className="text-sm font-semibold text-muted">{t("Итого")}</span>
         <span className="font-data text-xl font-semibold text-coral">{totalText}</span>
       </div>
 
       {!isInStock && cartQty >= product.stock_qty ? (
         <p className="mt-4 text-sm font-semibold text-burgundy">
-          В корзине уже весь доступный остаток.
+          {t("В корзине уже весь доступный остаток")}.
         </p>
       ) : null}
 
       <Button onClick={handleAddToCart} disabled={!isInStock} className="mt-5 w-full">
-        + В корзину
+        + {t("В корзину")}
       </Button>
     </div>
   );

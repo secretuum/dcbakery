@@ -32,9 +32,31 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://dc-bakery.kz").replace(/\/$/, "");
+
+const SITE_TITLE = "DC Bakery — B2B кондитерская и полуфабрикаты, Алматы";
+const SITE_DESCRIPTION =
+  "B2B-каталог десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей.";
+
 export const metadata: Metadata = {
-  title: "DC Bakery",
-  description: "B2B-каталог десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей.",
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  applicationName: "DC Bakery",
+  openGraph: {
+    type: "website",
+    siteName: "DC Bakery",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+    locale: "kk_KZ",
+    alternateLocale: ["ru_RU", "en_US"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default async function RootLayout({

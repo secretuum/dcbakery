@@ -138,7 +138,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
 
   async function handleClientLogin() {
     if (!clientLogin.trim() || !clientPassword) {
-      setClientError("Введите логин и пароль");
+      setClientError(t("Введите логин и пароль"));
       return;
     }
 
@@ -164,13 +164,13 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
 
       if (response.ok && data.notRegistered) {
         // Аккаунта нет в базе — не пропускаем и переводим на регистрацию
-        setClientNotice("Такой аккаунт не найден. Заполните регистрацию — и сразу попадёте в кабинет.");
+        setClientNotice(t("Такой аккаунт не найден. Заполните регистрацию — и сразу попадёте в кабинет."));
         openRegistration(clientLogin);
         return;
       }
 
       if (!response.ok || !data.ok) {
-        setClientError(data.error ?? "Не удалось войти");
+        setClientError(data.error ?? t("Не удалось войти"));
         setClientStep("idle");
         return;
       }
@@ -184,34 +184,34 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
         createdAt: "",
       });
     } catch {
-      setClientError("Не удалось войти. Проверьте соединение");
+      setClientError(t("Не удалось войти. Проверьте соединение"));
       setClientStep("idle");
     }
   }
 
   async function handleClientRegister() {
     if (!regEmail.includes("@")) {
-      setClientError("Введите корректный email");
+      setClientError(t("Введите корректный email"));
       return;
     }
 
     if (regPhone.replace(/\D/g, "").length < 11) {
-      setClientError("Введите полный номер телефона");
+      setClientError(t("Введите полный номер телефона"));
       return;
     }
 
     if (regPassword.length < 8) {
-      setClientError("Пароль должен быть не короче 8 символов");
+      setClientError(t("Пароль должен быть не короче 8 символов"));
       return;
     }
 
     if (!regCompany.trim()) {
-      setClientError("Укажите название компании");
+      setClientError(t("Укажите название компании"));
       return;
     }
 
     if (regBin.replace(/\D/g, "").length !== 12) {
-      setClientError("БИН/ИИН — 12 цифр");
+      setClientError(t("БИН/ИИН — 12 цифр"));
       return;
     }
 
@@ -242,7 +242,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       };
 
       if (!response.ok || !data.ok) {
-        setClientError(data.error ?? "Не удалось создать аккаунт");
+        setClientError(data.error ?? t("Не удалось создать аккаунт"));
         setClientStep("register");
         return;
       }
@@ -261,14 +261,14 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
         createdAt: "",
       });
     } catch {
-      setClientError("Не удалось создать аккаунт. Проверьте соединение");
+      setClientError(t("Не удалось создать аккаунт. Проверьте соединение"));
       setClientStep("register");
     }
   }
 
   async function handleForgotPassword() {
     if (!resetEmail.includes("@")) {
-      setClientError("Введите email, указанный при регистрации");
+      setClientError(t("Введите email, указанный при регистрации"));
       return;
     }
 
@@ -285,7 +285,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       const data = (await response.json().catch(() => ({}))) as { error?: string; ok?: boolean };
 
       if (!response.ok || !data.ok) {
-        setClientError(data.error ?? "Не удалось отправить письмо");
+        setClientError(data.error ?? t("Не удалось отправить письмо"));
         setClientStep("forgot");
         return;
       }
@@ -372,7 +372,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   className="flex-1"
                   onClick={() => void handleForgotPassword()}
                 >
-                  {clientStep === "sending_reset" ? "Отправляем..." : "Отправить письмо"}
+                  {clientStep === "sending_reset" ? t("Отправляем...") : t("Отправить письмо")}
                 </Button>
                 <Button
                   type="button"
@@ -471,7 +471,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   className="flex-1"
                   onClick={() => void handleClientRegister()}
                 >
-                  {clientStep === "registering" ? "Создаём аккаунт..." : "Зарегистрироваться"}
+                  {clientStep === "registering" ? t("Создаём аккаунт...") : t("Зарегистрироваться")}
                 </Button>
                 <Button
                   type="button"
@@ -524,7 +524,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   className="flex-1"
                   onClick={() => void handleClientLogin()}
                 >
-                  {clientStep === "signing_in" ? "Проверяем..." : "Войти"}
+                  {clientStep === "signing_in" ? t("Проверяем...") : t("Войти")}
                 </Button>
                 <Button
                   type="button"
@@ -578,7 +578,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
             <p className="mt-3 text-sm font-bold text-burgundy">{adminError}</p>
           ) : null}
           <Button type="submit" disabled={isAdminSubmitting} variant="outline" className="mt-5 w-full">
-            {isAdminSubmitting ? "Проверяем..." : "Войти как менеджер"}
+            {isAdminSubmitting ? t("Проверяем...") : t("Войти как менеджер")}
           </Button>
         </form>
       </div>
@@ -651,7 +651,7 @@ function AdminDashboard({
           className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
           <p className="text-xs font-bold uppercase text-raspberry">{t("Документы")}</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">Накладные и счета</h2>
+          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Накладные и счета")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Счёт, накладная и АВР по каждому заказу в один клик.
           </p>
@@ -660,8 +660,8 @@ function AdminDashboard({
           href="/admin/clients"
           className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">Партнёры</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">Наши клиенты</h2>
+          <p className="text-xs font-bold uppercase text-raspberry">{t("Партнёры")}</p>
+          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Наши клиенты")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Компании, контакты, лимиты и история заказов.
           </p>
@@ -681,7 +681,7 @@ function AdminDashboard({
           className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
         >
           <p className="text-xs font-bold uppercase text-raspberry">{t("Наличие")}</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">Стоп-лист</h2>
+          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Стоп-лист")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Временно снятые с продажи позиции.
           </p>
@@ -784,7 +784,7 @@ function CreditBlock({ state }: { state: CreditState }) {
             <circle cx="12" cy="12" r="9" /><path d="M12 7v6M12 16.5v.5" />
           </svg>
           <span>
-            <b className="font-semibold">Просрочка {state.overdueDays} дн.</b>{" "}
+            <b className="font-semibold">{t("Просрочка ${days} дн.", { days: state.overdueDays })}</b>{" "}
             Отгрузки приостановлены до погашения {formatCurrency(state.overdue)}.
           </span>
         </div>

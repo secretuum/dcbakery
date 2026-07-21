@@ -189,7 +189,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
               disabled={!isInStock}
               className="block w-full border border-coral bg-coral py-3.5 text-center text-sm font-bold uppercase tracking-[.08em] text-white transition hover:bg-coral-hover disabled:cursor-not-allowed disabled:border-black/10 disabled:bg-black/5 disabled:text-muted"
             >
-              {isInStock ? `В корзину · ${formatProductPrice(product.price)}` : "Нет в наличии"}
+              {isInStock ? `${t("В корзину")} · ${formatProductPrice(product.price)}` : t("Нет в наличии")}
             </button>
           )}
         </div>

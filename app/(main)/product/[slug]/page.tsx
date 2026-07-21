@@ -8,6 +8,7 @@ import { fetchProductBySlug, fetchProductSlugs } from "@/src/lib/catalog";
 import { formatProductPrice } from "@/src/lib/format";
 import { getLocale, getT } from "@/src/i18n/server";
 import { localizeProduct } from "@/src/i18n/product";
+import { JsonLd } from "@/src/components/seo/JsonLd";
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://dc-bakery.kz").replace(/\/$/, "");
 
@@ -78,8 +79,32 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ["Упаковка", product.packageType ?? t("уточняется")],
   ];
 
+  const productJsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: localized.name,
+    description: localized.description,
+    ...(product.images?.[0] ? { image: `${SITE_URL}${product.images[0]}` } : {}),
+    ...(product.category?.name ? { category: product.category.name } : {}),
+    ...(product.price > 0
+      ? {
+          offers: {
+            "@type": "Offer",
+            priceCurrency: "KZT",
+            price: product.price,
+            availability:
+              product.stock_qty > 0
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock",
+            url: `${SITE_URL}/product/${product.slug}`,
+          },
+        }
+      : {}),
+  };
+
   return (
     <main className="min-h-screen bg-cream text-dark pb-24">
+      <JsonLd data={productJsonLd} />
       <section className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
         <ProductGallery images={product.images} alt={product.name} />
 

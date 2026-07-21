@@ -8,6 +8,20 @@ import { promotions } from "@/src/data/promotions";
 import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
 import { PromoSection } from "@/src/components/home/PromoSection";
 import { EditableText, SiteEditProvider } from "@/src/components/home/SiteEditMode";
+import { JsonLd } from "@/src/components/seo/JsonLd";
+
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://dc-bakery.kz").replace(/\/$/, "");
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "DC Bakery",
+  url: SITE_URL,
+  image: `${SITE_URL}/opengraph-image`,
+  description:
+    "B2B-поставщик десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Алматы, Казахстан.",
+  areaServed: "KZ",
+};
 
 export const metadata: Metadata = {
   title: "DC Bakery — B2B поставщик продуктов питания",
@@ -35,6 +49,7 @@ export default async function Home() {
   return (
     <SiteEditProvider isSuperAdmin={isSuperAdmin} content={content}>
       <main className="text-dark">
+        <JsonLd data={organizationJsonLd} />
 
         {/* ─── Hero ─── */}
         <section className="border-b border-black/10 bg-white px-5 py-12 lg:px-8 lg:py-16">

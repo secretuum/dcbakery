@@ -4,6 +4,7 @@ import { CartProvider } from "@/src/contexts/CartContext";
 import { ToastProvider } from "@/src/contexts/ToastContext";
 import { LocaleProvider } from "@/src/i18n/client";
 import { getLocale } from "@/src/i18n/server";
+import { SITE_URL } from "@/src/lib/site-url";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -31,8 +32,6 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
 };
-
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://dc-bakery.kz").replace(/\/$/, "");
 
 const SITE_TITLE = "DC Bakery — B2B кондитерская и полуфабрикаты, Алматы";
 const SITE_DESCRIPTION =

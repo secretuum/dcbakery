@@ -9,8 +9,7 @@ import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
 import { PromoSection } from "@/src/components/home/PromoSection";
 import { EditableText, SiteEditProvider } from "@/src/components/home/SiteEditMode";
 import { JsonLd } from "@/src/components/seo/JsonLd";
-
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://dc-bakery.kz").replace(/\/$/, "");
+import { SITE_URL } from "@/src/lib/site-url";
 
 const organizationJsonLd = {
   "@context": "https://schema.org",

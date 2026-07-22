@@ -1,6 +1,5 @@
 import type { MetadataRoute } from "next";
-
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://dc-bakery.kz").replace(/\/$/, "");
+import { SITE_URL } from "@/src/lib/site-url";
 
 // Закрываем от индексации служебные и приватные разделы: админку, API,
 // страницы оплаты и печатные документы (счета/накладные/АВР).

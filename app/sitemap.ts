@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { fetchCategorySlugs, fetchProductSlugs } from "@/src/lib/catalog";
-
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://dc-bakery.kz").replace(/\/$/, "");
+import { SITE_URL } from "@/src/lib/site-url";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [categories, products] = await Promise.all([fetchCategorySlugs(), fetchProductSlugs()]);

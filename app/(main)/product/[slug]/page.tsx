@@ -9,8 +9,7 @@ import { formatProductPrice } from "@/src/lib/format";
 import { getLocale, getT } from "@/src/i18n/server";
 import { localizeProduct } from "@/src/i18n/product";
 import { JsonLd } from "@/src/components/seo/JsonLd";
-
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://dc-bakery.kz").replace(/\/$/, "");
+import { SITE_URL } from "@/src/lib/site-url";
 
 type ProductPageProps = {
   params: Promise<{

@@ -49,3 +49,27 @@ export async function answerCallbackQuery(callbackQueryId: string, text?: string
     body: JSON.stringify({ callback_query_id: callbackQueryId, text }),
   }).catch(() => undefined);
 }
+
+type EditMessageTextOptions = {
+  chatId: number | string;
+  messageId: number;
+  text: string;
+  replyMarkup?: InlineKeyboard;
+};
+
+/** Перерисовать текст и кнопки существующего сообщения (карточки заявки после действия). */
+export async function editMessageText(opts: EditMessageTextOptions): Promise<void> {
+  const token = botToken();
+  if (!token) return;
+  await fetch(`${API_BASE}/bot${token}/editMessageText`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: opts.chatId,
+      message_id: opts.messageId,
+      text: opts.text,
+      // Пустой inline_keyboard убирает кнопки у финальных статусов (выполнен/отменён)
+      reply_markup: opts.replyMarkup ?? { inline_keyboard: [] },
+    }),
+  }).catch(() => undefined);
+}

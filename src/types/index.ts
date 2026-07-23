@@ -61,6 +61,7 @@ export type OrderStatus =
   | "pending_manager_confirmation"
   | "change_proposed"
   | "confirmed_waiting_payment"
+  | "overdue"
   | "paid"
   | "delivering"
   | "completed"

@@ -4,6 +4,7 @@ import { fetchClientOrdersForCredit } from "@/src/lib/supabase/admin";
 
 const CREDIT_STATUSES = new Set([
   "confirmed_waiting_payment",
+  "overdue",
   "delivering",
   "completed",
 ]);

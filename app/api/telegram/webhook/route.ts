@@ -1,7 +1,19 @@
 import { NextResponse } from "next/server";
+import type { Order } from "@/src/types";
 import { getRole, roleLabels, canDo } from "@/src/lib/telegram/roles";
-import { sendMessage, answerCallbackQuery } from "@/src/lib/telegram/api";
+import { sendMessage, answerCallbackQuery, editMessageText } from "@/src/lib/telegram/api";
+import { buildOrderCard } from "@/src/lib/telegram/order-card";
 import { logAction } from "@/src/lib/audit";
+import { fetchAdminOrderItems } from "@/src/lib/supabase/admin";
+import {
+  cancelOrderAction,
+  changeStatus,
+  confirmOrder,
+  markPaid,
+  unmarkPaid,
+  type ActionError,
+  type OrderActor,
+} from "@/src/lib/orders/actions";
 
 const actionLabels: Record<string, string> = {
   confirm: "Подтвердить",
@@ -14,6 +26,21 @@ const actionLabels: Record<string, string> = {
   done: "Выполнен",
 };
 
+// Технические ошибки сервиса → короткий русский текст для всплывашки сотруднику.
+const errorLabels: Record<string, string> = {
+  "Order not found": "Заявка не найдена",
+  "Order already confirmed": "Заявка уже подтверждена",
+  "Order cannot be confirmed": "Заявку нельзя подтвердить",
+  "Order cannot be marked as paid": "Заявку нельзя отметить оплаченной",
+  "Paid order requires manual refund handling": "Оплаченную заявку нужно возвращать вручную",
+  "Order cannot be canceled": "Заявку нельзя отменить",
+  "Invalid status": "Недопустимый статус",
+};
+
+function friendlyError(message: string): string {
+  return errorLabels[message] ?? message;
+}
+
 function displayName(from: TgUser) {
   return [from.first_name, from.last_name].filter(Boolean).join(" ") || from.username || "";
 }
@@ -22,8 +49,9 @@ function displayName(from: TgUser) {
 // вебхук зарегистрирован с secret_token, добавляет заголовок
 // X-Telegram-Bot-Api-Secret-Token — сверяем его с TELEGRAM_WEBHOOK_SECRET.
 //
-// Шаг 1: обрабатываем только команду /start — бот отвечает Telegram id и ролью
-// пользователя. Ничего в заказах пока не трогаем.
+// Обрабатываем: /start (бот отвечает Telegram id и ролью) и нажатия кнопок в
+// карточке заявки (действие проверяется по роли, выполняется через общий сервис
+// src/lib/orders/actions, карточка перерисовывается, всё пишется в журнал).
 
 type TgUser = {
   id: number;
@@ -45,6 +73,50 @@ type TgUpdate = {
     message?: { chat: { id: number }; message_id: number };
   };
 };
+
+type ActionOutcome =
+  | { ok: true; order: Order | null; managerMessageId: string | null }
+  | ActionError;
+
+// Маппинг кнопки → функция общего сервиса. Права уже проверены выше (canDo).
+async function runAction(
+  action: string,
+  orderId: string,
+  actor: OrderActor,
+  origin: string,
+): Promise<ActionOutcome> {
+  switch (action) {
+    case "confirm":
+      return confirmOrder(orderId, { origin, actor });
+    case "reject":
+      return cancelOrderAction(orderId, { reason: "Отклонено в Telegram" });
+    case "cancel":
+      return cancelOrderAction(orderId, { reason: "Отменено в Telegram" });
+    case "paid":
+      return markPaid(orderId, { actor });
+    case "unpaid":
+      return unmarkPaid(orderId, { actor });
+    case "work":
+      return changeStatus(orderId, "in_progress");
+    case "deliver":
+      return changeStatus(orderId, "delivering");
+    case "done":
+      return changeStatus(orderId, "completed");
+    default:
+      return { ok: false, status: 400, error: "Неизвестное действие" };
+  }
+}
+
+// Перерисовать карточку заявки в чате под новый статус (текст + кнопки).
+async function refreshCard(
+  chatId: number,
+  messageId: number,
+  order: Order,
+): Promise<void> {
+  const items = await fetchAdminOrderItems(order.id).catch(() => []);
+  const { text, replyMarkup } = buildOrderCard(order, items);
+  await editMessageText({ chatId, messageId, text, replyMarkup });
+}
 
 export async function POST(request: Request) {
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim();
@@ -77,22 +149,67 @@ export async function POST(request: Request) {
       await answerCallbackQuery(cb.id, "Недостаточно прав для этого действия");
       return NextResponse.json({ ok: true });
     }
+    if (!orderId) {
+      await answerCallbackQuery(cb.id, "Заявка не найдена");
+      return NextResponse.json({ ok: true });
+    }
 
-    // ШАГ 2: пока заглушка — только журнал и подтверждение. Реальное изменение
-    // заказа подключим на шаге 3.
+    const actor: OrderActor = {
+      kind: "telegram",
+      telegramId: cb.from.id,
+      role,
+      name: displayName(cb.from),
+    };
+    const origin = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
+
+    let outcome: ActionOutcome;
+    try {
+      outcome = await runAction(action, orderId, actor, origin);
+    } catch (error) {
+      await logAction({
+        source: "telegram",
+        actorTelegramId: cb.from.id,
+        actorRole: role,
+        actorName: actor.name,
+        action,
+        orderId,
+        details: { ok: false, error: error instanceof Error ? error.message : "unknown" },
+      });
+      await answerCallbackQuery(cb.id, "Ошибка при выполнении действия");
+      return NextResponse.json({ ok: true });
+    }
+
+    if (!outcome.ok) {
+      await logAction({
+        source: "telegram",
+        actorTelegramId: cb.from.id,
+        actorRole: role,
+        actorName: actor.name,
+        action,
+        orderId,
+        details: { ok: false, error: outcome.error },
+      });
+      await answerCallbackQuery(cb.id, friendlyError(outcome.error));
+      return NextResponse.json({ ok: true });
+    }
+
+    // Успех: журнал + перерисовка карточки + всплывашка
     await logAction({
       source: "telegram",
       actorTelegramId: cb.from.id,
       actorRole: role,
-      actorName: displayName(cb.from),
+      actorName: actor.name,
       action,
-      orderId: orderId || null,
-      details: { stub: true },
+      orderId,
+      orderNumber: outcome.order?.order_number ?? null,
+      details: { ok: true, status: outcome.order?.status ?? null },
     });
-    await answerCallbackQuery(
-      cb.id,
-      `«${actionLabels[action] ?? action}» принято (демо). Реальное действие — на шаге 3.`,
-    );
+
+    if (outcome.order && cb.message) {
+      await refreshCard(cb.message.chat.id, cb.message.message_id, outcome.order);
+    }
+
+    await answerCallbackQuery(cb.id, `Готово: ${actionLabels[action] ?? action}`);
     return NextResponse.json({ ok: true });
   }
 

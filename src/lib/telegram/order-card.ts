@@ -17,6 +17,7 @@ function buttonsForStatus(status: OrderStatus): CardButton[] {
         { text: "✖️ Отклонить", action: "reject" },
       ];
     case "confirmed_waiting_payment":
+    case "overdue":
       return [
         { text: "💰 Оплачено", action: "paid" },
         { text: "✖️ Отменить", action: "cancel" },

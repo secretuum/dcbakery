@@ -36,6 +36,13 @@ function getGreenApiConfig() {
   };
 }
 
+// Единый флаг «WhatsApp включён». По умолчанию ВЫКЛ (пивот на Telegram + кабинет).
+// Клиентские пуши гейтятся на месте вызова (orders/actions), менеджерские —
+// внутри sendWhatsAppNotification / replaceWhatsAppOrderMessage.
+export function whatsappEnabled(): boolean {
+  return process.env.WHATSAPP_ENABLED === "true";
+}
+
 function getManagerCommandBlock(order: Order) {
   return [
     "Команды менеджера в этом чате:",
@@ -229,6 +236,10 @@ async function editGreenApiMessage(chatId: string, idMessage: string, message: s
 }
 
 export async function sendWhatsAppNotification(order: Order, items: OrderItem[]) {
+  if (!whatsappEnabled()) {
+    return null;
+  }
+
   const chatId = process.env.GREEN_API_CHAT_ID;
 
   if (!chatId) {
@@ -241,6 +252,10 @@ export async function sendWhatsAppNotification(order: Order, items: OrderItem[])
 }
 
 export async function replaceWhatsAppOrderMessage(order: Order, previousMessageId?: string | null) {
+  if (!whatsappEnabled()) {
+    return null;
+  }
+
   const chatId = process.env.GREEN_API_CHAT_ID;
 
   if (!chatId) {

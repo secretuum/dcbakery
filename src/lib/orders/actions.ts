@@ -20,6 +20,7 @@ import {
   sendCustomerOrderCanceledNotification,
   sendCustomerOrderConfirmationNotification,
   sendGreenApiTextMessage,
+  whatsappEnabled,
 } from "@/src/lib/whatsapp";
 import { fetchWhatsAppClientByChatId } from "@/src/lib/whatsapp-client-store";
 import { canonicalOrderStatuses } from "@/src/lib/order-status";
@@ -44,12 +45,6 @@ function addDays(isoDate: string, days: number): string {
   const d = new Date(isoDate);
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
-}
-
-// WhatsApp клиенту пока спящий (пивот на Telegram + личный кабинет). Включается
-// только явным WHATSAPP_ENABLED=true; по умолчанию — выключен.
-function whatsappEnabled(): boolean {
-  return process.env.WHATSAPP_ENABLED === "true";
 }
 
 // Общий «хвост» всех действий: перерисовать карточку заказа у менеджера в WhatsApp

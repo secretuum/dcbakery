@@ -29,3 +29,15 @@ export function getRole(telegramId: number | string): BotRole | null {
   if (parseIds(process.env.TELEGRAM_ACCOUNTANT_IDS).has(id)) return "accountant";
   return null;
 }
+
+// Матрица прав по действиям заявки. Менеджер ведёт заказ, но не отмечает оплату;
+// бухгалтер только отмечает/снимает оплату; админ может всё.
+const PERMISSIONS: Record<BotRole, ReadonlySet<string>> = {
+  admin: new Set(["confirm", "reject", "cancel", "paid", "unpaid", "work", "deliver", "done"]),
+  manager: new Set(["confirm", "reject", "cancel", "work", "deliver", "done"]),
+  accountant: new Set(["paid", "unpaid"]),
+};
+
+export function canDo(role: BotRole, action: string): boolean {
+  return PERMISSIONS[role].has(action);
+}

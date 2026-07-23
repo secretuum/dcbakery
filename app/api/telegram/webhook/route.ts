@@ -1,6 +1,22 @@
 import { NextResponse } from "next/server";
-import { getRole, roleLabels } from "@/src/lib/telegram/roles";
-import { sendMessage } from "@/src/lib/telegram/api";
+import { getRole, roleLabels, canDo } from "@/src/lib/telegram/roles";
+import { sendMessage, answerCallbackQuery } from "@/src/lib/telegram/api";
+import { logAction } from "@/src/lib/audit";
+
+const actionLabels: Record<string, string> = {
+  confirm: "Подтвердить",
+  reject: "Отклонить",
+  cancel: "Отменить",
+  paid: "Оплачено",
+  unpaid: "Снять оплату",
+  work: "В работу",
+  deliver: "Доставляется",
+  done: "Выполнен",
+};
+
+function displayName(from: TgUser) {
+  return [from.first_name, from.last_name].filter(Boolean).join(" ") || from.username || "";
+}
 
 // Вебхук Telegram-бота. Telegram присылает сюда апдейты POST-запросом и, если
 // вебхук зарегистрирован с secret_token, добавляет заголовок
@@ -22,6 +38,12 @@ type TgUpdate = {
     from?: TgUser;
     text?: string;
   };
+  callback_query?: {
+    id: string;
+    from: TgUser;
+    data?: string;
+    message?: { chat: { id: number }; message_id: number };
+  };
 };
 
 export async function POST(request: Request) {
@@ -38,6 +60,39 @@ export async function POST(request: Request) {
     update = (await request.json()) as TgUpdate;
   } catch {
     // Мусор в теле не должен ронять вебхук — иначе Telegram будет слать повторы
+    return NextResponse.json({ ok: true });
+  }
+
+  // Нажатие кнопки в карточке заявки
+  const cb = update.callback_query;
+  if (cb) {
+    const role = getRole(cb.from.id);
+    const [action, orderId] = (cb.data ?? "").split(":");
+
+    if (!role) {
+      await answerCallbackQuery(cb.id, "Доступа нет");
+      return NextResponse.json({ ok: true });
+    }
+    if (!action || !canDo(role, action)) {
+      await answerCallbackQuery(cb.id, "Недостаточно прав для этого действия");
+      return NextResponse.json({ ok: true });
+    }
+
+    // ШАГ 2: пока заглушка — только журнал и подтверждение. Реальное изменение
+    // заказа подключим на шаге 3.
+    await logAction({
+      source: "telegram",
+      actorTelegramId: cb.from.id,
+      actorRole: role,
+      actorName: displayName(cb.from),
+      action,
+      orderId: orderId || null,
+      details: { stub: true },
+    });
+    await answerCallbackQuery(
+      cb.id,
+      `«${actionLabels[action] ?? action}» принято (демо). Реальное действие — на шаге 3.`,
+    );
     return NextResponse.json({ ok: true });
   }
 

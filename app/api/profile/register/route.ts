@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
+import { isValidBin } from "@/src/lib/bin";
+import { isValidKzMobile } from "@/src/lib/phone";
 import { fetchWhatsAppClientByEmail } from "@/src/lib/magic-link-store";
-import { getWhatsAppChatIdFromPhone } from "@/src/lib/whatsapp";
+import { checkWhatsappExists, getWhatsAppChatIdFromPhone } from "@/src/lib/whatsapp";
 import {
   fetchWhatsAppClientByChatId,
   saveWhatsAppClientProfile,
@@ -58,14 +60,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Введите корректный email" }, { status: 422 });
   }
 
-  const phoneDigits = phone.replace(/\D/g, "");
-  if (phoneDigits.length < 11) {
-    return NextResponse.json({ error: "Введите полный номер телефона" }, { status: 422 });
+  if (!isValidKzMobile(phone)) {
+    return NextResponse.json(
+      { error: "Введите корректный мобильный номер, например +7 705 123 45 67" },
+      { status: 422 },
+    );
   }
 
   const chatId = getWhatsAppChatIdFromPhone(phone);
   if (!chatId) {
     return NextResponse.json({ error: "Неверный номер телефона" }, { status: 422 });
+  }
+
+  // Номер должен быть в WhatsApp — туда уходят счёт и документы. Проверяем через
+  // Green API; если проверить нельзя (нет ключей/ошибка/таймаут) — не блокируем.
+  const waExists = await checkWhatsappExists(phone);
+  if (waExists === false) {
+    return NextResponse.json(
+      {
+        error:
+          "На этом номере нет WhatsApp. Счёт и документы приходят в WhatsApp — укажите номер с WhatsApp.",
+      },
+      { status: 422 },
+    );
   }
 
   if (password.length < MIN_PASSWORD_LENGTH) {
@@ -79,9 +96,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Укажите название компании" }, { status: 422 });
   }
 
-  const binDigits = customerBin.replace(/\D/g, "");
-  if (binDigits.length !== 12) {
-    return NextResponse.json({ error: "БИН/ИИН — 12 цифр" }, { status: 422 });
+  if (!isValidBin(customerBin)) {
+    return NextResponse.json(
+      { error: "БИН/ИИН указан неверно — проверьте 12 цифр" },
+      { status: 422 },
+    );
   }
 
   // Почта не должна быть привязана к другому номеру

@@ -6,6 +6,8 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Button } from "@/src/components/ui/Button";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { Input } from "@/src/components/ui/Input";
+import { isValidBin } from "@/src/lib/bin";
+import { isValidKzMobile } from "@/src/lib/phone";
 import { clientOrderStatusLabels, creditStatusLabels, orderStatusLabels } from "@/src/lib/order-status";
 import { useCart } from "@/src/contexts/CartContext";
 import { useT } from "@/src/i18n/client";
@@ -195,8 +197,8 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       return;
     }
 
-    if (regPhone.replace(/\D/g, "").length < 11) {
-      setClientError(t("Введите полный номер телефона"));
+    if (!isValidKzMobile(regPhone)) {
+      setClientError(t("Введите корректный мобильный номер, например +7 705 123 45 67"));
       return;
     }
 
@@ -210,8 +212,8 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       return;
     }
 
-    if (regBin.replace(/\D/g, "").length !== 12) {
-      setClientError(t("БИН/ИИН — 12 цифр"));
+    if (!isValidBin(regBin)) {
+      setClientError(t("БИН/ИИН указан неверно — проверьте 12 цифр"));
       return;
     }
 
@@ -415,6 +417,11 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                     onChange={(e) => setRegPhone(e.currentTarget.value)}
                     placeholder="+7 (747) 000-00-00"
                   />
+                  {regPhone.trim() && !isValidKzMobile(regPhone) ? (
+                    <p className="mt-1 text-xs font-semibold text-raspberry">
+                      {t("Похоже на некорректный номер. Формат: +7 705 123 45 67")}
+                    </p>
+                  ) : null}
                 </label>
                 <label className="block">
                   <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
@@ -444,6 +451,11 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                     onChange={(e) => setRegBin(e.currentTarget.value)}
                     placeholder={t("12 цифр")}
                   />
+                  {regBin.trim() && !isValidBin(regBin) ? (
+                    <p className="mt-1 text-xs font-semibold text-raspberry">
+                      {t("БИН/ИИН указан неверно — проверьте 12 цифр")}
+                    </p>
+                  ) : null}
                 </label>
                 <label className="block">
                   <span className="text-sm font-bold text-dark">{t("Контактное лицо")}</span>

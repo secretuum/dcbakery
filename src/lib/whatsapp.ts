@@ -1,6 +1,7 @@
 import "server-only";
 import type { Order, OrderItem } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
+import { normalizeKzPhone } from "@/src/lib/phone";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
 import { formatResponsibleBlock } from "@/src/lib/responsibles";
 import {
@@ -297,6 +298,36 @@ export function getWhatsAppChatIdFromPhone(phone: string) {
 
   const normalizedDigits = digits.startsWith("8") ? `7${digits.slice(1)}` : digits;
   return `${normalizedDigits}@c.us`;
+}
+
+type CheckWhatsappResponse = { existsWhatsapp?: boolean };
+
+/** Есть ли WhatsApp на номере (Green API checkWhatsapp). true/false — определённый
+ *  ответ; null — проверить нельзя (нет конфига / ошибка / таймаут), тогда
+ *  вызывающий НЕ блокирует (fail-open). */
+export async function checkWhatsappExists(phone: string): Promise<boolean | null> {
+  const config = getGreenApiConfig();
+  const phoneNumber = normalizeKzPhone(phone);
+  if (!config || !phoneNumber) {
+    return null;
+  }
+
+  const url = `https://api.green-api.com/waInstance${config.instanceId}/checkWhatsapp/${config.apiToken}`;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phoneNumber: Number(phoneNumber) }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const data = (await response.json()) as CheckWhatsappResponse;
+    return typeof data.existsWhatsapp === "boolean" ? data.existsWhatsapp : null;
+  } catch {
+    return null;
+  }
 }
 
 export function formatPaymentLinkNotification(order: Order, paymentUrl: string) {

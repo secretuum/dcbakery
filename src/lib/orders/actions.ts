@@ -18,8 +18,9 @@ import {
   getWhatsAppChatIdFromPhone,
   replaceWhatsAppOrderMessage,
   sendCustomerOrderCanceledNotification,
-  sendCustomerOrderConfirmationNotification,
+  sendCustomerPaymentLinkNotification,
   sendGreenApiTextMessage,
+  whatsappClientNotifyEnabled,
   whatsappEnabled,
 } from "@/src/lib/whatsapp";
 import { fetchWhatsAppClientByChatId } from "@/src/lib/whatsapp-client-store";
@@ -129,15 +130,13 @@ export async function confirmOrder(
   const termDays = client?.payment_terms_days ?? Number(process.env.CONSIGNMENT_DAYS ?? 4);
   const dueDate = addDays(now.slice(0, 10), termDays);
   const paymentLink = createPaymentLink(order, undefined, origin);
-  // Уведомление клиента в WhatsApp — только при включённом флаге (иначе клиент
-  // берёт счёт в личном кабинете, а payment_status остаётся payment_link_created).
-  const customerNotification = whatsappEnabled()
-    ? await sendCustomerOrderConfirmationNotification(order, paymentLink.paymentUrl).catch(() => ({
-        messageId: null,
-        registrationRequested: false,
-      }))
-    : { messageId: null, registrationRequested: false };
-  const whatsappMessageId = customerNotification.messageId;
+  // Разовая рассылка клиенту при подтверждении: заказ + ссылка на счёт/оплату.
+  // Отдельный флаг WHATSAPP_CLIENT_NOTIFY (не общий whatsappEnabled), поэтому
+  // остальные WhatsApp — отмена, менеджерские карточки — остаются спящими.
+  // Только рассылка; статусы и всё прочее клиент смотрит на сайте.
+  const whatsappMessageId = whatsappClientNotifyEnabled()
+    ? await sendCustomerPaymentLinkNotification(order, paymentLink.paymentUrl).catch(() => null)
+    : null;
 
   if (whatsappEnabled()) {
     const customerChatId = getWhatsAppChatIdFromPhone(order.customer_phone);
@@ -182,7 +181,7 @@ export async function confirmOrder(
     order: confirmedOrder,
     managerMessageId,
     paymentUrl: paymentLink.paymentUrl,
-    registrationRequested: customerNotification.registrationRequested,
+    registrationRequested: false,
     whatsappMessageId,
   };
 }

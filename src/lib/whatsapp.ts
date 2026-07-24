@@ -43,6 +43,13 @@ export function whatsappEnabled(): boolean {
   return process.env.WHATSAPP_ENABLED === "true";
 }
 
+// Узкий флаг: разовая рассылка клиенту при подтверждении (заказ + счёт по ссылке).
+// Не зависит от общего whatsappEnabled — остальной WhatsApp (отмена, менеджерские
+// карточки, интерактив) остаётся спящим. Клиент всё прочее смотрит на сайте.
+export function whatsappClientNotifyEnabled(): boolean {
+  return process.env.WHATSAPP_CLIENT_NOTIFY === "true";
+}
+
 function getManagerCommandBlock(order: Order) {
   return [
     "Команды менеджера в этом чате:",
@@ -300,10 +307,10 @@ export function formatPaymentLinkNotification(order: Order, paymentUrl: string) 
     "",
     `Сумма к оплате: ${formatPrice(order.total_amount)}`,
     "",
-    "Оплата, счет и документы доступны по ссылке:",
+    "Счёт на оплату и документы — по ссылке:",
     paymentUrl,
     "",
-    "После оплаты статус обновится автоматически.",
+    "Статус заказа и все обновления смотрите в личном кабинете на сайте.",
   ].join("\n");
 }
 

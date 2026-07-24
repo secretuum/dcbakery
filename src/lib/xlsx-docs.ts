@@ -1,6 +1,7 @@
 import "server-only";
 import ExcelJS from "exceljs";
 import type { CompanyDetails } from "@/src/lib/company-details";
+import { nomenclatureCode } from "@/src/data/nomenclature-1c";
 import type { Order, OrderItem } from "@/src/types";
 
 // Формальные Excel-документы по казахстанским типовым формам (приказ МФ РК № 562):
@@ -188,60 +189,77 @@ export async function buildNaklWorkbook(
 ) {
   const wb = new ExcelJS.Workbook();
 
+  // Подписанты формы З-2 (те же env, что и на печатной странице накладной).
+  const supplyResponsible = process.env.DC_SUPPLY_RESPONSIBLE?.trim() || company.directorName;
+  const chiefAccountant = process.env.DC_CHIEF_ACCOUNTANT?.trim() || "";
+
   for (const section of sections) {
     const ws = wb.addWorksheet(section.label ?? "Накладная", {
       properties: { defaultRowHeight: 14 },
     });
     setupPage(ws);
     ws.columns = [
-      { width: 5 },   // A №
-      { width: 42 },  // B наименование
-      { width: 9 },   // C ед.
-      { width: 10 },  // D кол-во
-      { width: 13 },  // E цена
-      { width: 15 },  // F сумма
+      { width: 5 },   // A № п/п
+      { width: 36 },  // B наименование
+      { width: 11 },  // C номенкл. №
+      { width: 8 },   // D ед.
+      { width: 9 },   // E кол-во
+      { width: 12 },  // F цена
+      { width: 13 },  // G сумма
+      { width: 12 },  // H сумма НДС
     ];
 
-    ws.mergeCells("D1:F1");
-    setCell(ws, "D1", "Приложение 26 к приказу Министра финансов", { size: 8, align: "right" });
-    ws.mergeCells("D2:F2");
-    setCell(ws, "D2", "Республики Казахстан от 20.12.2012 № 562", { size: 8, align: "right" });
-    ws.mergeCells("D3:F3");
-    setCell(ws, "D3", "Форма З-2", { size: 8, align: "right", bold: true });
+    ws.mergeCells("F1:H1");
+    setCell(ws, "F1", "Приложение 26 к приказу Министра финансов", { size: 8, align: "right" });
+    ws.mergeCells("F2:H2");
+    setCell(ws, "F2", "Республики Казахстан от 20.12.2012 № 562", { size: 8, align: "right" });
+    ws.mergeCells("F3:H3");
+    setCell(ws, "F3", "Форма З-2", { size: 8, align: "right", bold: true });
 
     const number = `${order.order_number}${section.suffix}`;
-    ws.mergeCells("A5:F5");
+    ws.mergeCells("A5:H5");
     setCell(ws, "A5", `НАКЛАДНАЯ НА ОТПУСК ЗАПАСОВ НА СТОРОНУ № ${number}`, {
       bold: true, size: 12, align: "center",
     });
-    ws.mergeCells("A6:F6");
+    ws.mergeCells("A6:H6");
     setCell(ws, "A6", `от ${formatDateRu(order.created_at)}${section.label ? ` · ${section.label}` : ""}`, {
       align: "center", size: 10,
     });
 
-    ws.mergeCells("A8:F8");
+    ws.mergeCells("A8:H8");
     setCell(ws, "A8", `Организация (отправитель): ${company.legalName}, БИН ${company.bin}, ${company.address}`, { wrap: true });
-    ws.mergeCells("A9:F9");
+    ws.mergeCells("A9:H9");
     setCell(
       ws,
       "A9",
       `Получатель: ${order.company_name}${order.customer_bin ? `, БИН/ИИН ${order.customer_bin}` : ""}${order.delivery_address ? `, ${order.delivery_address}` : ""}`,
       { wrap: true },
     );
-    ws.mergeCells("A10:F10");
+    ws.mergeCells("A10:H10");
+    setCell(ws, "A10", `Ответственный за поставку: ${supplyResponsible || "—"}`);
+    ws.mergeCells("A11:H11");
     setCell(
       ws,
-      "A10",
+      "A11",
       `Основание: заявка № ${order.order_number}${order.delivery_date ? `, дата поставки ${formatDateRu(order.delivery_date)}` : ""}`,
     );
 
     // Таблица
-    const headRow = 12;
-    const headers = ["№ п/п", "Наименование, характеристика", "Ед. изм.", "Количество", "Цена за единицу, ₸", "Сумма, ₸"];
+    const headRow = 13;
+    const headers = [
+      "№ п/п",
+      "Наименование, характеристика (сорт, артикул)",
+      "Номенкл. №",
+      "Ед. изм.",
+      "Количество",
+      "Цена за единицу, ₸",
+      "Сумма, ₸",
+      "Сумма НДС, ₸",
+    ];
     headers.forEach((title, index) => {
       tableCell(ws, headRow, index + 1, title, { bold: true, align: "center" });
     });
-    ws.getRow(headRow).height = 26;
+    ws.getRow(headRow).height = 30;
 
     let row = headRow + 1;
     let total = 0;
@@ -249,19 +267,22 @@ export async function buildNaklWorkbook(
       total += item.total_amount;
       tableCell(ws, row, 1, index + 1, { align: "center" });
       tableCell(ws, row, 2, item.product_name);
-      tableCell(ws, row, 3, item.unit || "шт", { align: "center" });
-      tableCell(ws, row, 4, item.qty, { align: "center" });
-      tableCell(ws, row, 5, money(item.price), { align: "right", numFmt: NUM_FMT });
-      tableCell(ws, row, 6, money(item.total_amount), { align: "right", numFmt: NUM_FMT });
+      tableCell(ws, row, 3, nomenclatureCode(item.product_id), { align: "center" });
+      tableCell(ws, row, 4, item.unit || "шт", { align: "center" });
+      tableCell(ws, row, 5, item.qty, { align: "center" });
+      tableCell(ws, row, 6, money(item.price), { align: "right", numFmt: NUM_FMT });
+      tableCell(ws, row, 7, money(item.total_amount), { align: "right", numFmt: NUM_FMT });
+      tableCell(ws, row, 8, "—", { align: "center" });
       row++;
     });
 
-    ws.mergeCells(`A${row}:E${row}`);
+    ws.mergeCells(`A${row}:F${row}`);
     tableCell(ws, row, 1, "Итого", { bold: true, align: "right" });
-    tableCell(ws, row, 6, money(total), { bold: true, align: "right", numFmt: NUM_FMT });
+    tableCell(ws, row, 7, money(total), { bold: true, align: "right", numFmt: NUM_FMT });
+    tableCell(ws, row, 8, "—", { bold: true, align: "center" });
     row += 2;
 
-    ws.mergeCells(`A${row}:F${row}`);
+    ws.mergeCells(`A${row}:H${row}`);
     setCell(
       ws,
       `A${row}`,
@@ -269,26 +290,35 @@ export async function buildNaklWorkbook(
       { wrap: true, italic: true },
     );
     row++;
-    ws.mergeCells(`A${row}:F${row}`);
+    ws.mergeCells(`A${row}:H${row}`);
     setCell(ws, `A${row}`, company.taxNote, { size: 9 });
     row += 3;
 
     setCell(ws, `A${row}`, "Отпуск разрешил:", { bold: true });
-    ws.mergeCells(`B${row}:C${row}`);
-    setCell(ws, `B${row}`, `____________________ ${company.directorName}`);
-    ws.mergeCells(`D${row}:F${row}`);
-    setCell(ws, `D${row}`, "М.П.", { align: "right" });
+    ws.mergeCells(`B${row}:D${row}`);
+    setCell(ws, `B${row}`, `Руководитель ____________________ ${company.directorName}`, { wrap: true });
+    ws.mergeCells(`F${row}:H${row}`);
+    setCell(ws, `F${row}`, "М.П.", { align: "right" });
+    row += 2;
+    setCell(ws, `A${row}`, "Главный бухгалтер:", { bold: true });
+    ws.mergeCells(`B${row}:D${row}`);
+    setCell(ws, `B${row}`, `____________________ ${chiefAccountant}`);
     row += 2;
     setCell(ws, `A${row}`, "Отпустил:", { bold: true });
-    ws.mergeCells(`B${row}:C${row}`);
-    setCell(ws, `B${row}`, "____________________");
+    ws.mergeCells(`B${row}:D${row}`);
+    setCell(ws, `B${row}`, `____________________ ${supplyResponsible}`);
     row += 2;
     setCell(ws, `A${row}`, "Получил:", { bold: true });
-    ws.mergeCells(`B${row}:D${row}`);
-    setCell(ws, `B${row}`, `____________________ ${order.customer_name} (${order.company_name})`, { wrap: true });
+    ws.mergeCells(`B${row}:F${row}`);
+    setCell(
+      ws,
+      `B${row}`,
+      `по доверенности № ______ от __________  ____________________ ${order.customer_name} (${order.company_name})`,
+      { wrap: true },
+    );
 
     if (company.isDemo) {
-      ws.mergeCells("A4:F4");
+      ws.mergeCells("A4:H4");
       setCell(ws, "A4", "ДЕМО-ДОКУМЕНТ — не является основанием для отпуска", {
         bold: true, align: "center", size: 11,
       });

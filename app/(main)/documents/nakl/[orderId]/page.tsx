@@ -9,6 +9,7 @@ import {
 import { accountGroupLabels, splitItemsByAccount, sumItems } from "@/src/lib/document-split";
 import { fetchAdminProducts } from "@/src/lib/catalog";
 import { formatPrice } from "@/src/lib/format";
+import { nomenclatureCode } from "@/src/data/nomenclature-1c";
 import { pluralRu, quantityInWords, tengeInWords } from "@/src/lib/number-to-words";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 
@@ -205,7 +206,9 @@ export default async function NaklPage({ params, searchParams }: NaklPageProps) 
                         <td className="border border-black/40 px-2 py-2 font-semibold">
                           {item.product_name}
                         </td>
-                        <td className="border border-black/40 px-2 py-2 text-center text-muted"></td>
+                        <td className="border border-black/40 px-2 py-2 text-center text-muted">
+                          {nomenclatureCode(item.product_id)}
+                        </td>
                         <td className="border border-black/40 px-2 py-2 text-center">{item.unit}</td>
                         <td className="border border-black/40 px-2 py-2 text-center">{item.qty}</td>
                         <td className="border border-black/40 px-2 py-2 text-right">

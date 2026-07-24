@@ -10,10 +10,17 @@ function botToken(): string | null {
 
 type InlineKeyboard = { inline_keyboard: Array<Array<{ text: string; callback_data: string }>> };
 
+// Постоянная клавиатура под полем ввода (кнопка «Заказы» у бухгалтера в ЛС).
+type ReplyKeyboard = {
+  keyboard: Array<Array<{ text: string }>>;
+  resize_keyboard?: boolean;
+  is_persistent?: boolean;
+};
+
 type SendMessageOptions = {
   chatId: number | string;
   text: string;
-  replyMarkup?: InlineKeyboard;
+  replyMarkup?: InlineKeyboard | ReplyKeyboard;
 };
 
 /** Отправить сообщение. Возвращает message_id или null (например, если токен не задан). */

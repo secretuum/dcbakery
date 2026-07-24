@@ -30,6 +30,17 @@ export function getRole(telegramId: number | string): BotRole | null {
   return null;
 }
 
+/** Все Telegram id для роли (для рассылки в ЛС, например реквизиты бухгалтерам). */
+export function idsForRole(role: BotRole): string[] {
+  const raw =
+    role === "admin"
+      ? process.env.TELEGRAM_ADMIN_IDS
+      : role === "manager"
+        ? process.env.TELEGRAM_MANAGER_IDS
+        : process.env.TELEGRAM_ACCOUNTANT_IDS;
+  return [...parseIds(raw)];
+}
+
 // Матрица прав по действиям заявки. Менеджер ведёт заказ, но не отмечает оплату;
 // бухгалтер только отмечает/снимает оплату; админ может всё.
 const PERMISSIONS: Record<BotRole, ReadonlySet<string>> = {

@@ -3,8 +3,16 @@ import type { Order } from "@/src/types";
 import { getRole, roleLabels, canDo } from "@/src/lib/telegram/roles";
 import { sendMessage, answerCallbackQuery, editMessageText } from "@/src/lib/telegram/api";
 import { buildOrderCard } from "@/src/lib/telegram/order-card";
+import {
+  accountantKeyboard,
+  buildAccountantDetail,
+  buildAwaitingPaymentList,
+  isOrdersCommand,
+  notifyAccountantsAwaitingPayment,
+} from "@/src/lib/telegram/accountant";
+import { fetchAwaitingPaymentOrders } from "@/src/lib/orders/awaiting-payment";
 import { logAction } from "@/src/lib/audit";
-import { fetchAdminOrderItems } from "@/src/lib/supabase/admin";
+import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import {
   cancelOrderAction,
   changeStatus,
@@ -107,12 +115,15 @@ async function runAction(
   }
 }
 
-// Перерисовать карточку заявки в чате под новый статус (текст + кнопки).
-async function refreshCard(
-  chatId: number,
-  messageId: number,
-  order: Order,
-): Promise<void> {
+// Перерисовать карточку заявки В ОБЩЕМ ЧАТЕ под новый статус. Id группового
+// сообщения хранится в order.telegram_message_id, поэтому карточка обновляется
+// даже когда действие пришло из ЛС бухгалтера, а не из самой группы.
+async function refreshGroupCard(order: Order): Promise<void> {
+  const chatId =
+    process.env.TELEGRAM_GROUP_CHAT_ID?.trim() || process.env.TELEGRAM_CHAT_ID?.trim();
+  const messageId = order.telegram_message_id ? Number(order.telegram_message_id) : null;
+  if (!chatId || !messageId || Number.isNaN(messageId)) return;
+
   const items = await fetchAdminOrderItems(order.id).catch(() => []);
   const { text, replyMarkup } = buildOrderCard(order, items);
   await editMessageText({ chatId, messageId, text, replyMarkup });
@@ -145,6 +156,28 @@ export async function POST(request: Request) {
       await answerCallbackQuery(cb.id, "Доступа нет");
       return NextResponse.json({ ok: true });
     }
+
+    // Открыть детали заказа из раздела «Заказы» (read-only, бухгалтер/админ)
+    if (action === "open") {
+      if (role !== "accountant" && role !== "admin") {
+        await answerCallbackQuery(cb.id, "Недостаточно прав");
+        return NextResponse.json({ ok: true });
+      }
+      const order = orderId ? await fetchAdminOrder(orderId) : null;
+      if (!order) {
+        await answerCallbackQuery(cb.id, "Заявка не найдена");
+        return NextResponse.json({ ok: true });
+      }
+      const items = await fetchAdminOrderItems(order.id).catch(() => []);
+      const openOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
+      const detail = buildAccountantDetail(order, items, openOrigin);
+      if (cb.message) {
+        await sendMessage({ chatId: cb.message.chat.id, text: detail.text, replyMarkup: detail.replyMarkup });
+      }
+      await answerCallbackQuery(cb.id);
+      return NextResponse.json({ ok: true });
+    }
+
     if (!action || !canDo(role, action)) {
       await answerCallbackQuery(cb.id, "Недостаточно прав для этого действия");
       return NextResponse.json({ ok: true });
@@ -205,8 +238,13 @@ export async function POST(request: Request) {
       details: { ok: true, status: outcome.order?.status ?? null },
     });
 
-    if (outcome.order && cb.message) {
-      await refreshCard(cb.message.chat.id, cb.message.message_id, outcome.order);
+    if (outcome.order) {
+      await refreshGroupCard(outcome.order);
+    }
+
+    // Подтверждение → реквизиты заказа бухгалтеру(ам) в ЛС (кнопка «Оплачено»)
+    if (action === "confirm" && outcome.order) {
+      await notifyAccountantsAwaitingPayment(outcome.order, origin).catch(() => undefined);
     }
 
     await answerCallbackQuery(cb.id, `Готово: ${actionLabels[action] ?? action}`);
@@ -217,17 +255,35 @@ export async function POST(request: Request) {
   const from = message?.from;
   const text = message?.text;
 
-  if (message && from && typeof text === "string" && text.trim().toLowerCase().startsWith("/start")) {
+  if (message && from && typeof text === "string") {
     const role = getRole(from.id);
-    const name = [from.first_name, from.last_name].filter(Boolean).join(" ") || from.username || "";
-    const roleLine = role
-      ? `Ваша роль: ${roleLabels[role]}. Доступ есть.`
-      : "Доступа пока нет. Передайте свой ID администратору — он добавит вас в переменные.";
+    const trimmed = text.trim();
+    // В приватном чате chat.id === id пользователя (в группе — отрицательный).
+    const isPrivate = message.chat.id === from.id;
 
-    await sendMessage({
-      chatId: message.chat.id,
-      text: `Привет${name ? `, ${name}` : ""}!\nВаш Telegram ID: ${from.id}\n${roleLine}`,
-    });
+    if (trimmed.toLowerCase().startsWith("/start")) {
+      const name = [from.first_name, from.last_name].filter(Boolean).join(" ") || from.username || "";
+      const roleLine = role
+        ? `Ваша роль: ${roleLabels[role]}. Доступ есть.`
+        : "Доступа пока нет. Передайте свой ID администратору — он добавит вас в переменные.";
+      // Бухгалтеру/админу в личке даём постоянную кнопку «Заказы».
+      const withKeyboard = isPrivate && (role === "accountant" || role === "admin");
+
+      await sendMessage({
+        chatId: message.chat.id,
+        text: `Привет${name ? `, ${name}` : ""}!\nВаш Telegram ID: ${from.id}\n${roleLine}`,
+        replyMarkup: withKeyboard ? accountantKeyboard() : undefined,
+      });
+    } else if (isPrivate && isOrdersCommand(trimmed)) {
+      // Раздел «Заказы» — только бухгалтеру/админу и только в ЛС.
+      if (role === "accountant" || role === "admin") {
+        const orders = await fetchAwaitingPaymentOrders();
+        const list = buildAwaitingPaymentList(orders);
+        await sendMessage({ chatId: message.chat.id, text: list.text, replyMarkup: list.replyMarkup });
+      } else {
+        await sendMessage({ chatId: message.chat.id, text: "Доступа нет." });
+      }
+    }
   }
 
   // Telegram ждёт 200, иначе повторяет апдейт

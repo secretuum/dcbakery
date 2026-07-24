@@ -18,10 +18,9 @@ function buttonsForStatus(status: OrderStatus): CardButton[] {
       ];
     case "confirmed_waiting_payment":
     case "overdue":
-      return [
-        { text: "💰 Оплачено", action: "paid" },
-        { text: "✖️ Отменить", action: "cancel" },
-      ];
+      // Оплату отмечает бухгалтер — в ЛС или в разделе «Заказы», не в общем чате.
+      // Менеджеру в чате оставляем только отмену.
+      return [{ text: "✖️ Отменить", action: "cancel" }];
     case "paid":
       return [{ text: "🏭 В работу", action: "work" }];
     case "in_progress":
@@ -48,6 +47,9 @@ export function buildOrderCard(order: Order, items: OrderItem[]) {
   const text = [
     `🧾 Заявка ${order.order_number}`,
     `Статус: ${orderStatusLabels[order.status] ?? order.status}`,
+    order.status === "confirmed_waiting_payment" || order.status === "overdue"
+      ? "⏳ оплату проверяет бухгалтер"
+      : null,
     `Компания: ${order.company_name}`,
     `Контакт: ${order.customer_name} / ${order.customer_phone}`,
     order.delivery_date

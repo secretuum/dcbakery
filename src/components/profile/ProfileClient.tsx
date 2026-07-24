@@ -653,7 +653,7 @@ function AdminDashboard({
           <p className="text-xs font-bold uppercase text-raspberry">{t("Документы")}</p>
           <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Накладные и счета")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
-            Счёт, накладная и АВР по каждому заказу в один клик.
+            Счёт и накладная по каждому заказу в один клик.
           </p>
         </Link>
         <Link
@@ -935,9 +935,6 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
           <>
             <Link href={`/documents/invoice/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("Счет PDF")}</Link>
             <Link href={`/documents/nakl/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("Накладная PDF")}</Link>
-            {order.status === "completed" ? (
-              <Link href={`/documents/avr/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("АВР")}</Link>
-            ) : null}
           </>
         ) : null}
         <Link href="/catalog" className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("Повторить")}</Link>

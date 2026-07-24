@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { CancelOrderForm } from "@/src/components/admin/CancelOrderForm";
-import { AvrRequestButton } from "@/src/components/admin/AvrRequestButton";
 import Link from "next/link";
 import { ConfirmOrderButton } from "@/src/components/admin/ConfirmOrderButton";
 import { MarkOrderPaidButton } from "@/src/components/admin/MarkOrderPaidButton";
@@ -103,7 +102,6 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
                 ["Дата доставки", optional(order.delivery_date)],
                 ["Время", optional(order.delivery_time)],
                 ["Оплата", optional(order.payment_method)],
-                ["АВР", order.request_avr ? "запрошен" : "не требуется"],
               ].map(([label, value]) => (
                 <div key={label} className="rounded-btn border border-black/5 bg-cream px-4 py-3">
                   <dt className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{label}</dt>
@@ -175,7 +173,6 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
             status={order.status}
           />
           <CancelOrderForm disabled={isLocked} orderId={order.id} />
-          <AvrRequestButton orderId={order.id} requested={order.request_avr === true} />
 
           <div className="mt-6 space-y-2">
             <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Документы</p>
@@ -201,14 +198,6 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
                 Доступны после подтверждения
               </p>
             )}
-            {order.status === "completed" ? (
-              <Link
-                href={`/documents/avr/${order.id}`}
-                className="block rounded-btn border border-black/5 bg-cream px-4 py-3 text-sm font-semibold text-dark transition hover:bg-coral-light"
-              >
-                АВР →
-              </Link>
-            ) : null}
           </div>
 
           <div className="mt-6 rounded-btn bg-coral-light px-4 py-3">

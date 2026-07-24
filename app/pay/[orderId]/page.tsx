@@ -115,7 +115,6 @@ export default async function PayPage({ params }: PayPageProps) {
       order.status,
     );
   const naklAvailable = invoiceAvailable;
-  const avrAvailable = order.status === "completed";
   const isExternalPaymentUrl =
     Boolean(order.payment_url) && !order.payment_url?.includes(`/pay/${order.id}`);
   // Оплата картой доступна, когда Halyk настроен и заказ подтверждён, но не оплачен
@@ -214,18 +213,6 @@ export default async function PayPage({ params }: PayPageProps) {
               )}
             </div>
 
-            <div className="rounded-btn border border-black/5 bg-white p-4">
-              <p className="font-display text-base font-semibold">{t("АВР")}</p>
-              <p className="mt-2 text-sm leading-6 text-muted">{t("Акт выполненных работ — доступен после завершения заказа.")}</p>
-              {avrAvailable ? (
-                <Link
-                  className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn border border-dark bg-dark px-4 py-2 text-sm font-bold text-white transition hover:bg-dark/80"
-                  href={`/documents/avr/${order.id}`}
-                >{t("Открыть АВР")}</Link>
-              ) : (
-                <p className="mt-4 text-sm font-semibold text-burgundy">{t("После завершения заказа")}</p>
-              )}
-            </div>
           </div>
         </section>
 

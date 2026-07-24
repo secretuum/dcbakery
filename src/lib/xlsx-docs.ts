@@ -64,7 +64,7 @@ export function amountInWordsKzt(amount: number) {
   const tiyn = Math.round((amount - whole) * 100);
 
   if (whole === 0) {
-    return `ноль тенге ${String(tiyn).padStart(2, "0")} тиын`;
+    return `ноль теңге ${String(tiyn).padStart(2, "0")} тиын`;
   }
 
   const billions = Math.floor(whole / 1_000_000_000);
@@ -86,7 +86,7 @@ export function amountInWordsKzt(amount: number) {
     parts.push(tripleToWords(units, false));
   }
 
-  const text = `${parts.filter(Boolean).join(" ")} тенге ${String(tiyn).padStart(2, "0")} тиын`;
+  const text = `${parts.filter(Boolean).join(" ")} теңге ${String(tiyn).padStart(2, "0")} тиын`;
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 

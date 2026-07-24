@@ -37,7 +37,7 @@ export default async function AdminDocumentsPage() {
           Накладные и счета
         </h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-          Печатные документы по каждому заказу: счёт на оплату, накладная и АВР.
+          Печатные документы по каждому заказу: счёт на оплату и накладная.
           Смешанные заказы автоматически делятся на два счёта по цехам.
         </p>
       </div>
@@ -150,13 +150,6 @@ export default async function AdminDocumentsPage() {
                           target="_blank"
                         >
                           Накладная
-                        </Link>
-                        <Link
-                          className="rounded-btn border border-black/15 bg-white px-3 py-1.5 text-xs font-bold text-dark transition hover:bg-black/5"
-                          href={`/documents/avr/${order.id}`}
-                          target="_blank"
-                        >
-                          АВР
                         </Link>
                       </div>
                     </td>

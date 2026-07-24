@@ -7,7 +7,7 @@ import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatPrice, formatProductPrice } from "@/src/lib/format";
 import { useLocale, useT } from "@/src/i18n/client";
-import { localizeProduct } from "@/src/i18n/product";
+import { localizeMeasure, localizeProduct } from "@/src/i18n/product";
 import type { Product } from "@/src/types";
 
 type ProductSheetProps = {
@@ -67,12 +67,12 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
 
   const details: Array<[string, string]> = (
     [
-      ["Фасовка", product.weightLabel],
-      ["Минимальный заказ", product.min_qty > 1 ? `${product.min_qty} ${product.unit}` : null],
-      ["В наличии", product.stock_qty > 0 ? `${product.stock_qty} ${product.unit}` : null],
-      ["Срок годности", product.shelfLife],
-      ["Хранение", product.storage],
-      ["Упаковка", product.packageType],
+      ["Фасовка", localizeMeasure(product.weightLabel, locale)],
+      ["Минимальный заказ", product.min_qty > 1 ? `${product.min_qty} ${t(product.unit)}` : null],
+      ["В наличии", product.stock_qty > 0 ? `${product.stock_qty} ${t(product.unit)}` : null],
+      ["Срок годности", localizeMeasure(product.shelfLife, locale)],
+      ["Хранение", localizeMeasure(product.storage, locale)],
+      ["Упаковка", product.packageType ? t(product.packageType) : null],
     ] as Array<[string, string | null | undefined]>
   ).filter((row): row is [string, string] => Boolean(row[1]) && row[1] !== "уточняется");
 
@@ -115,7 +115,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
 
           <div className="px-4 pb-4 pt-4">
             <p className="text-xs font-semibold uppercase tracking-[.1em] text-muted">
-              {product.weightLabel ?? product.unit}
+              {product.weightLabel ? localizeMeasure(product.weightLabel, locale) : t(product.unit)}
             </p>
             <h2 className="mt-1.5 font-display text-xl font-bold leading-snug text-dark">
               {localized.name}

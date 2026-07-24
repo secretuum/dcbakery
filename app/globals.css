@@ -131,10 +131,4 @@ html {
     margin: 0 !important;
     padding: 0 !important;
   }
-
-  /* Убираем оболочки из потока, чтобы не появлялись пустые страницы. */
-  header,
-  footer {
-    display: none !important;
-  }
 }

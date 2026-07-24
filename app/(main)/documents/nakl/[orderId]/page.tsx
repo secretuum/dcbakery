@@ -9,6 +9,7 @@ import {
 import { accountGroupLabels, splitItemsByAccount, sumItems } from "@/src/lib/document-split";
 import { fetchAdminProducts } from "@/src/lib/catalog";
 import { formatPrice } from "@/src/lib/format";
+import { pluralRu, quantityInWords, tengeInWords } from "@/src/lib/number-to-words";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 
 type NaklPageProps = {
@@ -17,7 +18,7 @@ type NaklPageProps = {
 };
 
 export const metadata: Metadata = {
-  title: "Накладная | DC Bakery",
+  title: "Накладная (форма З-2) | DC Bakery",
 };
 
 function isUuid(value: string) {
@@ -48,6 +49,11 @@ export default async function NaklPage({ params, searchParams }: NaklPageProps) 
   }
 
   const company = getCompanyDetails();
+  // Форма З-2: подписанты. «Ответственный за поставку» и «Главный бухгалтер» —
+  // через env, с откатом на руководителя (у ИП обычно один человек).
+  const otpuskRazreshil = company.directorName;
+  const chiefAccountant = process.env.DC_CHIEF_ACCOUNTANT?.trim() || "";
+  const supplyResponsible = process.env.DC_SUPPLY_RESPONSIBLE?.trim() || company.directorName;
 
   // Разделение накладной по цехам — доступно, когда в заказе продукция обоих
   const groups = splitItemsByAccount(items, products);
@@ -116,101 +122,148 @@ export default async function NaklPage({ params, searchParams }: NaklPageProps) 
           </div>
         ) : null}
 
-        {sections.map((section, sectionIndex) => (
-          <article
-            key={section.key}
-            className={sectionIndex < sections.length - 1 ? "break-after-page mb-16" : ""}
-          >
-            <header className="border-b-2 border-dark pb-6">
-              <p className="text-sm font-bold uppercase text-muted">DC Bakery</p>
-              <h1 className="mt-3 text-4xl font-bold">
-                Товарная накладная №{" "}
-                {sections.length > 1 ? `${order.order_number}-${sectionIndex + 1}` : order.order_number}
-              </h1>
-              <p className="mt-2 text-sm font-semibold">
-                от {formatDate(order.created_at)}
-                {section.label ? ` · ${section.label}` : ""}
-              </p>
-            </header>
+        {sections.map((section, sectionIndex) => {
+          const sectionSum =
+            sections.length > 1 ? sumItems(section.items) : order.total_amount;
+          const itemCount = section.items.length;
+          const countWords = `${quantityInWords(itemCount)} ${pluralRu(itemCount, [
+            "наименование",
+            "наименования",
+            "наименований",
+          ])}`;
+          const naklNumber =
+            sections.length > 1 ? `${order.order_number}-${sectionIndex + 1}` : order.order_number;
 
-            <section className="mt-8 grid gap-4 sm:grid-cols-2">
-              <div className="border border-black/15 p-4">
-                <p className="text-xs font-bold uppercase text-muted">
-                  Грузоотправитель / Поставщик
-                </p>
-                <p className="mt-2 font-bold">{company.legalName}</p>
-                <p className="mt-1 text-sm">БИН: {company.bin}</p>
-                <p className="mt-1 text-sm">{company.address}</p>
+          return (
+            <article
+              key={section.key}
+              className={sectionIndex < sections.length - 1 ? "break-after-page mb-16" : ""}
+            >
+              <div className="flex justify-end">
+                <div className="max-w-[260px] border border-black/40 px-3 py-2 text-right text-[11px] leading-tight text-muted">
+                  Форма З-2
+                  <br />
+                  Утверждена приказом Министра финансов
+                  <br />
+                  Республики Казахстан от 20.12.2012 № 562
+                </div>
               </div>
-              <div className="border border-black/15 p-4">
-                <p className="text-xs font-bold uppercase text-muted">
-                  Грузополучатель / Покупатель
+
+              <header className="mt-3 border-b-2 border-dark pb-5 text-center">
+                <h1 className="text-3xl font-bold">
+                  Накладная № {naklNumber} на отпуск запасов на сторону
+                </h1>
+                <p className="mt-2 text-sm font-semibold">
+                  от {formatDate(order.created_at)}
+                  {section.label ? ` · ${section.label}` : ""}
                 </p>
-                <p className="mt-2 font-bold">{order.company_name}</p>
-                <p className="mt-1 text-sm">БИН/ИП: {order.customer_bin || "не указан"}</p>
-                <p className="mt-1 text-sm">{order.delivery_address || "адрес не указан"}</p>
-              </div>
-            </section>
+              </header>
 
-            <p className="mt-5 text-sm font-semibold text-muted">
-              Основание: Заявка № {order.order_number}
-              {order.delivery_date
-                ? `, дата поставки ${formatDate(order.delivery_date)}`
-                : ""}
-            </p>
+              <section className="mt-6 space-y-2 text-sm">
+                <p>
+                  <span className="font-bold">Организация (поставщик): </span>
+                  {company.legalName}, БИН {company.bin}, {company.address}
+                </p>
+                <p>
+                  <span className="font-bold">Получатель (покупатель): </span>
+                  {order.company_name}, БИН/ИИН {order.customer_bin || "не указан"},{" "}
+                  {order.delivery_address || "адрес не указан"}
+                </p>
+                <p>
+                  <span className="font-bold">Ответственный за поставку: </span>
+                  {supplyResponsible || "—"}
+                </p>
+                <p>
+                  <span className="font-bold">Основание: </span>
+                  Заявка № {order.order_number}
+                  {order.delivery_date
+                    ? `, дата поставки ${formatDate(order.delivery_date)}`
+                    : ""}
+                </p>
+              </section>
 
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[640px] border-collapse text-left text-sm">
-                <thead>
-                  <tr className="bg-cream">
-                    <th className="border border-black/15 px-3 py-3">№</th>
-                    <th className="border border-black/15 px-3 py-3">Наименование</th>
-                    <th className="border border-black/15 px-3 py-3">Ед.</th>
-                    <th className="border border-black/15 px-3 py-3">Кол-во</th>
-                    <th className="border border-black/15 px-3 py-3">Цена</th>
-                    <th className="border border-black/15 px-3 py-3">Сумма</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {section.items.map((item, index) => (
-                    <tr key={item.id}>
-                      <td className="border border-black/15 px-3 py-3">{index + 1}</td>
-                      <td className="border border-black/15 px-3 py-3 font-bold">
-                        {item.product_name}
-                      </td>
-                      <td className="border border-black/15 px-3 py-3">{item.unit}</td>
-                      <td className="border border-black/15 px-3 py-3">{item.qty}</td>
-                      <td className="border border-black/15 px-3 py-3">{formatPrice(item.price)}</td>
-                      <td className="border border-black/15 px-3 py-3 font-bold">
-                        {formatPrice(item.total_amount)}
-                      </td>
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[760px] border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="bg-cream">
+                      <th className="border border-black/40 px-2 py-2 text-center">№</th>
+                      <th className="border border-black/40 px-2 py-2">
+                        Наименование, характеристика (сорт, артикул)
+                      </th>
+                      <th className="border border-black/40 px-2 py-2 text-center">Номенкл. №</th>
+                      <th className="border border-black/40 px-2 py-2 text-center">Ед. изм.</th>
+                      <th className="border border-black/40 px-2 py-2 text-center">Кол-во</th>
+                      <th className="border border-black/40 px-2 py-2 text-right">Цена, тг</th>
+                      <th className="border border-black/40 px-2 py-2 text-right">Сумма, тг</th>
+                      <th className="border border-black/40 px-2 py-2 text-right">Сумма НДС, тг</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="mt-6 ml-auto max-w-md border-t-2 border-dark pt-4 text-right">
-              <p className="text-2xl font-bold">
-                Итого: {formatPrice(sections.length > 1 ? sumItems(section.items) : order.total_amount)}
-              </p>
-              <p className="mt-2 text-sm font-bold">{company.taxNote}</p>
-            </div>
-
-            <footer className="mt-16 grid gap-8 border-t border-black/15 pt-6 text-sm sm:grid-cols-2">
-              <div>
-                <p className="font-bold">Отпустил (Поставщик)</p>
-                <p className="mt-1 text-muted">{company.legalName}</p>
-                <p className="mt-8">__________________ {company.directorName}</p>
+                  </thead>
+                  <tbody>
+                    {section.items.map((item, index) => (
+                      <tr key={item.id}>
+                        <td className="border border-black/40 px-2 py-2 text-center">{index + 1}</td>
+                        <td className="border border-black/40 px-2 py-2 font-semibold">
+                          {item.product_name}
+                        </td>
+                        <td className="border border-black/40 px-2 py-2 text-center text-muted"></td>
+                        <td className="border border-black/40 px-2 py-2 text-center">{item.unit}</td>
+                        <td className="border border-black/40 px-2 py-2 text-center">{item.qty}</td>
+                        <td className="border border-black/40 px-2 py-2 text-right">
+                          {formatPrice(item.price)}
+                        </td>
+                        <td className="border border-black/40 px-2 py-2 text-right font-semibold">
+                          {formatPrice(item.total_amount)}
+                        </td>
+                        <td className="border border-black/40 px-2 py-2 text-center text-muted">—</td>
+                      </tr>
+                    ))}
+                    <tr className="bg-cream font-bold">
+                      <td className="border border-black/40 px-2 py-2 text-center" colSpan={6}>
+                        Итого
+                      </td>
+                      <td className="border border-black/40 px-2 py-2 text-right">
+                        {formatPrice(sectionSum)}
+                      </td>
+                      <td className="border border-black/40 px-2 py-2 text-center">—</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div>
-                <p className="font-bold">Принял (Покупатель)</p>
-                <p className="mt-1 text-muted">{order.company_name}</p>
-                <p className="mt-8">__________________ {order.customer_name}</p>
+
+              <div className="mt-5 space-y-1 text-sm">
+                <p>
+                  Всего отпущено наименований: {itemCount} ({countWords}).
+                </p>
+                <p>
+                  <span className="font-bold">На сумму прописью: </span>
+                  {tengeInWords(sectionSum)}
+                </p>
+                <p className="font-semibold">{company.taxNote}</p>
               </div>
-            </footer>
-          </article>
-        ))}
+
+              <footer className="mt-12 grid gap-x-8 gap-y-10 text-sm sm:grid-cols-2">
+                <div>
+                  <p className="font-bold">Отпуск разрешил</p>
+                  <p className="mt-8">Руководитель __________________ {otpuskRazreshil}</p>
+                </div>
+                <div>
+                  <p className="font-bold">Главный бухгалтер</p>
+                  <p className="mt-8">__________________ {chiefAccountant}</p>
+                </div>
+                <div>
+                  <p className="font-bold">Отпустил</p>
+                  <p className="mt-8">__________________ {supplyResponsible}</p>
+                </div>
+                <div>
+                  <p className="font-bold">
+                    Получил (по доверенности № ______ от ____________)
+                  </p>
+                  <p className="mt-8">__________________ {order.customer_name}</p>
+                </div>
+              </footer>
+            </article>
+          );
+        })}
       </div>
     </main>
   );

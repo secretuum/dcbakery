@@ -1,13 +1,13 @@
-// Номенклатурные номера 1С для колонки «Номенкл. №» накладной (форма З-2).
-// Ключ — slug товара (совпадает с product_id позиции заказа для товаров каталога).
-// Значение — код из справочника «Номенклатура» 1С БЕЗ ведущих нулей
-// (в 1С «00000001253», в накладной-образце пишут «1253»).
+// Номенклатурный номер для колонки «Номенкл. №» накладной (форма З-2).
+// Ключ — slug товара (= product_id позиции заказа для товаров каталога).
 //
-// ВАЖНО: выгрузка 1С (июль 2026) содержит готовую продукцию сайта лишь частично —
-// заполнены только позиции, реально найденные в 1С. Для пельменей, вареников,
-// котлет, тортов, Наполеона, чизкейков, говядины/стейков, ланч-боксов кодов в 1С
-// ПОКА НЕТ — их «Номенкл. №» останется пустым, пока товар не заведут в 1С.
-// Чтобы добавить код: впишите строку "<slug>": "<код без нулей>".
+// Приоритет: сначала настоящий код из 1С (когда товар заведён в 1С), иначе —
+// временный номер из iiko с префиксом «IK» (чтобы было видно, что это iiko и что
+// он временный, пока не заведут в 1С). Если нет ни того, ни другого — пусто.
+//
+// 1С: справочник «Номенклатура», код без ведущих нулей (в 1С «00000001253» → «1253»).
+// iiko: поле num карточки (сгенерировано из .iiko-cache: price-match-report → resto-products;
+//   .iiko-cache в git не входит, поэтому карта зафиксирована статически).
 
 export const NOMENCLATURE_1C_CODES: Record<string, string> = {
   "shu-yagodnyy": "1253", // 1С: Шу ягодный
@@ -20,8 +20,56 @@ export const NOMENCLATURE_1C_CODES: Record<string, string> = {
   "merengovyy-rulet": "1151", // 1С: меренговый рулет 0,5
 };
 
-/** Номенклатурный номер 1С по product_id (slug) позиции; "" если не задан. */
+// Временные номера iiko (num). Выводятся с префиксом «IK».
+export const IIKO_NUMS: Record<string, string> = {
+  "pelmeni-s-govyadinoy": "98314284",
+  "vareniki-s-kartofelem": "98314549",
+  "kotlety-govyazhi": "98314869",
+  "kotlety-kurinye": "98314376",
+  "syrniki-s-irimshikom": "98313269",
+  "syrniki-klassicheskie": "98314377",
+  "manty-s-govyadinoy-i-tykvoy": "98314873",
+  "samsa-s-govyadinoy-i-tykvoy": "98314325",
+  "samsa-s-kuritsey": "98314280",
+  "mini-chebureki-s-dzhusaem": "98313657",
+  "mini-chebureki-s-govyazhim-farshem-i-lukom": "98313657",
+  "myaso-govyadiny": "98312736",
+  "farsh-govyazhiy": "98313152",
+  "ribay": "98315361",
+  "tibon": "98315360",
+  "napoleon": "98313196",
+  "medovik": "98314221",
+  "molochnaya-devochka": "98314224",
+  "snikers": "98314036",
+  "ispanskiy-chizkeyk": "98313189",
+  "tary-chizkeyk": "98313191",
+  "sinnabon": "98313011",
+  "kartoshka": "98313818",
+  "merengovyy-rulet-tselnyy": "98313826",
+  "fistashkovyy-rulet": "98313827",
+  "fistashkovyy-rulet-tselnyy": "98313827",
+  "tartaletka-tvorozhnaya": "98313821",
+  "tartaletka-bannofi-pay": "98313289",
+  "kukis": "98313382",
+  "maffin-shokoladnyy": "98313482",
+  "tort-medovik": "98315353",
+  "tort-napoleon": "98315352",
+  "tort-molochnaya-devochka": "98315351",
+  "tort-snikers": "98315350",
+  "banka-keyk-fistashkovyy": "98315372",
+  "banka-keyk-krasnyy-barhat": "98314575",
+  "banka-keyk-tiramisu": "98315371",
+  "banka-keyk-oreo": "98315370",
+  "molochnaya-devochka-banketnaya": "98314046",
+  "tort-vuppi-banketnyy": "98315353",
+};
+
+/** Номенклатурный номер по product_id (slug): 1С-код, иначе IK+iiko, иначе "". */
 export function nomenclatureCode(productId: string | null | undefined): string {
   if (!productId) return "";
-  return NOMENCLATURE_1C_CODES[productId] ?? "";
+  const oneC = NOMENCLATURE_1C_CODES[productId];
+  if (oneC) return oneC;
+  const iiko = IIKO_NUMS[productId];
+  if (iiko) return `IK${iiko}`;
+  return "";
 }

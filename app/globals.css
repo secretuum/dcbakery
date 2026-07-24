@@ -114,9 +114,27 @@ html {
     display: none !important;
   }
 
+  /* Печатаем ТОЛЬКО сам документ — без шапки, подвала, корзины и прочего сайта. */
+  body * {
+    visibility: hidden !important;
+  }
+  .document-page,
+  .document-page * {
+    visibility: visible !important;
+  }
   .document-page {
-    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
     min-height: auto !important;
+    margin: 0 !important;
     padding: 0 !important;
+  }
+
+  /* Убираем оболочки из потока, чтобы не появлялись пустые страницы. */
+  header,
+  footer {
+    display: none !important;
   }
 }

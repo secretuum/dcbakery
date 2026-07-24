@@ -7,7 +7,7 @@ export function DocumentPrintButton() {
       type="button"
       onClick={() => window.print()}
     >
-      Скачать или распечатать
+      Печать
     </button>
   );
 }

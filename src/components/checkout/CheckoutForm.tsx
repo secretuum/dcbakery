@@ -9,6 +9,7 @@ import { Input } from "@/src/components/ui/Input";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatPrice } from "@/src/lib/format";
+import { isValidKzMobile } from "@/src/lib/phone";
 import { useT } from "@/src/i18n/client";
 
 type CheckoutFormState = {
@@ -144,7 +145,6 @@ function formatPhone(value: string) {
 
 function validateForm(form: CheckoutFormState, schedule: DeliverySchedule) {
   const errors: CheckoutFormErrors = {};
-  const phoneDigits = form.customer_phone.replace(/\D/g, "");
   const minDeliveryDate = getDeliveryDateOptions(schedule).find((option) => !option.disabled)?.value ?? "";
 
   if (!form.company_name.trim()) {
@@ -155,8 +155,8 @@ function validateForm(form: CheckoutFormState, schedule: DeliverySchedule) {
     errors.customer_name = "Укажите контактное лицо";
   }
 
-  if (phoneDigits.length < 11) {
-    errors.customer_phone = "Укажите полный номер телефона";
+  if (!isValidKzMobile(form.customer_phone)) {
+    errors.customer_phone = "Укажите корректный мобильный номер, например +7 705 123 45 67";
   }
 
   if (!form.delivery_date) {

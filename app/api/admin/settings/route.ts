@@ -40,8 +40,9 @@ export async function POST(request: Request) {
 
   const key = typeof payload.key === "string" ? payload.key.trim() : "";
 
-  // JSON-настройки сайта (контент/раскладка главной): только для суперадмина
-  if (key in jsonSettingKeys) {
+  // JSON-настройки сайта (контент/раскладка главной): только для суперадмина.
+  // Object.hasOwn, а НЕ `in` — иначе прото-ключи (constructor/__proto__/toString) прошли бы проверку.
+  if (Object.hasOwn(jsonSettingKeys, key)) {
     const value = typeof payload.value === "string" ? payload.value : "";
 
     if (!value || value.length > jsonSettingKeys[key]) {

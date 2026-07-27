@@ -3,12 +3,25 @@ import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 import { isValidBin } from "@/src/lib/bin";
 import { isValidKzMobile } from "@/src/lib/phone";
 import { fetchWhatsAppClientByEmail } from "@/src/lib/magic-link-store";
-import { checkWhatsappExists, getWhatsAppChatIdFromPhone } from "@/src/lib/whatsapp";
+import {
+  checkWhatsappExists,
+  getWhatsAppChatIdFromPhone,
+  sendGreenApiTextMessage,
+} from "@/src/lib/whatsapp";
 import {
   fetchWhatsAppClientByChatId,
   saveWhatsAppClientProfile,
 } from "@/src/lib/whatsapp-client-store";
 import { signUpClientAuthUser } from "@/src/lib/client-auth";
+import {
+  formatOtpMessage,
+  generateOtpCode,
+  hashOtpCode,
+  signOtpChallenge,
+  OTP_CHALLENGE_COOKIE,
+  OTP_COOKIE_MAX_AGE_S,
+  OTP_TTL_MS,
+} from "@/src/lib/otp";
 import {
   signClientSession,
   CLIENT_SESSION_COOKIE,
@@ -129,14 +142,14 @@ export async function POST(request: Request) {
 
   const created = await signUpClientAuthUser(email, password, `${siteUrl}/profile`);
 
-  if (created === "unavailable") {
+  if (created.status === "unavailable") {
     return NextResponse.json(
       { error: "Сервис регистрации недоступен. Попробуйте позже." },
       { status: 503 },
     );
   }
 
-  if (created === "already_exists") {
+  if (created.status === "already_exists") {
     return NextResponse.json(
       { error: "Аккаунт с этой почтой уже существует — войдите с паролем" },
       { status: 409 },
@@ -159,8 +172,38 @@ export async function POST(request: Request) {
     );
   }
 
+  // Основной путь подтверждения — WhatsApp-код. Пробуем отправить: если получилось,
+  // сессию НЕ выдаём, ждём ввода кода на /api/profile/otp/verify. Если WhatsApp
+  // недоступен (нет ключей/ошибка) — откатываемся на прежнее поведение (email/сессия).
+  const otpCode = generateOtpCode();
+  const otpSent = await sendGreenApiTextMessage(chatId, formatOtpMessage(otpCode));
+
+  if (otpSent) {
+    const challenge = await signOtpChallenge({
+      purpose: "register",
+      email,
+      phone,
+      chatId,
+      companyName,
+      userId: created.userId ?? "",
+      codeHash: await hashOtpCode(otpCode),
+      exp: Date.now() + OTP_TTL_MS,
+    });
+
+    const otpResponse = NextResponse.json({ ok: true, needsOtp: true });
+    otpResponse.cookies.set(OTP_CHALLENGE_COOKIE, challenge, {
+      httpOnly: true,
+      maxAge: OTP_COOKIE_MAX_AGE_S,
+      path: "/",
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+
+    return otpResponse;
+  }
+
   // Почта требует подтверждения — в кабинет пустим после клика по ссылке из письма
-  if (created === "created_unconfirmed") {
+  if (created.status === "created_unconfirmed") {
     return NextResponse.json({ ok: true, needsEmailConfirm: true, email });
   }
 

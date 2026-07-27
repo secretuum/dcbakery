@@ -15,6 +15,7 @@ import {
   gridArea,
   newId,
   rowHeightFor,
+  sanitizeHomeLayout,
   seedLayout,
   GRID_GAP,
   HOME_LAYOUT_KEY,
@@ -118,16 +119,18 @@ function BlockView({ block, editing }: { block: Block; editing: boolean }) {
   const wrap = `flex h-full w-full flex-col justify-center ${ALIGN_ITEMS[align]}`;
 
   if (block.type === "image") {
+    if (!block.src) {
+      // Пустую картинку показываем только в редакторе; публичному посетителю — ничего.
+      return editing ? (
+        <div className="flex h-full w-full items-center justify-center border border-dashed border-black/25 bg-cream text-xs text-muted">
+          Нет картинки
+        </div>
+      ) : null;
+    }
     return (
       <div className="h-full w-full overflow-hidden">
-        {block.src ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={block.src} alt={block.alt ?? ""} className="h-full w-full object-cover" loading="lazy" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center border border-dashed border-black/25 bg-cream text-xs text-muted">
-            Нет картинки
-          </div>
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={block.src} alt={block.alt ?? ""} className="h-full w-full object-cover" loading="lazy" />
       </div>
     );
   }
@@ -238,7 +241,7 @@ function EditGrid({ section, device, selectedId, onSelect, onBlockPos, onAddBloc
       if (mode === "move") {
         onBlockPos(block.id, {
           x: clamp(start.x + dc, 0, cols - start.w),
-          y: Math.max(0, start.y + dr),
+          y: clamp(start.y + dr, 0, 500),
           w: start.w,
           h: start.h,
         });
@@ -247,7 +250,7 @@ function EditGrid({ section, device, selectedId, onSelect, onBlockPos, onAddBloc
           x: start.x,
           y: start.y,
           w: clamp(start.w + dc, 1, cols - start.x),
-          h: Math.max(1, start.h + dr),
+          h: clamp(start.h + dr, 1, 50),
         });
       }
     }
@@ -479,7 +482,7 @@ function Inspector({ block, device, onChange, onPos, onDelete, onClose }: Inspec
       {/* точная позиция для активного устройства */}
       <div className="mb-2 grid grid-cols-2 gap-1.5">
         <Stepper label="↔ X" value={pos.x} min={0} max={cols - pos.w} onChange={(x) => onPos({ ...pos, x })} />
-        <Stepper label="↕ Y" value={pos.y} min={0} max={200} onChange={(y) => onPos({ ...pos, y })} />
+        <Stepper label="↕ Y" value={pos.y} min={0} max={500} onChange={(y) => onPos({ ...pos, y })} />
         <Stepper label="Шир" value={pos.w} min={1} max={cols - pos.x} onChange={(w) => onPos({ ...pos, w })} />
         <Stepper label="Выс" value={pos.h} min={1} max={50} onChange={(h) => onPos({ ...pos, h })} />
       </div>
@@ -604,6 +607,9 @@ export function HomeBuilder({
     }
     setDirty(false);
     setSaved(true);
+    // Приводим локальное состояние к тому, что реально сохранится после серверной санитизации,
+    // чтобы редактор не расходился с персистентной раскладкой после router.refresh().
+    setLayout(sanitizeHomeLayout(target));
     router.refresh();
   }
 
@@ -613,6 +619,9 @@ export function HomeBuilder({
     setLayout(next);
     void save(next);
   }
+
+  // Конструктор выключили — прячем сетку сразу (иначе она висит до конца router.refresh).
+  if (!layout.enabled) return null;
 
   const selected = (() => {
     if (!selectedId) return null;

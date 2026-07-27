@@ -247,7 +247,8 @@ function sanitizeHref(raw: unknown): string | undefined {
   const s = clampStr(raw, MAX_URL_LEN);
   if (!s) return undefined;
   const trimmed = s.trim();
-  if (trimmed.startsWith("/") || /^https?:\/\//i.test(trimmed)) return trimmed;
+  // startsWith("/") пропускает и protocol-relative "//host" → браузер уводит на чужой домен. Явно режем "//".
+  if ((trimmed.startsWith("/") && !trimmed.startsWith("//")) || /^https?:\/\//i.test(trimmed)) return trimmed;
   return undefined;
 }
 
@@ -256,7 +257,7 @@ function sanitizeSrc(raw: unknown): string | undefined {
   const s = clampStr(raw, MAX_URL_LEN);
   if (!s) return undefined;
   const trimmed = s.trim();
-  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith("/")) return trimmed;
+  if (/^https?:\/\//i.test(trimmed) || (trimmed.startsWith("/") && !trimmed.startsWith("//"))) return trimmed;
   return undefined;
 }
 

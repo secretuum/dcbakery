@@ -58,19 +58,26 @@ export async function verifyClientPassword(
   }
 }
 
+export type SignUpResult = {
+  status: "created_confirmed" | "created_unconfirmed" | "already_exists" | "unavailable";
+  /** id пользователя Supabase (когда доступен) — для авто-подтверждения email после WhatsApp-кода */
+  userId?: string;
+};
+
 /**
  * Регистрирует клиента через публичный signup: если в Supabase включено
- * подтверждение почты — письмо уйдёт автоматически, а вход откроется после клика.
+ * подтверждение почты — письмо уйдёт автоматически, а вход откроется после клика
+ * или после подтверждения по WhatsApp-коду (авто-подтверждение email по userId).
  */
 export async function signUpClientAuthUser(
   email: string,
   password: string,
   redirectTo: string,
-): Promise<"created_confirmed" | "created_unconfirmed" | "already_exists" | "unavailable"> {
+): Promise<SignUpResult> {
   const url = authUrl(`/signup?redirect_to=${encodeURIComponent(redirectTo)}`);
 
   if (!url) {
-    return "unavailable";
+    return { status: "unavailable" };
   }
 
   try {
@@ -89,26 +96,29 @@ export async function signUpClientAuthUser(
       msg?: string;
       error_code?: string;
       identities?: unknown[];
+      id?: string;
+      user?: { id?: string };
     };
 
     if (response.ok) {
       // Повторный signup на занятую почту Supabase маскирует фейковым
       // пользователем без identities — считаем это "уже существует"
       if (Array.isArray(data.identities) && data.identities.length === 0) {
-        return "already_exists";
+        return { status: "already_exists" };
       }
 
-      return data.access_token ? "created_confirmed" : "created_unconfirmed";
+      const userId = data.id ?? data.user?.id;
+      return { status: data.access_token ? "created_confirmed" : "created_unconfirmed", userId };
     }
 
     const message = `${data.error_code ?? ""} ${data.msg ?? ""}`.toLowerCase();
     if (message.includes("already") || response.status === 422 || response.status === 409) {
-      return "already_exists";
+      return { status: "already_exists" };
     }
 
-    return "unavailable";
+    return { status: "unavailable" };
   } catch {
-    return "unavailable";
+    return { status: "unavailable" };
   }
 }
 

@@ -61,6 +61,12 @@ function formatDate(value?: string | null) {
   }).format(new Date(value));
 }
 
+function formatMmss(totalSeconds: number) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void }) {
   const t = useT();
   // Admin section state
@@ -82,8 +88,27 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
   const [clientError, setClientError] = useState("");
   const [clientNotice, setClientNotice] = useState("");
   const [clientStep, setClientStep] = useState<
-    "idle" | "signing_in" | "register" | "registering" | "confirm_sent" | "forgot" | "sending_reset" | "reset_sent"
+    | "idle"
+    | "signing_in"
+    | "register"
+    | "registering"
+    | "otp"
+    | "verifying"
+    | "confirm_sent"
+    | "forgot"
+    | "sending_reset"
+    | "reset_sent"
   >("idle");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSeconds, setOtpSeconds] = useState(0);
+  const [otpResending, setOtpResending] = useState(false);
+
+  // Обратный отсчёт срока WhatsApp-кода на шаге ввода.
+  useEffect(() => {
+    if (clientStep !== "otp") return;
+    const id = window.setInterval(() => setOtpSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => window.clearInterval(id);
+  }, [clientStep]);
 
   async function handleAdminSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -237,6 +262,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       const data = (await response.json().catch(() => ({}))) as {
         error?: string;
         ok?: boolean;
+        needsOtp?: boolean;
         needsEmailConfirm?: boolean;
         email?: string;
         phone?: string;
@@ -246,6 +272,15 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       if (!response.ok || !data.ok) {
         setClientError(data.error ?? t("Не удалось создать аккаунт"));
         setClientStep("register");
+        return;
+      }
+
+      if (data.needsOtp) {
+        // Код ушёл в WhatsApp — переходим к вводу кода
+        setOtpCode("");
+        setOtpSeconds(120);
+        setClientError("");
+        setClientStep("otp");
         return;
       }
 
@@ -265,6 +300,75 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
     } catch {
       setClientError(t("Не удалось создать аккаунт. Проверьте соединение"));
       setClientStep("register");
+    }
+  }
+
+  async function handleVerifyOtp() {
+    const code = otpCode.replace(/\D/g, "");
+
+    if (code.length !== 6) {
+      setClientError(t("Введите 6-значный код из WhatsApp"));
+      return;
+    }
+
+    setClientError("");
+    setClientStep("verifying");
+
+    try {
+      const response = await fetch("/api/profile/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        ok?: boolean;
+        email?: string;
+        phone?: string;
+        companyName?: string;
+      };
+
+      if (!response.ok || !data.ok) {
+        setClientError(data.error ?? t("Неверный код"));
+        setClientStep("otp");
+        return;
+      }
+
+      onLogin({
+        role: "client",
+        email: data.email ?? regEmail.trim().toLowerCase(),
+        phone: data.phone ?? regPhone,
+        companyName: data.companyName ?? regCompany,
+        createdAt: "",
+      });
+    } catch {
+      setClientError(t("Не удалось проверить код. Проверьте соединение"));
+      setClientStep("otp");
+    }
+  }
+
+  async function handleResendOtp() {
+    if (otpResending) return;
+
+    setOtpResending(true);
+    setClientError("");
+
+    try {
+      const response = await fetch("/api/profile/otp/resend", { method: "POST" });
+      const data = (await response.json().catch(() => ({}))) as { error?: string; ok?: boolean };
+
+      if (!response.ok || !data.ok) {
+        setClientError(data.error ?? t("Не удалось отправить код"));
+        return;
+      }
+
+      setOtpCode("");
+      setOtpSeconds(120);
+    } catch {
+      setClientError(t("Не удалось отправить код. Проверьте соединение"));
+    } finally {
+      setOtpResending(false);
     }
   }
 
@@ -324,6 +428,70 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   setClientNotice("");
                 }}
               >{t("К форме входа")}</Button>
+            </>
+          ) : clientStep === "otp" || clientStep === "verifying" ? (
+            <>
+              <h2 className="text-2xl font-bold tracking-tight">{t("Введите код из WhatsApp")}</h2>
+              <div className="mt-4 rounded-xl bg-green-50 p-4">
+                <p className="text-sm font-bold text-green-700">{t("Код отправлен в WhatsApp")}</p>
+                <p className="mt-1 text-sm font-semibold text-green-600/80">
+                  {t("Мы написали на ")}<span className="font-bold">{regPhone}</span>{t(". Введите 6-значный код — он действует 2 минуты.")}
+                </p>
+              </div>
+              <label className="mt-4 block">
+                <span className="text-sm font-bold text-dark">{t("Код подтверждения")}</span>
+                <Input
+                  className="mt-2 text-center font-data text-2xl tracking-[.4em]"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.currentTarget.value.replace(/\D/g, "").slice(0, 6))}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void handleVerifyOtp();
+                    }
+                  }}
+                  placeholder="000000"
+                  autoFocus
+                />
+              </label>
+              {clientError ? (
+                <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
+              ) : null}
+              <p className="mt-2 text-xs font-semibold text-muted">
+                {otpSeconds > 0
+                  ? t("Код действует ещё ${time}", { time: formatMmss(otpSeconds) })
+                  : t("Срок кода истёк — запросите новый.")}
+              </p>
+              <div className="mt-5 flex gap-3">
+                <Button
+                  type="button"
+                  disabled={clientStep === "verifying" || otpCode.length !== 6}
+                  className="flex-1"
+                  onClick={() => void handleVerifyOtp()}
+                >
+                  {clientStep === "verifying" ? t("Проверяем...") : t("Подтвердить")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={otpResending || otpSeconds > 90}
+                  onClick={() => void handleResendOtp()}
+                >
+                  {otpResending ? t("Отправляем...") : t("Отправить снова")}
+                </Button>
+              </div>
+              <button
+                type="button"
+                className="mt-4 text-sm font-semibold text-muted underline-offset-2 hover:text-dark hover:underline"
+                onClick={() => {
+                  setClientStep("idle");
+                  setClientError("");
+                  setClientNotice("");
+                }}
+              >{t("Назад ко входу")}</button>
             </>
           ) : clientStep === "reset_sent" ? (
             <>

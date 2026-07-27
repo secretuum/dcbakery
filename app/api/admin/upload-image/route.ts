@@ -62,7 +62,9 @@ export async function POST(request: Request) {
   const rawSlug = formData.get("slug");
   const slug = sanitizeSlug(typeof rawSlug === "string" ? rawSlug : "new") || "new";
   const ext = detectedMime === "image/webp" ? "webp" : detectedMime === "image/png" ? "png" : "jpg";
-  const path = `products/${slug}_${Date.now()}.${ext}`;
+  // folder=site → картинки конструктора главной; иначе фото товаров (по умолчанию).
+  const folder = formData.get("folder") === "site" ? "site" : "products";
+  const path = `${folder}/${slug}_${Date.now()}.${ext}`;
 
   const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${path}`;
   const res = await fetch(uploadUrl, {

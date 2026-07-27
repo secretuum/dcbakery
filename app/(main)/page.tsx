@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { getSiteContent } from "@/src/lib/site-content";
+import { getHomeLayout } from "@/src/lib/home-layout.server";
 import { getIsSuperAdmin } from "@/src/lib/superadmin";
 import { getT } from "@/src/i18n/server";
 import { promotions } from "@/src/data/promotions";
 import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
 import { PromoSection } from "@/src/components/home/PromoSection";
 import { EditableText, SiteEditProvider } from "@/src/components/home/SiteEditMode";
+import { HomeBuilder, EnableBuilderGate } from "@/src/components/home/HomeBuilder";
 import { JsonLd } from "@/src/components/seo/JsonLd";
 import { SITE_URL } from "@/src/lib/site-url";
 
@@ -37,13 +39,31 @@ const stats = [
 ];
 
 export default async function Home() {
-  const [categories, allProducts, content, isSuperAdmin, t] = await Promise.all([
+  const [categories, allProducts, content, layout, isSuperAdmin, t] = await Promise.all([
     fetchCategories(),
     fetchProducts(),
     getSiteContent(),
+    getHomeLayout(),
     getIsSuperAdmin(),
     getT(),
   ]);
+
+  // Конструктор включён и есть что показывать → рендерим сетку вместо классической главной.
+  if (layout.enabled && layout.sections.length > 0) {
+    return (
+      <>
+        <JsonLd data={organizationJsonLd} />
+        <HomeBuilder
+          isSuperAdmin={isSuperAdmin}
+          initialLayout={layout}
+          bands={{
+            promos: <PromoSection promotions={promotions} />,
+            catalog: <HomeCatalogTabs categories={categories} products={allProducts} />,
+          }}
+        />
+      </>
+    );
+  }
 
   return (
     <SiteEditProvider isSuperAdmin={isSuperAdmin} content={content}>
@@ -142,6 +162,7 @@ export default async function Home() {
         </section>
 
       </main>
+      <EnableBuilderGate isSuperAdmin={isSuperAdmin} />
     </SiteEditProvider>
   );
 }

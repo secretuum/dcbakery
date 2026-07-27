@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { SITE_CONTENT_KEY } from "@/src/lib/site-content";
+import { HOME_LAYOUT_KEY } from "@/src/lib/home-layout";
 import { getIsSuperAdmin } from "@/src/lib/superadmin";
 import { upsertAppSetting } from "@/src/lib/supabase/admin";
 
@@ -11,6 +12,14 @@ const allowedSettingKeys = new Set([
 ]);
 
 const MAX_SITE_CONTENT_LENGTH = 20_000;
+// Раскладка главной хранит URL картинок → допускаем больший объём.
+const MAX_HOME_LAYOUT_LENGTH = 100_000;
+
+// JSON-настройки суперадмина: ключ → максимальная длина строки.
+const jsonSettingKeys: Record<string, number> = {
+  [SITE_CONTENT_KEY]: MAX_SITE_CONTENT_LENGTH,
+  [HOME_LAYOUT_KEY]: MAX_HOME_LAYOUT_LENGTH,
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
@@ -31,11 +40,11 @@ export async function POST(request: Request) {
 
   const key = typeof payload.key === "string" ? payload.key.trim() : "";
 
-  // Контент сайта: JSON-строка, только для суперадмина
-  if (key === SITE_CONTENT_KEY) {
+  // JSON-настройки сайта (контент/раскладка главной): только для суперадмина
+  if (key in jsonSettingKeys) {
     const value = typeof payload.value === "string" ? payload.value : "";
 
-    if (!value || value.length > MAX_SITE_CONTENT_LENGTH) {
+    if (!value || value.length > jsonSettingKeys[key]) {
       return NextResponse.json({ error: "Invalid content" }, { status: 400 });
     }
 

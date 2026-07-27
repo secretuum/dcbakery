@@ -109,6 +109,31 @@ html {
 .product-grid > .product-card:nth-child(11) { animation-delay: 550ms; }
 .product-grid > .product-card:nth-child(12) { animation-delay: 605ms; }
 
+/* ── Конструктор главной: адаптивная сетка (публичный рендер) ──
+   Каждый блок задаёт свои координаты через CSS-переменные для телефона
+   (--m-*) и десктопа (--d-*); переключение — чистым media-query. */
+.gc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: minmax(44px, auto);
+  gap: 12px;
+}
+.gc-block {
+  grid-column: var(--m-col);
+  grid-row: var(--m-row);
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .gc-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-auto-rows: minmax(48px, auto);
+  }
+  .gc-block {
+    grid-column: var(--d-col);
+    grid-row: var(--d-row);
+  }
+}
+
 @media print {
   .print-hidden {
     display: none !important;

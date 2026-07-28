@@ -5,6 +5,8 @@ export type ClientSessionPayload = {
   phone: string;
   companyName: string;
   accountantPhone: string;
+  /** номер подтверждён WhatsApp-кодом (для плашки «подтвердите второй способ») */
+  phoneVerified?: boolean;
   exp: number;
 };
 

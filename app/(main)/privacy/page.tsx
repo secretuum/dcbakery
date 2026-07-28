@@ -18,7 +18,7 @@ export default async function PrivacyPage() {
           <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Правовая информация")}</p>
           <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">{t("Политика конфиденциальности")}</h1>
           <p className="mt-2 text-sm text-muted">{t("обработки персональных данных — сайт dc-bakery.kz")}</p>
-          <div className="mt-5 rounded-btn bg-cream px-4 py-3 text-xs font-semibold text-muted">{t("Редакция от 10 июля 2026 года.&ensp;Проект — подлежит согласованию с юристом.").replace(/&ensp;/g, " ")}</div>
+          <div className="mt-5 rounded-btn bg-cream px-4 py-3 text-xs font-semibold text-muted">{t("Редакция от 10 июля 2026 года.")}</div>
 
           <div className="mt-10 border-t border-black/10 pt-8">
             <h2 className="font-display text-lg font-semibold">{t("1. Общие положения")}</h2>

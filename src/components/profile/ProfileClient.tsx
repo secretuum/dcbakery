@@ -24,6 +24,7 @@ type ClientSession = {
   email: string;
   phone: string;
   accountant_phone?: string;
+  phoneVerified?: boolean;
   role: "client";
 };
 
@@ -41,6 +42,7 @@ type ClientSessionResponse = {
   phone?: string;
   companyName?: string;
   accountantPhone?: string;
+  phoneVerified?: boolean;
 };
 
 function formatCurrency(value: number) {
@@ -340,6 +342,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
         email: data.email ?? regEmail.trim().toLowerCase(),
         phone: data.phone ?? regPhone,
         companyName: data.companyName ?? regCompany,
+        phoneVerified: true,
         createdAt: "",
       });
     } catch {
@@ -1271,6 +1274,130 @@ function DeliveryBox({ orders }: { orders: ClientOrderSummary[] }) {
   );
 }
 
+function VerifyPhoneBanner({ phone, onVerified }: { phone: string; onVerified: () => void }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [code, setCode] = useState("");
+  const [seconds, setSeconds] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!open || seconds <= 0) return;
+    const id = window.setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => window.clearInterval(id);
+  }, [open, seconds]);
+
+  async function requestCode() {
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch("/api/profile/verify-phone/request", { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; ok?: boolean };
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? t("Не удалось отправить код"));
+        return;
+      }
+      setOpen(true);
+      setSeconds(120);
+      setCode("");
+    } catch {
+      setError(t("Ошибка сети"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function confirmCode() {
+    const c = code.replace(/\D/g, "");
+    if (c.length !== 6) {
+      setError(t("Введите 6-значный код"));
+      return;
+    }
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch("/api/profile/verify-phone/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: c }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { error?: string; ok?: boolean };
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? t("Неверный код"));
+        return;
+      }
+      onVerified();
+    } catch {
+      setError(t("Ошибка сети"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-5 rounded-card border border-amber-200 bg-amber-50 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-amber-800">{t("Подтвердите номер WhatsApp")}</p>
+          <p className="mt-0.5 text-xs font-semibold text-amber-700/80">
+            {t("Подтвердите ")}<b>{phone}</b>{t(" — на него приходят счёт и документы. Пришлём код в WhatsApp.")}
+          </p>
+        </div>
+        {!open ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void requestCode()}
+            className="shrink-0 rounded border border-amber-400 bg-white px-4 py-2 text-xs font-bold text-amber-800 transition hover:bg-amber-100 disabled:opacity-50"
+          >
+            {busy ? t("Отправляем...") : t("Подтвердить номер")}
+          </button>
+        ) : null}
+      </div>
+
+      {open ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-amber-200 pt-3">
+          <Input
+            className="w-32 text-center font-data text-lg tracking-[.3em]"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            value={code}
+            onChange={(e) => setCode(e.currentTarget.value.replace(/\D/g, "").slice(0, 6))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void confirmCode();
+              }
+            }}
+            placeholder="000000"
+            autoFocus
+          />
+          <button
+            type="button"
+            disabled={busy || code.length !== 6}
+            onClick={() => void confirmCode()}
+            className="rounded border border-amber-500 bg-amber-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-600 disabled:opacity-50"
+          >
+            {t("Готово")}
+          </button>
+          <button
+            type="button"
+            disabled={busy || seconds > 90}
+            onClick={() => void requestCode()}
+            className="rounded px-3 py-2 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-40"
+          >
+            {seconds > 0 ? t("Ещё раз (${time})", { time: formatMmss(seconds) }) : t("Отправить снова")}
+          </button>
+        </div>
+      ) : null}
+
+      {error ? <p className="mt-2 text-xs font-bold text-burgundy">{error}</p> : null}
+    </div>
+  );
+}
+
 function ClientDashboard({
   session,
   onLogout,
@@ -1380,6 +1507,14 @@ function ClientDashboard({
           <button type="button" onClick={onLogout} className="rounded border border-black/20 px-4 py-2 text-sm font-semibold text-muted hover:bg-black/5">{t("Выйти")}</button>
         </div>
       </div>
+
+      {/* Плашка: подтвердите второй способ (номер WhatsApp) */}
+      {!session.phoneVerified && session.phone ? (
+        <VerifyPhoneBanner
+          phone={session.phone}
+          onVerified={() => onUpdate({ ...session, phoneVerified: true })}
+        />
+      ) : null}
 
       {/* Credit block */}
       {creditState ? (
@@ -1515,6 +1650,7 @@ export function ProfileClient({ popularProducts = [] }: { popularProducts?: Prod
             phone: clientData.phone ?? "",
             companyName: clientData.companyName ?? "",
             accountant_phone: clientData.accountantPhone ?? "",
+            phoneVerified: clientData.phoneVerified ?? false,
             createdAt: new Date().toISOString(),
             role: "client",
           });

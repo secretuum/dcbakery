@@ -31,7 +31,7 @@ export async function POST(request: Request) {
   }
 
   // Истёкший challenge допустим — по нему знаем, кому переслать код.
-  const prev = await readOtpChallenge((await cookies()).get(OTP_CHALLENGE_COOKIE)?.value);
+  const prev = await readOtpChallenge((await cookies()).get(OTP_CHALLENGE_COOKIE)?.value, "register");
 
   if (!prev) {
     return NextResponse.json(

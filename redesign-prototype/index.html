@@ -1,0 +1,2405 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DC Bakery — прототип редизайна B2B-сайта</title>
+<meta name="description" content="Дизайн-прототип редизайна сайта DC Bakery: B2B-поставки десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ==========================================================================
+     БИБЛИОТЕКА ИКОНОК
+     Линейные SVG-символы 24×24. Emoji в интерфейсе не используются.
+     ========================================================================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="i-menu"><path d="M3 6h18M3 12h18M3 18h18"/></g>
+    <g id="i-close"><path d="M18 6 6 18M6 6l12 12"/></g>
+    <g id="i-cart"><path d="M5 6h16l-2 9H7L5 6Z"/><path d="M5 6 4.2 3H2"/><circle cx="9" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/></g>
+    <g id="i-user"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></g>
+    <g id="i-search"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.6-3.6"/></g>
+    <g id="i-filter"><path d="M4 6h16M7 12h10M10 18h4"/></g>
+    <g id="i-sliders"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></g>
+    <g id="i-chev-down"><path d="m6 9 6 6 6-6"/></g>
+    <g id="i-chev-up"><path d="m6 15 6-6 6 6"/></g>
+    <g id="i-chev-right"><path d="m9 6 6 6-6 6"/></g>
+    <g id="i-chev-left"><path d="m15 6-6 6 6 6"/></g>
+    <g id="i-arrow-right"><path d="M4 12h16M14 6l6 6-6 6"/></g>
+    <g id="i-arrow-left"><path d="M20 12H4M10 6l-6 6 6 6"/></g>
+    <g id="i-plus"><path d="M12 5v14M5 12h14"/></g>
+    <g id="i-minus"><path d="M5 12h14"/></g>
+    <g id="i-check"><path d="m5 12.5 5 5L19 7"/></g>
+    <g id="i-check-circle"><circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.7 2.7L16 9.6"/></g>
+    <g id="i-alert-circle"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.4h.01"/></g>
+    <g id="i-alert-triangle"><path d="M10.3 4.3 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4M12 17h.01"/></g>
+    <g id="i-info"><circle cx="12" cy="12" r="9"/><path d="M12 16.5V11M12 7.6h.01"/></g>
+    <g id="i-trash"><path d="M4 7h16M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/><path d="M6.5 7 7.4 19a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7"/><path d="M10.5 11v5.5M13.5 11v5.5"/></g>
+    <g id="i-gift"><path d="M3.5 11.5h17v8a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5v-8Z"/><path d="M2.5 7.5h19v4h-19zM12 7.5V21"/><path d="M12 7.5S10.6 3 8.3 3a2.2 2.2 0 0 0 0 4.5H12ZM12 7.5S13.4 3 15.7 3a2.2 2.2 0 0 1 0 4.5H12Z"/></g>
+    <g id="i-clock"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.3l3.4 2"/></g>
+    <g id="i-calendar"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8.5 3v4M15.5 3v4"/></g>
+    <g id="i-truck"><path d="M2.5 6.5h11v10h-11z"/><path d="M13.5 10h4l3 3.2v3.3h-7z"/><circle cx="7" cy="18.5" r="1.9"/><circle cx="17" cy="18.5" r="1.9"/></g>
+    <g id="i-phone"><path d="M6.2 3.5h3l1.6 4-2 1.4a12.5 12.5 0 0 0 5.8 5.8l1.4-2 4 1.6v3a2 2 0 0 1-2.2 2A16.8 16.8 0 0 1 4.2 5.7a2 2 0 0 1 2-2.2Z"/></g>
+    <g id="i-whatsapp"><path d="M3.5 20.5 5 16.2A8.2 8.2 0 1 1 8 19.2l-4.5 1.3Z"/><path d="M9 9.2c.2 2 1.9 4.4 4.4 5.3.9.3 1.6-.1 1.9-.7l.3-.6-2-1-.7.8a5.6 5.6 0 0 1-2.2-2.3l.9-.6-1-2-.7.3c-.6.3-1 .9-.9 1.8Z"/></g>
+    <g id="i-instagram"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17 7h.01"/></g>
+    <g id="i-mail"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.6 7 8.4 6 8.4-6"/></g>
+    <g id="i-pin"><path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></g>
+    <g id="i-repeat"><path d="M4 9.5A5 5 0 0 1 9 5h9M18 5l-3-3M18 5l-3 3"/><path d="M20 14.5a5 5 0 0 1-5 4.5H6M6 19l3 3M6 19l3-3"/></g>
+    <g id="i-home"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-9.5Z"/></g>
+    <g id="i-grid"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></g>
+    <g id="i-star"><path d="m12 3.8 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 10l5.9-.8L12 3.8Z"/></g>
+    <g id="i-package"><path d="m12 3 8.5 4.5v9L12 21l-8.5-4.5v-9L12 3Z"/><path d="m3.5 7.5 8.5 4.5 8.5-4.5M12 12v9"/></g>
+    <g id="i-snow"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/><path d="m9.4 4.6 2.6 2.6 2.6-2.6M9.4 19.4l2.6-2.6 2.6 2.6"/></g>
+    <g id="i-shield"><path d="M12 3.2 4.8 6v6c0 4.4 3 7.7 7.2 9 4.2-1.3 7.2-4.6 7.2-9V6L12 3.2Z"/><path d="m9 12 2.2 2.2L15.2 10"/></g>
+    <g id="i-file"><path d="M13.5 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5L13.5 3Z"/><path d="M13.5 3v5.5H19M8.5 13h7M8.5 16.5h5"/></g>
+    <g id="i-card"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/></g>
+    <g id="i-logout"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8 6 12l4 4M6 12h9"/></g>
+    <g id="i-edit"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17l-1 3Z"/><path d="m14.5 6.5 3 3"/></g>
+    <g id="i-eye"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.8"/></g>
+    <g id="i-image"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m4.5 17 4.6-4.4 3.4 3.2 3-2.6 4 3.8"/></g>
+    <g id="i-wheat"><path d="M12 21V9"/><path d="M12 12c-3 0-4.5-1.6-4.5-4.2C10.5 7.8 12 9.4 12 12ZM12 12c3 0 4.5-1.6 4.5-4.2C13.5 7.8 12 9.4 12 12Z"/><path d="M12 7.5c-2.4 0-3.6-1.3-3.6-3.4C10.8 4.1 12 5.4 12 7.5ZM12 7.5c2.4 0 3.6-1.3 3.6-3.4C13.2 4.1 12 5.4 12 7.5Z"/></g>
+    <g id="i-percent"><path d="M18 6 6 18"/><circle cx="7.6" cy="7.6" r="2.4"/><circle cx="16.4" cy="16.4" r="2.4"/></g>
+    <g id="i-list"><path d="M8 6.5h12M8 12h12M8 17.5h12M4 6.5h.01M4 12h.01M4 17.5h.01"/></g>
+    <g id="i-refresh"><path d="M20 11a8 8 0 1 0-.7 4.3"/><path d="M20 5v6h-6"/></g>
+    <g id="i-layers"><path d="m12 3 9 4.8-9 4.8-9-4.8L12 3Z"/><path d="m3 12.6 9 4.8 9-4.8M3 17.2l9 4.8 9-4.8"/></g>
+  </defs>
+</svg>
+
+<!-- ==========================================================================
+     ШАПКА
+     Состояния: обычная / sticky (класс .is-stuck после прокрутки),
+     корзина пустая / с индикатором, открытый выбор языка.
+     ========================================================================== -->
+<header class="header" id="header">
+  <div class="container header__inner">
+
+    <!-- Логотип: словесный знак DC BAKERY -->
+    <a class="logo" href="#/home" aria-label="DC Bakery — на главную">
+      <svg class="logo__mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect width="40" height="40" rx="12" fill="var(--accent)"/>
+        <path d="M11 12h6.6c4.4 0 7.4 3.1 7.4 8s-3 8-7.4 8H11V12Z" fill="#fff"/>
+        <path d="M15.4 15.9v8.2h2c2.1 0 3.4-1.5 3.4-4.1s-1.3-4.1-3.4-4.1h-2Z" fill="var(--accent)"/>
+        <circle cx="28.6" cy="27" r="2.4" fill="#fff"/>
+      </svg>
+      <span>
+        <span class="logo__text">DC Bakery</span>
+        <span class="logo__sub">B2B · ОПТ</span>
+      </span>
+    </a>
+
+    <!-- Навигация (desktop) -->
+    <nav class="header__nav" aria-label="Основная навигация">
+      <a class="header__link" href="#/catalog" data-nav="catalog">Каталог</a>
+      <a class="header__link" href="#/home#about">О нас</a>
+      <a class="header__link" href="#/payment-delivery">Доставка</a>
+      <a class="header__link" href="#/contacts">Контакты</a>
+    </nav>
+
+    <div class="header__actions">
+
+      <!-- Выбор языка (выпадающее меню) -->
+      <div class="lang" id="lang">
+        <button class="lang__toggle" type="button" data-toggle="lang" aria-haspopup="true" aria-expanded="false">
+          <span id="lang-current">RU</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-down"/></svg>
+        </button>
+        <div class="dropdown" role="menu" aria-label="Язык интерфейса">
+          <p class="dropdown__label">Язык интерфейса</p>
+          <button class="dropdown__item is-active" type="button" role="menuitem" data-lang="RU">Русский <span class="code">RU</span></button>
+          <button class="dropdown__item" type="button" role="menuitem" data-lang="KK">Қазақша <span class="code">KK</span></button>
+          <button class="dropdown__item" type="button" role="menuitem" data-lang="EN">English <span class="code">EN</span></button>
+          <div class="dropdown__sep"></div>
+          <p class="dropdown__label" style="padding-top:2px">Переключение — визуальная демонстрация</p>
+        </div>
+      </div>
+
+      <!-- Второстепенная ссылка для розничного клиента -->
+      <!-- TODO(backend): подставить реальный URL розничного сайта del Cappuccino.
+           В коде рабочего сайта адрес приходит из NEXT_PUBLIC_RETAIL_SITE_URL,
+           значение по умолчанию — https://example.com, т.е. реального адреса
+           в проекте нет. Пока href="#". -->
+      <a class="btn btn--sm btn--retail header__retail" href="#" data-retail>Заказать в розницу</a>
+
+      <a class="btn btn--sm btn--dark header__cta" href="#/register">Стать партнёром</a>
+
+      <a class="icon-btn icon-btn--sm" href="#/profile" aria-label="Кабинет">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-user"/></svg>
+      </a>
+
+      <!-- Корзина: без товаров и с индикатором количества -->
+      <button class="icon-btn icon-btn--sm has-count" type="button" data-open="cart" aria-label="Корзина">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cart"/></svg>
+        <span class="icon-btn__count hidden" data-cart-count>0</span>
+      </button>
+
+      <button class="icon-btn icon-btn--sm header__burger" type="button" data-open="menu" aria-label="Меню">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-menu"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ==========================================================================
+     ПОЛНОЭКРАННОЕ МОБИЛЬНОЕ МЕНЮ
+     ========================================================================== -->
+<div class="mobilemenu" id="mobilemenu" role="dialog" aria-modal="true" aria-label="Меню">
+  <div class="mobilemenu__head">
+    <span class="logo">
+      <svg class="logo__mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect width="40" height="40" rx="12" fill="var(--accent)"/>
+        <path d="M11 12h6.6c4.4 0 7.4 3.1 7.4 8s-3 8-7.4 8H11V12Z" fill="#fff"/>
+        <path d="M15.4 15.9v8.2h2c2.1 0 3.4-1.5 3.4-4.1s-1.3-4.1-3.4-4.1h-2Z" fill="var(--accent)"/>
+        <circle cx="28.6" cy="27" r="2.4" fill="#fff"/>
+      </svg>
+      <span><span class="logo__text">DC Bakery</span><span class="logo__sub">B2B · ОПТ</span></span>
+    </span>
+    <button class="icon-btn icon-btn--sm ml-auto" type="button" data-close="menu" aria-label="Закрыть меню">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg>
+    </button>
+  </div>
+
+  <div class="mobilemenu__body">
+    <nav class="mobilemenu__nav" aria-label="Мобильная навигация">
+      <a class="mobilemenu__link" href="#/catalog">Каталог
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg></a>
+      <a class="mobilemenu__link" href="#/home#about">О нас
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg></a>
+      <a class="mobilemenu__link" href="#/payment-delivery">Оплата и доставка
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg></a>
+      <a class="mobilemenu__link" href="#/contacts">Контакты
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg></a>
+      <a class="mobilemenu__link" href="#/orders">Мои заказы
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg></a>
+    </nav>
+
+    <div class="row row--wrap mb-5">
+      <span class="text-xs text-muted">Язык:</span>
+      <button class="chip is-active" type="button" data-lang="RU">Русский</button>
+      <button class="chip" type="button" data-lang="KK">Қазақша</button>
+      <button class="chip" type="button" data-lang="EN">English</button>
+    </div>
+
+    <div class="surface surface--warm pad-5" style="border-radius:var(--r-xl)">
+      <p class="eyebrow">Связаться</p>
+      <div class="stack stack-2 mt-3">
+        <a class="row text-sm" href="https://wa.me/77477272650" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-whatsapp"/></svg>
+          <b>+7 747 727 2650</b></a>
+        <a class="row text-sm" href="tel:+77476940766">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-phone"/></svg>
+          <b>+7 747 694 0766</b></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="mobilemenu__foot">
+    <a class="btn btn--primary btn--block" href="#/register">Стать партнёром</a>
+    <a class="btn btn--retail btn--block" href="#" data-retail>Заказать в розницу</a>
+  </div>
+</div>
+
+<main class="app-main" id="app">
+
+<!-- ==========================================================================
+     МАРШРУТ #/home — ГЛАВНАЯ
+     ========================================================================== -->
+<section class="route" data-route="home" id="route-home">
+
+  <!-- ── 1. HERO ─────────────────────────────────────────────────────────── -->
+  <div class="hero">
+    <div class="hero__grain" aria-hidden="true"></div>
+    <div class="container hero__inner">
+
+      <div class="hero__content">
+        <span class="hero__eyebrow">B2B-поставки · Алматы</span>
+        <h1 class="hero__title">Надёжные поставки
+для вашего бизнеса</h1>
+        <p class="hero__sub">Десерты, полуфабрикаты и мясо для кофеен, ресторанов, отелей и магазинов. Оптовые цены, живые остатки, история заказов — всё в одном кабинете.</p>
+
+        <div class="hero__cta">
+          <a class="btn btn--lg btn--primary" href="#/catalog">
+            Открыть каталог
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-arrow-right"/></svg>
+          </a>
+          <a class="btn btn--lg btn--secondary" href="#/register">Стать партнёром</a>
+        </div>
+
+        <!-- Отдельная ненавязчивая кнопка для розничного клиента -->
+        <div class="hero__retail">
+          <span>Нужен один торт или коробка пирожных?</span>
+          <!-- TODO(backend): реальный URL del Cappuccino не найден в проекте. -->
+          <a class="link-accent" href="#" data-retail>Заказать в розницу →</a>
+        </div>
+      </div>
+
+      <!-- Сцена: реальные фотографии продукции DC Bakery -->
+      <div class="hero__stage" aria-hidden="true">
+        <div class="hero__glow"></div>
+        <div class="hero__photo hero__photo--main">
+          <img src="assets/products/tort-medovik.webp" alt="" loading="eager" width="700" height="700">
+        </div>
+        <div class="hero__photo hero__photo--a">
+          <img src="assets/products/ispanskiy-chizkeyk.webp" alt="" loading="lazy" width="300" height="400">
+        </div>
+        <div class="hero__photo hero__photo--b">
+          <img src="assets/products/shu-yagodnyy.webp" alt="" loading="lazy" width="300" height="300">
+        </div>
+        <div class="hero__tag">
+          <img src="assets/products/pelmeni-s-govyadinoy.webp" alt="" width="40" height="40">
+          <span>
+            <b>53 позиции</b>
+            <span>десерты · полуфабрикаты · мясо</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Показатели -->
+    <div class="container">
+      <div class="hero__stats">
+        <div class="hero__stat"><b>50+</b><span>партнёров по Казахстану</span></div>
+        <div class="hero__stat"><b>98%</b><span>заказов без замечаний</span></div>
+        <div class="hero__stat"><b>Халал</b><span>вся мясная линейка</span></div>
+        <div class="hero__stat"><b>100%</b><span>собственное производство</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2. ГОРИЗОНТАЛЬНАЯ НАВИГАЦИЯ ПО РАЗДЕЛАМ ────────────────────────── -->
+  <div class="catbar" id="home-catbar">
+    <div class="container">
+      <nav class="catrail no-scrollbar" aria-label="Разделы главной">
+        <a class="catrail__item is-active" href="#/home#popular">популярное</a>
+        <a class="catrail__item" href="#/home#deserty">десерты<span class="count">34</span></a>
+        <a class="catrail__item" href="#/home#polufabrikaty">полуфабрикаты<span class="count">11</span></a>
+        <a class="catrail__item" href="#/home#myaso">мясо<span class="count">4</span></a>
+        <a class="catrail__item" href="#/home#seasonal">сезонное</a>
+        <a class="catrail__item" href="#/home#showcase">для витрины</a>
+        <a class="catrail__item" href="#/home#delivery">доставка</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- ── 3. АКЦИЯ «5 ДЕСЕРТОВ» — программа наград ───────────────────────── -->
+  <section class="section section--tight" id="promo">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-head__text">
+          <span class="eyebrow">Бонусная программа</span>
+          <h2>Награда за объём недели</h2>
+        </div>
+        <!-- Переключатель демонстрационных состояний прогресса -->
+        <div class="section-head__aside reward__states" role="group" aria-label="Состояния прогресса">
+          <button class="chip" type="button" data-promo-state="empty">Прогресс 0%</button>
+          <button class="chip is-active" type="button" data-promo-state="progress">Прогресс 65%</button>
+          <button class="chip" type="button" data-promo-state="reward">Награда получена</button>
+        </div>
+      </div>
+
+      <article class="reward" id="reward" data-state="progress">
+        <div class="reward__top">
+          <div>
+            <div class="row row--wrap">
+              <span class="reward__badge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-gift"/></svg>
+                Бонусная программа
+              </span>
+              <span class="reward__period">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg>
+                с 1 августа по 30 ноября 2026
+              </span>
+              <!-- Информационный tooltip -->
+              <span class="tip">
+                <button class="tip__trigger" type="button" aria-label="Как считается сумма" data-tip>i</button>
+                <span class="tip__bubble" role="tooltip">Сумма считается по подтверждённым и оплаченным заказам одного БИН/ИИН с понедельника по воскресенье.</span>
+              </span>
+            </div>
+
+            <h3 class="reward__title">5 десертов в подарок за заказы недели</h3>
+
+            <div class="reward__amount">
+              <b data-reward-amount>35 000 ₸</b>
+              <span data-reward-caption>до подарка · набрано 65 000 ₸ из 100 000 ₸</span>
+            </div>
+
+            <!-- Шкала с этапами -->
+            <div class="reward__scale">
+              <div class="milestones">
+                <div class="milestones__track">
+                  <div class="milestones__fill" data-reward-fill style="width:65%"></div>
+                </div>
+                <div class="milestones__nodes" data-reward-nodes></div>
+                <div class="milestones__labels" data-reward-labels></div>
+              </div>
+            </div>
+
+            <p class="text-sm text-muted mt-5">Оформляйте заказы на общую сумму от 100 000 ₸ за календарную неделю — и получайте комплимент: пять десертов на выбор вместе со следующим заказом.</p>
+          </div>
+
+          <!-- Карточки подарочных десертов -->
+          <aside class="reward__gifts">
+            <h4>Десерты на выбор</h4>
+            <div class="reward__giftlist" data-reward-gifts></div>
+            <p class="text-xs text-muted mt-4">Пять позиций на выбор партнёра — приезжают со следующим подтверждённым заказом.</p>
+          </aside>
+        </div>
+
+        <!-- Раскрываемая панель условий -->
+        <div class="reward__terms" id="reward-terms">
+          <button class="reward__termsbtn" type="button" data-toggle="reward-terms" aria-expanded="false">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-file"/></svg>
+            Условия акции
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-down"/></svg>
+          </button>
+          <div class="reward__termsbody">
+            <ul class="reward__termslist" data-reward-terms></ul>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ── 4. БЫСТРЫЙ ПОВТОР ЗАКАЗА (для существующего клиента) ───────────── -->
+  <section class="section section--tight">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-head__text">
+          <span class="eyebrow">Coffee Point, повторим?</span>
+          <h2>Быстрый повтор заказа</h2>
+        </div>
+        <div class="section-head__aside">
+          <a class="btn btn--sm btn--ghost" href="#/orders">Все заказы
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="surface pad-5" style="border-radius:var(--r-2xl)">
+        <div class="row row--wrap" style="gap:var(--s-4)">
+          <div>
+            <p class="mono text-sm" style="font-weight:600">DC-2607-0121</p>
+            <p class="text-xs text-muted mt-2">11 июля 2026 · 4 позиции · 62 шт</p>
+          </div>
+          <div class="ml-auto row" style="gap:var(--s-4)">
+            <div style="text-align:right">
+              <b style="font-family:var(--font-display);font-size:var(--t-h4);letter-spacing:-.02em" class="num">57 280 ₸</b>
+              <p class="text-xs text-muted">сумма заказа</p>
+            </div>
+            <button class="btn btn--primary" type="button" data-repeat-order="DC-2607-0121">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="#i-repeat"/></svg>
+              Повторить
+            </button>
+          </div>
+        </div>
+        <div class="rail rail--sm rail--to-grid no-scrollbar mt-5" data-list="repeat"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 5. ПОПУЛЯРНОЕ (poster-карточки) ────────────────────────────────── -->
+  <section class="section section--tight" id="popular">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-head__text">
+          <span class="eyebrow">Популярное</span>
+          <h2>Часто берут партнёры</h2>
+        </div>
+        <div class="section-head__aside">
+          <a class="btn btn--sm btn--secondary" href="#/catalog?collection=popular">Смотреть все 13</a>
+        </div>
+      </div>
+      <div class="rail rail--to-grid no-scrollbar" data-list="popular-posters"></div>
+    </div>
+  </section>
+
+  <!-- ── 6. КАТЕГОРИИ ───────────────────────────────────────────────────── -->
+  <section class="section section--tight">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-head__text">
+          <span class="eyebrow">Каталог</span>
+          <h2>Закупка по разделам</h2>
+        </div>
+        <div class="section-head__aside">
+          <a class="btn btn--sm btn--ghost" href="#/catalog">Весь каталог
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="grid grid-4" data-list="categories"></div>
+    </div>
+  </section>
+
+  <!-- ── 7. ДЕСЕРТЫ ─────────────────────────────────────────────────────── -->
+  <section class="section section--tight" id="deserty">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-head__text">
+          <span class="eyebrow">Десерты</span>
+          <h2>Витрина кофейни</h2>
+        </div>
+        <div class="section-head__aside">
+          <a class="btn btn--sm btn--secondary" href="#/catalog?category=deserty">Все 34 позиции</a>
+        </div>
+      </div>
+      <div class="rail rail--to-grid no-scrollbar" data-list="deserty"></div>
+    </div>
+  </section>
+
+  <!-- ── 8. ПОЛУФАБРИКАТЫ ───────────────────────────────────────────────── -->
+  <section class="section section--tight" id="polufabrikaty">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-head__text">
+          <span class="eyebrow">Полуфабрикаты</span>
+          <h2>Заготовки для кухни</h2>
+        </div>
+        <div class="section-head__aside">
+          <a class="btn btn--sm btn--secondary" href="#/catalog?category=polufabrikaty">Все 11 позиций</a>
+        </div>
+      </div>
+      <div class="rail rail--to-grid no-scrollbar" data-list="polufabrikaty"></div>
+    </div>
+  </section>
+
+  <!-- ── 9. МЯСО (позиции без фотографий — видна заглушка) ──────────────── -->
+  <section class="section section--tight" id="myaso">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-head__text">
+          <span class="eyebrow">Мясо · Халал</span>
+          <h2>Мякоть, фарш и стейки</h2>
+        </div>
+        <div class="section-head__aside">
+          <a class="btn btn--sm btn--secondary" href="#/catalog?category=myaso">Все 4 позиции</a>
+        </div>
+      </div>
+      <div class="rail rail--to-grid no-scrollbar" data-list="myaso"></div>
+    </div>
+  </section>
+
+  <!-- ── 10. СЕЗОННАЯ ПОДБОРКА ──────────────────────────────────────────── -->
+  <section class="section section--tight" id="seasonal">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-head__text">
+          <span class="eyebrow">Сезонная подборка</span>
+          <h2>Лёгкие ягодные и фруктовые вкусы</h2>
+        </div>
+      </div>
+      <div class="rail rail--to-grid rail--to-grid-3 no-scrollbar" data-list="seasonal-posters"></div>
+    </div>
+  </section>
+
+  <!-- ── 11. ТОВАРЫ ДЛЯ ВИТРИНЫ ─────────────────────────────────────────── -->
+  <section class="section section--tight" id="showcase">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-head__text">
+          <span class="eyebrow">Для витрины</span>
+          <h2>Штучные позиции под кофе</h2>
+        </div>
+        <div class="section-head__aside">
+          <a class="btn btn--sm btn--secondary" href="#/catalog?collection=showcase">Открыть подборку</a>
+        </div>
+      </div>
+      <div class="rail rail--to-grid no-scrollbar" data-list="showcase"></div>
+    </div>
+  </section>
+
+  <!-- ── 12. B2B-ПРЕИМУЩЕСТВА ───────────────────────────────────────────── -->
+  <section class="section" id="advantages">
+    <div class="container">
+      <div class="section-head">
+        <div class="section-head__text">
+          <span class="eyebrow">Почему DC Bakery</span>
+          <h2>B2B-закупка в одном окне</h2>
+        </div>
+      </div>
+      <div class="grid grid-3up" data-list="advantages"></div>
+    </div>
+  </section>
+
+  <!-- ── 13. ДОСТАВКА И ЭТАПЫ РАБОТЫ ────────────────────────────────────── -->
+  <section class="section" id="delivery">
+    <div class="container">
+      <div class="surface surface--dark pad-6 pad-md-8" style="border-radius:var(--r-3xl)">
+        <div class="section-head">
+          <div class="section-head__text">
+            <span class="eyebrow eyebrow--light">Как работает заказ</span>
+            <h2 style="max-width:16ch">Заказ → подтверждение → счёт → доставка</h2>
+          </div>
+          <div class="section-head__aside">
+            <a class="btn btn--sm btn--on-dark" href="#/payment-delivery">Оплата и доставка</a>
+          </div>
+        </div>
+
+        <div class="grid grid-4" data-list="steps"></div>
+
+        <div class="grid grid-3up mt-7">
+          <div class="glass glass--dark pad-5" style="border-radius:var(--r-xl)">
+            <p class="eyebrow eyebrow--light">График поставок</p>
+            <p style="font-family:var(--font-display);font-size:var(--t-h4);font-weight:700;margin-top:8px">Вторник · Четверг · Суббота</p>
+            <p class="text-xs mt-2" style="color:var(--on-dark-muted)">Приём заявок до 18:00 накануне дня доставки</p>
+          </div>
+          <div class="glass glass--dark pad-5" style="border-radius:var(--r-xl)">
+            <p class="eyebrow eyebrow--light">Минимальный заказ</p>
+            <p style="font-family:var(--font-display);font-size:var(--t-h4);font-weight:700;margin-top:8px" class="num">15 000 ₸</p>
+            <p class="text-xs mt-2" style="color:var(--on-dark-muted)">От минимума доставка бесплатная</p>
+          </div>
+          <div class="glass glass--dark pad-5" style="border-radius:var(--r-xl)">
+            <p class="eyebrow eyebrow--light">Ниже минимума</p>
+            <p style="font-family:var(--font-display);font-size:var(--t-h4);font-weight:700;margin-top:8px" class="num">1 500–3 000 ₸</p>
+            <p class="text-xs mt-2" style="color:var(--on-dark-muted)">Доплата за доставку по усмотрению поставщика</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 14. О КОМПАНИИ ─────────────────────────────────────────────────── -->
+  <section class="section" id="about">
+    <div class="container">
+      <div class="grid" style="grid-template-columns:1fr">
+        <div class="surface pad-6 pad-md-8" style="border-radius:var(--r-3xl);overflow:hidden">
+          <div class="grid grid-about">
+            <div>
+              <span class="eyebrow">О компании</span>
+              <h2 class="mt-3" style="max-width:18ch">DC Bakery — B2B поставщик еды в Казахстане</h2>
+              <p class="lead mt-5">Мы специализируемся на поставках продуктов питания для B2B-сегмента: кофеен, ресторанов, гостиниц и магазинов. Работаем с 50+ партнёрами по всему Казахстану.</p>
+              <div class="row row--wrap mt-6">
+                <span class="chip chip--accent">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-shield"/></svg>
+                  Собственное производство
+                </span>
+                <span class="chip chip--accent">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-wheat"/></svg>
+                  Пекарня и цех полуфабрикатов
+                </span>
+                <span class="chip chip--accent">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-package"/></svg>
+                  Халал по мясной линейке
+                </span>
+              </div>
+              <div class="row row--wrap mt-6">
+                <a class="btn btn--primary" href="#/register">Стать партнёром</a>
+                <a class="btn btn--secondary" href="#/contacts">Контакты и реквизиты</a>
+              </div>
+            </div>
+
+            <!-- Фотографии производства/продукции из существующих ассетов -->
+            <div class="grid grid-3up" style="gap:var(--s-3)">
+              <img src="assets/products/tort-napoleon.webp" alt="Торт Наполеон" style="border-radius:var(--r-xl);aspect-ratio:3/4;object-fit:cover;width:100%" loading="lazy">
+              <img src="assets/products/sinnabon.webp" alt="Синнабон" style="border-radius:var(--r-xl);aspect-ratio:3/4;object-fit:cover;width:100%;margin-top:var(--s-6)" loading="lazy">
+              <img src="assets/products/manty-s-govyadinoy-i-tykvoy.webp" alt="Манты с говядиной и тыквой" style="border-radius:var(--r-xl);aspect-ratio:3/4;object-fit:cover;width:100%" loading="lazy">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 15. ФИНАЛЬНЫЙ CTA ──────────────────────────────────────────────── -->
+  <section class="section section--tight">
+    <div class="container">
+      <div class="surface surface--accent pad-6 pad-md-8" style="border-radius:var(--r-3xl);text-align:center">
+        <span class="eyebrow eyebrow--light">Начать работу</span>
+        <h2 class="mt-3" style="max-width:20ch;margin-inline:auto">Соберите первую оптовую заявку в каталоге</h2>
+        <p class="mt-4" style="color:rgba(255,255,255,.82);max-width:52ch;margin-inline:auto">Выберите позиции, проверьте остатки и отправьте заказ на подтверждение менеджеру.</p>
+        <div class="row row--wrap mt-6" style="justify-content:center">
+          <a class="btn btn--lg btn--white" href="#/catalog">Перейти в каталог</a>
+          <a class="btn btn--lg btn--on-dark" href="#/register">Стать партнёром</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/catalog — КАТАЛОГ
+     Состояния (переключаются инспектором): normal · skeleton · empty · error
+     ========================================================================== -->
+<section class="route" data-route="catalog" id="route-catalog">
+
+  <div class="container pagehead">
+    <nav class="crumbs" aria-label="Хлебные крошки">
+      <a href="#/home">Главная</a>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg>
+      <span data-catalog-crumb>Каталог</span>
+    </nav>
+    <h1>Каталог</h1>
+    <p class="lead">Оптовые цены и живые остатки. Минимальный заказ — 15 000 ₸, доставка вт · чт · сб.</p>
+  </div>
+
+  <!-- Горизонтальная навигация по категориям -->
+  <div class="catbar">
+    <div class="container">
+      <nav class="catrail no-scrollbar" data-catalog-cats aria-label="Категории каталога"></nav>
+    </div>
+  </div>
+
+  <div class="container section section--flush-top" style="padding-top:var(--s-6)">
+    <div class="catalog">
+
+      <!-- ── Фильтры (desktop) ──────────────────────────────────────────── -->
+      <aside class="filters" data-filters aria-label="Фильтры каталога">
+        <div class="filters__head">
+          <span class="filters__title">Фильтры</span>
+          <button class="btn btn--xs btn--ghost" type="button" data-filter-reset>Сбросить всё</button>
+        </div>
+
+        <div class="filters__group">
+          <p class="filters__legend">Категория</p>
+          <div class="filters__list" data-filter-categories></div>
+        </div>
+
+        <div class="filters__group">
+          <p class="filters__legend">Подкатегория</p>
+          <div class="filters__list" data-filter-subcategories></div>
+        </div>
+
+        <div class="filters__group">
+          <p class="filters__legend">Цена, ₸</p>
+          <div class="price-range">
+            <div class="price-range__inputs">
+              <input class="input" type="number" placeholder="от" data-filter-min aria-label="Цена от">
+              <span class="price-range__dash">—</span>
+              <input class="input" type="number" placeholder="до" data-filter-max aria-label="Цена до">
+            </div>
+            <div class="price-range__track">
+              <div class="price-range__fill" data-range-fill style="left:0%;right:0%"></div>
+              <div class="price-range__knob" data-range-knob-a style="left:0%"></div>
+              <div class="price-range__knob" data-range-knob-b style="left:100%"></div>
+            </div>
+            <div class="price-range__legend"><span>230 ₸</span><span>11 550 ₸</span></div>
+          </div>
+        </div>
+
+        <div class="filters__group">
+          <p class="filters__legend">Наличие</p>
+          <label class="switch">
+            <input type="checkbox" data-filter-instock>
+            <span>Только в наличии</span>
+          </label>
+          <label class="switch mt-3">
+            <input type="checkbox" data-filter-halal>
+            <span>Только халал</span>
+          </label>
+        </div>
+      </aside>
+
+      <!-- ── Основная колонка ───────────────────────────────────────────── -->
+      <div>
+        <!-- Панель инструментов -->
+        <div class="catalog__toolbar">
+          <div class="input-group" data-search-group>
+            <span class="input-group__icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="#i-search"/></svg>
+            </span>
+            <input class="input" type="search" placeholder="Найти товар..." data-search aria-label="Поиск по каталогу">
+            <button class="input-group__clear" type="button" data-search-clear aria-label="Очистить поиск">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg>
+            </button>
+          </div>
+
+          <div class="catalog__sort">
+            <select class="select" data-sort aria-label="Сортировка">
+              <option value="default">По умолчанию</option>
+              <option value="popular">По популярности</option>
+              <option value="price_asc">Цена: по возрастанию</option>
+              <option value="price_desc">Цена: по убыванию</option>
+            </select>
+          </div>
+
+          <button class="btn btn--secondary catalog__filterbtn" type="button" data-open="filters">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="#i-sliders"/></svg>
+            Фильтры
+            <span class="badge badge--accent hidden" data-filter-count>0</span>
+          </button>
+        </div>
+
+        <p class="catalog__count mb-4">Найдено <b data-catalog-count>53</b> позиции</p>
+
+        <!-- Активные фильтры -->
+        <div class="activefilters hidden" data-active-filters></div>
+
+        <!-- Состояние: обычная загрузка -->
+        <div data-catalog-state="normal">
+          <div class="product-grid" data-list="catalog"></div>
+          <div class="catalog__more" data-catalog-more>
+            <button class="btn btn--secondary btn--lg" type="button" data-load-more>Показать ещё</button>
+          </div>
+        </div>
+
+        <!-- Состояние: skeleton -->
+        <div class="product-grid hidden" data-catalog-state="skeleton" data-skeleton-grid></div>
+
+        <!-- Состояние: пустой результат поиска -->
+        <div class="state hidden" data-catalog-state="empty">
+          <div class="state__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-search"/></svg>
+          </div>
+          <h3 class="state__title">Ничего не найдено по выбранным фильтрам</h3>
+          <p class="state__text">Попробуйте изменить запрос, снять фильтр по наличию или расширить диапазон цены.</p>
+          <div class="state__actions">
+            <button class="btn btn--primary" type="button" data-filter-reset>Сбросить фильтры</button>
+            <a class="btn btn--secondary" href="#/catalog">Весь каталог</a>
+          </div>
+        </div>
+
+        <!-- Состояние: ошибка (заглушка вместо backend) -->
+        <div class="state state--error hidden" data-catalog-state="error">
+          <div class="state__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-alert-triangle"/></svg>
+          </div>
+          <h3 class="state__title">Не удалось загрузить каталог</h3>
+          <p class="state__text">Это визуальная заглушка состояния ошибки. В рабочем сайте здесь будет повтор запроса к каталогу.</p>
+          <div class="state__actions">
+            <button class="btn btn--primary" type="button" data-catalog-retry>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="#i-refresh"/></svg>
+              Повторить
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/product — СТРАНИЦА ТОВАРА
+     Полноразмерный вариант карточки. Оверлейные варианты (модальное окно на
+     desktop и полноэкранная карточка на mobile) — см. блок #psheet ниже.
+     ========================================================================== -->
+<section class="route" data-route="product" id="route-product">
+  <div class="container pagehead">
+    <nav class="crumbs" aria-label="Хлебные крошки">
+      <a href="#/home">Главная</a>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg>
+      <a href="#/catalog">Каталог</a>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg>
+      <span data-product-crumb>Товар</span>
+    </nav>
+  </div>
+
+  <div class="container" style="padding-bottom:var(--s-10)">
+    <!-- Состояние: обычное -->
+    <div data-product-state="normal">
+      <div class="grid grid-2up" data-product-page></div>
+
+      <section class="section section--tight">
+        <div class="section-head">
+          <div class="section-head__text">
+            <span class="eyebrow">Рекомендуем</span>
+            <h2>Из этого же раздела</h2>
+          </div>
+        </div>
+        <div class="rail rail--to-grid no-scrollbar" data-list="product-related"></div>
+      </section>
+    </div>
+
+    <!-- Состояние: loading (skeleton) -->
+    <div class="hidden" data-product-state="loading">
+      <div class="grid grid-2up" data-product-skeleton>
+        <div class="skeleton skeleton--img" style="aspect-ratio:1/1;border-radius:var(--r-2xl)"></div>
+        <div class="stack stack-4">
+          <div class="skeleton skeleton--pill w-40"></div>
+          <div class="skeleton skeleton--title w-80"></div>
+          <div class="skeleton skeleton--text w-60"></div>
+          <div class="skeleton" style="height:120px;border-radius:var(--r-lg)"></div>
+          <div class="skeleton skeleton--pill w-50" style="height:52px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Состояние: ошибка получения данных (заглушка) -->
+    <div class="state state--error hidden" data-product-state="error">
+      <div class="state__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-alert-triangle"/></svg>
+      </div>
+      <h3 class="state__title">Не удалось получить данные товара</h3>
+      <p class="state__text">Визуальная заглушка. В рабочем сайте здесь будет повторный запрос карточки и остатков.</p>
+      <div class="state__actions">
+        <button class="btn btn--primary" type="button" data-product-retry>Повторить</button>
+        <a class="btn btn--secondary" href="#/catalog">Вернуться в каталог</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/cart — КОРЗИНА (отдельная страница)
+     Состояния: normal · empty · loading · error
+     Оверлейные варианты корзины (desktop drawer / mobile bottom sheet) — #cart
+     ========================================================================== -->
+<section class="route" data-route="cart" id="route-cart">
+  <div class="container pagehead">
+    <span class="eyebrow">Заявка</span>
+    <h1>Корзина</h1>
+    <p class="lead">Минимальная сумма B2B-заявки — 15 000 ₸. Менеджер подтвердит остатки и слот доставки.</p>
+  </div>
+
+  <div class="container" style="padding-bottom:var(--s-10)">
+
+    <!-- Состояние: обычное -->
+    <div data-cart-state="normal">
+      <div class="checkout">
+        <div class="stack stack-3">
+          <!-- Прогресс до минимальной суммы -->
+          <div class="minbar" data-minbar>
+            <div class="minbar__top">
+              <span class="minbar__label" data-minbar-label>Осталось набрать 4 200 ₸ до минимального заказа</span>
+              <span class="minbar__value" data-minbar-value>10 800 / 15 000 ₸</span>
+            </div>
+            <div class="progress"><div class="progress__bar" data-minbar-bar style="width:72%"></div></div>
+          </div>
+
+          <div class="stack stack-3" data-cart-lines></div>
+
+          <div class="row row--wrap mt-3">
+            <a class="btn btn--ghost" href="#/catalog">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="#i-arrow-left"/></svg>
+              Продолжить закупку
+            </a>
+            <button class="btn btn--ghost ml-auto" type="button" data-cart-clear>Очистить корзину</button>
+          </div>
+        </div>
+
+        <!-- Липкая панель с итогом -->
+        <aside class="sticky-summary">
+          <div class="surface pad-5" style="border-radius:var(--r-2xl)">
+            <h3 style="font-size:var(--t-h4)">Итог заявки</h3>
+            <div class="summary mt-5">
+              <div class="summary__row"><span>Позиций</span><b data-cart-positions>0</b></div>
+              <div class="summary__row"><span>Единиц товара</span><b data-cart-units>0</b></div>
+              <div class="summary__row"><span>Доставка</span><b data-cart-delivery>0 ₸</b></div>
+              <div class="summary__total"><span>К оплате</span><b data-cart-total>0 ₸</b></div>
+            </div>
+
+            <div class="alert alert--warning mt-4 hidden" data-cart-minwarn>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-alert-circle"/></svg>
+              <span><b>Нужно добрать корзину</b>Для B2B-заявки минимальная сумма составляет 15 000 ₸.</span>
+            </div>
+
+            <div class="alert alert--success mt-4 hidden" data-cart-minok>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check-circle"/></svg>
+              <span><b>Минимум достигнут</b>Оформление доступно, доставка бесплатная.</span>
+            </div>
+
+            <a class="btn btn--primary btn--lg btn--block mt-5" href="#/checkout" data-cart-checkout>Оформить заявку</a>
+            <p class="text-xs text-muted text-center mt-3">Оплата — по счёту. Счёт придёт после подтверждения менеджером.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Состояние: пустая корзина -->
+    <div class="state hidden" data-cart-state="empty">
+      <div class="state__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cart"/></svg>
+      </div>
+      <h3 class="state__title">В корзине пока пусто</h3>
+      <p class="state__text">Соберите заявку из каталога — 53 позиции: десерты, полуфабрикаты и мясо. Минимальная сумма заказа 15 000 ₸.</p>
+      <div class="state__actions">
+        <a class="btn btn--primary btn--lg" href="#/catalog">Открыть каталог</a>
+        <button class="btn btn--secondary btn--lg" type="button" data-repeat-order="DC-2607-0121">Повторить прошлый заказ</button>
+      </div>
+    </div>
+
+    <!-- Состояние: загрузка -->
+    <div class="hidden" data-cart-state="loading">
+      <div class="checkout">
+        <div class="stack stack-3">
+          <div class="skeleton" style="height:74px;border-radius:var(--r-lg)"></div>
+          <div class="skeleton" style="height:104px;border-radius:var(--r-lg)"></div>
+          <div class="skeleton" style="height:104px;border-radius:var(--r-lg)"></div>
+          <div class="skeleton" style="height:104px;border-radius:var(--r-lg)"></div>
+        </div>
+        <div class="skeleton" style="height:300px;border-radius:var(--r-2xl)"></div>
+      </div>
+    </div>
+
+    <!-- Состояние: ошибка -->
+    <div class="state state--error hidden" data-cart-state="error">
+      <div class="state__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-alert-triangle"/></svg>
+      </div>
+      <h3 class="state__title">Корзина временно недоступна</h3>
+      <p class="state__text">Визуальная заглушка состояния ошибки. Позиции сохранены, попробуйте обновить.</p>
+      <div class="state__actions">
+        <button class="btn btn--primary" type="button" data-cart-retry>Обновить корзину</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/checkout — ОФОРМЛЕНИЕ ЗАЯВКИ
+     Состояния: form · loading · error · success
+     ========================================================================== -->
+<section class="route" data-route="checkout" id="route-checkout">
+  <div class="container pagehead">
+    <span class="eyebrow">Оформление заявки</span>
+    <h1>Контакты и доставка</h1>
+    <p class="lead">Заполните контакты и удобное время доставки — менеджер подтвердит заявку и пришлёт счёт в WhatsApp.</p>
+  </div>
+
+  <div class="container" style="padding-bottom:var(--s-10)">
+
+    <!-- ── Состояние: форма ───────────────────────────────────────────── -->
+    <div data-checkout-state="form">
+      <div class="checkout">
+        <form class="surface pad-5 pad-md-8" style="border-radius:var(--r-2xl)" data-checkout-form novalidate>
+
+          <!-- Контакты -->
+          <div class="form-section">
+            <p class="form-section__title">Контакты</p>
+            <div class="form-grid">
+              <label class="field span-2" data-field="company_name">
+                <span class="field__label">Название компании / заведения <span class="req">*</span></span>
+                <input class="input" name="company_name" placeholder="Например, Coffee Point" autocomplete="organization">
+                <span class="field__error">Укажите название компании или заведения</span>
+              </label>
+
+              <label class="field span-2" data-field="customer_bin">
+                <span class="field__label">БИН / ИИН</span>
+                <input class="input mono" name="customer_bin" placeholder="Например, 123456789012" inputmode="numeric" maxlength="12">
+                <span class="field__hint">12 цифр. Нужен для счёта и накладной.</span>
+                <span class="field__error">БИН/ИИН указан неверно — проверьте 12 цифр</span>
+              </label>
+
+              <label class="field" data-field="customer_name">
+                <span class="field__label">Контактное лицо <span class="req">*</span></span>
+                <input class="input" name="customer_name" placeholder="Имя менеджера" autocomplete="name">
+                <span class="field__error">Укажите контактное лицо</span>
+              </label>
+
+              <label class="field" data-field="customer_phone">
+                <span class="field__label">Телефон <span class="req">*</span></span>
+                <input class="input mono" name="customer_phone" placeholder="+7 (___) ___-__-__" inputmode="tel" autocomplete="tel">
+                <span class="field__error">Укажите корректный мобильный номер, например +7 705 123 45 67</span>
+              </label>
+
+              <label class="field span-2" data-field="customer_email">
+                <span class="field__label">E-mail</span>
+                <input class="input" name="customer_email" type="email" placeholder="accounting@example.com" autocomplete="email">
+                <span class="field__hint">На него приходят счёт и документы.</span>
+                <span class="field__error">Введите корректный email</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Доставка -->
+          <div class="form-section">
+            <p class="form-section__title">Доставка</p>
+            <div class="form-grid">
+              <label class="field span-2" data-field="delivery_address">
+                <span class="field__label">Адрес доставки</span>
+                <input class="input" name="delivery_address" placeholder="Город, улица, дом, точка" autocomplete="street-address">
+              </label>
+
+              <div class="field span-2" data-field="delivery_date">
+                <span class="field__label">Дата доставки <span class="req">*</span></span>
+                <div class="datepick no-scrollbar" data-datepick role="group" aria-label="Дата доставки"></div>
+                <span class="field__hint">Доставка: вт · чт · сб. Приём заявок до 18:00 накануне дня доставки.</span>
+                <span class="field__error">Выберите дату доставки</span>
+              </div>
+
+              <label class="field" data-field="delivery_time">
+                <span class="field__label">Время</span>
+                <select class="select" name="delivery_time">
+                  <option>Утро 8-12</option>
+                  <option>День 12-18</option>
+                  <option>Договориться с менеджером</option>
+                </select>
+              </label>
+
+              <label class="field" data-field="delivery_type">
+                <span class="field__label">Способ получения</span>
+                <select class="select" name="delivery_type">
+                  <option>Доставка по адресу</option>
+                  <option>Самовывоз с производства</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <!-- Оплата и документы -->
+          <div class="form-section">
+            <p class="form-section__title">Оплата и документы</p>
+            <div class="stack stack-3">
+              <label class="paymethod">
+                <input type="radio" name="payment" value="invoice" checked>
+                <span class="paymethod__mark" aria-hidden="true"></span>
+                <span>
+                  <b>Выставить счёт</b>
+                  <span>После подтверждения заявки менеджер выставит счёт с реквизитами. Основной способ для B2B.</span>
+                </span>
+              </label>
+              <label class="paymethod">
+                <input type="radio" name="payment" value="bank">
+                <span class="paymethod__mark" aria-hidden="true"></span>
+                <span>
+                  <b>Безналичный расчёт</b>
+                  <span>Для одобренных B2B-клиентов — на условиях консигнации 3–4 дня.</span>
+                </span>
+              </label>
+              <label class="paymethod">
+                <input type="radio" name="payment" value="card">
+                <span class="paymethod__mark" aria-hidden="true"></span>
+                <span>
+                  <b>Банковской картой онлайн</b>
+                  <span>Visa / Mastercard через защищённую страницу банка-эквайера. В прототипе открывает заглушку платёжного шлюза.</span>
+                </span>
+              </label>
+
+              <label class="field" data-field="comment">
+                <span class="field__label">Комментарий</span>
+                <textarea class="textarea" name="comment" placeholder="Особые условия, удобный контакт, детали доставки"></textarea>
+              </label>
+            </div>
+          </div>
+
+          <!-- Согласие с офертой -->
+          <div class="form-section">
+            <div class="field" data-field="oferta">
+              <label class="check check--card">
+                <input type="checkbox" name="oferta">
+                <span>Я ознакомлен(а) и принимаю условия <a class="link-accent" href="#/oferta">Публичной оферты</a> и <a class="link-accent" href="#/privacy">Политики конфиденциальности</a></span>
+              </label>
+              <span class="field__error">Необходимо принять условия оферты</span>
+            </div>
+
+            <div class="row row--wrap mt-5">
+              <a class="btn btn--ghost" href="#/cart">Вернуться в корзину</a>
+              <div class="row ml-auto" style="gap:var(--s-2)">
+                <button class="btn btn--secondary" type="button" data-checkout-fill>Заполнить демо-данными</button>
+                <button class="btn btn--primary btn--lg" type="submit" data-checkout-submit>Отправить заявку</button>
+              </div>
+            </div>
+            <p class="text-xs text-muted mt-3">Прототип: данные никуда не отправляются, кнопка показывает спроектированный success-screen.</p>
+          </div>
+        </form>
+
+        <!-- Сводка заказа -->
+        <aside class="sticky-summary">
+          <div class="surface pad-5" style="border-radius:var(--r-2xl)">
+            <div class="row">
+              <h3 style="font-size:var(--t-h4)">Сводка заказа</h3>
+              <a class="btn btn--xs btn--ghost ml-auto" href="#/cart">Изменить</a>
+            </div>
+            <div class="order-summary__list mt-4" data-checkout-items></div>
+            <hr class="divider mt-4">
+            <div class="summary mt-4">
+              <div class="summary__row"><span>Позиций</span><b data-checkout-positions>0</b></div>
+              <div class="summary__row"><span>Доставка</span><b>0 ₸</b></div>
+              <div class="summary__total"><span>К оплате</span><b data-checkout-total>0 ₸</b></div>
+            </div>
+            <div class="stub mt-4">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-info"/></svg>
+              <span>Заглушка: счёт и документы формируются на стороне backend после подтверждения заявки менеджером.</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ── Состояние: отправка ────────────────────────────────────────── -->
+    <div class="state hidden" data-checkout-state="loading">
+      <div class="state__icon"><span class="spinner spinner--lg"></span></div>
+      <h3 class="state__title">Отправляем заявку…</h3>
+      <p class="state__text">Проверяем остатки и передаём заявку менеджеру. Обычно занимает несколько секунд.</p>
+    </div>
+
+    <!-- ── Состояние: ошибка backend ──────────────────────────────────── -->
+    <div class="state state--error hidden" data-checkout-state="error">
+      <div class="state__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-alert-triangle"/></svg>
+      </div>
+      <h3 class="state__title">Ошибка отправки, попробуйте снова</h3>
+      <p class="state__text">Заглушка состояния ошибки backend. Заявка не потеряна — корзина сохранена.</p>
+      <div class="state__actions">
+        <button class="btn btn--primary" type="button" data-checkout-back>Вернуться к форме</button>
+        <a class="btn btn--secondary" href="https://wa.me/77477272650" target="_blank" rel="noopener">Написать в WhatsApp</a>
+      </div>
+    </div>
+
+    <!-- ── Состояние: заявка создана + ожидание подтверждения ─────────── -->
+    <div class="hidden" data-checkout-state="success">
+      <div class="state state--success">
+        <div class="state__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check-circle"/></svg>
+        </div>
+        <h3 class="state__title">Заявка создана</h3>
+        <p class="state__text">Номер заявки <b class="mono">DC-2607-0152</b>. Менеджер проверит остатки и слот доставки, затем пришлёт счёт в WhatsApp на +7 705 123 45 67.</p>
+        <div class="state__actions">
+          <a class="btn btn--primary btn--lg" href="#/order-details">Открыть заявку</a>
+          <a class="btn btn--secondary btn--lg" href="#/catalog">Вернуться в каталог</a>
+        </div>
+      </div>
+
+      <div class="surface pad-5 pad-md-8 mt-5" style="border-radius:var(--r-2xl);max-width:720px;margin-inline:auto">
+        <p class="eyebrow">Что дальше</p>
+        <div class="steps mt-5">
+          <div class="steps__item is-done">
+            <span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg></span>
+            <div><p class="steps__title">Заявка отправлена</p><p class="steps__meta">Сегодня, 14:32</p></div>
+          </div>
+          <div class="steps__item is-current">
+            <span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg></span>
+            <div><p class="steps__title">Ожидает подтверждения менеджером</p><p class="steps__meta">Проверяем остатки и слот доставки</p></div>
+          </div>
+          <div class="steps__item">
+            <span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-file"/></svg></span>
+            <div><p class="steps__title">Счёт на оплату</p><p class="steps__meta">Придёт в WhatsApp и на e-mail</p></div>
+          </div>
+          <div class="steps__item">
+            <span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-truck"/></svg></span>
+            <div><p class="steps__title">Доставка</p><p class="steps__meta">Вт · чт · сб, по согласованному слоту</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/login — ВХОД В КАБИНЕТ
+     Состояния: form · loading · error · manager (отдельный менеджерский вход)
+     ========================================================================== -->
+<section class="route" data-route="login" id="route-login">
+  <div class="container auth">
+    <div class="auth__card">
+
+      <!-- Состояние: форма -->
+      <div data-login-state="form">
+        <div class="auth__head">
+          <span class="eyebrow">Кабинет партнёра</span>
+          <h1>Вход в кабинет</h1>
+          <p>История заказов, реквизиты, повтор заявки и документы — в одном месте.</p>
+        </div>
+
+        <form class="stack stack-4" data-login-form novalidate>
+          <label class="field" data-field="login">
+            <span class="field__label">Почта или номер телефона</span>
+            <input class="input" name="login" placeholder="accounting@example.com" autocomplete="username">
+            <span class="field__error">Введите логин и пароль</span>
+          </label>
+
+          <label class="field" data-field="password">
+            <span class="field__label">Пароль</span>
+            <input class="input" name="password" type="password" placeholder="Минимум 8 символов" autocomplete="current-password">
+            <span class="field__error">Пароль должен быть не короче 8 символов</span>
+          </label>
+
+          <div class="row">
+            <label class="check"><input type="checkbox" checked><span>Запомнить меня</span></label>
+            <a class="link-accent text-sm ml-auto" href="#/forgot-password">Забыли пароль?</a>
+          </div>
+
+          <button class="btn btn--primary btn--lg btn--block" type="submit" data-login-submit>Войти</button>
+
+          <div class="stub">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-info"/></svg>
+            <span>Прототип: авторизации нет. Кнопка «Войти» открывает демонстрационный профиль Coffee Point.</span>
+          </div>
+        </form>
+
+        <div class="auth__foot">
+          Нет аккаунта? <a class="link-accent" href="#/register">Зарегистрироваться</a>
+          <div class="mt-4">
+            <button class="btn btn--sm btn--ghost" type="button" data-login-state-btn="manager">Вход для менеджера →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Состояние: проверка (loading) -->
+      <div class="hidden" data-login-state="loading">
+        <div class="state state--bare">
+          <div class="state__icon"><span class="spinner spinner--lg"></span></div>
+          <h3 class="state__title">Проверяем…</h3>
+          <p class="state__text">Ищем аккаунт по почте и телефону.</p>
+        </div>
+      </div>
+
+      <!-- Состояние: ошибка входа -->
+      <div class="hidden" data-login-state="error">
+        <div class="state state--error state--bare">
+          <div class="state__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-alert-circle"/></svg>
+          </div>
+          <h3 class="state__title">Не удалось войти</h3>
+          <p class="state__text">Аккаунт не найден — зарегистрируйтесь или проверьте почту и пароль.</p>
+          <div class="state__actions">
+            <button class="btn btn--primary" type="button" data-login-state-btn="form">Попробовать снова</button>
+            <a class="btn btn--secondary" href="#/register">Зарегистрироваться</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Состояние: менеджерский вход (есть на действующем сайте: /admin/login) -->
+      <div class="hidden" data-login-state="manager">
+        <div class="auth__head">
+          <span class="eyebrow eyebrow--muted">Служебный доступ</span>
+          <h1>Админ-профиль</h1>
+          <p>Отдельный вход для менеджеров и бухгалтерии: заказы, стоп-лист, документы, настройки.</p>
+        </div>
+        <form class="stack stack-4" data-manager-form novalidate>
+          <label class="field">
+            <span class="field__label">E-mail</span>
+            <input class="input" type="email" placeholder="manager@dc-bakery.kz" autocomplete="username">
+          </label>
+          <label class="field">
+            <span class="field__label">Пароль</span>
+            <input class="input" type="password" placeholder="••••••••" autocomplete="current-password">
+          </label>
+          <button class="btn btn--dark btn--lg btn--block" type="submit">Войти в админ-профиль</button>
+          <div class="stub">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-info"/></svg>
+            <span>Заглушка: административная часть не входит в состав дизайн-прототипа витрины.</span>
+          </div>
+        </form>
+        <div class="auth__foot">
+          <button class="btn btn--sm btn--ghost" type="button" data-login-state-btn="form">← Вход для клиента</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/register — РЕГИСТРАЦИЯ
+     Состояния: form · otp · otp-error · success
+     ========================================================================== -->
+<section class="route" data-route="register" id="route-register">
+  <div class="container auth">
+    <div class="auth__card">
+
+      <!-- Шаг 1: анкета -->
+      <div data-register-state="form">
+        <div class="auth__head">
+          <span class="eyebrow">Стать партнёром</span>
+          <h1>Регистрация</h1>
+          <p>Заказы оформляются только с подтверждённым аккаунтом. Код подтверждения придёт в WhatsApp.</p>
+        </div>
+
+        <form class="stack stack-4" data-register-form novalidate>
+          <label class="field" data-field="company">
+            <span class="field__label">Компания / заведение <span class="req">*</span></span>
+            <input class="input" placeholder="Например, Coffee Point">
+            <span class="field__error">Укажите название компании или заведения</span>
+          </label>
+          <label class="field" data-field="bin">
+            <span class="field__label">БИН / ИИН</span>
+            <input class="input mono" placeholder="12 цифр" inputmode="numeric" maxlength="12">
+            <span class="field__error">БИН/ИИН указан неверно — проверьте 12 цифр</span>
+          </label>
+          <label class="field" data-field="phone">
+            <span class="field__label">Телефон WhatsApp <span class="req">*</span></span>
+            <input class="input mono" placeholder="+7 (___) ___-__-__" inputmode="tel">
+            <span class="field__error">Укажите корректный мобильный номер, например +7 705 123 45 67</span>
+          </label>
+          <label class="field" data-field="email">
+            <span class="field__label">E-mail</span>
+            <input class="input" type="email" placeholder="accounting@example.com">
+            <span class="field__hint">На него приходят счёт и документы.</span>
+            <span class="field__error">Введите корректный email</span>
+          </label>
+          <label class="field" data-field="pass">
+            <span class="field__label">Пароль для кабинета <span class="req">*</span></span>
+            <input class="input" type="password" placeholder="Минимум 8 символов">
+            <span class="field__error">Пароль должен быть не короче 8 символов</span>
+          </label>
+
+          <label class="check check--card">
+            <input type="checkbox">
+            <span>Принимаю условия <a class="link-accent" href="#/oferta">Публичной оферты</a> и <a class="link-accent" href="#/privacy">Политики конфиденциальности</a></span>
+          </label>
+
+          <button class="btn btn--primary btn--lg btn--block" type="submit">Получить код в WhatsApp</button>
+        </form>
+
+        <div class="auth__foot">Уже есть аккаунт? <a class="link-accent" href="#/login">Войти</a></div>
+      </div>
+
+      <!-- Шаг 2: код из WhatsApp -->
+      <div class="hidden" data-register-state="otp">
+        <div class="auth__head">
+          <span class="eyebrow">Шаг 2 из 2</span>
+          <h1>Подтвердите номер WhatsApp</h1>
+          <p>Мы отправили код на <b>+7 705 123 45 67</b>. Введите 6 цифр — код действует 2 минуты.</p>
+        </div>
+
+        <div class="otp" data-otp>
+          <input inputmode="numeric" maxlength="1" aria-label="Цифра 1">
+          <input inputmode="numeric" maxlength="1" aria-label="Цифра 2">
+          <input inputmode="numeric" maxlength="1" aria-label="Цифра 3">
+          <input inputmode="numeric" maxlength="1" aria-label="Цифра 4">
+          <input inputmode="numeric" maxlength="1" aria-label="Цифра 5">
+          <input inputmode="numeric" maxlength="1" aria-label="Цифра 6">
+        </div>
+        <p class="field__error text-center mt-3 hidden" data-otp-error style="display:none">Неверный код</p>
+        <p class="text-xs text-muted text-center mt-4">Код действует ещё 1:47</p>
+
+        <button class="btn btn--primary btn--lg btn--block mt-5" type="button" data-register-state-btn="success">Подтвердить и оформить</button>
+        <div class="row mt-3" style="justify-content:center;gap:var(--s-4)">
+          <button class="btn btn--sm btn--ghost" type="button">Ещё раз</button>
+          <button class="btn btn--sm btn--ghost" type="button" data-register-state-btn="otp-error">Показать ошибку кода</button>
+        </div>
+        <div class="auth__foot">
+          <button class="btn btn--sm btn--ghost" type="button" data-register-state-btn="form">← Назад</button>
+        </div>
+      </div>
+
+      <!-- Шаг 2: ошибка кода -->
+      <div class="hidden" data-register-state="otp-error">
+        <div class="auth__head">
+          <span class="eyebrow">Шаг 2 из 2</span>
+          <h1>Подтвердите номер WhatsApp</h1>
+          <p>Мы отправили код на <b>+7 705 123 45 67</b>.</p>
+        </div>
+        <div class="otp has-error">
+          <input value="4" inputmode="numeric" maxlength="1" aria-label="Цифра 1">
+          <input value="1" inputmode="numeric" maxlength="1" aria-label="Цифра 2">
+          <input value="9" inputmode="numeric" maxlength="1" aria-label="Цифра 3">
+          <input value="0" inputmode="numeric" maxlength="1" aria-label="Цифра 4">
+          <input value="2" inputmode="numeric" maxlength="1" aria-label="Цифра 5">
+          <input value="7" inputmode="numeric" maxlength="1" aria-label="Цифра 6">
+        </div>
+        <p class="field__error text-center mt-3" style="display:block">Неверный код</p>
+        <p class="text-xs text-muted text-center mt-2">Срок кода истёк — запросите новый.</p>
+        <button class="btn btn--primary btn--lg btn--block mt-5" type="button">Отправить код заново</button>
+        <div class="auth__foot">
+          <button class="btn btn--sm btn--ghost" type="button" data-register-state-btn="otp">← К вводу кода</button>
+        </div>
+      </div>
+
+      <!-- Успех -->
+      <div class="hidden" data-register-state="success">
+        <div class="state state--success state--bare">
+          <div class="state__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check-circle"/></svg>
+          </div>
+          <h3 class="state__title">Аккаунт создан</h3>
+          <p class="state__text">Номер подтверждён. Менеджер свяжется для согласования условий оптовой работы — обычно в течение рабочего дня.</p>
+          <div class="state__actions">
+            <a class="btn btn--primary btn--lg" href="#/profile">Открыть кабинет</a>
+            <a class="btn btn--secondary btn--lg" href="#/catalog">Открыть каталог</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/forgot-password — ВОССТАНОВЛЕНИЕ ПАРОЛЯ
+     Состояния: form · sent
+     ========================================================================== -->
+<section class="route" data-route="forgot-password" id="route-forgot-password">
+  <div class="container auth">
+    <div class="auth__card">
+
+      <div data-forgot-state="form">
+        <div class="auth__head">
+          <span class="eyebrow">Сброс пароля</span>
+          <h1>Забыли пароль?</h1>
+          <p>Укажите почту, на которую регистрировались, — пришлём ссылку для нового пароля.</p>
+        </div>
+        <form class="stack stack-4" data-forgot-form novalidate>
+          <label class="field" data-field="email">
+            <span class="field__label">E-mail</span>
+            <input class="input" type="email" placeholder="accounting@example.com" autocomplete="email">
+            <span class="field__error">Введите корректный email</span>
+          </label>
+          <button class="btn btn--primary btn--lg btn--block" type="submit">Отправить ссылку</button>
+        </form>
+        <div class="auth__foot"><a class="link-accent" href="#/login">Назад ко входу</a></div>
+      </div>
+
+      <!-- Подтверждение отправки письма -->
+      <div class="hidden" data-forgot-state="sent">
+        <div class="state state--success state--bare">
+          <div class="state__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-mail"/></svg>
+          </div>
+          <h3 class="state__title">Письмо отправлено</h3>
+          <p class="state__text">Если почта <b>accounting@coffeepoint.kz</b> зарегистрирована, на неё придёт ссылка для установки нового пароля. Перейдите по ссылке из письма, затем войдите с паролем.</p>
+          <div class="state__actions">
+            <a class="btn btn--primary" href="#/login">К форме входа</a>
+            <button class="btn btn--secondary" type="button" data-forgot-state-btn="form">Отправить ещё раз</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/profile — КАБИНЕТ КЛИЕНТА
+     ========================================================================== -->
+<section class="route" data-route="profile" id="route-profile">
+  <div class="container pagehead">
+    <span class="eyebrow">Кабинет партнёра</span>
+    <h1>Профиль</h1>
+  </div>
+
+  <div class="container" style="padding-bottom:var(--s-10)">
+    <div class="profile">
+
+      <!-- Левая колонка -->
+      <div class="stack stack-4">
+        <!-- Крупная карточка клиента -->
+        <div class="client-card">
+          <div class="client-card__top">
+            <span class="client-card__avatar">CP</span>
+            <div style="min-width:0">
+              <p class="client-card__name">Coffee Point</p>
+              <p class="client-card__sub">Постоянный партнёр · с апреля 2026</p>
+            </div>
+          </div>
+          <div class="client-card__grid">
+            <div class="client-card__cell"><em>Заказов</em><b>28</b></div>
+            <div class="client-card__cell"><em>За неделю</em><b>65 000 ₸</b></div>
+            <div class="client-card__cell"><em>Доступный лимит</em><b>281 600 ₸</b></div>
+            <div class="client-card__cell"><em>Ближайший платёж</em><b>14 августа</b></div>
+          </div>
+        </div>
+
+        <!-- Товарный кредит -->
+        <div class="info-card">
+          <div class="info-card__head">
+            <span class="info-card__title">Товарный кредит</span>
+            <span class="badge badge--success info-card__action">Кредит активен</span>
+          </div>
+          <div class="summary">
+            <div class="summary__row"><span>Лимит</span><b class="num">400 000 ₸</b></div>
+            <div class="summary__row"><span>Использовано</span><b class="num">118 400 ₸</b></div>
+            <div class="summary__row"><span>Доступно сейчас</span><b class="num" style="color:var(--success)">281 600 ₸</b></div>
+          </div>
+          <div class="progress mt-4"><div class="progress__bar" style="width:29.6%"></div></div>
+          <button class="btn btn--sm btn--soft btn--block mt-4" type="button" data-toast="Запрос отправлен менеджеру — заглушка прототипа">Запросить увеличение лимита</button>
+        </div>
+
+        <!-- Реквизиты компании -->
+        <div class="info-card">
+          <div class="info-card__head">
+            <span class="info-card__title">Реквизиты компании</span>
+            <button class="btn btn--xs btn--ghost info-card__action" type="button" data-open="edit-requisites">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="#i-edit"/></svg>
+              Изменить
+            </button>
+          </div>
+          <dl class="kv">
+            <div class="kv__row"><dt>Компания</dt><dd>Coffee Point</dd></div>
+            <div class="kv__row"><dt>БИН / ИИН</dt><dd class="mono">123456789012</dd></div>
+            <div class="kv__row"><dt>Контактное лицо</dt><dd>Айгерим Сатпаева</dd></div>
+            <div class="kv__row"><dt>Телефон WhatsApp</dt><dd class="mono">+7 705 123 45 67</dd></div>
+            <div class="kv__row"><dt>E-mail</dt><dd style="word-break:break-all">accounting@coffeepoint.kz</dd></div>
+          </dl>
+        </div>
+
+        <!-- Адреса доставки -->
+        <div class="info-card">
+          <div class="info-card__head">
+            <span class="info-card__title">Адреса доставки</span>
+            <button class="btn btn--xs btn--ghost info-card__action" type="button" data-toast="Добавление адреса — заглушка прототипа">Добавить</button>
+          </div>
+          <div class="stack stack-3" data-profile-addresses></div>
+        </div>
+
+        <button class="btn btn--secondary btn--block" type="button" data-open="logout">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-logout"/></svg>
+          Выйти
+        </button>
+      </div>
+
+      <!-- Правая колонка -->
+      <div class="stack stack-5">
+        <!-- Прогресс акции в кабинете -->
+        <div class="surface pad-5" style="border-radius:var(--r-2xl)">
+          <div class="row">
+            <span class="reward__badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-gift"/></svg>
+              Бонусная программа
+            </span>
+            <span class="reward__period ml-auto">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg>
+              до 30 ноября 2026
+            </span>
+          </div>
+          <p class="mt-4" style="font-family:var(--font-display);font-size:var(--t-h3);font-weight:800;letter-spacing:-.03em">Ещё 35 000 ₸ до 5 десертов</p>
+          <div class="progress progress--lg mt-4"><div class="progress__bar" style="width:65%"></div></div>
+          <p class="text-xs text-muted mt-3">Набрано 65 000 ₸ из 100 000 ₸ за неделю с понедельника по воскресенье.</p>
+        </div>
+
+        <!-- Быстрый повтор -->
+        <div>
+          <div class="section-head" style="margin-bottom:var(--s-4)">
+            <div class="section-head__text"><h2 style="font-size:var(--t-h3)">Быстрый повтор</h2></div>
+          </div>
+          <div class="grid grid-4" data-list="repeat-mini"></div>
+        </div>
+
+        <!-- История заказов -->
+        <div>
+          <div class="section-head" style="margin-bottom:var(--s-4)">
+            <div class="section-head__text"><h2 style="font-size:var(--t-h3)">История заказов</h2></div>
+            <div class="section-head__aside"><a class="btn btn--sm btn--ghost" href="#/orders">Все заказы →</a></div>
+          </div>
+          <div class="stack stack-3" data-list="orders-short"></div>
+          <p class="text-xs text-muted mt-4">История подтягивается по email и телефону. Если заказ оформлялся на другой контакт — обратитесь к менеджеру.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/orders — ИСТОРИЯ ЗАКАЗОВ
+     Состояния: normal · empty · loading
+     ========================================================================== -->
+<section class="route" data-route="orders" id="route-orders">
+  <div class="container pagehead">
+    <nav class="crumbs" aria-label="Хлебные крошки">
+      <a href="#/profile">Профиль</a>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg>
+      <span>Заказы</span>
+    </nav>
+    <h1>Мои заказы</h1>
+    <p class="lead">Повтор заявки в один тап, статусы и документы по каждому заказу.</p>
+  </div>
+
+  <div class="container" style="padding-bottom:var(--s-10)">
+    <div class="tabs mb-5" style="max-width:520px" data-orders-tabs>
+      <button class="tabs__item is-active" type="button" data-orders-filter="all">Все</button>
+      <button class="tabs__item" type="button" data-orders-filter="active">В работе</button>
+      <button class="tabs__item" type="button" data-orders-filter="completed">Завершённые</button>
+      <button class="tabs__item" type="button" data-orders-filter="canceled">Отменённые</button>
+    </div>
+
+    <div data-orders-state="normal">
+      <div class="stack stack-3" data-list="orders"></div>
+    </div>
+
+    <div class="hidden" data-orders-state="loading">
+      <div class="stack stack-3">
+        <div class="skeleton" style="height:168px;border-radius:var(--r-xl)"></div>
+        <div class="skeleton" style="height:168px;border-radius:var(--r-xl)"></div>
+        <div class="skeleton" style="height:168px;border-radius:var(--r-xl)"></div>
+      </div>
+    </div>
+
+    <div class="state hidden" data-orders-state="empty">
+      <div class="state__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-package"/></svg>
+      </div>
+      <h3 class="state__title">Заказов пока нет</h3>
+      <p class="state__text">Соберите первую оптовую заявку — минимальная сумма 15 000 ₸.</p>
+      <div class="state__actions"><a class="btn btn--primary btn--lg" href="#/catalog">Открыть каталог</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/order-details — ДЕТАЛИ ЗАКАЗА
+     ========================================================================== -->
+<section class="route" data-route="order-details" id="route-order-details">
+  <div class="container pagehead">
+    <nav class="crumbs" aria-label="Хлебные крошки">
+      <a href="#/orders">Заказы</a>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-right"/></svg>
+      <span class="mono" data-order-crumb>DC-2607-0148</span>
+    </nav>
+    <div class="row row--wrap" style="margin-top:var(--s-3)">
+      <h1 class="mono" data-order-number style="font-size:var(--t-h1)">DC-2607-0148</h1>
+      <span class="badge badge--warning badge--dot" data-order-status>В производстве</span>
+    </div>
+    <p class="lead" data-order-sub>Создан 24 июля 2026 · 4 позиции · 84 шт</p>
+  </div>
+
+  <div class="container" style="padding-bottom:var(--s-10)">
+    <div class="checkout">
+      <div class="stack stack-4">
+        <!-- Позиции заказа -->
+        <div class="surface pad-5" style="border-radius:var(--r-2xl)">
+          <h3 style="font-size:var(--t-h4)">Состав заказа</h3>
+          <div class="stack stack-3 mt-4" data-order-items></div>
+          <hr class="divider mt-5">
+          <div class="summary mt-4">
+            <div class="summary__row"><span>Позиций</span><b data-order-positions>4</b></div>
+            <div class="summary__row"><span>Доставка</span><b>0 ₸</b></div>
+            <div class="summary__total"><span>Итого</span><b data-order-total>67 960 ₸</b></div>
+          </div>
+        </div>
+
+        <!-- Доставка -->
+        <div class="surface pad-5" style="border-radius:var(--r-2xl)">
+          <h3 style="font-size:var(--t-h4)">Доставка</h3>
+          <dl class="kv mt-4">
+            <div class="kv__row"><dt>Дата</dt><dd data-order-date>24 июля 2026</dd></div>
+            <div class="kv__row"><dt>Время</dt><dd>Утро 8-12</dd></div>
+            <div class="kv__row"><dt>Адрес</dt><dd style="max-width:60%">г. Алматы, пр. Достык 132, кофейня</dd></div>
+            <div class="kv__row"><dt>Получатель</dt><dd>Айгерим Сатпаева</dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <aside class="stack stack-4">
+        <!-- Статус -->
+        <div class="surface pad-5" style="border-radius:var(--r-2xl)">
+          <h3 style="font-size:var(--t-h4)">Статус заявки</h3>
+          <div class="steps mt-5">
+            <div class="steps__item is-done">
+              <span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg></span>
+              <div><p class="steps__title">Заявка отправлена</p><p class="steps__meta">24 июля, 14:32</p></div>
+            </div>
+            <div class="steps__item is-current">
+              <span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg></span>
+              <div><p class="steps__title">Ожидает подтверждения менеджером</p><p class="steps__meta">Проверяем остатки и слот</p></div>
+            </div>
+            <div class="steps__item">
+              <span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-file"/></svg></span>
+              <div><p class="steps__title">Счёт на оплату</p><p class="steps__meta">Придёт в WhatsApp и на e-mail</p></div>
+            </div>
+            <div class="steps__item">
+              <span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-truck"/></svg></span>
+              <div><p class="steps__title">Доставка</p><p class="steps__meta">Вт · чт · сб</p></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Оплата и документы -->
+        <div class="surface pad-5" style="border-radius:var(--r-2xl)">
+          <h3 style="font-size:var(--t-h4)">Оплата и документы</h3>
+          <div class="row mt-4">
+            <span class="text-sm text-muted">Статус оплаты</span>
+            <span class="badge badge--neutral ml-auto">Не оплачен</span>
+          </div>
+          <div class="stack stack-2 mt-4">
+            <button class="btn btn--secondary btn--block" type="button" data-open="payment">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-card"/></svg>
+              Оплатить картой
+            </button>
+            <button class="btn btn--ghost btn--block" type="button" data-toast="Счёт PDF — заглушка прототипа">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-file"/></svg>
+              Счёт PDF
+            </button>
+            <button class="btn btn--ghost btn--block" type="button" data-toast="Накладная PDF — заглушка прототипа">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-file"/></svg>
+              Накладная PDF
+            </button>
+          </div>
+        </div>
+
+        <button class="btn btn--primary btn--lg btn--block" type="button" data-repeat-order="DC-2607-0148">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="#i-repeat"/></svg>
+          Повторить заказ
+        </button>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/payment-delivery — ОПЛАТА И ДОСТАВКА
+     ========================================================================== -->
+<section class="route" data-route="payment-delivery" id="route-payment-delivery">
+  <div class="container pagehead">
+    <span class="eyebrow">Для B2B-клиентов</span>
+    <h1>Оплата и доставка</h1>
+    <p class="lead">Все расчёты в тенге (KZT). Подробные условия — в <a class="link-accent" href="#/oferta">Публичной оферте</a>.</p>
+  </div>
+
+  <div class="container" style="padding-bottom:var(--s-10);max-width:920px">
+    <div class="stack stack-4">
+
+      <!-- Оплата -->
+      <div class="surface pad-6 pad-md-8" style="border-radius:var(--r-2xl)">
+        <h2>Оплата</h2>
+        <div class="stack stack-3 mt-5">
+          <div class="row" style="align-items:flex-start;gap:var(--s-4);padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <span class="badge badge--accent" style="width:32px;height:32px;justify-content:center;border-radius:var(--r-sm);flex-shrink:0">1</span>
+            <div>
+              <p style="font-weight:600">Банковской картой онлайн</p>
+              <p class="text-sm text-muted mt-2" style="line-height:1.65">Visa / Mastercard через защищённую платёжную страницу банка-эквайера. Данные карты вводятся на стороне банка и на сайте не хранятся. Средства списываются в момент оформления заказа.</p>
+              <button class="btn btn--xs btn--soft mt-3" type="button" data-open="payment">Посмотреть экран оплаты</button>
+            </div>
+          </div>
+          <div class="row" style="align-items:flex-start;gap:var(--s-4);padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <span class="badge badge--accent" style="width:32px;height:32px;justify-content:center;border-radius:var(--r-sm);flex-shrink:0">2</span>
+            <div>
+              <p style="font-weight:600">По счёту (безналичный расчёт)</p>
+              <p class="text-sm text-muted mt-2" style="line-height:1.65">Для одобренных B2B-клиентов — на условиях консигнации 3–4 дня. Оплата согласно выставленному счёту на банковский счёт Поставщика. <a class="link-accent" href="#/contacts">Реквизиты →</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Доставка -->
+      <div class="surface pad-6 pad-md-8" style="border-radius:var(--r-2xl)">
+        <h2>Доставка</h2>
+        <div class="grid grid-3up mt-5">
+          <div class="text-center" style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <p class="num" style="font-family:var(--font-display);font-size:var(--t-h3);font-weight:800;color:var(--accent);letter-spacing:-.03em">15 000 ₸</p>
+            <p class="text-xs text-muted mt-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600">Минимальный заказ</p>
+          </div>
+          <div class="text-center" style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <p class="num" style="font-family:var(--font-display);font-size:var(--t-h3);font-weight:800;color:var(--accent);letter-spacing:-.03em">0 ₸</p>
+            <p class="text-xs text-muted mt-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600">Доставка от минимума</p>
+          </div>
+          <div class="text-center" style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <p class="num" style="font-family:var(--font-display);font-size:var(--t-h3);font-weight:800;color:var(--accent);letter-spacing:-.03em">1 500–3 000 ₸</p>
+            <p class="text-xs text-muted mt-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:600">Доставка ниже минимума</p>
+          </div>
+        </div>
+        <div class="prose mt-5">
+          <p>При заказе от 15 000 тенге доставка бесплатная.</p>
+          <p>При меньшей сумме возможна доплата за доставку 1 500–3 000 тенге по усмотрению Поставщика.</p>
+          <p>Способ (доставка или самовывоз) и точные сроки согласуются при подтверждении заказа менеджером.</p>
+        </div>
+        <div class="alert mt-5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-truck"/></svg>
+          <span><b>График поставок: вторник · четверг · суббота</b>Приём заявок до 18:00 накануне дня доставки.</span>
+        </div>
+      </div>
+
+      <!-- Возврат -->
+      <div class="surface pad-6 pad-md-8" style="border-radius:var(--r-2xl)">
+        <h2>Возврат</h2>
+        <div class="prose mt-5">
+          <p>Продукция скоропортящаяся. Товар надлежащего качества возврату не подлежит.</p>
+          <p>Претензии по количеству и качеству принимаются только в момент приёмки и фиксируются актом. После подписания накладной претензии не рассматриваются.</p>
+          <p>При выявлении производственного брака Поставщик производит замену, допоставку или возврат стоимости.</p>
+          <p>Возврат средств по оплате картой — на ту же карту в срок до 10 рабочих дней с момента согласования возврата.</p>
+          <p>Подробнее — <a class="link-accent" href="#/oferta">разделы 8–9 Публичной оферты</a>. По вопросам: e-mail <a class="link-accent" href="mailto:info@dc-bakery.kz">info@dc-bakery.kz</a>, тел. <a class="link-accent" href="tel:+77477272650">+7 747 727 2650</a> или <a class="link-accent" href="tel:+77476940766">+7 747 694 0766</a>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/contacts — КОНТАКТЫ И РЕКВИЗИТЫ
+     ========================================================================== -->
+<section class="route" data-route="contacts" id="route-contacts">
+  <div class="container pagehead">
+    <span class="eyebrow">Поставщик</span>
+    <h1>Контакты и реквизиты</h1>
+    <p class="lead">DC Bakery — B2B-поставки хлебобулочных и кондитерских изделий.</p>
+  </div>
+
+  <div class="container" style="padding-bottom:var(--s-10);max-width:920px">
+    <div class="stack stack-4">
+
+      <!-- Быстрые контакты -->
+      <div class="grid grid-3up">
+        <a class="surface pad-5" style="border-radius:var(--r-xl)" href="https://wa.me/77477272650" target="_blank" rel="noopener">
+          <span class="cat-card__icon" style="width:44px;height:44px">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-whatsapp"/></svg>
+          </span>
+          <p class="eyebrow mt-4">WhatsApp · приём заявок</p>
+          <p style="font-weight:700;font-size:var(--t-body-lg);margin-top:6px" class="mono">+7 747 727 2650</p>
+        </a>
+        <a class="surface pad-5" style="border-radius:var(--r-xl)" href="tel:+77476940766">
+          <span class="cat-card__icon" style="width:44px;height:44px">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-phone"/></svg>
+          </span>
+          <p class="eyebrow mt-4">Телефон · руководитель цеха</p>
+          <p style="font-weight:700;font-size:var(--t-body-lg);margin-top:6px" class="mono">+7 747 694 0766</p>
+        </a>
+        <a class="surface pad-5" style="border-radius:var(--r-xl)" href="https://www.instagram.com/bakery.dc" target="_blank" rel="noopener">
+          <span class="cat-card__icon" style="width:44px;height:44px">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-instagram"/></svg>
+          </span>
+          <p class="eyebrow mt-4">Instagram</p>
+          <p style="font-weight:700;font-size:var(--t-body-lg);margin-top:6px">@bakery.dc</p>
+        </a>
+      </div>
+
+      <!-- Данные поставщика -->
+      <div class="surface pad-6 pad-md-8" style="border-radius:var(--r-2xl)">
+        <h2>Данные поставщика</h2>
+        <div class="grid grid-2 mt-5">
+          <div style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <p class="eyebrow eyebrow--muted">Наименование</p>
+            <p class="mt-2" style="font-weight:600;font-size:var(--t-sm)">ИП Кошкаров Асылбек Касымбекович</p>
+          </div>
+          <div style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <p class="eyebrow eyebrow--muted">БИН / ИИН</p>
+            <p class="mt-2 mono" style="font-weight:600;font-size:var(--t-sm)">810127300096</p>
+          </div>
+          <div style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg);grid-column:1/-1">
+            <p class="eyebrow eyebrow--muted">Регистрация</p>
+            <p class="mt-2" style="font-weight:600;font-size:var(--t-sm)">Талон о госрегистрации ИП №KZ26TWQ02214961 от 26.01.2025</p>
+          </div>
+          <div style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <p class="eyebrow eyebrow--muted">Адрес</p>
+            <p class="mt-2" style="font-weight:600;font-size:var(--t-sm)">г. Алматы, ул. Жамбыла 154</p>
+          </div>
+          <div style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <p class="eyebrow eyebrow--muted">Режим работы</p>
+            <p class="mt-2" style="font-weight:600;font-size:var(--t-sm)">Пн–Пт 9:00–19:00</p>
+          </div>
+          <div style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <p class="eyebrow eyebrow--muted">E-mail</p>
+            <a class="mt-2 link-accent" style="display:block;font-weight:600;font-size:var(--t-sm)" href="mailto:info@dc-bakery.kz">info@dc-bakery.kz</a>
+          </div>
+          <div style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg)">
+            <p class="eyebrow eyebrow--muted">Сайт</p>
+            <p class="mt-2" style="font-weight:600;font-size:var(--t-sm)">dc-bakery.kz</p>
+          </div>
+          <div style="padding:var(--s-5);background:var(--cream);border-radius:var(--r-lg);grid-column:1/-1">
+            <p class="eyebrow eyebrow--muted">Приём заказов</p>
+            <p class="mt-2" style="font-weight:600;font-size:var(--t-sm)">Через сайт и WhatsApp-каталог</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Банковские реквизиты -->
+      <div class="surface pad-6 pad-md-8" style="border-radius:var(--r-2xl)">
+        <span class="eyebrow">Оплата по счёту</span>
+        <h2 class="mt-3">Банковские реквизиты</h2>
+        <p class="text-sm text-muted mt-3">Оплата производится на счёт, соответствующий категории Продукции. <a class="link-accent" href="#/oferta">Подробнее в п. 5.3 Оферты</a></p>
+        <div class="grid grid-2 mt-6" data-list="requisites"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/oferta — ПУБЛИЧНАЯ ОФЕРТА
+     ========================================================================== -->
+<section class="route" data-route="oferta" id="route-oferta">
+  <div class="container pagehead">
+    <span class="eyebrow">Правовая информация</span>
+    <h1>Публичная оферта</h1>
+    <p class="lead">о заключении договора поставки продукции DC Bakery</p>
+  </div>
+
+  <div class="container" style="padding-bottom:var(--s-10)">
+    <div class="legal">
+      <nav class="legal__toc" aria-label="Содержание оферты" data-legal-toc></nav>
+      <article class="legal__doc" data-legal-doc="oferta"></article>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/privacy — ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ
+     ========================================================================== -->
+<section class="route" data-route="privacy" id="route-privacy">
+  <div class="container pagehead">
+    <span class="eyebrow">Правовая информация</span>
+    <h1>Политика конфиденциальности</h1>
+    <p class="lead">обработки персональных данных — сайт dc-bakery.kz. Редакция от 10 июля 2026 года.</p>
+  </div>
+
+  <div class="container" style="padding-bottom:var(--s-10)">
+    <div class="legal">
+      <nav class="legal__toc" aria-label="Содержание политики" data-legal-toc></nav>
+      <article class="legal__doc" data-legal-doc="privacy"></article>
+    </div>
+  </div>
+</section>
+
+<!-- ==========================================================================
+     МАРШРУТ #/404 — СТРАНИЦА НЕ НАЙДЕНА
+     ========================================================================== -->
+<section class="route" data-route="404" id="route-404">
+  <div class="container" style="padding-block:var(--s-11) var(--s-12)">
+    <div class="state" style="max-width:620px;margin-inline:auto">
+      <p style="font-family:var(--font-display);font-size:clamp(64px,14vw,120px);font-weight:800;letter-spacing:-.05em;color:var(--accent-200);line-height:1">404</p>
+      <h1 class="state__title" style="font-size:var(--t-h2)">Страница не найдена</h1>
+      <p class="state__text">Такой раздел или товар пока не добавлен в каталог DC Bakery.</p>
+      <div class="state__actions">
+        <a class="btn btn--primary btn--lg" href="#/catalog">Вернуться в каталог</a>
+        <a class="btn btn--secondary btn--lg" href="#/home">На главную</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ==========================================================================
+     ПОДВАЛ
+     ========================================================================== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <div>
+        <span class="logo">
+          <svg class="logo__mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <rect width="40" height="40" rx="12" fill="var(--accent)"/>
+            <path d="M11 12h6.6c4.4 0 7.4 3.1 7.4 8s-3 8-7.4 8H11V12Z" fill="#fff"/>
+            <path d="M15.4 15.9v8.2h2c2.1 0 3.4-1.5 3.4-4.1s-1.3-4.1-3.4-4.1h-2Z" fill="var(--accent)"/>
+            <circle cx="28.6" cy="27" r="2.4" fill="#fff"/>
+          </svg>
+          <span><span class="logo__text">DC Bakery</span><span class="logo__sub">B2B · ОПТ</span></span>
+        </span>
+        <p class="footer__about">B2B-каталог десертов, полуфабрикатов и мясных позиций для кофеен, ресторанов, магазинов и отелей.</p>
+        <div class="row row--wrap mt-6">
+          <a class="btn btn--sm btn--primary" href="#/catalog">Открыть каталог</a>
+          <!-- TODO(backend): реальный URL del Cappuccino не найден в проекте -->
+          <a class="btn btn--sm btn--on-dark" href="#" data-retail>Заказать в розницу</a>
+        </div>
+      </div>
+
+      <div class="footer__contacts">
+        <div class="footer__contact">
+          <em>WhatsApp</em>
+          <a href="https://wa.me/77477272650" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-whatsapp"/></svg>
+            +7 747 727 2650</a>
+        </div>
+        <div class="footer__contact">
+          <em>Телефон</em>
+          <a href="tel:+77476940766">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-phone"/></svg>
+            +7 747 694 0766</a>
+        </div>
+        <div class="footer__contact">
+          <em>Instagram</em>
+          <a href="https://www.instagram.com/bakery.dc" target="_blank" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-instagram"/></svg>
+            @bakery.dc</a>
+        </div>
+        <div class="footer__contact">
+          <em>E-mail</em>
+          <a href="mailto:info@dc-bakery.kz">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-mail"/></svg>
+            info@dc-bakery.kz</a>
+        </div>
+        <div class="footer__contact">
+          <em>Адрес</em>
+          <b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pin"/></svg>
+            г. Алматы, ул. Жамбыла 154</b>
+        </div>
+        <div class="footer__contact">
+          <em>Режим работы</em>
+          <b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg>
+            Пн–Пт 9:00–19:00</b>
+        </div>
+        <div class="footer__contact" style="grid-column:1/-1">
+          <em>График поставок</em>
+          <b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-truck"/></svg>
+            Вторник · Четверг · Суббота</b>
+          <span>Приём заявок до 18:00 накануне</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <span class="eyebrow eyebrow--light" style="color:rgba(255,255,255,.4)">Правовая информация</span>
+      <a class="footer__legal" href="#/oferta">Публичная оферта</a>
+      <a class="footer__legal" href="#/privacy">Политика конфиденциальности</a>
+      <a class="footer__legal" href="#/payment-delivery">Оплата и доставка</a>
+      <a class="footer__legal" href="#/contacts">Контакты и реквизиты</a>
+      <a class="footer__legal" href="ui-kit.html">UI-kit прототипа</a>
+      <span class="footer__copy ml-auto">© 2026 DC Bakery</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ==========================================================================
+     НИЖНЯЯ НАВИГАЦИЯ (mobile)
+     ========================================================================== -->
+<nav class="bottomnav" aria-label="Мобильная навигация">
+  <a class="bottomnav__item" href="#/home" data-bnav="home">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-home"/></svg>
+    Главная
+  </a>
+  <a class="bottomnav__item" href="#/catalog" data-bnav="catalog">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-grid"/></svg>
+    Каталог
+  </a>
+  <a class="bottomnav__item" href="#/cart" data-bnav="cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cart"/></svg>
+    Корзина
+    <span class="icon-btn__count hidden" data-cart-count>0</span>
+  </a>
+  <a class="bottomnav__item" href="#/profile" data-bnav="profile">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-user"/></svg>
+    Кабинет
+  </a>
+</nav>
+
+<!-- Плавающая мини-корзина (mobile) -->
+<div class="cartbar" data-cartbar>
+  <span class="cartbar__text">
+    <b data-cartbar-total>0 ₸</b>
+    <span data-cartbar-sub>0 позиций</span>
+  </span>
+  <button class="btn btn--sm btn--primary" type="button" data-open="cart">Корзина</button>
+</div>
+
+<!-- ==========================================================================
+     ОВЕРЛЕИ
+     ========================================================================== -->
+
+<!-- Общая подложка -->
+<div class="scrim" data-scrim></div>
+
+<!-- ── Корзина: desktop drawer / mobile bottom sheet ───────────────────── -->
+<aside class="overlay sheet sheet--adaptive" id="cart" role="dialog" aria-modal="true" aria-label="Корзина">
+  <div class="sheet__head">
+    <span class="sheet__title">Корзина</span>
+    <span class="badge badge--soft" data-cart-badge>0 позиций</span>
+    <button class="icon-btn icon-btn--sm ml-auto" type="button" data-close="cart" aria-label="Закрыть корзину">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg>
+    </button>
+  </div>
+
+  <div class="sheet__body">
+    <!-- Состояние: есть товары -->
+    <div data-cartsheet-state="normal">
+      <div class="minbar mb-4" data-minbar>
+        <div class="minbar__top">
+          <span class="minbar__label" data-minbar-label>Осталось набрать 15 000 ₸</span>
+          <span class="minbar__value" data-minbar-value>0 / 15 000 ₸</span>
+        </div>
+        <div class="progress"><div class="progress__bar" data-minbar-bar style="width:0%"></div></div>
+      </div>
+      <div class="stack stack-3" data-cart-lines></div>
+    </div>
+
+    <!-- Состояние: пусто -->
+    <div class="state state--bare hidden" data-cartsheet-state="empty">
+      <div class="state__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cart"/></svg>
+      </div>
+      <h3 class="state__title" style="font-size:var(--t-h4)">В корзине пока пусто</h3>
+      <p class="state__text">Соберите заявку из каталога. Минимальная сумма заказа 15 000 ₸.</p>
+      <div class="state__actions">
+        <a class="btn btn--primary" href="#/catalog" data-close="cart">Открыть каталог</a>
+      </div>
+    </div>
+
+    <!-- Состояние: загрузка -->
+    <div class="stack stack-3 hidden" data-cartsheet-state="loading">
+      <div class="skeleton" style="height:74px;border-radius:var(--r-lg)"></div>
+      <div class="skeleton" style="height:104px;border-radius:var(--r-lg)"></div>
+      <div class="skeleton" style="height:104px;border-radius:var(--r-lg)"></div>
+    </div>
+
+    <!-- Состояние: ошибка -->
+    <div class="state state--error state--bare hidden" data-cartsheet-state="error">
+      <div class="state__icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-alert-triangle"/></svg>
+      </div>
+      <h3 class="state__title" style="font-size:var(--t-h4)">Корзина недоступна</h3>
+      <p class="state__text">Заглушка состояния ошибки. Позиции сохранены.</p>
+      <div class="state__actions"><button class="btn btn--primary" type="button" data-cart-retry>Обновить</button></div>
+    </div>
+  </div>
+
+  <div class="sheet__foot" data-cartsheet-foot>
+    <div class="summary mb-4">
+      <div class="summary__row"><span>Позиций</span><b data-cart-positions>0</b></div>
+      <div class="summary__row"><span>Доставка</span><b data-cart-delivery>0 ₸</b></div>
+      <div class="summary__total"><span>К оплате</span><b data-cart-total>0 ₸</b></div>
+    </div>
+    <a class="btn btn--primary btn--lg btn--block" href="#/checkout" data-close="cart" data-cart-checkout>Оформить заявку</a>
+    <a class="btn btn--ghost btn--block mt-2" href="#/cart" data-close="cart">Открыть страницу корзины</a>
+  </div>
+</aside>
+
+<!-- ── Карточка товара: модальное окно / полноэкранная на mobile ───────── -->
+<div class="overlay psheet" id="psheet" role="dialog" aria-modal="true" aria-label="Карточка товара">
+  <div class="psheet__panel">
+
+    <!-- Состояние: обычное -->
+    <div class="psheet__media" data-psheet-media>
+      <div class="psheet__topbar">
+        <button class="icon-btn icon-btn--glass" type="button" data-close="psheet" aria-label="Назад">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="#i-arrow-left"/></svg>
+        </button>
+        <button class="icon-btn icon-btn--glass ml-auto" type="button" data-toast="Добавлено в лист избранного — заглушка" aria-label="В лист">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="#i-star"/></svg>
+        </button>
+      </div>
+      <div class="psheet__nutri" data-psheet-nutri></div>
+    </div>
+
+    <div class="psheet__side">
+      <div class="psheet__info">
+      <div data-psheet-state="normal">
+        <div data-psheet-body></div>
+      </div>
+
+      <!-- Состояние: loading -->
+      <div class="stack stack-4 hidden" data-psheet-state="loading">
+        <div class="skeleton skeleton--pill w-40"></div>
+        <div class="skeleton skeleton--title w-80"></div>
+        <div class="skeleton skeleton--text w-60"></div>
+        <div class="skeleton" style="height:140px;border-radius:var(--r-lg)"></div>
+        <div class="skeleton skeleton--text w-70"></div>
+      </div>
+
+      <!-- Состояние: ошибка получения данных -->
+      <div class="state state--error state--bare hidden" data-psheet-state="error">
+        <div class="state__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-alert-triangle"/></svg>
+        </div>
+        <h3 class="state__title" style="font-size:var(--t-h4)">Не удалось получить данные</h3>
+        <p class="state__text">Заглушка. В рабочем сайте здесь повтор запроса карточки и остатков.</p>
+        <div class="state__actions"><button class="btn btn--primary" type="button" data-psheet-retry>Повторить</button></div>
+      </div>
+      </div>
+
+      <!-- Закреплённая полупрозрачная панель покупки -->
+      <div class="psheet__buy" data-psheet-buy></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Фильтры каталога: мобильная панель ──────────────────────────────── -->
+<aside class="overlay bsheet" id="filters" role="dialog" aria-modal="true" aria-label="Фильтры">
+  <span class="bsheet__grip" aria-hidden="true"></span>
+  <div class="bsheet__head">
+    <span class="sheet__title">Фильтры</span>
+    <button class="btn btn--xs btn--ghost ml-auto" type="button" data-filter-reset>Сбросить всё</button>
+    <button class="icon-btn icon-btn--sm" type="button" data-close="filters" aria-label="Закрыть фильтры">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg>
+    </button>
+  </div>
+  <div class="bsheet__body">
+    <div class="filters__group">
+      <p class="filters__legend">Категория</p>
+      <div class="filters__list" data-filter-categories></div>
+    </div>
+    <div class="filters__group">
+      <p class="filters__legend">Подкатегория</p>
+      <div class="filters__list" data-filter-subcategories></div>
+    </div>
+    <div class="filters__group">
+      <p class="filters__legend">Цена, ₸</p>
+      <div class="price-range">
+        <div class="price-range__inputs">
+          <input class="input" type="number" placeholder="от" data-filter-min aria-label="Цена от">
+          <span class="price-range__dash">—</span>
+          <input class="input" type="number" placeholder="до" data-filter-max aria-label="Цена до">
+        </div>
+        <div class="price-range__legend"><span>230 ₸</span><span>11 550 ₸</span></div>
+      </div>
+    </div>
+    <div class="filters__group">
+      <p class="filters__legend">Наличие</p>
+      <label class="switch"><input type="checkbox" data-filter-instock><span>Только в наличии</span></label>
+      <label class="switch mt-3"><input type="checkbox" data-filter-halal><span>Только халал</span></label>
+    </div>
+  </div>
+  <div class="bsheet__foot">
+    <button class="btn btn--primary btn--lg btn--block" type="button" data-close="filters">
+      Показать <span data-filter-result>53</span> позиции
+    </button>
+  </div>
+</aside>
+
+<!-- ── Подтверждение удаления позиции ──────────────────────────────────── -->
+<div class="overlay modal modal--sm" id="confirm-remove" role="dialog" aria-modal="true" aria-labelledby="confirm-remove-title">
+  <div class="modal__panel">
+    <div class="modal__body text-center">
+      <div class="state__icon" style="margin-inline:auto;background:var(--danger-bg);color:var(--danger)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-trash"/></svg>
+      </div>
+      <h3 id="confirm-remove-title" class="mt-5" style="font-size:var(--t-h4)">Удалить позицию из корзины?</h3>
+      <p class="text-sm text-muted mt-3" data-confirm-text>«Медовик» будет удалён из заявки. Действие можно отменить, добавив товар заново.</p>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close="confirm-remove">Отменить</button>
+      <button class="btn btn--danger" type="button" data-confirm-remove>Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Подтверждение выхода из аккаунта ────────────────────────────────── -->
+<div class="overlay modal modal--sm" id="logout" role="dialog" aria-modal="true" aria-labelledby="logout-title">
+  <div class="modal__panel">
+    <div class="modal__body text-center">
+      <div class="state__icon" style="margin-inline:auto">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-logout"/></svg>
+      </div>
+      <h3 id="logout-title" class="mt-5" style="font-size:var(--t-h4)">Выйти из кабинета?</h3>
+      <p class="text-sm text-muted mt-3">Корзина сохранится на этом устройстве. Для оформления заявки потребуется войти снова.</p>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close="logout">Остаться</button>
+      <a class="btn btn--dark" href="#/login" data-close="logout">Выйти</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── Редактирование реквизитов ───────────────────────────────────────── -->
+<div class="overlay modal" id="edit-requisites" role="dialog" aria-modal="true" aria-labelledby="edit-req-title">
+  <div class="modal__panel">
+    <div class="modal__head">
+      <span class="modal__title" id="edit-req-title">Реквизиты компании</span>
+      <button class="icon-btn icon-btn--sm modal__close" type="button" data-close="edit-requisites" aria-label="Закрыть">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <div class="modal__body">
+      <div class="stack stack-4">
+        <label class="field"><span class="field__label">Компания / заведение</span><input class="input" value="Coffee Point"></label>
+        <label class="field"><span class="field__label">БИН / ИИН</span><input class="input mono" value="123456789012" maxlength="12"></label>
+        <label class="field"><span class="field__label">Контактное лицо</span><input class="input" value="Айгерим Сатпаева"></label>
+        <label class="field"><span class="field__label">Телефон WhatsApp</span><input class="input mono" value="+7 705 123 45 67"></label>
+        <label class="field"><span class="field__label">Телефон бухгалтера</span><input class="input mono" placeholder="+7 (___) ___-__-__"></label>
+        <label class="field"><span class="field__label">E-mail</span><input class="input" type="email" value="accounting@coffeepoint.kz"></label>
+      </div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close="edit-requisites">Отменить</button>
+      <button class="btn btn--primary" type="button" data-close="edit-requisites" data-toast="Сохранено — заглушка прототипа">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Заглушка платёжного шлюза ───────────────────────────────────────── -->
+<div class="overlay modal" id="payment" role="dialog" aria-modal="true" aria-labelledby="payment-title">
+  <div class="modal__panel">
+    <div class="modal__head">
+      <span class="modal__title" id="payment-title">Оплата картой</span>
+      <button class="icon-btn icon-btn--sm modal__close" type="button" data-close="payment" aria-label="Закрыть">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-close"/></svg>
+      </button>
+    </div>
+    <div class="modal__body">
+      <div class="state state--bare" style="padding-block:var(--s-6)">
+        <div class="state__icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-card"/></svg>
+        </div>
+        <h3 class="state__title" style="font-size:var(--t-h4)">Здесь будет переход к платёжной системе</h3>
+        <p class="state__text">Visa / Mastercard через защищённую платёжную страницу банка-эквайера. Данные карты вводятся на стороне банка и на сайте не хранятся.</p>
+      </div>
+
+      <div class="surface surface--cream pad-5 mt-4" style="border-radius:var(--r-lg)">
+        <div class="summary">
+          <div class="summary__row"><span>Заказ</span><b class="mono">DC-2607-0148</b></div>
+          <div class="summary__row"><span>Позиций</span><b>4</b></div>
+          <div class="summary__total"><span>К оплате</span><b>67 960 ₸</b></div>
+        </div>
+      </div>
+
+      <div class="stub mt-4">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-info"/></svg>
+        <span>Заглушка прототипа: платёжная интеграция не подключена. В рабочем сайте отсюда открывается платёжная страница банка.</span>
+      </div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close="payment">Закрыть</button>
+      <button class="btn btn--primary" type="button" data-close="payment" data-toast="Демо-оплата: переход к платёжной системе не выполняется">Перейти к оплате</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Универсальное success-окно ──────────────────────────────────────── -->
+<div class="overlay modal modal--sm" id="success" role="dialog" aria-modal="true" aria-labelledby="success-title">
+  <div class="modal__panel">
+    <div class="modal__body text-center">
+      <div class="state__icon" style="margin-inline:auto;background:var(--success-bg);color:var(--success)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check-circle"/></svg>
+      </div>
+      <h3 id="success-title" class="mt-5" style="font-size:var(--t-h4)">Заявка отправлена</h3>
+      <p class="text-sm text-muted mt-3">Менеджер подтвердит заявку и пришлёт счёт в WhatsApp. Обычно это занимает до одного рабочего часа.</p>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close="success">Закрыть</button>
+      <a class="btn btn--primary" href="#/orders" data-close="success">К заказам</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── Универсальное error-окно ────────────────────────────────────────── -->
+<div class="overlay modal modal--sm" id="error" role="dialog" aria-modal="true" aria-labelledby="error-title">
+  <div class="modal__panel">
+    <div class="modal__body text-center">
+      <div class="state__icon" style="margin-inline:auto;background:var(--danger-bg);color:var(--danger)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><use href="#i-alert-triangle"/></svg>
+      </div>
+      <h3 id="error-title" class="mt-5" style="font-size:var(--t-h4)">Не удалось отправить заявку</h3>
+      <p class="text-sm text-muted mt-3">Проверьте обязательные поля или попробуйте позже. Корзина сохранена — ничего не потеряно.</p>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" type="button" data-close="error">Закрыть</button>
+      <a class="btn btn--primary" href="https://wa.me/77477272650" target="_blank" rel="noopener">Написать в WhatsApp</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── Тосты ──────────────────────────────────────────────────────────── -->
+<div class="toasts" data-toasts aria-live="polite" aria-atomic="true"></div>
+
+<!-- ==========================================================================
+     ИНСПЕКТОР СОСТОЯНИЙ
+     Инструмент просмотра прототипа: открывает любой слой и любое состояние
+     без backend. В продакшен-версии сайта отсутствует.
+     ========================================================================== -->
+<div class="inspector" id="inspector">
+  <button class="inspector__tab" type="button" data-toggle="inspector" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-layers"/></svg>
+    Состояния
+  </button>
+  <div class="inspector__panel">
+    <div class="inspector__head">
+      <h4>Инспектор прототипа</h4>
+      <p>Все экраны, слои и состояния — без backend.</p>
+    </div>
+
+    <div class="inspector__group">
+      <p class="inspector__legend">Экраны</p>
+      <div class="inspector__list" data-inspector-routes></div>
+    </div>
+
+    <div class="inspector__group" data-inspector-states-group>
+      <p class="inspector__legend">Состояния экрана</p>
+      <div class="inspector__list" data-inspector-states></div>
+    </div>
+
+    <div class="inspector__group">
+      <p class="inspector__legend">Слои и оверлеи</p>
+      <div class="inspector__list">
+        <button class="inspector__btn" type="button" data-open="menu">Мобильное меню</button>
+        <button class="inspector__btn" type="button" data-inspector-lang>Выбор языка</button>
+        <button class="inspector__btn" type="button" data-open="filters">Фильтры</button>
+        <button class="inspector__btn" type="button" data-inspector-psheet>Карточка товара</button>
+        <button class="inspector__btn" type="button" data-open="cart">Корзина</button>
+        <button class="inspector__btn" type="button" data-open="confirm-remove">Подтверждение удаления</button>
+        <button class="inspector__btn" type="button" data-open="edit-requisites">Редактирование реквизитов</button>
+        <button class="inspector__btn" type="button" data-open="logout">Выход из аккаунта</button>
+        <button class="inspector__btn" type="button" data-open="payment">Платёжный шлюз</button>
+        <button class="inspector__btn" type="button" data-open="success">Success-окно</button>
+        <button class="inspector__btn" type="button" data-open="error">Error-окно</button>
+        <button class="inspector__btn" type="button" data-inspector-tooltip>Tooltip акции</button>
+        <button class="inspector__btn" type="button" data-toast="Позиция добавлена в заявку">Toast</button>
+      </div>
+    </div>
+
+    <div class="inspector__group">
+      <p class="inspector__legend">Корзина</p>
+      <div class="inspector__list">
+        <button class="inspector__btn" type="button" data-cart-preset="empty">Пустая</button>
+        <button class="inspector__btn" type="button" data-cart-preset="below">Ниже минимума</button>
+        <button class="inspector__btn" type="button" data-cart-preset="above">Минимум достигнут</button>
+        <button class="inspector__btn" type="button" data-cart-preset="warn">С предупреждением об остатке</button>
+      </div>
+    </div>
+
+    <div class="inspector__group">
+      <p class="inspector__legend">Прочее</p>
+      <div class="inspector__list">
+        <a class="inspector__btn" href="ui-kit.html">Открыть UI-kit →</a>
+        <a class="inspector__btn" href="README.md">README</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

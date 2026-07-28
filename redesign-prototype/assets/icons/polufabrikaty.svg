@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- pelmeni body -->
+  <ellipse cx="32" cy="36" rx="20" ry="14" fill="#f47b6f"/>
+  <!-- folded edge -->
+  <path d="M14 34 Q20 22 32 24 Q44 22 50 34" fill="#c4395a"/>
+  <!-- crimp line -->
+  <path d="M16 34 Q19 30 22 34 Q25 30 28 34 Q31 30 34 34 Q37 30 40 34 Q43 30 46 34 Q48 32 50 34" fill="none" stroke="#8b1a4a" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- shadow -->
+  <ellipse cx="32" cy="52" rx="18" ry="3" fill="#8b1a4a" opacity="0.2"/>
+  <!-- steam dots -->
+  <circle cx="24" cy="14" r="2" fill="#c4395a" opacity="0.5"/>
+  <circle cx="32" cy="10" r="2.5" fill="#c4395a" opacity="0.5"/>
+  <circle cx="40" cy="14" r="2" fill="#c4395a" opacity="0.5"/>
+</svg>

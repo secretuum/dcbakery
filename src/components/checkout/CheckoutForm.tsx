@@ -11,6 +11,7 @@ import { useToast } from "@/src/contexts/ToastContext";
 import { formatPrice } from "@/src/lib/format";
 import { isValidKzMobile } from "@/src/lib/phone";
 import { useT } from "@/src/i18n/client";
+import { CheckoutAuthGate } from "@/src/components/checkout/CheckoutAuthGate";
 
 type CheckoutFormState = {
   company_name: string;
@@ -220,6 +221,7 @@ export function CheckoutForm({
   const canCheckout = totalAmount >= MIN_ORDER_AMOUNT;
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAuthGate, setShowAuthGate] = useState(false);
   const isNavigatingRef = useRef(false);
   const [form, setForm] = useState<CheckoutFormState>({
     company_name: "",
@@ -252,23 +254,20 @@ export function CheckoutForm({
     setErrors((currentErrors) => ({ ...currentErrors, [field]: undefined }));
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const submission = { ...form, delivery_date: selectedDeliveryDate };
-    const nextErrors = validateForm(submission, schedule);
-
-    if (Object.keys(nextErrors).length > 0) {
-      setErrors(nextErrors);
-      showToast("Проверьте обязательные поля", "error");
-      return;
+  async function isClientAuthed() {
+    try {
+      const response = await fetch("/api/profile/client-session", { cache: "no-store" });
+      const data = (await response.json().catch(() => ({}))) as { authenticated?: boolean };
+      return Boolean(data.authenticated);
+    } catch {
+      return false;
     }
+  }
 
-    if (!canCheckout) {
-      showToast("Минимальная сумма заказа пока не набрана", "error");
-      return;
-    }
-
+  // Отправка заказа — логика запроса не менялась; patch добирает поля,
+  // заполненные в гейте регистрации (email/БИН).
+  async function submitOrder(patch?: Partial<CheckoutFormState>) {
+    const submission = { ...form, ...patch, delivery_date: selectedDeliveryDate };
     setIsSubmitting(true);
 
     try {
@@ -308,6 +307,32 @@ export function CheckoutForm({
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const submission = { ...form, delivery_date: selectedDeliveryDate };
+    const nextErrors = validateForm(submission, schedule);
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      showToast("Проверьте обязательные поля", "error");
+      return;
+    }
+
+    if (!canCheckout) {
+      showToast("Минимальная сумма заказа пока не набрана", "error");
+      return;
+    }
+
+    // Заказ — только с подтверждённым аккаунтом. Нет сессии → гейт регистрации/входа.
+    if (!(await isClientAuthed())) {
+      setShowAuthGate(true);
+      return;
+    }
+
+    await submitOrder();
   }
 
   if (!isReady || items.length === 0) {
@@ -569,6 +594,25 @@ export function CheckoutForm({
           </aside>
         </div>
       </section>
+
+      {showAuthGate ? (
+        <CheckoutAuthGate
+          prefill={{
+            company: form.company_name,
+            phone: form.customer_phone,
+            email: form.customer_email,
+            name: form.customer_name,
+            bin: form.customer_bin,
+          }}
+          onClose={() => setShowAuthGate(false)}
+          onAuthenticated={(patch) => {
+            if (patch?.customer_email) updateField("customer_email", patch.customer_email);
+            if (patch?.customer_bin) updateField("customer_bin", patch.customer_bin);
+            setShowAuthGate(false);
+            void submitOrder(patch);
+          }}
+        />
+      ) : null}
     </main>
   );
 }

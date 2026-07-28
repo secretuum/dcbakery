@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     ? ((body as Record<string, unknown>).code as string).trim()
     : "";
 
-  const challenge = await readOtpChallenge((await cookies()).get(OTP_CHALLENGE_COOKIE)?.value);
+  const challenge = await readOtpChallenge((await cookies()).get(OTP_CHALLENGE_COOKIE)?.value, "register");
 
   if (!challenge) {
     return NextResponse.json(
@@ -70,6 +70,7 @@ export async function POST(request: Request) {
     phone: challenge.phone,
     companyName: challenge.companyName,
     accountantPhone: "",
+    phoneVerified: true,
     exp: Date.now() + SESSION_MAX_AGE_S * 1000,
   };
 

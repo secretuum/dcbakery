@@ -20,5 +20,6 @@ export async function GET(request: NextRequest) {
     phone: session.phone,
     companyName: session.companyName,
     accountantPhone: session.accountantPhone,
+    phoneVerified: session.phoneVerified === true,
   });
 }

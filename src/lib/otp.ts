@@ -11,8 +11,10 @@ export const OTP_CHALLENGE_COOKIE = "dc_otp_challenge";
 export const OTP_TTL_MS = 2 * 60 * 1000; // код действителен 2 минуты
 export const OTP_COOKIE_MAX_AGE_S = 2 * 60 + 30; // кука чуть дольше — успеть проверить/переслать
 
+export type OtpPurpose = "register" | "verify_phone";
+
 export type OtpChallenge = {
-  purpose: "register";
+  purpose: OtpPurpose;
   email: string;
   phone: string;
   chatId: string;
@@ -74,7 +76,10 @@ export async function signOtpChallenge(payload: OtpChallenge): Promise<string> {
  * вызывающий): verify требует свежий код, а resend допускает истёкший challenge,
  * чтобы переслать новый код тому же регистранту.
  */
-export async function readOtpChallenge(value: string | undefined | null): Promise<OtpChallenge | null> {
+export async function readOtpChallenge(
+  value: string | undefined | null,
+  expectedPurpose: OtpPurpose,
+): Promise<OtpChallenge | null> {
   if (!value) return null;
   const dot = value.lastIndexOf(".");
   if (dot === -1) return null;
@@ -87,7 +92,7 @@ export async function readOtpChallenge(value: string | undefined | null): Promis
     if (!safeEqual(expected, sig)) return null;
 
     const payload = JSON.parse(Buffer.from(data, "base64url").toString()) as OtpChallenge;
-    if (payload.purpose !== "register") return null;
+    if (payload.purpose !== expectedPurpose) return null;
     return payload;
   } catch {
     return null;

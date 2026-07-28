@@ -25,6 +25,7 @@ import {
 } from "@/src/lib/whatsapp";
 import { fetchWhatsAppClientByChatId } from "@/src/lib/whatsapp-client-store";
 import { canonicalOrderStatuses } from "@/src/lib/order-status";
+import { exportOrderWriteoffToIiko } from "@/src/lib/orders/iiko-export";
 
 // Единая логика действий над заказом (подтверждение / оплата / статусы / отмена).
 // Раньше жила по одной копии в каждом admin-роуте; теперь и админка, и Telegram-бот
@@ -311,6 +312,16 @@ export async function changeStatus(
   const managerMessageId = order
     ? await refreshManagerMessage(order, previousOrder.whatsapp_message_id)
     : null;
+
+  // Списание в iiko — при ПЕРЕХОДЕ в «Доставляется» (best-effort: не роняет смену
+  // статуса; идемпотентность = срабатывает только на переходе, не на повторной установке).
+  if (order && status === "delivering" && previousOrder.status !== "delivering") {
+    const items = await fetchAdminOrderItems(id).catch(() => []);
+    const iikoResult = await exportOrderWriteoffToIiko(order, items).catch(() => null);
+    if (iikoResult && !iikoResult.ok && !iikoResult.skipped) {
+      console.error(`[iiko] списание заказа ${order.order_number} не удалось:`, iikoResult.error);
+    }
+  }
 
   return { ok: true, order, managerMessageId };
 }

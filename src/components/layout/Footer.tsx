@@ -50,15 +50,18 @@ export async function Footer() {
   ];
 
   return (
-    <footer className="print-hidden border-t border-black/10 bg-white">
-      <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[1.2fr_1.8fr] lg:px-8">
+    <footer className="print-hidden bg-espresso text-white">
+      <div className="mx-auto grid max-w-7xl gap-8 px-5 pb-8 pt-14 lg:grid-cols-[1fr_1.4fr] lg:gap-16 lg:px-8">
         <div>
-          <Link href="/" className="inline-block" aria-label="DC Bakery">
-            <span className="font-display text-xl font-bold uppercase tracking-[.12em] text-dark">
+          <Link href="/" className="inline-flex flex-col leading-none" aria-label="DC Bakery">
+            <span className="font-display text-xl font-extrabold uppercase tracking-[.13em] text-white">
               DC BAKERY
             </span>
+            <span className="mt-1 text-[10px] font-semibold uppercase tracking-[.16em] text-accent-300">
+              by del Cappuccino
+            </span>
           </Link>
-          <p className="mt-4 max-w-md text-sm leading-6 text-muted">
+          <p className="mt-5 max-w-md text-sm leading-6 text-white/70">
             {t(
               "B2B-каталог десертов, полуфабрикатов и мясных позиций для кофеен, ресторанов, магазинов и отелей.",
             )}
@@ -67,11 +70,11 @@ export async function Footer() {
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {contactItems.map((item) => (
-            <div key={item.label} className="border border-black/10 bg-cream p-4">
-              <p className="text-[10px] font-bold uppercase tracking-[.1em] text-coral">{item.label}</p>
+            <div key={item.label} className="rounded-md border border-white/15 bg-white/[0.06] p-4">
+              <p className="text-[10px] font-bold uppercase tracking-[.12em] text-accent-300">{item.label}</p>
               {item.href ? (
                 <a
-                  className="mt-2 flex items-center gap-2 text-sm font-semibold text-dark hover:text-coral"
+                  className="mt-2 flex items-center gap-2 break-words text-sm font-semibold text-white hover:text-accent-300"
                   href={item.href}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -80,26 +83,23 @@ export async function Footer() {
                   {item.value}
                 </a>
               ) : (
-                <p className="mt-2 text-sm font-semibold text-dark">{item.value}</p>
+                <p className="mt-2 text-sm font-semibold text-white">{item.value}</p>
               )}
               {"hint" in item && item.hint ? (
-                <p className="mt-1 text-xs text-muted">{item.hint}</p>
+                <p className="mt-1 text-xs text-white/55">{item.hint}</p>
               ) : null}
             </div>
           ))}
         </div>
       </div>
 
-      <div className="border-t border-black/10 px-5 pb-20 pt-4">
-        <div className="mx-auto max-w-7xl space-y-3">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <p className="text-[10px] font-bold uppercase tracking-[.1em] text-muted/60">{t("Правовая информация")}</p>
-            <Link href="/oferta" className="text-sm text-muted transition hover:text-dark">{t("Публичная оферта")}</Link>
-            <Link href="/privacy" className="text-sm text-muted transition hover:text-dark">{t("Политика конфиденциальности")}</Link>
-            <Link href="/oplata-i-dostavka" className="text-sm text-muted transition hover:text-dark">{t("Оплата и доставка")}</Link>
-            <Link href="/contacts" className="text-sm text-muted transition hover:text-dark">{t("Контакты и реквизиты")}</Link>
-          </div>
-          <p className="text-sm text-muted">© {new Date().getFullYear()} DC Bakery</p>
+      <div className="border-t border-white/15 px-5 pb-[calc(1.5rem+68px)] pt-5 lg:pb-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2">
+          <Link href="/oferta" className="text-sm text-white/70 transition hover:text-white">{t("Публичная оферта")}</Link>
+          <Link href="/privacy" className="text-sm text-white/70 transition hover:text-white">{t("Политика конфиденциальности")}</Link>
+          <Link href="/oplata-i-dostavka" className="text-sm text-white/70 transition hover:text-white">{t("Оплата и доставка")}</Link>
+          <Link href="/contacts" className="text-sm text-white/70 transition hover:text-white">{t("Контакты и реквизиты")}</Link>
+          <p className="ml-auto text-sm text-white/45">© {new Date().getFullYear()} DC Bakery</p>
         </div>
       </div>
     </footer>

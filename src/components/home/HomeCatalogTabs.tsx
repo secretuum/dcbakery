@@ -27,11 +27,11 @@ export function HomeCatalogTabs({ categories, products }: Props) {
   }, [activeTab, products]);
 
   return (
-    <section className="border-t border-black/10 bg-cream px-5 py-14 lg:px-8 lg:py-20">
+    <section className="bg-cream px-5 py-14 lg:px-8 lg:py-20">
       <div className="mx-auto max-w-7xl">
         {/* Section header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="font-display text-3xl font-bold tracking-tight text-dark lg:text-4xl">
+          <h2 className="font-display text-3xl font-extrabold tracking-tight text-dark lg:text-4xl">
             {t("Каталог продукции")}
           </h2>
           <Link
@@ -43,16 +43,16 @@ export function HomeCatalogTabs({ categories, products }: Props) {
         </div>
 
         {/* Tabs */}
-        <div className="no-scrollbar mt-7 flex overflow-x-auto border-b border-black/10">
+        <div className="no-scrollbar mt-7 flex gap-1 overflow-x-auto rounded-full bg-cream-deep p-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`shrink-0 border-b-2 pb-3 pr-6 text-sm font-semibold whitespace-nowrap transition ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition ${
                 activeTab === tab.id
-                  ? "border-dark text-dark"
-                  : "border-transparent text-muted hover:text-dark"
+                  ? "bg-white text-dark shadow-sm"
+                  : "text-muted hover:text-dark"
               }`}
             >
               {t(tab.name)}
@@ -75,7 +75,7 @@ export function HomeCatalogTabs({ categories, products }: Props) {
         <div className="mt-8 text-center">
           <Link
             href="/catalog"
-            className="inline-block border border-dark px-6 py-2.5 text-sm font-semibold text-dark transition hover:bg-dark hover:text-white"
+            className="inline-flex min-h-12 items-center rounded-full border border-black/15 bg-white px-6 text-[15px] font-semibold text-dark transition hover:border-coral hover:text-coral active:scale-[.98]"
           >
             {t("Смотреть все товары")}
           </Link>

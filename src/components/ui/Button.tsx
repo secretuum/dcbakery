@@ -1,11 +1,22 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
-type ButtonVariant = "primary" | "outline" | "ghost";
+type ButtonVariant =
+  | "primary"
+  | "outline"
+  | "secondary"
+  | "dark"
+  | "soft"
+  | "ghost"
+  | "danger"
+  | "white";
+type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 type ButtonBaseProps = {
   children: ReactNode;
   className?: string;
   variant?: ButtonVariant;
+  size?: ButtonSize;
+  block?: boolean;
 };
 
 type ButtonAnchorProps = ButtonBaseProps &
@@ -21,9 +32,21 @@ type ButtonNativeProps = ButtonBaseProps &
 export type ButtonProps = ButtonAnchorProps | ButtonNativeProps;
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: "bg-coral text-white hover:bg-coral-hover",
-  outline: "border border-coral bg-transparent text-coral hover:bg-coral-light",
-  ghost: "bg-transparent text-dark hover:bg-coral-light",
+  primary: "bg-coral text-white hover:bg-coral-hover active:bg-accent-press",
+  outline: "border border-coral bg-white text-coral hover:bg-coral-light",
+  secondary: "border border-black/10 bg-white text-dark hover:border-coral hover:text-coral",
+  dark: "bg-espresso text-white hover:bg-espresso/90",
+  soft: "bg-accent-50 text-accent-700 hover:bg-accent-100",
+  ghost: "bg-transparent text-ink-soft hover:bg-black/5",
+  danger: "bg-danger-bg text-danger hover:bg-danger hover:text-white",
+  white: "bg-white text-accent-700 shadow-sm hover:text-coral",
+};
+
+const sizeClasses: Record<ButtonSize, string> = {
+  xs: "min-h-9 gap-1.5 px-3.5 text-xs",
+  sm: "min-h-10 gap-2 px-[18px] text-[13.5px]",
+  md: "min-h-12 gap-2 px-6 text-[15px]",
+  lg: "min-h-14 gap-2.5 px-[30px] text-[17px]",
 };
 
 function cx(...classes: Array<string | undefined | false>) {
@@ -31,10 +54,12 @@ function cx(...classes: Array<string | undefined | false>) {
 }
 
 export function Button(props: ButtonProps) {
-  const { children, className, variant = "primary", ...rest } = props;
+  const { children, className, variant = "primary", size = "md", block, ...rest } = props;
   const classes = cx(
-    "inline-flex min-h-11 items-center justify-center rounded-btn px-5 py-3 text-sm font-bold transition disabled:pointer-events-none disabled:opacity-50",
+    "inline-flex items-center justify-center rounded-btn font-semibold transition active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
+    sizeClasses[size],
     variantClasses[variant],
+    block && "w-full",
     className,
   );
 

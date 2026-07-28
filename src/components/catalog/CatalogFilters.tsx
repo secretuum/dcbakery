@@ -150,14 +150,14 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
             value={priceMin}
             onChange={(e) => setPriceMin(e.target.value)}
             placeholder={t("от")}
-            className="w-full rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-dark placeholder-muted outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
+            className="w-full rounded-md border-[1.5px] border-black/10 bg-white px-3 py-2 text-sm text-dark placeholder-muted-light outline-none focus:border-coral focus:ring-2 focus:ring-coral/15"
           />
           <input
             type="number"
             value={priceMax}
             onChange={(e) => setPriceMax(e.target.value)}
             placeholder={t("до")}
-            className="w-full rounded border border-black/10 bg-white px-3 py-1.5 text-sm text-dark placeholder-muted outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
+            className="w-full rounded-md border-[1.5px] border-black/10 bg-white px-3 py-2 text-sm text-dark placeholder-muted-light outline-none focus:border-coral focus:ring-2 focus:ring-coral/15"
           />
         </div>
         {(priceMin !== "" || priceMax !== "") && (
@@ -190,7 +190,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
 
       {/* Mobile slide-in panel */}
       <div
-        className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col overflow-y-auto bg-white p-5 shadow-xl transition-transform duration-300 lg:hidden"
+        className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col overflow-y-auto rounded-r-3xl bg-white p-5 shadow-xl transition-transform duration-300 lg:hidden"
         style={{ transform: isMobileOpen ? "translateX(0)" : "translateX(-100%)" }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -199,7 +199,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
           <button
             type="button"
             onClick={() => setIsMobileOpen(false)}
-            className="flex h-8 w-8 items-center justify-center border border-black/10 bg-white text-dark hover:bg-black/5"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-black/10 bg-white text-dark hover:bg-black/5"
             aria-label={t("Закрыть")}
           >
             ✕
@@ -210,7 +210,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
           <button
             type="button"
             onClick={() => { resetFilters(); setIsMobileOpen(false); }}
-            className="mt-6 w-full rounded bg-dark py-2.5 text-sm font-bold text-white"
+            className="mt-6 w-full rounded-full bg-espresso py-3 text-sm font-bold text-white"
           >
             {t("Сбросить и закрыть")}
           </button>
@@ -246,7 +246,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={t("Найти товар...")}
-                className="w-full rounded border border-black/10 bg-white py-2.5 pl-10 pr-8 text-sm text-dark placeholder-gray-400 outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
+                className="w-full rounded-full border-[1.5px] border-black/10 bg-white py-3 pl-10 pr-8 text-sm text-dark placeholder-muted-light outline-none transition focus:border-coral focus:ring-4 focus:ring-coral/15"
               />
               {query && (
                 <button
@@ -261,7 +261,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
               value={sortMode}
               onChange={(e) => setSortMode(e.currentTarget.value as SortMode)}
               aria-label={t("Сортировка")}
-              className="rounded border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark outline-none focus:border-coral focus:ring-1 focus:ring-coral/20"
+              className="rounded-full border-[1.5px] border-black/10 bg-white px-4 py-3 text-sm font-semibold text-dark outline-none transition focus:border-coral focus:ring-4 focus:ring-coral/15"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -272,14 +272,14 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
             <button
               type="button"
               onClick={() => setIsMobileOpen(true)}
-              className="flex items-center gap-2 rounded border border-black/10 bg-white px-4 py-2.5 text-sm font-bold text-dark lg:hidden"
+              className="flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-3 text-sm font-bold text-dark lg:hidden"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h18M7 12h10M11 20h2" />
               </svg>
               {t("Фильтры")}
               {hasActiveFilters && (
-                <span className="flex h-5 w-5 items-center justify-center bg-coral text-[10px] font-bold text-white">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-coral text-[10px] font-bold text-white">
                   {selectedCategories.length + (inStockOnly ? 1 : 0) + (priceMin !== "" || priceMax !== "" ? 1 : 0)}
                 </span>
               )}
@@ -297,7 +297,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
             <div className="flex flex-col gap-14">
               {popularProducts.length > 0 && (
                 <div>
-                  <h2 id="cat-popular" className="mb-6 text-3xl font-bold tracking-tight text-dark">
+                  <h2 id="cat-popular" className="mb-6 font-display text-3xl font-extrabold tracking-tight text-dark">
                     {t("Популярное")}
                   </h2>
                   {productGrid(popularProducts)}
@@ -310,7 +310,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
                   <div key={category.id}>
                     <h2
                       id={`cat-${category.slug}`}
-                      className="mb-6 text-3xl font-bold tracking-tight text-dark"
+                      className="mb-6 font-display text-3xl font-extrabold tracking-tight text-dark"
                     >
                       {t(category.name)}
                     </h2>

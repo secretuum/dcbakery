@@ -1,0 +1,1463 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DC Bakery — UI-kit прототипа</title>
+<meta name="description" content="Библиотека компонентов, состояний и слоёв дизайн-прототипа DC Bakery.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- Библиотека иконок (та же, что в index.html) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <g id="i-menu"><path d="M3 6h18M3 12h18M3 18h18"/></g>
+    <g id="i-close"><path d="M18 6 6 18M6 6l12 12"/></g>
+    <g id="i-cart"><path d="M5 6h16l-2 9H7L5 6Z"/><path d="M5 6 4.2 3H2"/><circle cx="9" cy="19.5" r="1.6"/><circle cx="17" cy="19.5" r="1.6"/></g>
+    <g id="i-user"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></g>
+    <g id="i-search"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-3.6-3.6"/></g>
+    <g id="i-filter"><path d="M4 6h16M7 12h10M10 18h4"/></g>
+    <g id="i-sliders"><path d="M4 8h10M18 8h2M4 16h4M12 16h8"/><circle cx="16" cy="8" r="2"/><circle cx="10" cy="16" r="2"/></g>
+    <g id="i-chev-down"><path d="m6 9 6 6 6-6"/></g>
+    <g id="i-chev-up"><path d="m6 15 6-6 6 6"/></g>
+    <g id="i-chev-right"><path d="m9 6 6 6-6 6"/></g>
+    <g id="i-chev-left"><path d="m15 6-6 6 6 6"/></g>
+    <g id="i-arrow-right"><path d="M4 12h16M14 6l6 6-6 6"/></g>
+    <g id="i-arrow-left"><path d="M20 12H4M10 6l-6 6 6 6"/></g>
+    <g id="i-plus"><path d="M12 5v14M5 12h14"/></g>
+    <g id="i-minus"><path d="M5 12h14"/></g>
+    <g id="i-check"><path d="m5 12.5 5 5L19 7"/></g>
+    <g id="i-check-circle"><circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.7 2.7L16 9.6"/></g>
+    <g id="i-alert-circle"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.4h.01"/></g>
+    <g id="i-alert-triangle"><path d="M10.3 4.3 2.6 17.4A2 2 0 0 0 4.3 20.4h15.4a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0Z"/><path d="M12 9.5v4M12 17h.01"/></g>
+    <g id="i-info"><circle cx="12" cy="12" r="9"/><path d="M12 16.5V11M12 7.6h.01"/></g>
+    <g id="i-trash"><path d="M4 7h16M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/><path d="M6.5 7 7.4 19a1.6 1.6 0 0 0 1.6 1.5h6a1.6 1.6 0 0 0 1.6-1.5L17.5 7"/><path d="M10.5 11v5.5M13.5 11v5.5"/></g>
+    <g id="i-gift"><path d="M3.5 11.5h17v8a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5v-8Z"/><path d="M2.5 7.5h19v4h-19zM12 7.5V21"/><path d="M12 7.5S10.6 3 8.3 3a2.2 2.2 0 0 0 0 4.5H12ZM12 7.5S13.4 3 15.7 3a2.2 2.2 0 0 1 0 4.5H12Z"/></g>
+    <g id="i-clock"><circle cx="12" cy="12" r="9"/><path d="M12 7v5.3l3.4 2"/></g>
+    <g id="i-calendar"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8.5 3v4M15.5 3v4"/></g>
+    <g id="i-truck"><path d="M2.5 6.5h11v10h-11z"/><path d="M13.5 10h4l3 3.2v3.3h-7z"/><circle cx="7" cy="18.5" r="1.9"/><circle cx="17" cy="18.5" r="1.9"/></g>
+    <g id="i-phone"><path d="M6.2 3.5h3l1.6 4-2 1.4a12.5 12.5 0 0 0 5.8 5.8l1.4-2 4 1.6v3a2 2 0 0 1-2.2 2A16.8 16.8 0 0 1 4.2 5.7a2 2 0 0 1 2-2.2Z"/></g>
+    <g id="i-whatsapp"><path d="M3.5 20.5 5 16.2A8.2 8.2 0 1 1 8 19.2l-4.5 1.3Z"/><path d="M9 9.2c.2 2 1.9 4.4 4.4 5.3.9.3 1.6-.1 1.9-.7l.3-.6-2-1-.7.8a5.6 5.6 0 0 1-2.2-2.3l.9-.6-1-2-.7.3c-.6.3-1 .9-.9 1.8Z"/></g>
+    <g id="i-instagram"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17 7h.01"/></g>
+    <g id="i-mail"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.6 7 8.4 6 8.4-6"/></g>
+    <g id="i-pin"><path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></g>
+    <g id="i-repeat"><path d="M4 9.5A5 5 0 0 1 9 5h9M18 5l-3-3M18 5l-3 3"/><path d="M20 14.5a5 5 0 0 1-5 4.5H6M6 19l3 3M6 19l3-3"/></g>
+    <g id="i-home"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1v-9.5Z"/></g>
+    <g id="i-grid"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></g>
+    <g id="i-star"><path d="m12 3.8 2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 10l5.9-.8L12 3.8Z"/></g>
+    <g id="i-package"><path d="m12 3 8.5 4.5v9L12 21l-8.5-4.5v-9L12 3Z"/><path d="m3.5 7.5 8.5 4.5 8.5-4.5M12 12v9"/></g>
+    <g id="i-snow"><path d="M12 3v18M4.2 7.5l15.6 9M19.8 7.5l-15.6 9"/><path d="m9.4 4.6 2.6 2.6 2.6-2.6M9.4 19.4l2.6-2.6 2.6 2.6"/></g>
+    <g id="i-shield"><path d="M12 3.2 4.8 6v6c0 4.4 3 7.7 7.2 9 4.2-1.3 7.2-4.6 7.2-9V6L12 3.2Z"/><path d="m9 12 2.2 2.2L15.2 10"/></g>
+    <g id="i-file"><path d="M13.5 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8.5L13.5 3Z"/><path d="M13.5 3v5.5H19M8.5 13h7M8.5 16.5h5"/></g>
+    <g id="i-card"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5"/><path d="M2.5 10h19"/></g>
+    <g id="i-logout"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8 6 12l4 4M6 12h9"/></g>
+    <g id="i-edit"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17l-1 3Z"/><path d="m14.5 6.5 3 3"/></g>
+    <g id="i-eye"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.8"/></g>
+    <g id="i-image"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="m4.5 17 4.6-4.4 3.4 3.2 3-2.6 4 3.8"/></g>
+    <g id="i-wheat"><path d="M12 21V9"/><path d="M12 12c-3 0-4.5-1.6-4.5-4.2C10.5 7.8 12 9.4 12 12ZM12 12c3 0 4.5-1.6 4.5-4.2C13.5 7.8 12 9.4 12 12Z"/><path d="M12 7.5c-2.4 0-3.6-1.3-3.6-3.4C10.8 4.1 12 5.4 12 7.5ZM12 7.5c2.4 0 3.6-1.3 3.6-3.4C13.2 4.1 12 5.4 12 7.5Z"/></g>
+    <g id="i-percent"><path d="M18 6 6 18"/><circle cx="7.6" cy="7.6" r="2.4"/><circle cx="16.4" cy="16.4" r="2.4"/></g>
+    <g id="i-list"><path d="M8 6.5h12M8 12h12M8 17.5h12M4 6.5h.01M4 12h.01M4 17.5h.01"/></g>
+    <g id="i-refresh"><path d="M20 11a8 8 0 1 0-.7 4.3"/><path d="M20 5v6h-6"/></g>
+    <g id="i-layers"><path d="m12 3 9 4.8-9 4.8-9-4.8L12 3Z"/><path d="m3 12.6 9 4.8 9-4.8M3 17.2l9 4.8 9-4.8"/></g>
+  </defs>
+</svg>
+
+<!-- ==========================================================================
+     ШАПКА UI-KIT
+     ========================================================================== -->
+<div class="kit-nav">
+  <div class="container kit-nav__inner no-scrollbar">
+    <a class="logo" href="index.html" style="margin-right:auto">
+      <svg class="logo__mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <rect width="40" height="40" rx="12" fill="var(--accent)"/>
+        <path d="M11 12h6.6c4.4 0 7.4 3.1 7.4 8s-3 8-7.4 8H11V12Z" fill="#fff"/>
+        <path d="M15.4 15.9v8.2h2c2.1 0 3.4-1.5 3.4-4.1s-1.3-4.1-3.4-4.1h-2Z" fill="var(--accent)"/>
+        <circle cx="28.6" cy="27" r="2.4" fill="#fff"/>
+      </svg>
+      <span><span class="logo__text">UI-kit</span><span class="logo__sub">DC BAKERY</span></span>
+    </a>
+    <a class="kit-nav__link" href="#colors">Цвета</a>
+    <a class="kit-nav__link" href="#type">Типографика</a>
+    <a class="kit-nav__link" href="#grid">Сетка</a>
+    <a class="kit-nav__link" href="#space">Отступы</a>
+    <a class="kit-nav__link" href="#radius">Радиусы</a>
+    <a class="kit-nav__link" href="#shadow">Тени</a>
+    <a class="kit-nav__link" href="#icons">Иконки</a>
+    <a class="kit-nav__link" href="#buttons">Кнопки</a>
+    <a class="kit-nav__link" href="#forms">Поля</a>
+    <a class="kit-nav__link" href="#chips">Chips · Tabs · Badges</a>
+    <a class="kit-nav__link" href="#progress">Progress</a>
+    <a class="kit-nav__link" href="#cards">Карточки</a>
+    <a class="kit-nav__link" href="#banners">Баннеры</a>
+    <a class="kit-nav__link" href="#nav">Header · Footer · Nav</a>
+    <a class="kit-nav__link" href="#layers">Слои и оверлеи</a>
+    <a class="kit-nav__link" href="#states">Состояния</a>
+    <a class="kit-nav__link" href="index.html">← Прототип</a>
+  </div>
+</div>
+
+<main class="container" style="padding-bottom:var(--s-12)">
+
+  <header style="padding-block:var(--s-9) var(--s-7)">
+    <span class="eyebrow">Дизайн-система</span>
+    <h1 class="display-2 mt-3">UI-kit прототипа DC Bakery</h1>
+    <p class="lead mt-4" style="max-width:62ch">Все элементы визуальной системы редизайна: токены, компоненты, состояния и слои. Каждый оверлей открывается кнопкой — ни один слой дизайна не существует только в коде.</p>
+    <div class="row row--wrap mt-6">
+      <a class="btn btn--primary" href="index.html">Открыть прототип</a>
+      <a class="btn btn--secondary" href="index.html#/catalog">Каталог</a>
+      <a class="btn btn--ghost" href="README.md">README</a>
+    </div>
+  </header>
+
+  <!-- ── ЦВЕТА ────────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="colors">
+    <div class="kit-section__head">
+      <h2>Цвета</h2>
+      <p>Основа — акцент DC Bakery #C2531F, тёплый кремовый фон и чернильный текст. Все значения — CSS-переменные.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Бренд</p>
+      <div class="kit-grid" data-swatches="brand"></div>
+    </div>
+    <div class="kit-block">
+      <p class="kit-block__label">Поверхности и текст</p>
+      <div class="kit-grid" data-swatches="surface"></div>
+    </div>
+    <div class="kit-block">
+      <p class="kit-block__label">Семантика</p>
+      <div class="kit-grid" data-swatches="semantic"></div>
+    </div>
+  </section>
+
+  <!-- ── ТИПОГРАФИКА ──────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="type">
+    <div class="kit-section__head">
+      <h2>Типографика</h2>
+      <p>Montserrat — заголовки, Geist — интерфейс, IBM Plex Mono — номера заказов, БИН и IBAN.</p>
+    </div>
+    <div class="kit-block">
+      <p class="kit-block__label">Шкала</p>
+      <div class="stack stack-5">
+        <div><p class="display-1">Display 1</p><code class="text-xs text-muted mono">--t-display-1 · clamp(38px, 7.4vw, 76px) · Montserrat 800</code></div>
+        <div><p class="display-2">Display 2</p><code class="text-xs text-muted mono">--t-display-2 · Montserrat 700</code></div>
+        <div><h1>Заголовок H1</h1><code class="text-xs text-muted mono">--t-h1</code></div>
+        <div><h2>Заголовок H2</h2><code class="text-xs text-muted mono">--t-h2</code></div>
+        <div><h3>Заголовок H3</h3><code class="text-xs text-muted mono">--t-h3</code></div>
+        <div><h4>Заголовок H4</h4><code class="text-xs text-muted mono">--t-h4</code></div>
+        <div><p class="eyebrow">Надзаголовок · eyebrow</p><code class="text-xs text-muted mono">.eyebrow · 11px / 0.14em</code></div>
+        <div><p class="lead">Лид-абзац: десерты, полуфабрикаты и мясо для кофеен, ресторанов, отелей и магазинов.</p><code class="text-xs text-muted mono">.lead · 17px</code></div>
+        <div><p>Основной текст интерфейса. Оптовые цены, живые остатки, история заказов — всё в одном кабинете.</p><code class="text-xs text-muted mono">15px / 1.55</code></div>
+        <div><p class="text-sm text-muted">Вторичный текст · 13.5px</p></div>
+        <div><p class="text-xs text-muted">Подпись · 12px</p></div>
+        <div><p class="mono" style="font-size:17px">DC-2607-0148 · KZ61722S000051248791 · 810127300096</p><code class="text-xs text-muted mono">.mono · IBM Plex Mono, tabular-nums</code></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── СЕТКА ────────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="grid">
+    <div class="kit-section__head">
+      <h2>Сетка</h2>
+      <p>Контейнер 1280px, поля 20 / 32 / 40px. Каталог — 2 колонки на mobile, 3 на планшете, 4 на широком десктопе.</p>
+    </div>
+    <div class="kit-block">
+      <p class="kit-block__label">12 колонок</p>
+      <div class="grid-demo">
+        <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div>
+        <div>7</div><div>8</div><div>9</div><div>10</div><div>11</div><div>12</div>
+      </div>
+    </div>
+    <div class="kit-block">
+      <p class="kit-block__label">Контрольные точки</p>
+      <div class="stack stack-3">
+        <div class="spec-demo"><span class="spec-demo__name">Mobile</span><span class="spec-demo__code">390 × 844 · 1 колонка, нижняя навигация</span></div>
+        <div class="spec-demo"><span class="spec-demo__name">Tablet</span><span class="spec-demo__code">768 × 1024 · 2–3 колонки, фильтры в шторке</span></div>
+        <div class="spec-demo"><span class="spec-demo__name">Desktop</span><span class="spec-demo__code">1440 × 900 · сайдбар фильтров, 4 колонки</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ОТСТУПЫ ──────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="space">
+    <div class="kit-section__head">
+      <h2>Отступы</h2>
+      <p>Шаг 4px. Секции — 48px на mobile, 80px на десктопе.</p>
+    </div>
+    <div class="kit-block" data-spacing></div>
+  </section>
+
+  <!-- ── РАДИУСЫ ──────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="radius">
+    <div class="kit-section__head">
+      <h2>Радиусы</h2>
+      <p>Крупные скругления — ключевой приём системы: карточки 32px, панели 40–52px, кнопки и чипы — pill.</p>
+    </div>
+    <div class="kit-block">
+      <div class="kit-row" data-radii></div>
+    </div>
+  </section>
+
+  <!-- ── ТЕНИ ─────────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="shadow">
+    <div class="kit-section__head">
+      <h2>Тени</h2>
+      <p>Тёплые, низкоконтрастные — на кремовом фоне ощущаются как мягкий свет.</p>
+    </div>
+    <div class="kit-block surface--cream">
+      <div class="kit-grid" data-shadows></div>
+    </div>
+  </section>
+
+  <!-- ── ИКОНКИ ───────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="icons">
+    <div class="kit-section__head">
+      <h2>Иконки</h2>
+      <p>Линейный набор 24×24, толщина 1.7–1.9. Emoji в интерфейсе не используются.</p>
+    </div>
+    <div class="kit-block">
+      <div class="kit-grid" style="grid-template-columns:repeat(auto-fill,minmax(92px,1fr))" data-icons></div>
+    </div>
+  </section>
+
+  <!-- ── КНОПКИ ───────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="buttons">
+    <div class="kit-section__head">
+      <h2>Кнопки</h2>
+      <p>Все типы и состояния: обычное, hover, active, disabled, loading.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Типы</p>
+      <div class="kit-row">
+        <button class="btn btn--primary">Открыть каталог</button>
+        <button class="btn btn--dark">Стать партнёром</button>
+        <button class="btn btn--secondary">Вторичная</button>
+        <button class="btn btn--soft">Мягкая</button>
+        <button class="btn btn--ghost">Призрачная</button>
+        <button class="btn btn--retail">Заказать в розницу</button>
+        <button class="btn btn--danger">Удалить</button>
+      </div>
+      <div class="kit-row mt-4" style="background:var(--espresso);padding:var(--s-4);border-radius:var(--r-md)">
+        <button class="btn btn--on-dark">На тёмном</button>
+        <button class="btn btn--white">Белая</button>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Размеры</p>
+      <div class="kit-row">
+        <button class="btn btn--primary btn--xs">XS</button>
+        <button class="btn btn--primary btn--sm">SM</button>
+        <button class="btn btn--primary">MD</button>
+        <button class="btn btn--primary btn--lg">LG</button>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Состояния</p>
+      <div class="kit-row">
+        <button class="btn btn--primary">Обычное</button>
+        <button class="btn btn--primary" style="background:var(--accent-hover)">Hover</button>
+        <button class="btn btn--primary" style="background:var(--accent-press);transform:scale(.975)">Active</button>
+        <button class="btn btn--primary" disabled>Disabled</button>
+        <button class="btn btn--primary is-loading">Loading</button>
+        <button class="btn btn--secondary is-loading">Loading</button>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Иконочные кнопки и stepper</p>
+      <div class="kit-row">
+        <button class="icon-btn icon-btn--sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-user"/></svg></button>
+        <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-search"/></svg></button>
+        <button class="icon-btn icon-btn--lg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-filter"/></svg></button>
+        <button class="icon-btn icon-btn--accent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-plus"/></svg></button>
+        <button class="icon-btn icon-btn--dark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-plus"/></svg></button>
+        <button class="icon-btn icon-btn--bare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-trash"/></svg></button>
+        <span class="icon-btn icon-btn--glass"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-arrow-left"/></svg></span>
+        <button class="icon-btn has-count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cart"/></svg><span class="icon-btn__count">14</span></button>
+      </div>
+      <div class="kit-row mt-4">
+        <span class="stepper stepper--sm"><button class="stepper__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><use href="#i-minus"/></svg></button><span class="stepper__value">1</span><button class="stepper__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><use href="#i-plus"/></svg></button></span>
+        <span class="stepper"><button class="stepper__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><use href="#i-minus"/></svg></button><span class="stepper__value">8</span><button class="stepper__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><use href="#i-plus"/></svg></button></span>
+        <span class="stepper stepper--lg"><button class="stepper__btn" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><use href="#i-minus"/></svg></button><span class="stepper__value">24</span><button class="stepper__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><use href="#i-plus"/></svg></button></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ПОЛЯ ФОРМ ────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="forms">
+    <div class="kit-section__head">
+      <h2>Поля форм</h2>
+      <p>Input, textarea, select, checkbox, radio, switch, OTP. Состояния: обычное, focus, ошибка, успех, disabled.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Текстовые поля</p>
+      <div class="form-grid">
+        <label class="field">
+          <span class="field__label">Название компании <span class="req">*</span></span>
+          <input class="input" placeholder="Например, Coffee Point">
+          <span class="field__hint">Как в счёте и накладной.</span>
+        </label>
+        <label class="field is-valid">
+          <span class="field__label">Заполнено</span>
+          <input class="input" value="Coffee Point">
+        </label>
+        <label class="field has-error">
+          <span class="field__label">Телефон <span class="req">*</span></span>
+          <input class="input mono" value="+7 705 12">
+          <span class="field__error">Укажите корректный мобильный номер, например +7 705 123 45 67</span>
+        </label>
+        <label class="field">
+          <span class="field__label">Disabled</span>
+          <input class="input" value="810127300096" disabled>
+        </label>
+        <label class="field span-2">
+          <span class="field__label">Комментарий</span>
+          <textarea class="textarea" placeholder="Особые условия, удобный контакт, детали доставки"></textarea>
+        </label>
+        <label class="field">
+          <span class="field__label">Select</span>
+          <select class="select"><option>Утро 8-12</option><option>День 12-18</option><option>Договориться с менеджером</option></select>
+        </label>
+        <div class="field">
+          <span class="field__label">Поиск с очисткой</span>
+          <div class="input-group has-value">
+            <span class="input-group__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><use href="#i-search"/></svg></span>
+            <input class="input" value="медовик">
+            <button class="input-group__clear" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-close"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Выбор</p>
+      <div class="form-grid">
+        <div class="stack stack-3">
+          <label class="check"><input type="checkbox" checked><span>Только в наличии</span></label>
+          <label class="check"><input type="checkbox"><span>Только халал</span></label>
+          <label class="check"><input type="checkbox" disabled><span>Disabled</span></label>
+          <label class="check check--card"><input type="checkbox" checked><span>Я ознакомлен(а) и принимаю условия <a class="link-accent" href="index.html#/oferta">Публичной оферты</a></span></label>
+        </div>
+        <div class="stack stack-3">
+          <label class="check"><input type="radio" name="kit-radio" checked><span>Выставить счёт</span></label>
+          <label class="check"><input type="radio" name="kit-radio"><span>Безналичный расчёт</span></label>
+          <label class="switch"><input type="checkbox" checked><span>Показывать остатки</span></label>
+          <label class="switch"><input type="checkbox"><span>Только новинки</span></label>
+        </div>
+      </div>
+      <div class="stack stack-3 mt-5" style="max-width:520px">
+        <label class="paymethod">
+          <input type="radio" name="kit-pay" checked>
+          <span class="paymethod__mark"></span>
+          <span><b>Выставить счёт</b><span>Менеджер выставит счёт с реквизитами после подтверждения.</span></span>
+        </label>
+        <label class="paymethod">
+          <input type="radio" name="kit-pay">
+          <span class="paymethod__mark"></span>
+          <span><b>Банковской картой онлайн</b><span>Visa / Mastercard через страницу банка-эквайера.</span></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Код подтверждения и выбор даты</p>
+      <div class="otp" style="justify-content:flex-start">
+        <input value="4" maxlength="1"><input value="1" maxlength="1"><input value="9" maxlength="1">
+        <input maxlength="1"><input maxlength="1"><input maxlength="1">
+      </div>
+      <div class="otp has-error mt-4" style="justify-content:flex-start">
+        <input value="4" maxlength="1"><input value="1" maxlength="1"><input value="9" maxlength="1">
+        <input value="0" maxlength="1"><input value="2" maxlength="1"><input value="7" maxlength="1">
+      </div>
+      <p class="field__error mt-3" style="display:block">Неверный код</p>
+
+      <div class="datepick no-scrollbar mt-5">
+        <button class="datepick__day"><em>вт</em><b>29 июл</b></button>
+        <button class="datepick__day is-selected"><em>чт</em><b>31 июл</b></button>
+        <button class="datepick__day"><em>сб</em><b>2 авг</b></button>
+        <button class="datepick__day" disabled><em>вс</em><b>3 авг</b></button>
+        <button class="datepick__day" disabled><em>пн</em><b>4 авг</b></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── CHIPS · TABS · BADGES ────────────────────────────────────────────── -->
+  <section class="kit-section" id="chips">
+    <div class="kit-section__head">
+      <h2>Chips · Tabs · Badges</h2>
+      <p>Фильтры, статусы и метки товара.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Chips</p>
+      <div class="kit-row">
+        <span class="chip">125 грамм</span>
+        <span class="chip chip--outline">коробка</span>
+        <span class="chip chip--accent">Халал</span>
+        <span class="chip chip--white">Новинка</span>
+        <button class="chip is-active" type="button">Активный</button>
+        <button class="chip" type="button">Торты <span class="chip__remove"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><use href="#i-close"/></svg></span></button>
+        <span class="chip chip--lg">Крупный chip</span>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Tabs</p>
+      <div class="tabs" style="max-width:520px">
+        <button class="tabs__item is-active">Все</button>
+        <button class="tabs__item">В работе</button>
+        <button class="tabs__item">Завершённые</button>
+        <button class="tabs__item">Отменённые</button>
+      </div>
+      <nav class="catrail no-scrollbar mt-5">
+        <button class="catrail__item is-active">все<span class="count">53</span></button>
+        <button class="catrail__item">десерты<span class="count">34</span></button>
+        <button class="catrail__item">полуфабрикаты<span class="count">11</span></button>
+        <button class="catrail__item">мясо<span class="count">4</span></button>
+      </nav>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Badges и статусы заказа</p>
+      <div class="kit-row">
+        <span class="badge badge--accent">Новинка</span>
+        <span class="badge badge--soft">Хит</span>
+        <span class="badge badge--neutral">Без фото</span>
+        <span class="badge badge--dark">Опт</span>
+      </div>
+      <div class="kit-row mt-4" data-status-badges></div>
+      <div class="kit-row mt-4">
+        <span class="stock stock--in">В наличии</span>
+        <span class="stock stock--low">Мало · осталось 3</span>
+        <span class="stock stock--out">Нет в наличии</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PROGRESS ─────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="progress">
+    <div class="kit-section__head">
+      <h2>Progress</h2>
+      <p>Прогресс до минимального заказа и шкала программы наград с этапами.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Линейный прогресс</p>
+      <div class="stack stack-4" style="max-width:560px">
+        <div class="progress"><div class="progress__bar" style="width:18%"></div></div>
+        <div class="progress"><div class="progress__bar" style="width:65%"></div></div>
+        <div class="progress progress--lg progress--success"><div class="progress__bar" style="width:100%"></div></div>
+      </div>
+      <div class="minbar mt-5" style="max-width:560px">
+        <div class="minbar__top">
+          <span class="minbar__label">Осталось набрать 4 200 ₸ до минимального заказа</span>
+          <span class="minbar__value">10 800 / 15 000 ₸</span>
+        </div>
+        <div class="progress"><div class="progress__bar" style="width:72%"></div></div>
+      </div>
+      <div class="minbar is-reached mt-3" style="max-width:560px">
+        <div class="minbar__top">
+          <span class="minbar__label">Минимум достигнут — оформление доступно</span>
+          <span class="minbar__value">18 400 / 15 000 ₸</span>
+        </div>
+        <div class="progress"><div class="progress__bar" style="width:100%"></div></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Шкала наград с этапами</p>
+      <div class="milestones" style="max-width:620px">
+        <div class="milestones__track"><div class="milestones__fill" style="width:65%"></div></div>
+        <div class="milestones__nodes" data-kit-nodes></div>
+        <div class="milestones__labels" data-kit-labels></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Спиннеры</p>
+      <div class="kit-row">
+        <span class="spinner spinner--sm"></span>
+        <span class="spinner"></span>
+        <span class="spinner spinner--lg"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── КАРТОЧКИ ─────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="cards">
+    <div class="kit-section__head">
+      <h2>Карточки товаров</h2>
+      <p>Компактная карточка, poster-карточка, строка быстрого повтора, карточка категории, строка корзины, карточка заказа.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Товарная карточка · в наличии / мало / нет / без фото / добавлено</p>
+      <div class="product-grid" data-kit-products></div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Poster-карточка</p>
+      <div class="grid grid-3up" data-kit-posters></div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Строка быстрого повтора и карточка категории</p>
+      <div class="grid grid-2">
+        <div class="stack stack-3" data-kit-minis></div>
+        <div class="grid grid-2" data-kit-cats></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Строка корзины · обычная и с предупреждением об остатке</p>
+      <div class="stack stack-3" data-kit-cartlines></div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Карточка заказа</p>
+      <div class="stack stack-3" data-kit-orders></div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Карточка клиента и информационный блок</p>
+      <div class="grid grid-2">
+        <div class="client-card">
+          <div class="client-card__top">
+            <span class="client-card__avatar">CP</span>
+            <div><p class="client-card__name">Coffee Point</p><p class="client-card__sub">Постоянный партнёр · с апреля 2026</p></div>
+          </div>
+          <div class="client-card__grid">
+            <div class="client-card__cell"><em>Заказов</em><b>28</b></div>
+            <div class="client-card__cell"><em>За неделю</em><b>65 000 ₸</b></div>
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="info-card__head">
+            <span class="info-card__title">Реквизиты компании</span>
+            <button class="btn btn--xs btn--ghost info-card__action">Изменить</button>
+          </div>
+          <dl class="kv">
+            <div class="kv__row"><dt>Компания</dt><dd>Coffee Point</dd></div>
+            <div class="kv__row"><dt>БИН / ИИН</dt><dd class="mono">123456789012</dd></div>
+            <div class="kv__row"><dt>Телефон</dt><dd class="mono">+7 705 123 45 67</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Шаги статуса заказа</p>
+      <div class="steps" style="max-width:460px">
+        <div class="steps__item is-done"><span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><use href="#i-check"/></svg></span><div><p class="steps__title">Заявка отправлена</p><p class="steps__meta">24 июля, 14:32</p></div></div>
+        <div class="steps__item is-current"><span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-clock"/></svg></span><div><p class="steps__title">Ожидает подтверждения менеджером</p><p class="steps__meta">Проверяем остатки и слот</p></div></div>
+        <div class="steps__item"><span class="steps__dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-truck"/></svg></span><div><p class="steps__title">Доставка</p><p class="steps__meta">Вт · чт · сб</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── БАННЕРЫ ──────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="banners">
+    <div class="kit-section__head">
+      <h2>Баннеры</h2>
+      <p>Акцентный, тёмный и карточка программы наград с тремя состояниями прогресса.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Акцентный и тёмный</p>
+      <div class="grid grid-2">
+        <div class="surface surface--accent pad-6" style="border-radius:var(--r-2xl)">
+          <span class="eyebrow eyebrow--light">Начать работу</span>
+          <h3 class="mt-3" style="color:#fff">Соберите первую оптовую заявку</h3>
+          <p class="mt-3 text-sm" style="color:rgba(255,255,255,.82)">Выберите позиции, проверьте остатки и отправьте заказ менеджеру.</p>
+          <a class="btn btn--white mt-5" href="index.html#/catalog">Перейти в каталог</a>
+        </div>
+        <div class="surface surface--dark pad-6" style="border-radius:var(--r-2xl)">
+          <span class="eyebrow eyebrow--light">График поставок</span>
+          <h3 class="mt-3">Вторник · Четверг · Суббота</h3>
+          <p class="mt-3 text-sm" style="color:var(--on-dark-muted)">Приём заявок до 18:00 накануне дня доставки.</p>
+          <a class="btn btn--on-dark mt-5" href="index.html#/payment-delivery">Оплата и доставка</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Программа наград · переключите состояние</p>
+      <div class="kit-row mb-4">
+        <button class="chip" type="button" data-kit-promo="empty">Прогресс 0%</button>
+        <button class="chip is-active" type="button" data-kit-promo="progress">Прогресс 65%</button>
+        <button class="chip" type="button" data-kit-promo="reward">Награда получена</button>
+      </div>
+      <article class="reward" data-kit-reward>
+        <div class="reward__top" style="grid-template-columns:1fr">
+          <div>
+            <div class="row row--wrap">
+              <span class="reward__badge"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-gift"/></svg> Бонусная программа</span>
+              <span class="reward__period"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-clock"/></svg> с 1 августа по 30 ноября 2026</span>
+              <span class="tip">
+                <button class="tip__trigger" type="button" data-kit-tip>i</button>
+                <span class="tip__bubble" role="tooltip">Сумма считается по подтверждённым и оплаченным заказам одного БИН/ИИН с понедельника по воскресенье.</span>
+              </span>
+            </div>
+            <h3 class="reward__title">5 десертов в подарок за заказы недели</h3>
+            <div class="reward__amount"><b data-kit-amount>35 000 ₸</b><span data-kit-caption>до подарка</span></div>
+            <div class="reward__scale">
+              <div class="milestones">
+                <div class="milestones__track"><div class="milestones__fill" data-kit-fill style="width:65%"></div></div>
+                <div class="milestones__nodes" data-kit-nodes2></div>
+                <div class="milestones__labels" data-kit-labels2></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ── HEADER · FOOTER · MOBILE NAV ─────────────────────────────────────── -->
+  <section class="kit-section" id="nav">
+    <div class="kit-section__head">
+      <h2>Header · Footer · Mobile navigation</h2>
+      <p>Шапка в обычном и sticky-состоянии, нижняя навигация, плавающая мини-корзина.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Шапка — обычная</p>
+      <div style="border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden">
+        <div class="header" style="position:static">
+          <div class="container header__inner">
+            <span class="logo">
+              <svg class="logo__mark" viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="var(--accent)"/><path d="M11 12h6.6c4.4 0 7.4 3.1 7.4 8s-3 8-7.4 8H11V12Z" fill="#fff"/><path d="M15.4 15.9v8.2h2c2.1 0 3.4-1.5 3.4-4.1s-1.3-4.1-3.4-4.1h-2Z" fill="var(--accent)"/><circle cx="28.6" cy="27" r="2.4" fill="#fff"/></svg>
+              <span><span class="logo__text">DC Bakery</span><span class="logo__sub">B2B · ОПТ</span></span>
+            </span>
+            <nav class="header__nav">
+              <span class="header__link is-active">Каталог</span>
+              <span class="header__link">О нас</span>
+              <span class="header__link">Доставка</span>
+              <span class="header__link">Контакты</span>
+            </nav>
+            <div class="header__actions">
+              <span class="lang" style="display:block"><span class="lang__toggle">RU <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-chev-down"/></svg></span></span>
+              <span class="btn btn--sm btn--retail header__retail" style="display:inline-flex">Заказать в розницу</span>
+              <span class="btn btn--sm btn--dark header__cta" style="display:inline-flex">Стать партнёром</span>
+              <span class="icon-btn icon-btn--sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-user"/></svg></span>
+              <span class="icon-btn icon-btn--sm has-count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-cart"/></svg></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="text-xs text-muted mt-3">Корзина без товаров — счётчик скрыт.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Шапка — sticky-состояние с индикатором корзины</p>
+      <div style="border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden">
+        <div class="header is-stuck" style="position:static">
+          <div class="container header__inner">
+            <span class="logo">
+              <svg class="logo__mark" viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="var(--accent)"/><path d="M11 12h6.6c4.4 0 7.4 3.1 7.4 8s-3 8-7.4 8H11V12Z" fill="#fff"/><path d="M15.4 15.9v8.2h2c2.1 0 3.4-1.5 3.4-4.1s-1.3-4.1-3.4-4.1h-2Z" fill="var(--accent)"/><circle cx="28.6" cy="27" r="2.4" fill="#fff"/></svg>
+              <span><span class="logo__text">DC Bakery</span><span class="logo__sub">B2B · ОПТ</span></span>
+            </span>
+            <div class="header__actions">
+              <span class="btn btn--sm btn--dark header__cta" style="display:inline-flex">Стать партнёром</span>
+              <span class="icon-btn icon-btn--sm has-count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-cart"/></svg><span class="icon-btn__count">14</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Нижняя навигация (mobile) и плавающая мини-корзина</p>
+      <div style="position:relative;border:1px solid var(--line);border-radius:var(--r-md);background:var(--cream-deep);height:170px;overflow:hidden">
+        <div class="cartbar is-visible" style="position:absolute;bottom:84px;left:16px;right:16px">
+          <span class="cartbar__text"><b>18 400 ₸</b><span>4 позиции · 39 шт</span></span>
+          <button class="btn btn--sm btn--primary">Корзина</button>
+        </div>
+        <nav class="bottomnav" style="position:absolute;display:grid">
+          <span class="bottomnav__item is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-home"/></svg>Главная</span>
+          <span class="bottomnav__item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-grid"/></svg>Каталог</span>
+          <span class="bottomnav__item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-cart"/></svg>Корзина<span class="icon-btn__count">14</span></span>
+          <span class="bottomnav__item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-user"/></svg>Кабинет</span>
+        </nav>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Подвал</p>
+      <div style="border-radius:var(--r-md);overflow:hidden">
+        <footer class="footer" style="padding-top:var(--s-7)">
+          <div class="container">
+            <div class="footer__top" style="padding-bottom:var(--s-6)">
+              <div>
+                <span class="logo">
+                  <svg class="logo__mark" viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="var(--accent)"/><path d="M11 12h6.6c4.4 0 7.4 3.1 7.4 8s-3 8-7.4 8H11V12Z" fill="#fff"/><path d="M15.4 15.9v8.2h2c2.1 0 3.4-1.5 3.4-4.1s-1.3-4.1-3.4-4.1h-2Z" fill="var(--accent)"/><circle cx="28.6" cy="27" r="2.4" fill="#fff"/></svg>
+                  <span><span class="logo__text">DC Bakery</span><span class="logo__sub">B2B · ОПТ</span></span>
+                </span>
+                <p class="footer__about">B2B-каталог десертов, полуфабрикатов и мясных позиций для кофеен, ресторанов, магазинов и отелей.</p>
+              </div>
+              <div class="footer__contacts">
+                <div class="footer__contact"><em>WhatsApp</em><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-whatsapp"/></svg>+7 747 727 2650</b></div>
+                <div class="footer__contact"><em>Телефон</em><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-phone"/></svg>+7 747 694 0766</b></div>
+                <div class="footer__contact"><em>Instagram</em><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-instagram"/></svg>@bakery.dc</b></div>
+              </div>
+            </div>
+            <div class="footer__bottom" style="padding-bottom:var(--s-5)">
+              <span class="footer__legal">Публичная оферта</span>
+              <span class="footer__legal">Политика конфиденциальности</span>
+              <span class="footer__copy ml-auto">© 2026 DC Bakery</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── СЛОИ И ОВЕРЛЕИ ───────────────────────────────────────────────────── -->
+  <section class="kit-section" id="layers">
+    <div class="kit-section__head">
+      <h2>Слои и оверлеи</h2>
+      <p>Каждый слой открывается отдельной кнопкой — ни один не существует только в коде.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Открыть слой</p>
+      <div class="kit-row">
+        <button class="btn btn--secondary" data-open="kit-menu">Мобильное меню</button>
+        <button class="btn btn--secondary" data-kit-dropdown>Dropdown (язык)</button>
+        <button class="btn btn--secondary" data-open="kit-filters">Фильтры (bottom sheet)</button>
+        <button class="btn btn--secondary" data-open="kit-psheet">Карточка товара</button>
+        <button class="btn btn--secondary" data-open="kit-cart">Корзина (side sheet)</button>
+        <button class="btn btn--secondary" data-open="kit-confirm">Подтверждение удаления</button>
+        <button class="btn btn--secondary" data-open="kit-modal">Модальное окно</button>
+        <button class="btn btn--secondary" data-open="kit-error">Ошибка</button>
+        <button class="btn btn--secondary" data-open="kit-success">Успех</button>
+        <button class="btn btn--secondary" data-open="kit-payment">Платёжный шлюз</button>
+        <button class="btn btn--secondary" data-kit-tipbtn>Tooltip</button>
+        <button class="btn btn--secondary" data-kit-toast="info">Toast · info</button>
+        <button class="btn btn--secondary" data-kit-toast="success">Toast · success</button>
+        <button class="btn btn--secondary" data-kit-toast="error">Toast · error</button>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Dropdown — раскрытый</p>
+      <div class="lang is-open" style="display:inline-block;position:relative;height:230px">
+        <button class="lang__toggle" type="button">RU <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-chev-down"/></svg></button>
+        <div class="dropdown" style="position:absolute">
+          <p class="dropdown__label">Язык интерфейса</p>
+          <button class="dropdown__item is-active">Русский <span class="code">RU</span></button>
+          <button class="dropdown__item">Қазақша <span class="code">KK</span></button>
+          <button class="dropdown__item">English <span class="code">EN</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Tooltip — раскрытый</p>
+      <span class="tip is-open" style="margin-top:60px;display:inline-flex">
+        <button class="tip__trigger" type="button">i</button>
+        <span class="tip__bubble" role="tooltip">Сумма считается по подтверждённым и оплаченным заказам одного БИН/ИИН с понедельника по воскресенье.</span>
+      </span>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Alert</p>
+      <div class="stack stack-3" style="max-width:640px">
+        <div class="alert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-info"/></svg><span><b>График поставок: вторник · четверг · суббота</b>Приём заявок до 18:00 накануне дня доставки.</span></div>
+        <div class="alert alert--success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-check-circle"/></svg><span><b>Минимум достигнут</b>Оформление доступно, доставка бесплатная.</span></div>
+        <div class="alert alert--warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-alert-circle"/></svg><span><b>Нужно добрать корзину</b>Для B2B-заявки минимальная сумма составляет 15 000 ₸.</span></div>
+        <div class="alert alert--danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-alert-triangle"/></svg><span><b>Ошибка отправки</b>Проверьте обязательные поля и попробуйте снова.</span></div>
+        <div class="stub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-info"/></svg><span>Заглушка прототипа: платёжная интеграция не подключена.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── СОСТОЯНИЯ ────────────────────────────────────────────────────────── -->
+  <section class="kit-section" id="states">
+    <div class="kit-section__head">
+      <h2>Состояния</h2>
+      <p>Skeleton, empty, error, success — базовые слои любого экрана.</p>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Skeleton</p>
+      <div class="product-grid" data-kit-skeleton></div>
+      <div class="stack stack-3 mt-5" style="max-width:520px">
+        <div class="skeleton skeleton--title w-60"></div>
+        <div class="skeleton skeleton--text w-100"></div>
+        <div class="skeleton skeleton--text w-80"></div>
+        <div class="skeleton skeleton--pill w-40"></div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Empty · Error · Success</p>
+      <div class="grid grid-3up">
+        <div class="state">
+          <div class="state__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><use href="#i-cart"/></svg></div>
+          <h3 class="state__title" style="font-size:var(--t-h4)">В корзине пока пусто</h3>
+          <p class="state__text">Соберите заявку из каталога. Минимальная сумма заказа 15 000 ₸.</p>
+          <div class="state__actions"><a class="btn btn--primary btn--sm" href="index.html#/catalog">Открыть каталог</a></div>
+        </div>
+        <div class="state state--error">
+          <div class="state__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-alert-triangle"/></svg></div>
+          <h3 class="state__title" style="font-size:var(--t-h4)">Не удалось загрузить каталог</h3>
+          <p class="state__text">Визуальная заглушка состояния ошибки.</p>
+          <div class="state__actions"><button class="btn btn--primary btn--sm">Повторить</button></div>
+        </div>
+        <div class="state state--success">
+          <div class="state__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-check-circle"/></svg></div>
+          <h3 class="state__title" style="font-size:var(--t-h4)">Заявка создана</h3>
+          <p class="state__text">Менеджер подтвердит заявку и пришлёт счёт в WhatsApp.</p>
+          <div class="state__actions"><a class="btn btn--primary btn--sm" href="index.html#/orders">К заказам</a></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kit-block">
+      <p class="kit-block__label">Заглушка вместо фотографии товара</p>
+      <div class="grid grid-4" data-kit-fallbacks></div>
+    </div>
+  </section>
+</main>
+
+<!-- ==========================================================================
+     ОВЕРЛЕИ UI-KIT
+     ========================================================================== -->
+<div class="scrim" data-scrim></div>
+
+<div class="mobilemenu" id="kit-menu">
+  <div class="mobilemenu__head">
+    <span class="logo"><span><span class="logo__text">DC Bakery</span><span class="logo__sub">B2B · ОПТ</span></span></span>
+    <button class="icon-btn icon-btn--sm ml-auto" data-close="kit-menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-close"/></svg></button>
+  </div>
+  <div class="mobilemenu__body">
+    <nav class="mobilemenu__nav">
+      <span class="mobilemenu__link">Каталог<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-chev-right"/></svg></span>
+      <span class="mobilemenu__link">О нас<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-chev-right"/></svg></span>
+      <span class="mobilemenu__link">Оплата и доставка<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-chev-right"/></svg></span>
+      <span class="mobilemenu__link">Контакты<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#i-chev-right"/></svg></span>
+    </nav>
+    <div class="row row--wrap"><span class="text-xs text-muted">Язык:</span><button class="chip is-active">Русский</button><button class="chip">Қазақша</button><button class="chip">English</button></div>
+  </div>
+  <div class="mobilemenu__foot">
+    <button class="btn btn--primary btn--block">Стать партнёром</button>
+    <button class="btn btn--retail btn--block">Заказать в розницу</button>
+  </div>
+</div>
+
+<aside class="overlay bsheet" id="kit-filters">
+  <span class="bsheet__grip"></span>
+  <div class="bsheet__head">
+    <span class="sheet__title">Фильтры</span>
+    <button class="btn btn--xs btn--ghost ml-auto">Сбросить всё</button>
+    <button class="icon-btn icon-btn--sm" data-close="kit-filters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-close"/></svg></button>
+  </div>
+  <div class="bsheet__body">
+    <div class="filters__group">
+      <p class="filters__legend">Категория</p>
+      <div class="filters__list">
+        <label class="check"><input type="checkbox" checked><span>Десерты <span class="text-muted">· 34</span></span></label>
+        <label class="check"><input type="checkbox"><span>Полуфабрикаты <span class="text-muted">· 11</span></span></label>
+        <label class="check"><input type="checkbox"><span>Мясо <span class="text-muted">· 4</span></span></label>
+      </div>
+    </div>
+    <div class="filters__group">
+      <p class="filters__legend">Цена, ₸</p>
+      <div class="price-range__inputs">
+        <input class="input" placeholder="от"><span class="price-range__dash">—</span><input class="input" placeholder="до">
+      </div>
+    </div>
+    <div class="filters__group">
+      <p class="filters__legend">Наличие</p>
+      <label class="switch"><input type="checkbox" checked><span>Только в наличии</span></label>
+    </div>
+  </div>
+  <div class="bsheet__foot"><button class="btn btn--primary btn--lg btn--block" data-close="kit-filters">Показать 34 позиции</button></div>
+</aside>
+
+<div class="overlay psheet" id="kit-psheet">
+  <div class="psheet__panel">
+    <div class="psheet__media" data-kit-psheet-media>
+      <div class="psheet__topbar">
+        <button class="icon-btn icon-btn--glass" data-close="kit-psheet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><use href="#i-arrow-left"/></svg></button>
+        <button class="icon-btn icon-btn--glass ml-auto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><use href="#i-star"/></svg></button>
+      </div>
+      <div class="psheet__nutri" data-kit-psheet-nutri></div>
+    </div>
+    <div class="psheet__side">
+      <div class="psheet__info" data-kit-psheet-info></div>
+      <div class="psheet__buy" data-kit-psheet-buy></div>
+    </div>
+  </div>
+</div>
+
+<aside class="overlay sheet sheet--adaptive" id="kit-cart">
+  <div class="sheet__head">
+    <span class="sheet__title">Корзина</span>
+    <span class="badge badge--soft">2 позиции</span>
+    <button class="icon-btn icon-btn--sm ml-auto" data-close="kit-cart"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-close"/></svg></button>
+  </div>
+  <div class="sheet__body">
+    <div class="minbar mb-4">
+      <div class="minbar__top"><span class="minbar__label">Осталось набрать 4 200 ₸</span><span class="minbar__value">10 800 / 15 000 ₸</span></div>
+      <div class="progress"><div class="progress__bar" style="width:72%"></div></div>
+    </div>
+    <div class="stack stack-3" data-kit-cartsheet></div>
+  </div>
+  <div class="sheet__foot">
+    <div class="summary mb-4">
+      <div class="summary__row"><span>Позиций</span><b>2</b></div>
+      <div class="summary__row"><span>Доставка</span><b>1 500–3 000 ₸</b></div>
+      <div class="summary__total"><span>К оплате</span><b>10 800 ₸</b></div>
+    </div>
+    <button class="btn btn--primary btn--lg btn--block is-disabled">Оформить заявку</button>
+  </div>
+</aside>
+
+<div class="overlay modal modal--sm" id="kit-confirm">
+  <div class="modal__panel">
+    <div class="modal__body text-center">
+      <div class="state__icon" style="margin-inline:auto;background:var(--danger-bg);color:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-trash"/></svg></div>
+      <h3 class="mt-5" style="font-size:var(--t-h4)">Удалить позицию из корзины?</h3>
+      <p class="text-sm text-muted mt-3">«Медовик» будет удалён из заявки. Действие можно отменить, добавив товар заново.</p>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" data-close="kit-confirm">Отменить</button>
+      <button class="btn btn--danger" data-close="kit-confirm">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay modal" id="kit-modal">
+  <div class="modal__panel">
+    <div class="modal__head">
+      <span class="modal__title">Реквизиты компании</span>
+      <button class="icon-btn icon-btn--sm modal__close" data-close="kit-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <div class="stack stack-4">
+        <label class="field"><span class="field__label">Компания / заведение</span><input class="input" value="Coffee Point"></label>
+        <label class="field"><span class="field__label">БИН / ИИН</span><input class="input mono" value="123456789012"></label>
+        <label class="field"><span class="field__label">E-mail</span><input class="input" value="accounting@coffeepoint.kz"></label>
+      </div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" data-close="kit-modal">Отменить</button>
+      <button class="btn btn--primary" data-close="kit-modal">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay modal modal--sm" id="kit-error">
+  <div class="modal__panel">
+    <div class="modal__body text-center">
+      <div class="state__icon" style="margin-inline:auto;background:var(--danger-bg);color:var(--danger)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-alert-triangle"/></svg></div>
+      <h3 class="mt-5" style="font-size:var(--t-h4)">Не удалось отправить заявку</h3>
+      <p class="text-sm text-muted mt-3">Проверьте обязательные поля или попробуйте позже. Корзина сохранена.</p>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" data-close="kit-error">Закрыть</button>
+      <button class="btn btn--primary" data-close="kit-error">Повторить</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay modal modal--sm" id="kit-success">
+  <div class="modal__panel">
+    <div class="modal__body text-center">
+      <div class="state__icon" style="margin-inline:auto;background:var(--success-bg);color:var(--success)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><use href="#i-check-circle"/></svg></div>
+      <h3 class="mt-5" style="font-size:var(--t-h4)">Заявка отправлена</h3>
+      <p class="text-sm text-muted mt-3">Менеджер подтвердит заявку и пришлёт счёт в WhatsApp.</p>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" data-close="kit-success">Закрыть</button>
+      <button class="btn btn--primary" data-close="kit-success">К заказам</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay modal" id="kit-payment">
+  <div class="modal__panel">
+    <div class="modal__head">
+      <span class="modal__title">Оплата картой</span>
+      <button class="icon-btn icon-btn--sm modal__close" data-close="kit-payment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="modal__body">
+      <div class="state state--bare" style="padding-block:var(--s-6)">
+        <div class="state__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><use href="#i-card"/></svg></div>
+        <h3 class="state__title" style="font-size:var(--t-h4)">Здесь будет переход к платёжной системе</h3>
+        <p class="state__text">Visa / Mastercard через защищённую платёжную страницу банка-эквайера.</p>
+      </div>
+      <div class="stub mt-4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><use href="#i-info"/></svg><span>Заглушка прототипа: платёжная интеграция не подключена.</span></div>
+    </div>
+    <div class="modal__foot">
+      <button class="btn btn--secondary" data-close="kit-payment">Закрыть</button>
+      <button class="btn btn--primary" data-close="kit-payment">Перейти к оплате</button>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" data-toasts></div>
+
+<script src="data.js"></script>
+<script>
+/* ============================================================================
+   UI-kit прототипа DC Bakery — демонстрационный скрипт.
+   Наполняет галерею компонентов реальными данными из data.js и открывает слои.
+   ========================================================================== */
+
+(function () {
+  "use strict";
+
+  var D = window.DC;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  function esc(v) {
+    return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  function money(v) {
+    return String(Math.round(Number(v) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " ₸";
+  }
+  function icon(name, size, w) {
+    return '<svg width="' + (size || 18) + '" height="' + (size || 18) + '" viewBox="0 0 24 24" fill="none" ' +
+      'stroke="currentColor" stroke-width="' + (w || 1.8) + '" stroke-linecap="round" stroke-linejoin="round" ' +
+      'aria-hidden="true"><use href="#i-' + name + '"/></svg>';
+  }
+  function P(id) {
+    return D.PRODUCTS.filter(function (p) { return p.id === id; })[0];
+  }
+
+  /* --- 1. Цвета ---------------------------------------------------------- */
+
+  var SWATCHES = {
+    brand: [
+      ["Accent 500 · бренд", "--accent", "#c2531f"],
+      ["Accent 600 · hover", "--accent-hover", "#a8451a"],
+      ["Accent 700 · press", "--accent-press", "#8a3714"],
+      ["Accent 300", "--accent-300", "#e2a479"],
+      ["Accent 100", "--accent-100", "#f8e3d4"],
+      ["Accent 050", "--accent-050", "#fdf3ec"],
+    ],
+    surface: [
+      ["Cream · фон", "--cream", "#fff8f6"],
+      ["Cream deep", "--cream-deep", "#fdeee7"],
+      ["Cream warm", "--cream-warm", "#fae7dd"],
+      ["White", "--white", "#ffffff"],
+      ["Espresso · тёмные блоки", "--espresso", "#2a1f1b"],
+      ["Ink · текст", "--ink", "#1c1c1c"],
+      ["Ink soft", "--ink-soft", "#4a4340"],
+      ["Muted", "--muted", "#7a7a7a"],
+    ],
+    semantic: [
+      ["Success", "--success", "#1e7a4f"],
+      ["Success bg", "--success-bg", "#e6f3ec"],
+      ["Warning", "--warning", "#a86a12"],
+      ["Warning bg", "--warning-bg", "#fdf0dc"],
+      ["Danger", "--danger", "#bf3a2b"],
+      ["Danger bg", "--danger-bg", "#fbe8e5"],
+      ["Info", "--info", "#35618f"],
+      ["Info bg", "--info-bg", "#e8f0f8"],
+    ],
+  };
+
+  $$("[data-swatches]").forEach(function (root) {
+    root.innerHTML = SWATCHES[root.getAttribute("data-swatches")].map(function (s) {
+      return '<div class="swatch"><div class="swatch__chip" style="background:var(' + s[1] + ')"></div>' +
+        '<div class="swatch__meta"><b>' + esc(s[0]) + "</b><code>" + esc(s[1]) + " · " + esc(s[2]) + "</code></div></div>";
+    }).join("");
+  });
+
+  /* --- 2. Отступы, радиусы, тени ----------------------------------------- */
+
+  var SPACES = [4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96, 128];
+  var spacing = $("[data-spacing]");
+  if (spacing) {
+    spacing.innerHTML = SPACES.map(function (v, i) {
+      return '<div class="spec-demo"><span class="spec-demo__box" style="width:' + v + "px;height:20px" + '"></span>' +
+        '<span class="spec-demo__name">' + v + "px</span>" +
+        '<span class="spec-demo__code">--s-' + (i + 1) + "</span></div>";
+    }).join("");
+  }
+
+  var RADII = [["xs", 8], ["sm", 12], ["md", 18], ["lg", 24], ["xl", 32], ["2xl", 40], ["3xl", 52], ["pill", 999]];
+  var radii = $("[data-radii]");
+  if (radii) {
+    radii.innerHTML = RADII.map(function (r) {
+      return '<div class="radius-demo" style="border-radius:var(--r-' + r[0] + ')">--r-' + r[0] + "</div>";
+    }).join("");
+  }
+
+  var SHADOWS = ["xs", "sm", "md", "lg", "xl", "accent"];
+  var shadows = $("[data-shadows]");
+  if (shadows) {
+    shadows.innerHTML = SHADOWS.map(function (s) {
+      return '<div class="shadow-demo" style="box-shadow:var(--sh-' + s + ')">--sh-' + s + "</div>";
+    }).join("");
+  }
+
+  /* --- 3. Иконки --------------------------------------------------------- */
+
+  var ICONS = ["menu", "close", "cart", "user", "search", "filter", "sliders", "chev-down", "chev-up",
+    "chev-right", "chev-left", "arrow-right", "arrow-left", "plus", "minus", "check", "check-circle",
+    "alert-circle", "alert-triangle", "info", "trash", "gift", "clock", "calendar", "truck", "phone",
+    "whatsapp", "instagram", "mail", "pin", "repeat", "home", "grid", "star", "package", "snow",
+    "shield", "file", "card", "logout", "edit", "eye", "image", "wheat", "percent", "list", "refresh", "layers"];
+  var icons = $("[data-icons]");
+  if (icons) {
+    icons.innerHTML = ICONS.map(function (n) {
+      return '<div class="icon-demo">' + icon(n, 24, 1.7) + "<span>" + n + "</span></div>";
+    }).join("");
+  }
+
+  /* --- 4. Бейджи статусов ------------------------------------------------ */
+
+  var statusBadges = $("[data-status-badges]");
+  if (statusBadges) {
+    var html = Object.keys(D.ORDER_STATUSES).map(function (k) {
+      var s = D.ORDER_STATUSES[k];
+      return '<span class="badge badge--' + s.tone + ' badge--dot">' + esc(s.label) + "</span>";
+    }).join("");
+    html += Object.keys(D.PAYMENT_STATUSES).slice(0, 4).map(function (k) {
+      var s = D.PAYMENT_STATUSES[k];
+      return '<span class="badge badge--' + s.tone + '">' + esc(s.label) + "</span>";
+    }).join("");
+    statusBadges.innerHTML = html;
+  }
+
+  /* --- 5. Шкалы наград --------------------------------------------------- */
+
+  function renderMilestones(nodesSel, labelsSel, current) {
+    var nodes = $(nodesSel), labels = $(labelsSel);
+    if (!nodes || !labels) return;
+    nodes.innerHTML = D.PROMO.milestones.map(function (m) {
+      var at = (m.value / D.PROMO.threshold) * 100;
+      var reached = current >= m.value;
+      return '<span class="milestones__node' + (reached ? " is-reached" : "") + '" style="left:' + at + '%">' + icon("gift", 16, 1.9) + "</span>";
+    }).join("");
+    labels.innerHTML = D.PROMO.milestones.map(function (m) {
+      var at = (m.value / D.PROMO.threshold) * 100;
+      var reached = current >= m.value;
+      var shift = at >= 99 ? "translate:-100% 0" : at <= 1 ? "translate:0 0" : "";
+      return '<span class="milestones__label' + (reached ? " is-reached" : "") + '" style="left:' + at + "%;" + shift + '">' +
+        "<b>" + esc(m.label) + "</b><span>" + esc(m.caption) + "</span></span>";
+    }).join("");
+  }
+  renderMilestones("[data-kit-nodes]", "[data-kit-labels]", 65000);
+
+  function setKitPromo(key) {
+    var conf = D.PROMO.states[key];
+    var reward = $("[data-kit-reward]");
+    if (!conf || !reward) return;
+    var pct = Math.min(100, (conf.current / D.PROMO.threshold) * 100);
+    var complete = conf.current >= D.PROMO.threshold;
+    reward.classList.toggle("is-complete", complete);
+    $("[data-kit-fill]").style.width = pct + "%";
+    $("[data-kit-amount]").textContent = complete ? "5 десертов ваши" : money(D.PROMO.threshold - conf.current);
+    $("[data-kit-caption]").textContent = complete
+      ? "набрано " + money(conf.current) + " за неделю"
+      : conf.current === 0 ? "до подарка · неделя только началась" : "до подарка · набрано " + money(conf.current);
+    renderMilestones("[data-kit-nodes2]", "[data-kit-labels2]", conf.current);
+    $$("[data-kit-promo]").forEach(function (b) {
+      b.classList.toggle("is-active", b.getAttribute("data-kit-promo") === key);
+    });
+  }
+  setKitPromo("progress");
+
+  /* --- 6. Карточки ------------------------------------------------------- */
+
+  function fallback(p) {
+    return '<div class="photo-fallback">' +
+      '<svg class="photo-fallback__mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><use href="#i-image"/></svg>' +
+      '<span class="photo-fallback__name">' + esc(p.name) + '</span>' +
+      '<span class="photo-fallback__note">фото готовится</span></div>';
+  }
+  function media(p) {
+    return p.image ? '<img src="' + esc(p.image) + '" alt="' + esc(p.name) + '" loading="lazy">' : fallback(p);
+  }
+  function stockState(p) { return !p.stock ? "out" : p.stock <= 5 ? "low" : "in"; }
+  function stockLabel(p) {
+    return !p.stock ? "Нет в наличии" : p.stock <= 5 ? "Мало · осталось " + p.stock : "В наличии";
+  }
+
+  function productCard(p, opts) {
+    opts = opts || {};
+    var st = stockState(p);
+    var flags = [];
+    if (p.isNew) flags.push('<span class="badge badge--accent">Новинка</span>');
+    if (p.isPopular) flags.push('<span class="badge badge--soft">Хит</span>');
+    if (!p.image) flags.push('<span class="badge badge--neutral">Без фото</span>');
+    if (!p.stock) flags.push('<span class="badge badge--neutral">Нет в наличии</span>');
+    else if (p.stock <= 5) flags.push('<span class="badge badge--warning">Мало</span>');
+
+    var control = !p.stock
+      ? '<button class="btn btn--xs btn--secondary product-card__add" disabled>Нет</button>'
+      : opts.qty
+        ? '<span class="stepper stepper--sm product-card__stepper"><button class="stepper__btn">' + icon("minus", 14, 2.2) +
+          '</button><span class="stepper__value">' + opts.qty + '</span><button class="stepper__btn">' + icon("plus", 14, 2.2) + "</button></span>"
+        : '<button class="icon-btn icon-btn--sm icon-btn--accent product-card__add">' + icon("plus", 17, 2.2) + "</button>";
+
+    return '<article class="product-card' + (!p.stock ? " is-out" : "") + (opts.added ? " is-added" : "") + '">' +
+      '<div class="product-card__media">' + media(p) +
+        (flags.length ? '<div class="product-card__flags">' + flags.join("") + "</div>" : "") +
+        '<span class="product-card__added">' + icon("check", 15, 2.4) + "Добавлено</span></div>" +
+      '<div class="product-card__body">' +
+        '<h3 class="product-card__name">' + esc(p.name) + "</h3>" +
+        '<p class="product-card__meta"><span>' + esc(p.weightLabel) + "</span><span>·</span>" +
+        '<span class="stock stock--' + st + '">' + esc(stockLabel(p)) + "</span></p>" +
+        '<div class="product-card__foot"><span class="product-card__price">' + money(p.price) +
+        "<small>за упаковку</small></span>" + control + "</div></div></article>";
+  }
+
+  var kitProducts = $("[data-kit-products]");
+  if (kitProducts) {
+    kitProducts.innerHTML = [
+      productCard(P("medovik")),
+      productCard(P("tort-napoleon")),
+      productCard(P("tary-chizkeyk")),
+      productCard(P("ribay")),
+      productCard(P("sinnabon"), { qty: 8 }),
+      productCard(P("kukis"), { added: true }),
+      productCard(P("desert-dubayskiy")),
+      productCard(P("mini-chebureki-s-govyazhim-farshem-i-lukom")),
+    ].join("");
+  }
+
+  function posterCard(p) {
+    return '<article class="poster-card">' +
+      (p.image ? '<img src="' + esc(p.image) + '" alt="' + esc(p.name) + '" loading="lazy">' : fallback(p)) +
+      '<span class="poster-card__scrim"></span>' +
+      (p.isNew ? '<span class="badge badge--accent poster-card__tag">Новинка</span>' : "") +
+      '<div class="poster-card__body"><span class="poster-card__text">' +
+      '<span class="poster-card__name">' + esc(p.name) + "</span>" +
+      '<span class="poster-card__price">' + money(p.price) + " · " + esc(p.weightLabel) + "</span></span>" +
+      '<button class="icon-btn icon-btn--dark poster-card__add">' + icon("plus", 20, 2.2) + "</button></div></article>";
+  }
+  var kitPosters = $("[data-kit-posters]");
+  if (kitPosters) {
+    kitPosters.innerHTML = ["tort-medovik", "ispanskiy-chizkeyk", "desert-fistashka-malina"]
+      .map(function (id) { return posterCard(P(id)); }).join("");
+  }
+
+  var kitMinis = $("[data-kit-minis]");
+  if (kitMinis) {
+    kitMinis.innerHTML = ["napoleon", "snikers", "banka-keyk-tiramisu"].map(function (id) {
+      var p = P(id);
+      return '<button class="mini-card"><span class="mini-card__img">' + media(p) + "</span>" +
+        '<span class="mini-card__text"><span class="mini-card__name">' + esc(p.name) + "</span>" +
+        '<span class="mini-card__price">' + money(p.price) + " · 12 шт</span></span>" +
+        '<span class="icon-btn icon-btn--sm icon-btn--bare">' + icon("chev-right", 16, 2) + "</span></button>";
+    }).join("");
+  }
+
+  var kitCats = $("[data-kit-cats]");
+  if (kitCats) {
+    kitCats.innerHTML = D.CATEGORIES.slice(0, 2).map(function (c) {
+      return '<span class="cat-card"><span class="cat-card__bg"></span>' +
+        '<span class="cat-card__icon"><img src="' + esc(c.icon) + '" alt=""></span><span>' +
+        '<span class="cat-card__name">' + esc(c.name) + "</span>" +
+        '<span class="cat-card__tagline">' + esc(c.tagline) + "</span></span>" +
+        '<span class="cat-card__count">' + c.count + " позиций" + icon("arrow-right", 15, 2) + "</span></span>";
+    }).join("");
+  }
+
+  function cartLine(p, qty, warn) {
+    return '<article class="cart-line"><div class="cart-line__img">' + media(p) + "</div>" +
+      '<div class="cart-line__body"><h4 class="cart-line__name">' + esc(p.name) + "</h4>" +
+      '<p class="cart-line__meta">' + esc(p.weightLabel) + " · " + money(p.price) + " за упаковку</p>" +
+      '<div class="cart-line__foot"><span class="stepper stepper--sm">' +
+      '<button class="stepper__btn">' + icon("minus", 14, 2.2) + '</button><span class="stepper__value">' + qty +
+      '</span><button class="stepper__btn">' + icon("plus", 14, 2.2) + "</button></span>" +
+      '<span class="cart-line__sum">' + money(p.price * qty) + "</span></div></div>" +
+      '<button class="icon-btn icon-btn--sm icon-btn--bare cart-line__remove">' + icon("trash", 16, 1.8) + "</button>" +
+      (warn ? '<p class="cart-line__warn">' + icon("alert-circle", 15, 1.9) + "На остатке всего " + p.stock + " шт — менеджер подтвердит количество</p>" : "") +
+      "</article>";
+  }
+
+  var kitCartlines = $("[data-kit-cartlines]");
+  if (kitCartlines) {
+    kitCartlines.innerHTML = cartLine(P("medovik"), 8, false) + cartLine(P("banka-keyk-oreo"), 1, true);
+  }
+  var kitCartsheet = $("[data-kit-cartsheet]");
+  if (kitCartsheet) {
+    kitCartsheet.innerHTML = cartLine(P("medovik"), 8, false) + cartLine(P("kukis"), 6, false);
+  }
+
+  var kitOrders = $("[data-kit-orders]");
+  if (kitOrders) {
+    kitOrders.innerHTML = D.ORDERS.slice(0, 2).map(function (o) {
+      var st = D.ORDER_STATUSES[o.status];
+      var thumbs = o.items.slice(0, 3).map(function (it) {
+        return it.image ? '<img src="' + esc(it.image) + '" alt="">' : '<span class="ph"></span>';
+      }).join("");
+      return '<article class="order-card"><div class="order-card__top">' +
+        '<span class="order-card__num">' + esc(o.number) + "</span>" +
+        '<span class="order-card__date">' + esc(o.date) + "</span>" +
+        '<span class="badge badge--' + st.tone + ' badge--dot ml-auto">' + esc(st.label) + "</span></div>" +
+        '<div class="order-card__mid"><div class="order-card__thumbs">' + thumbs +
+        '<span class="order-card__more">+' + (o.items.length - 3) + "</span></div>" +
+        '<div class="order-card__total"><b>' + money(o.total) + "</b><span>" + o.positions + " позиции · " + o.units + " шт</span></div></div>" +
+        '<div class="order-card__foot"><span class="btn btn--xs btn--ghost">Детали заказа</span>' +
+        '<span class="btn btn--xs btn--soft ml-auto">' + icon("repeat", 14, 2) + "Повторить</span></div></article>";
+    }).join("");
+  }
+
+  /* --- 7. Skeleton и заглушки фотографий --------------------------------- */
+
+  var kitSkeleton = $("[data-kit-skeleton]");
+  if (kitSkeleton) {
+    var cell = '<div class="product-card"><div class="skeleton skeleton--img" style="aspect-ratio:1/1;border-radius:0"></div>' +
+      '<div class="product-card__body"><div class="skeleton skeleton--text w-80"></div>' +
+      '<div class="skeleton skeleton--text w-50 mt-2"></div><div class="product-card__foot">' +
+      '<div class="skeleton skeleton--title w-50"></div>' +
+      '<div class="skeleton skeleton--circle ml-auto" style="width:36px;height:36px"></div></div></div></div>';
+    kitSkeleton.innerHTML = cell + cell + cell + cell;
+  }
+
+  var kitFallbacks = $("[data-kit-fallbacks]");
+  if (kitFallbacks) {
+    kitFallbacks.innerHTML = D.PRODUCTS.filter(function (p) { return !p.image; }).slice(0, 4).map(function (p) {
+      return '<div style="position:relative;aspect-ratio:1/1;border-radius:var(--r-xl);overflow:hidden">' + fallback(p) + "</div>";
+    }).join("");
+  }
+
+  /* --- 8. Карточка товара в оверлее -------------------------------------- */
+
+  (function () {
+    var p = P("tort-medovik");
+    var mediaRoot = $("[data-kit-psheet-media]");
+    if (!mediaRoot) return;
+    var holder = document.createElement("div");
+    holder.style.cssText = "position:absolute;inset:0;z-index:1";
+    holder.innerHTML = '<img src="' + esc(p.image) + '" alt="' + esc(p.name) + '" style="width:100%;height:100%;object-fit:cover">';
+    mediaRoot.insertBefore(holder, mediaRoot.firstChild);
+
+    $("[data-kit-psheet-nutri]").innerHTML = [
+      { v: p.weightGrams + " г", l: "фасовка" },
+      { v: p.shelfLife, l: "срок годности" },
+      { v: p.packageType, l: "упаковка" },
+    ].map(function (n) {
+      return '<span class="psheet__nutriitem"><b>' + esc(n.v) + "</b><span>" + esc(n.l) + "</span></span>";
+    }).join("");
+
+    $("[data-kit-psheet-info]").innerHTML =
+      '<h2 class="psheet__name">' + esc(p.name) + "</h2>" +
+      '<div class="psheet__chips"><span class="chip">' + esc(p.weightLabel) + '</span>' +
+      '<span class="chip">' + esc(p.packageType) + '</span><span class="chip chip--accent">Халал</span>' +
+      '<span class="chip"><span class="stock stock--in">В наличии</span></span></div>' +
+      '<div class="psheet__price"><b>' + money(p.price) + "</b><span>за " + esc(p.weightLabel) + "</span></div>" +
+      '<p class="text-sm text-muted mt-4">' + esc(p.description) + "</p>" +
+      '<div class="accordion mt-6"><div class="accordion__item is-open">' +
+      '<button class="accordion__btn" data-kit-acc>Состав' + icon("chev-down", 18, 2) + "</button>" +
+      '<div class="accordion__body">' + esc(p.composition) + "</div></div>" +
+      '<div class="accordion__item"><button class="accordion__btn" data-kit-acc>Хранение и срок годности' + icon("chev-down", 18, 2) + "</button>" +
+      '<div class="accordion__body"><dl class="spec">' +
+      '<div class="spec__row"><dt>Хранение</dt><dd>' + esc(p.storage) + "</dd></div>" +
+      '<div class="spec__row"><dt>Срок годности</dt><dd>' + esc(p.shelfLife) + "</dd></div>" +
+      "</dl></div></div></div>";
+
+    $("[data-kit-psheet-buy]").innerHTML =
+      '<span class="stepper stepper--lg"><button class="stepper__btn">' + icon("minus", 16, 2.2) +
+      '</button><span class="stepper__value">1</span><button class="stepper__btn">' + icon("plus", 16, 2.2) + "</button></span>" +
+      '<button class="btn btn--lg btn--primary">' + icon("plus", 18, 2.2) + " " + money(p.price) + "</button>";
+  })();
+
+  /* --- 9. Оверлеи, тосты, мелкая интерактивность -------------------------- */
+
+  var scrim = $("[data-scrim]");
+  var open = [];
+
+  function openOverlay(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add("is-open");
+    if (open.indexOf(id) === -1) open.push(id);
+    scrim.classList.add("is-open");
+    document.body.classList.add("is-locked");
+  }
+  function closeOverlay(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove("is-open");
+    open = open.filter(function (x) { return x !== id; });
+    if (!open.length) {
+      scrim.classList.remove("is-open");
+      document.body.classList.remove("is-locked");
+    }
+  }
+  function closeAll() { open.slice().forEach(closeOverlay); }
+
+  document.addEventListener("click", function (e) {
+    var o = e.target.closest("[data-open]");
+    if (o) { openOverlay(o.getAttribute("data-open")); return; }
+    var c = e.target.closest("[data-close]");
+    if (c) { closeOverlay(c.getAttribute("data-close")); return; }
+
+    var promo = e.target.closest("[data-kit-promo]");
+    if (promo) { setKitPromo(promo.getAttribute("data-kit-promo")); return; }
+
+    var acc = e.target.closest("[data-kit-acc]");
+    if (acc) { acc.parentNode.classList.toggle("is-open"); return; }
+
+    var tip = e.target.closest("[data-kit-tip]");
+    if (tip) { tip.closest(".tip").classList.toggle("is-open"); return; }
+
+    if (e.target.closest("[data-kit-tipbtn]")) {
+      var t = $(".kit-block .tip.is-open") || $("[data-kit-tip]");
+      if (t) {
+        var wrap = t.closest(".tip");
+        wrap.classList.add("is-open");
+        wrap.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
+      return;
+    }
+
+    if (e.target.closest("[data-kit-dropdown]")) {
+      var dd = $(".lang.is-open");
+      if (dd) dd.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
+
+    var toastBtn = e.target.closest("[data-kit-toast]");
+    if (toastBtn) {
+      var kind = toastBtn.getAttribute("data-kit-toast");
+      var msg = kind === "success" ? "Позиция добавлена в заявку"
+        : kind === "error" ? "Проверьте обязательные поля"
+        : "Язык интерфейса: русский. В прототипе переключение — визуальная демонстрация.";
+      toast(msg, kind);
+    }
+  });
+
+  if (scrim) scrim.addEventListener("click", closeAll);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeAll(); });
+
+  var toastsRoot = $("[data-toasts]");
+  function toast(message, kind) {
+    var el = document.createElement("div");
+    el.className = "toast" + (kind && kind !== "info" ? " toast--" + kind : "");
+    var ic = kind === "error" ? "alert-circle" : kind === "success" ? "check-circle" : "info";
+    el.innerHTML = icon(ic, 18) + "<span>" + esc(message) + "</span>" +
+      '<button class="toast__close" aria-label="Закрыть">' + icon("close", 15, 2) + "</button>";
+    toastsRoot.appendChild(el);
+    var timer = setTimeout(remove, 4200);
+    el.querySelector(".toast__close").addEventListener("click", function () { clearTimeout(timer); remove(); });
+    function remove() {
+      el.classList.add("is-leaving");
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 260);
+    }
+    while (toastsRoot.children.length > 3) toastsRoot.removeChild(toastsRoot.firstChild);
+  }
+
+  console.info("%cUI-kit DC Bakery", "font-weight:700;color:#c2531f", "— все компоненты и слои прототипа.");
+})();
+</script>
+</body>
+</html>

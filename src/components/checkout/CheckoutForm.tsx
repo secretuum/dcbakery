@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MIN_ORDER_AMOUNT } from "@/app/constants";
+import { MIN_ORDER_AMOUNT, deliveryFee } from "@/app/constants";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
 import { useCart } from "@/src/contexts/CartContext";
@@ -30,7 +30,7 @@ type CheckoutFormState = {
 type CheckoutFormErrors = Partial<Record<keyof CheckoutFormState, string>>;
 
 const fieldClassName =
-  "min-h-12 w-full rounded-btn border border-black/10 bg-white px-4 py-3 text-sm font-medium text-dark outline-none transition placeholder:text-muted focus:border-coral focus:ring-2 focus:ring-coral/25";
+  "min-h-[52px] w-full rounded-md border-[1.5px] border-black/10 bg-white px-4 py-3 text-[15px] font-medium text-dark outline-none transition placeholder:text-muted-light hover:border-black/20 focus:border-coral focus:ring-4 focus:ring-coral/15";
 
 const DELIVERY_WINDOW_DAYS = 14;
 // Дефолты дублируют defaultSiteContent — используются, пока настройки не загрузились
@@ -582,9 +582,15 @@ export function CheckoutForm({
                 <span className="text-muted">{t("Позиций")}</span>
                 <span className="font-data">{items.length}</span>
               </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-muted">{t("Доставка")}</span>
+                <span className={deliveryFee(totalAmount) === 0 ? "font-data text-success" : "font-data"}>
+                  {deliveryFee(totalAmount) === 0 ? t("Бесплатно") : formatPrice(deliveryFee(totalAmount))}
+                </span>
+              </div>
               <div className="flex items-end justify-between gap-4 border-t border-black/10 pt-4">
                 <span className="text-muted">{t("Итого")}</span>
-                <span className="font-data text-xl font-semibold text-coral">{formatPrice(totalAmount)}</span>
+                <span className="font-data text-xl font-bold text-coral">{formatPrice(totalAmount + deliveryFee(totalAmount))}</span>
               </div>
             </div>
 

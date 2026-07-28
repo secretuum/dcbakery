@@ -56,8 +56,10 @@ export function ProductCard({ product }: ProductCardProps) {
     }
   }
 
+  const lowStock = isInStock && product.stock_qty <= 5;
+
   return (
-    <article className="product-card overflow-hidden border border-black/10 bg-white transition-shadow hover:shadow-md">
+    <article className="product-card flex flex-col overflow-hidden rounded-xl bg-white shadow-xs transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
       <button
         type="button"
         onClick={() => setIsSheetOpen(true)}
@@ -71,50 +73,55 @@ export function ProductCard({ product }: ProductCardProps) {
             categoryId={product.category_id}
             categorySlug={product.category?.slug}
             fill
-            sizes="(max-width: 640px) 33vw, (max-width: 1280px) 25vw, 20vw"
-            className="object-cover transition-transform duration-300 hover:scale-105"
+            sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 20vw"
+            className={`object-cover transition-transform duration-500 hover:scale-[1.045] ${!isInStock ? "opacity-50 grayscale" : ""}`}
           />
           {!isInStock && (
-            <span className="absolute right-2 top-2">
-              <Badge variant="dark">{t("нет")}</Badge>
+            <span className="absolute left-2.5 top-2.5">
+              <Badge variant="dark">{t("Нет в наличии")}</Badge>
             </span>
           )}
         </div>
       </button>
 
-      <div className="p-2.5 sm:p-3">
+      <div className="flex flex-1 flex-col gap-2 p-4">
         <h3
-          className="line-clamp-2 cursor-pointer text-sm font-semibold leading-snug text-dark"
+          className="line-clamp-2 min-h-[2.6em] cursor-pointer text-[15px] font-semibold leading-snug text-dark"
           onClick={() => setIsSheetOpen(true)}
         >
           {localized.name}
         </h3>
 
-        {product.min_qty > 1 && (
-          <p className="mt-1 text-xs text-muted">
-            {t("Мин.")} {product.min_qty} {t(product.unit)}
-          </p>
-        )}
+        <p className="text-xs font-semibold">
+          {isInStock ? (
+            <span className={lowStock ? "text-warning" : "text-success"}>
+              {lowStock ? `${t("Осталось")} ${product.stock_qty} ${t(product.unit)}` : t("В наличии")}
+            </span>
+          ) : (
+            <span className="text-muted">{t("Нет в наличии")}</span>
+          )}
+          {product.min_qty > 1 ? (
+            <span className="text-muted"> · {t("Мин.")} {product.min_qty} {t(product.unit)}</span>
+          ) : null}
+        </p>
 
-        <div className="mt-2.5 flex items-center justify-between gap-2">
-          <p className="font-data text-sm font-semibold text-coral">{priceText}</p>
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+          <p className="font-display text-[17px] font-bold tabular-nums text-dark">{priceText}</p>
 
           {inCart ? (
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-1 rounded-full border border-black/10 p-0.5">
               <button
                 onClick={handleDecrease}
-                className="flex h-7 w-7 items-center justify-center rounded border border-black/10 text-base font-bold text-dark transition hover:bg-black/5"
+                className="flex size-8 items-center justify-center rounded-full text-lg font-bold text-dark transition hover:bg-black/5"
                 aria-label={t("Уменьшить количество")}
               >
                 −
               </button>
-              <span className="min-w-[1.75rem] text-center text-sm font-bold tabular-nums text-dark">
-                {cartQty}
-              </span>
+              <span className="min-w-6 text-center text-sm font-bold tabular-nums text-dark">{cartQty}</span>
               <button
                 onClick={handleIncrease}
                 disabled={cartQty >= product.stock_qty}
-                className="flex h-7 w-7 items-center justify-center rounded border border-coral bg-coral text-white transition hover:bg-coral-hover disabled:border-black/10 disabled:bg-black/5 disabled:text-muted"
+                className="flex size-8 items-center justify-center rounded-full bg-coral text-white transition hover:bg-coral-hover disabled:bg-black/10 disabled:text-muted"
                 aria-label={t("Увеличить количество")}
               >
                 +
@@ -124,7 +131,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <button
               onClick={handleAddToCart}
               disabled={!isInStock}
-              className="flex h-7 w-7 items-center justify-center rounded border border-coral text-base font-bold text-coral transition hover:bg-coral hover:text-white disabled:border-black/10 disabled:text-muted"
+              className="flex size-9 items-center justify-center rounded-full bg-coral text-xl font-bold text-white transition hover:bg-coral-hover disabled:bg-black/10 disabled:text-muted"
               aria-label={`${t("Добавить в корзину:")} ${localized.name}`}
             >
               +

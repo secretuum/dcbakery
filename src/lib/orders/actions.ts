@@ -128,7 +128,7 @@ export async function confirmOrder(
   const now = new Date().toISOString();
   // Консигнация: срок оплаты отсчитывается от ПОДТВЕРЖДЕНИЯ (не от отгрузки).
   // Индивидуальный срок клиента в приоритете, иначе — CONSIGNMENT_DAYS (по умолчанию 4).
-  const termDays = client?.payment_terms_days ?? Number(process.env.CONSIGNMENT_DAYS ?? 4);
+  const termDays = client?.payment_terms_days ?? Number(process.env.CONSIGNMENT_DAYS ?? 7);
   const dueDate = addDays(now.slice(0, 10), termDays);
   const paymentLink = createPaymentLink(order, undefined, origin);
   // Разовая рассылка клиенту при подтверждении: заказ + ссылка на счёт/оплату.

@@ -1,17 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --dc-coral: #c2531f;
-  --dc-coral-hover: #96401a;
-  --dc-coral-light: #f5e2d3;
-  --dc-burgundy: #96401a;
-  --dc-raspberry: #96401a;
+  /* Бренд DC Bakery — из логотипа: малиново-пурпурный вордмарк + лососевая монограмма */
+  --dc-accent: #a81860;
+  --dc-accent-hover: #8e1451;
+  --dc-accent-press: #740f40;
+  --dc-accent-050: #fbe9f0;
+  --dc-accent-100: #f6cddd;
+  --dc-accent-200: #eaa0bd;
+  --dc-accent-300: #db6f98;
+  --dc-accent-400: #c53f76;
+  --dc-accent-500: #a81860;
+  --dc-accent-600: #8e1451;
+  --dc-accent-700: #6d0f3f;
+  --dc-accent-800: #4a0a2a;
+
+  /* Лососево-розовый (монограмма/блаш) */
+  --dc-blush: #f09090;
+  --dc-blush-soft: #f8c2c6;
+  --dc-blush-050: #fdecec;
+
+  /* del Cappuccino — тёмно-зелёный саб-бренд (использовать точечно) */
+  --dc-green: #2e6145;
+
+  /* Поверхности */
   --dc-cream: #fff8f6;
+  --dc-cream-deep: #fdeee7;
+  --dc-cream-warm: #fae7dd;
+  --dc-espresso: #2a1f1b;
+
+  /* Текст */
   --dc-dark: #1c1c1c;
+  --dc-ink-soft: #4a4340;
   --dc-muted: #7a7a7a;
-  --radius-card: 4px;
-  --radius-btn: 4px;
-  --radius-badge: 4px;
+  --dc-muted-light: #a2988f;
+
+  /* Обратная совместимость: старые «coral» = новый брендовый акцент */
+  --dc-coral: var(--dc-accent);
+  --dc-coral-hover: var(--dc-accent-hover);
+  --dc-coral-light: var(--dc-accent-050);
+  --dc-burgundy: #b3253f;
+  --dc-raspberry: var(--dc-accent);
+
+  /* Семантика */
+  --dc-success: #1e7a4f;
+  --dc-success-bg: #e6f3ec;
+  --dc-warning: #a86a12;
+  --dc-warning-bg: #fdf0dc;
+  --dc-danger: #bf3a2b;
+  --dc-danger-bg: #fbe8e5;
+
+  /* Радиусы — крупные скругления редизайна */
+  --radius-card: 24px;
+  --radius-btn: 9999px;
+  --radius-badge: 9999px;
+
   --background: var(--dc-cream);
   --foreground: var(--dc-dark);
 }
@@ -19,17 +62,68 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-coral: var(--dc-coral);
-  --color-coral-hover: var(--dc-coral-hover);
+
+  /* Акцент — старые имена coral сохранены (теперь = брендовый малиновый) */
+  --color-coral: var(--dc-accent);
+  --color-coral-hover: var(--dc-accent-hover);
   --color-coral-light: var(--dc-coral-light);
+  --color-accent: var(--dc-accent);
+  --color-accent-hover: var(--dc-accent-hover);
+  --color-accent-press: var(--dc-accent-press);
+  --color-accent-50: var(--dc-accent-050);
+  --color-accent-100: var(--dc-accent-100);
+  --color-accent-200: var(--dc-accent-200);
+  --color-accent-300: var(--dc-accent-300);
+  --color-accent-400: var(--dc-accent-400);
+  --color-accent-500: var(--dc-accent-500);
+  --color-accent-600: var(--dc-accent-600);
+  --color-accent-700: var(--dc-accent-700);
+  --color-accent-800: var(--dc-accent-800);
+
+  --color-blush: var(--dc-blush);
+  --color-blush-soft: var(--dc-blush-soft);
+  --color-blush-50: var(--dc-blush-050);
+  --color-brand-green: var(--dc-green);
+
   --color-burgundy: var(--dc-burgundy);
   --color-raspberry: var(--dc-raspberry);
+
   --color-cream: var(--dc-cream);
+  --color-cream-deep: var(--dc-cream-deep);
+  --color-cream-warm: var(--dc-cream-warm);
+  --color-espresso: var(--dc-espresso);
   --color-dark: var(--dc-dark);
+  --color-ink-soft: var(--dc-ink-soft);
   --color-muted: var(--dc-muted);
+  --color-muted-light: var(--dc-muted-light);
+
+  --color-success: var(--dc-success);
+  --color-success-bg: var(--dc-success-bg);
+  --color-warning: var(--dc-warning);
+  --color-warning-bg: var(--dc-warning-bg);
+  --color-danger: var(--dc-danger);
+  --color-danger-bg: var(--dc-danger-bg);
+
+  /* Радиусы: старые card/btn/badge переопределены + шкала */
   --radius-card: var(--radius-card);
   --radius-btn: var(--radius-btn);
   --radius-badge: var(--radius-badge);
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-2xl: 40px;
+  --radius-3xl: 52px;
+
+  /* Тёплые тени */
+  --shadow-xs: 0 1px 2px rgba(86, 34, 13, 0.05);
+  --shadow-sm: 0 2px 10px rgba(86, 34, 13, 0.06);
+  --shadow-md: 0 10px 28px rgba(86, 34, 13, 0.08);
+  --shadow-lg: 0 22px 54px rgba(86, 34, 13, 0.12);
+  --shadow-xl: 0 36px 88px rgba(86, 34, 13, 0.18);
+  --shadow-accent: 0 14px 34px rgba(168, 24, 96, 0.26);
+
   --font-sans: var(--font-geist-sans);
   --font-display: var(--font-montserrat);
   --font-data: var(--font-ibm-plex-mono);

@@ -1041,7 +1041,7 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   }
 
   return (
-    <article className="rounded border border-black/10 bg-white hover:border-black/20 transition-colors">
+    <article className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xs transition-colors hover:border-black/20">
       {/* Header row */}
       <button
         type="button"
@@ -1192,7 +1192,7 @@ function PopularProductsSection({ products }: { products: Product[] }) {
 
 function SidebarBox({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded border border-black/10 bg-white p-4">
+    <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-xs">
       <p className="font-display text-[11px] font-semibold uppercase tracking-[.07em] text-dark">
         {title}
       </p>
@@ -1221,7 +1221,7 @@ function ConditionsBox({ state }: { state: CreditState }) {
       ) : null}
       <button
         type="button"
-        className="mt-3 w-full rounded border border-dashed border-black/20 py-2 text-xs font-semibold text-muted transition hover:border-coral hover:text-coral"
+        className="mt-3 w-full rounded-full border border-dashed border-black/20 py-2 text-xs font-semibold text-muted transition hover:border-coral hover:text-coral"
       >{t("Запросить увеличение лимита")}</button>
     </SidebarBox>
   );

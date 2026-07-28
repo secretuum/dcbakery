@@ -23,10 +23,10 @@ export function CartItem({ item }: CartItemProps) {
   const lineTotal = product.price * qty;
 
   return (
-    <article className="grid grid-cols-[80px_1fr] gap-4 rounded-card border border-black/10 bg-white p-4 sm:grid-cols-[112px_1fr] sm:p-5">
+    <article className="grid grid-cols-[80px_1fr] gap-4 rounded-card border border-black/10 bg-white p-4 shadow-xs sm:grid-cols-[112px_1fr] sm:p-5">
       <Link
         href={`/product/${product.slug}`}
-        className="relative aspect-square self-start overflow-hidden rounded border border-black/10 bg-cream"
+        className="relative aspect-square self-start overflow-hidden rounded-lg bg-cream"
       >
         <FallbackImage
           src={imageSrc}

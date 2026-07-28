@@ -5,7 +5,7 @@ import { getT } from "@/src/i18n/server";
 export const metadata: Metadata = {
   title: "Оплата и доставка — DC Bakery",
   description:
-    "Способы оплаты, условия доставки и возврата для B2B-клиентов DC Bakery. Минимальный заказ 15 000 тенге, бесплатная доставка.",
+    "Способы оплаты, условия доставки и возврата для B2B-клиентов DC Bakery. Бесплатная доставка от 15 000 тенге.",
 };
 
 export default async function OplataIDostavkaPage() {
@@ -44,7 +44,7 @@ export default async function OplataIDostavkaPage() {
                 <div>
                   <p className="font-semibold text-dark">{t("По счёту (безналичный расчёт)")}</p>
                   <p className="mt-1 text-sm leading-6 text-muted">
-                    Для одобренных B2B-клиентов — на условиях консигнации 3–4 дня.
+                    Для одобренных B2B-клиентов — на условиях консигнации 7 дней.
                     Оплата согласно выставленному счёту на банковский счёт Поставщика.{" "}
                     <Link href="/contacts" className="font-bold text-coral hover:underline">{t("Реквизиты →")}</Link>
                   </p>
@@ -59,21 +59,21 @@ export default async function OplataIDostavkaPage() {
           <h2 className="font-display text-xl font-semibold">{t("Доставка")}</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-3">
             <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-semibold text-coral">15 000 ₸</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Минимальный заказ")}</p>
+              <p className="font-data text-2xl font-bold text-success">{t("Бесплатно")}</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("от 15 000 ₸")}</p>
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-semibold text-coral">0 ₸</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Доставка от минимума")}</p>
+              <p className="font-data text-2xl font-bold text-coral">1 500 ₸</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("10 000–15 000 ₸")}</p>
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-semibold text-coral">1 500–3 000 ₸</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Доставка ниже минимума")}</p>
+              <p className="font-data text-2xl font-bold text-coral">3 000 ₸</p>
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("до 10 000 ₸")}</p>
             </div>
           </div>
           <div className="mt-5 space-y-3 text-sm leading-7 text-dark/80">
-            <p>{t("При заказе от 15 000 тенге доставка бесплатная.")}</p>
-            <p>{t("При меньшей сумме возможна доплата за доставку 1 500–3 000 тенге по усмотрению Поставщика.")}</p>
+            <p>{t("При заказе дороже 15 000 ₸ доставка бесплатная.")}</p>
+            <p>{t("Заказ 10 000–15 000 ₸ — доставка 1 500 ₸; дешевле 10 000 ₸ — 3 000 ₸.")}</p>
             <p>{t("Способ (доставка или самовывоз) и точные сроки согласуются при подтверждении заказа менеджером.")}</p>
           </div>
         </div>

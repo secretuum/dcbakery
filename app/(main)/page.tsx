@@ -71,36 +71,36 @@ export default async function Home() {
         <JsonLd data={organizationJsonLd} />
 
         {/* ─── Hero ─── */}
-        <section className="border-b border-black/10 bg-white px-5 py-12 lg:px-8 lg:py-16">
+        <section className="bg-gradient-to-b from-cream-deep to-cream px-5 py-14 lg:px-8 lg:py-20">
           <div className="mx-auto max-w-7xl">
-            <div className="grid items-end gap-10 lg:grid-cols-[1fr_auto]">
+            <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">
+                <span className="inline-flex items-center rounded-full bg-white px-3.5 py-1.5 text-xs font-bold uppercase tracking-[.12em] text-coral shadow-sm">
                   {t("B2B поставщик · Казахстан")}
-                </p>
-                <h1 className="mt-4 font-display text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-[3.25rem]">
+                </span>
+                <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
                   <EditableText field="heroTitle" fallback={t(content.heroTitle)} multiline />
                 </h1>
-                <p className="mt-5 max-w-xl text-base leading-7 text-muted">
+                <p className="mt-5 max-w-xl text-base leading-7 text-ink-soft lg:text-lg">
                   <EditableText field="heroSubtitle" fallback={t(content.heroSubtitle)} multiline />
                 </p>
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link href="/catalog"
-                    className="rounded border border-dark bg-dark px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-dark/80">
+                    className="inline-flex min-h-12 items-center rounded-full bg-coral px-6 text-[15px] font-semibold text-white shadow-accent transition hover:bg-coral-hover active:scale-[.98]">
                     {t("Открыть каталог")}
                   </Link>
                   <Link href="/profile"
-                    className="rounded border border-black/20 px-5 py-2.5 text-sm font-semibold text-dark transition hover:bg-black/5">
+                    className="inline-flex min-h-12 items-center rounded-full border border-black/15 bg-white px-6 text-[15px] font-semibold text-dark transition hover:border-coral hover:text-coral">
                     {t("Стать партнёром")}
                   </Link>
                 </div>
               </div>
 
               {/* Stat grid — desktop */}
-              <div className="hidden grid-cols-2 gap-px border border-black/10 bg-black/10 lg:grid">
+              <div className="hidden grid-cols-2 gap-3 lg:grid">
                 {stats.map((stat) => (
-                  <div key={stat.value} className="bg-white px-8 py-6">
-                    <p className="font-data text-3xl font-semibold text-dark">{t(stat.value)}</p>
+                  <div key={stat.value} className="rounded-xl bg-white p-6 shadow-sm">
+                    <p className="font-data text-3xl font-bold text-coral">{t(stat.value)}</p>
                     <p className="mt-2 text-xs leading-relaxed text-muted" style={{ whiteSpace: "pre-line" }}>
                       {t(stat.label)}
                     </p>
@@ -110,10 +110,10 @@ export default async function Home() {
             </div>
 
             {/* Stats — mobile */}
-            <div className="mt-10 grid grid-cols-2 gap-px border border-black/10 bg-black/10 sm:grid-cols-4 lg:hidden">
+            <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:hidden">
               {stats.map((stat) => (
-                <div key={stat.value} className="bg-white px-4 py-4">
-                  <p className="font-data text-2xl font-semibold text-dark">{t(stat.value)}</p>
+                <div key={stat.value} className="rounded-xl bg-white p-4 shadow-sm">
+                  <p className="font-data text-2xl font-bold text-coral">{t(stat.value)}</p>
                   <p className="mt-1.5 text-xs leading-relaxed text-muted" style={{ whiteSpace: "pre-line" }}>
                     {t(stat.label)}
                   </p>
@@ -130,23 +130,23 @@ export default async function Home() {
         <HomeCatalogTabs categories={categories} products={allProducts} />
 
         {/* ─── About ─── */}
-        <section id="about" className="border-t border-black/10 bg-white px-5 py-14 lg:px-8 lg:py-20">
-          <div className="mx-auto max-w-7xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[.12em] text-muted">{t("О компании")}</p>
-            <h2 className="mt-3 font-display text-2xl font-semibold tracking-tight lg:text-3xl">
+        <section id="about" className="bg-cream px-5 py-16 lg:px-8 lg:py-24">
+          <div className="mx-auto max-w-7xl rounded-3xl bg-white p-8 shadow-sm lg:p-14">
+            <p className="text-[10px] font-bold uppercase tracking-[.12em] text-coral">{t("О компании")}</p>
+            <h2 className="mt-3 font-display text-2xl font-extrabold tracking-tight lg:text-3xl">
               <EditableText field="aboutTitle" fallback={t(content.aboutTitle)} />
             </h2>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-muted">
+            <p className="mt-4 max-w-2xl text-[15px] leading-7 text-ink-soft">
               <EditableText field="aboutText" fallback={t(content.aboutText)} multiline />
             </p>
-            <ul className="mt-6 space-y-2">
+            <ul className="mt-6 grid gap-2.5 sm:grid-cols-2">
               {[
                 "Халал сертификаты на всё мясо и полуфабрикаты",
                 "Натуральные ингредиенты без консервантов",
                 "Доставка 98% заказов вовремя",
                 "Личный менеджер для каждого партнёра",
               ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm text-dark">
+                <li key={item} className="flex items-start gap-2.5 text-sm font-medium text-dark">
                   <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-coral" />
                   {t(item)}
                 </li>
@@ -154,7 +154,29 @@ export default async function Home() {
             </ul>
             <div className="mt-8">
               <Link href="/profile"
-                className="rounded border border-dark bg-dark px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-dark/80">
+                className="inline-flex min-h-12 items-center rounded-full bg-espresso px-6 text-[15px] font-semibold text-white transition hover:bg-espresso/90 active:scale-[.98]">
+                {t("Стать партнёром")}
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ─── Final CTA ─── */}
+        <section className="px-5 pb-16 lg:px-8 lg:pb-24">
+          <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl bg-coral px-8 py-14 text-center text-white lg:py-20">
+            <h2 className="mx-auto max-w-2xl font-display text-3xl font-extrabold leading-tight tracking-tight lg:text-4xl">
+              {t("Соберите первую оптовую заявку")}
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-white/85">
+              {t("Оптовые цены, живые остатки и товарный кредит — всё в одном кабинете.")}
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Link href="/catalog"
+                className="inline-flex min-h-12 items-center rounded-full bg-white px-6 text-[15px] font-semibold text-coral shadow-sm transition hover:bg-white/90 active:scale-[.98]">
+                {t("Открыть каталог")}
+              </Link>
+              <Link href="/profile"
+                className="inline-flex min-h-12 items-center rounded-full border border-white/25 bg-white/10 px-6 text-[15px] font-semibold text-white transition hover:bg-white/20 active:scale-[.98]">
                 {t("Стать партнёром")}
               </Link>
             </div>

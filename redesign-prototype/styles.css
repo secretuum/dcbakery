@@ -4315,3 +4315,41 @@ button.chip[aria-pressed="true"] {
 .kv__row dd {
   overflow-wrap: anywhere;
 }
+
+/* --- Оформление заказа: горизонтальные ленты не растягивают форму -------- */
+
+.checkout > *,
+.form-grid > *,
+.form-section > * {
+  min-width: 0;
+}
+.datepick {
+  max-width: 100%;
+}
+
+/* --- Карточка категории: декоративный круг должен быть виден ------------- */
+
+.cat-card__bg {
+  z-index: 0;
+}
+.cat-card > *:not(.cat-card__bg) {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- Ввод кода: поля сжимаются на узких экранах -------------------------- */
+
+.otp {
+  width: 100%;
+  flex-wrap: wrap;
+}
+@media (max-width: 460px) {
+  .otp {
+    gap: 6px;
+  }
+  .otp input {
+    width: 44px;
+    height: 54px;
+    font-size: 19px;
+  }
+}

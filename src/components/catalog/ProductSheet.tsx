@@ -79,13 +79,13 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
   // Портал: у карточек бывает transform (анимация появления), который делает их
   // containing block для fixed — без портала шторка прибивается к карточке.
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-end justify-center" role="dialog" aria-modal="true" aria-label={localized.name}>
+    <div className="fixed inset-0 z-[60] flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={localized.name}>
       {/* Backdrop */}
-      <div className="animate-fade-in-bg absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="animate-fade-in-bg absolute inset-0 bg-black/45" onClick={onClose} />
 
       {/* Panel */}
       <div
-        className="animate-slide-up-panel relative flex w-full max-w-lg flex-col overflow-hidden border-t border-black/10 bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.15)]"
+        className="animate-slide-up-panel relative flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-xl sm:max-w-xl sm:rounded-3xl"
         style={{ maxHeight: "92vh", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         {/* Scrollable content */}
@@ -101,7 +101,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
             <button
               type="button"
               onClick={onClose}
-              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center border border-black/10 bg-white text-dark transition hover:bg-black/5"
+              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white text-dark shadow-sm transition hover:bg-black/5"
               aria-label={t("Закрыть")}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -129,7 +129,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
             ) : null}
 
             {details.length > 0 ? (
-              <div className="mt-4 border border-black/8 bg-cream">
+              <div className="mt-4 overflow-hidden rounded-xl border border-black/10 bg-cream">
                 {details.map(([label, value], i) => (
                   <div key={label}
                     className={`flex items-baseline justify-between gap-4 px-4 py-2.5 ${i < details.length - 1 ? "border-b border-black/5" : ""}`}>
@@ -141,7 +141,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
             ) : null}
 
             {localized.composition ? (
-              <details className="mt-3 border border-black/8 bg-cream px-4 py-3">
+              <details className="mt-3 rounded-xl border border-black/10 bg-cream px-4 py-3">
                 <summary className="cursor-pointer text-sm font-semibold text-dark">{t("Состав")}</summary>
                 <p className="mt-2 text-sm leading-6 text-muted">{localized.composition}</p>
               </details>
@@ -157,7 +157,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
                 <button
                   type="button"
                   onClick={handleDecrease}
-                  className="flex h-11 w-11 items-center justify-center border border-black/10 text-xl font-bold text-dark transition hover:bg-black/5"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-black/10 text-xl font-bold text-dark transition hover:bg-black/5"
                   aria-label={t("Уменьшить количество")}
                 >
                   −
@@ -169,7 +169,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
                   type="button"
                   onClick={handleIncrease}
                   disabled={cartQty >= product.stock_qty}
-                  className="flex h-11 w-11 items-center justify-center border border-coral bg-coral text-xl font-bold text-white transition hover:bg-coral-hover disabled:border-black/10 disabled:bg-black/5 disabled:text-muted"
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-coral text-xl font-bold text-white transition hover:bg-coral-hover disabled:bg-black/10 disabled:text-muted"
                   aria-label={t("Увеличить количество")}
                 >
                   +
@@ -187,7 +187,7 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
               type="button"
               onClick={handleAdd}
               disabled={!isInStock}
-              className="block w-full border border-coral bg-coral py-3.5 text-center text-sm font-bold uppercase tracking-[.08em] text-white transition hover:bg-coral-hover disabled:cursor-not-allowed disabled:border-black/10 disabled:bg-black/5 disabled:text-muted"
+              className="block w-full rounded-full bg-coral py-3.5 text-center text-[15px] font-semibold text-white shadow-accent transition hover:bg-coral-hover active:scale-[.99] disabled:cursor-not-allowed disabled:bg-black/10 disabled:text-muted disabled:shadow-none"
             >
               {isInStock ? `${t("В корзину")} · ${formatProductPrice(product.price)}` : t("Нет в наличии")}
             </button>

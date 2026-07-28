@@ -79,8 +79,7 @@ export default function CartSheet() {
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="fixed left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 overflow-hidden rounded border border-dark bg-white py-2 pl-4 pr-2 shadow-[0_8px_30px_rgba(0,0,0,0.18)] transition hover:shadow-[0_10px_36px_rgba(0,0,0,0.22)]"
-          style={{ bottom: "calc(1.25rem + env(safe-area-inset-bottom, 0px))" }}
+          className="fixed left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 overflow-hidden rounded-full border border-black/10 bg-white py-2 pl-4 pr-2 shadow-lg transition hover:shadow-xl bottom-[calc(76px_+_env(safe-area-inset-bottom))] lg:bottom-[calc(20px_+_env(safe-area-inset-bottom))]"
           aria-label={`Открыть корзину, товаров: ${totalItems}, набрано ${Math.round(pillFillPct)}% минимального заказа`}
         >
           {/* Заполнение полосатым паттерном по мере набора минимума 15 000 ₸ */}

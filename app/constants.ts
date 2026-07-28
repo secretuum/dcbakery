@@ -1,7 +1,19 @@
 export const RETAIL_SITE_URL =
   process.env.NEXT_PUBLIC_RETAIL_SITE_URL ?? "https://example.com";
 
-export const MIN_ORDER_AMOUNT = 15000;
+// Жёсткого минимума заказа больше нет — вместо него тарифы доставки (см. ниже).
+// Оставлено = 0, чтобы существующие проверки `total < MIN_ORDER_AMOUNT` не блокировали.
+export const MIN_ORDER_AMOUNT = 0;
+
+// Доставка: бесплатно от этой суммы, иначе тариф по deliveryFee().
+export const FREE_DELIVERY_THRESHOLD = 15000;
+
+/** Тариф доставки по сумме корзины: >15000 — бесплатно, 10000–15000 — 1500 ₸, ниже — 3000 ₸. */
+export function deliveryFee(subtotal: number): number {
+  if (subtotal > FREE_DELIVERY_THRESHOLD) return 0;
+  if (subtotal >= 10000) return 1500;
+  return 3000;
+}
 
 export const B2B_PAYMENT_METHODS = ["Выставить счет", "Безналичный расчет"] as const;
 

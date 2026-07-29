@@ -20,42 +20,47 @@ export function CartSummary() {
   const hasQuoteItems = items.some((item) => item.product.price <= 0);
 
   return (
-    <aside className="rounded-card border border-black/10 bg-white p-5 shadow-sm lg:sticky lg:top-28">
-      <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Корзина")}</p>
-      <h2 className="mt-2 font-display text-lg font-bold tracking-tight">{t("Итого по заявке")}</h2>
+    <aside className="rounded-2xl bg-white p-5 shadow-sm lg:sticky lg:top-28">
+      <h2 className="font-display text-[17px] font-bold tracking-tight text-dark">{t("Итог заявки")}</h2>
 
-      <div className="mt-6 space-y-3 text-sm font-semibold">
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-muted">{t("Товаров")}</span>
-          <span className="font-data">{totalItems}</span>
+      {/* summary rows */}
+      <div className="mt-5 space-y-3">
+        <div className="flex gap-3 text-[13.5px]">
+          <span className="text-muted">{t("Позиций")}</span>
+          <span className="ml-auto font-semibold tabular-nums text-dark">{items.length}</span>
         </div>
-        <div className="flex items-center justify-between gap-4">
-          <span className="text-muted">{t("Подытог")}</span>
-          <span className="font-data">{formatPrice(totalAmount)}</span>
+        <div className="flex gap-3 text-[13.5px]">
+          <span className="text-muted">{t("Единиц товара")}</span>
+          <span className="ml-auto font-semibold tabular-nums text-dark">{totalItems}</span>
         </div>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex gap-3 text-[13.5px]">
           <span className="text-muted">{t("Доставка")}</span>
-          <span className={freeDelivery ? "font-data text-success" : "font-data"}>
+          <span
+            className={`ml-auto font-semibold tabular-nums ${freeDelivery ? "text-success" : "text-dark"}`}
+          >
             {freeDelivery ? t("Бесплатно") : formatPrice(delivery)}
           </span>
         </div>
-        <div className="border-t border-black/10 pt-4">
-          <div className="flex items-end justify-between gap-4">
-            <span className="text-muted">{t("Итого")}</span>
-            <span className="font-data text-xl font-bold text-coral">{formatPrice(grandTotal)}</span>
-          </div>
+
+        {/* total */}
+        <div className="flex items-end gap-3 border-t border-black/10 pt-3">
+          <span className="text-[13.5px] text-muted">{t("К оплате")}</span>
+          <span className="ml-auto font-display text-2xl font-extrabold tabular-nums text-coral">
+            {formatPrice(grandTotal)}
+          </span>
         </div>
       </div>
 
-      <div className="mt-6 rounded-md bg-cream-deep p-4">
-        <div className="flex items-center justify-between gap-3 text-xs font-semibold uppercase tracking-[.08em] text-ink-soft">
+      {/* free-delivery progress (minbar) */}
+      <div className="mt-5 rounded-md bg-cream-deep p-4">
+        <div className="flex items-center justify-between gap-3 text-[11px] font-bold uppercase tracking-[.12em] text-ink-soft">
           <span>{t("Бесплатная доставка")}</span>
-          <span className="font-data">{formatPrice(FREE_DELIVERY_THRESHOLD)}</span>
+          <span className="font-data tracking-normal">{formatPrice(FREE_DELIVERY_THRESHOLD)}</span>
         </div>
         <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white">
           <div className="h-full rounded-full bg-coral transition-all" style={{ width: `${progress}%` }} />
         </div>
-        <p className="mt-3 text-sm leading-6 text-ink-soft">
+        <p className="mt-3 text-[13.5px] leading-6 text-ink-soft">
           {freeDelivery
             ? t("Доставка бесплатная — сумма достаточна.")
             : t("Добавьте ещё ${amount} — и доставка станет бесплатной.", {
@@ -69,7 +74,7 @@ export function CartSummary() {
         ) : null}
       </div>
 
-      <Button onClick={() => router.push("/checkout")} disabled={!canCheckout} block className="mt-6">
+      <Button onClick={() => router.push("/checkout")} disabled={!canCheckout} block className="mt-5">
         {t("Оформить заявку")}
       </Button>
     </aside>

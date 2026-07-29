@@ -72,7 +72,7 @@ export const clientOrderStatusLabels: Partial<Record<OrderStatus, string>> = {
 };
 
 export const creditStatusLabels: Record<ClientStatus, string> = {
-  active: "Кредит активен",
+  active: "Лимит активен",
   prepay_only: "Только предоплата",
   blocked: "Отгрузки приостановлены",
 };

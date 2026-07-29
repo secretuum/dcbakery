@@ -23,44 +23,42 @@ export function CartItem({ item }: CartItemProps) {
   const lineTotal = product.price * qty;
 
   return (
-    <article className="grid grid-cols-[80px_1fr] gap-4 rounded-card border border-black/10 bg-white p-4 shadow-xs sm:grid-cols-[112px_1fr] sm:p-5">
+    <article className="relative grid grid-cols-[72px_minmax(0,1fr)] gap-3 rounded-lg bg-white p-3 shadow-xs sm:grid-cols-[88px_minmax(0,1fr)] sm:gap-4 sm:p-4">
       <Link
         href={`/product/${product.slug}`}
-        className="relative aspect-square self-start overflow-hidden rounded-lg bg-cream"
+        className="relative aspect-square self-start overflow-hidden rounded-md bg-cream"
       >
         <FallbackImage
           src={imageSrc}
           alt={localizedName}
           fill
-          sizes="112px"
+          sizes="88px"
           className="object-cover"
         />
       </Link>
 
-      <div className="min-w-0">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[.1em] text-muted">
-              {product.category?.name ?? "Каталог"}
-            </p>
-            <Link href={`/product/${product.slug}`} className="mt-1 block">
-              <h2 className="text-base font-semibold leading-6 text-dark">
-                {localizedName}
-              </h2>
-            </Link>
-            <p className="mt-2 text-sm text-muted">
-              Фасовка: {product.weightLabel ?? "уточняется"}
-            </p>
-          </div>
+      <div className="flex min-w-0 flex-col gap-2">
+        {product.category?.name ? (
+          <p className="text-[11px] font-semibold uppercase tracking-[.12em] text-muted">
+            {product.category.name}
+          </p>
+        ) : null}
 
-          <button
-            type="button"
-            onClick={() => remove(product.id)}
-            className="self-start rounded-btn px-3 py-2 text-sm font-semibold text-muted transition hover:bg-coral-light hover:text-dark"
-          >{t("Удалить")}</button>
-        </div>
+        <Link href={`/product/${product.slug}`} className="block pr-[30px]">
+          <h2 className="text-[13.5px] font-semibold leading-[1.35] text-dark">
+            {localizedName}
+          </h2>
+        </Link>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-[minmax(180px,240px)_1fr] md:items-center">
+        <p className="text-xs text-muted">
+          {t("Фасовка")}: {product.weightLabel ?? t("уточняется")}
+        </p>
+
+        <p className="font-data text-xs text-muted">
+          {formatProductPrice(product.price)} / {t("ед.")}
+        </p>
+
+        <div className="mt-auto flex items-center gap-3 pt-1">
           <QuantitySelector
             maxQty={product.stock_qty}
             minQty={product.min_qty}
@@ -70,16 +68,33 @@ export function CartItem({ item }: CartItemProps) {
             value={qty}
           />
 
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 md:justify-end">
-            <p className="font-data text-sm text-muted">
-              {formatProductPrice(product.price)} / ед.
-            </p>
-            <p className="font-data text-lg font-semibold text-dark">
-              {product.price > 0 ? formatPrice(lineTotal) : "Цена уточняется"}
-            </p>
-          </div>
+          <span className="ml-auto whitespace-nowrap font-data text-[15px] font-bold tabular-nums text-dark">
+            {product.price > 0 ? formatPrice(lineTotal) : t("Цена уточняется")}
+          </span>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => remove(product.id)}
+        aria-label={t("Удалить")}
+        className="absolute right-2.5 top-2.5 inline-flex h-9 w-9 items-center justify-center rounded-full text-muted transition hover:bg-black/[.06] hover:text-coral"
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M18 6 6 18" />
+          <path d="m6 6 12 12" />
+        </svg>
+      </button>
     </article>
   );
 }

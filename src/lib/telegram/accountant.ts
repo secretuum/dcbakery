@@ -1,6 +1,7 @@
 import "server-only";
 import type { Order, OrderItem } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
+import { orderTotalWithDelivery } from "@/app/constants";
 import { orderStatusLabels } from "@/src/lib/order-status";
 import { getCompanyDetails } from "@/src/lib/company-details";
 import { idsForRole } from "@/src/lib/telegram/roles";
@@ -42,7 +43,9 @@ function requisitesBlock(order: Order): string {
   if (c.bankIban) lines.push(`IBAN (основной): ${c.bankIban}`);
   if (c.bankIbanPf) lines.push(`IBAN (Цех ПФ): ${c.bankIbanPf}`);
   lines.push(`Назначение: оплата по счёту №${order.order_number}`);
-  lines.push(`Сумма: ${formatPrice(order.total_amount)}`);
+  const delivery = order.delivery_amount ?? 0;
+  lines.push(`Доставка: ${delivery > 0 ? formatPrice(delivery) : "бесплатно"}`);
+  lines.push(`Сумма: ${formatPrice(orderTotalWithDelivery(order))}`);
   if (c.taxNote) lines.push(c.taxNote);
   return lines.join("\n");
 }
@@ -99,7 +102,7 @@ export function buildAwaitingPaymentList(orders: AwaitingPaymentRow[]) {
   const text = `📋 Заказы, ждущие оплаты (${orders.length})\nВыберите заказ, чтобы открыть детали:`;
   const rows = orders.map((o) => {
     const overdue = o.status === "overdue" ? " ⏰" : "";
-    const label = `№${o.order_number} · ${shortDate(o.created_at)} · ${formatPrice(o.total_amount)}${overdue}`;
+    const label = `№${o.order_number} · ${shortDate(o.created_at)} · ${formatPrice(orderTotalWithDelivery(o))}${overdue}`;
     return [{ text: label, callback_data: `open:${o.id}` }];
   });
 

@@ -9,6 +9,11 @@ import { promotions } from "@/src/data/promotions";
 import { RETAIL_SITE_URL } from "@/app/constants";
 import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
 import { PromoSection } from "@/src/components/home/PromoSection";
+import { HomeCatBar } from "@/src/components/home/HomeCatBar";
+import { HomeReward } from "@/src/components/home/HomeReward";
+import { HomePopularPosters } from "@/src/components/home/HomePopularPosters";
+import { HomeCategoryCards } from "@/src/components/home/HomeCategoryCards";
+import { HomeDelivery } from "@/src/components/home/HomeDelivery";
 import { EditableText, SiteEditProvider } from "@/src/components/home/SiteEditMode";
 import { HomeBuilder, EnableBuilderGate } from "@/src/components/home/HomeBuilder";
 import { JsonLd } from "@/src/components/seo/JsonLd";
@@ -65,6 +70,15 @@ export default async function Home() {
       </>
     );
   }
+
+  const categoryCounts = allProducts.reduce<Record<string, number>>((acc, p) => {
+    acc[p.category_id] = (acc[p.category_id] ?? 0) + 1;
+    return acc;
+  }, {});
+  const dessertGifts = allProducts
+    .filter((p) => (p.category?.name ?? "").toLowerCase().includes("десерт"))
+    .slice(0, 5);
+  const popularProducts = allProducts.slice(0, 6);
 
   return (
     <SiteEditProvider isSuperAdmin={isSuperAdmin} content={content}>
@@ -172,40 +186,77 @@ export default async function Home() {
           </div>
         </section>
 
-        {/* ─── Promotions ─── */}
-        <PromoSection promotions={promotions} />
+        {/* ─── Навигация по разделам ─── */}
+        <HomeCatBar categories={categories} counts={categoryCounts} />
 
-        {/* ─── Catalog ─── */}
+        {/* ─── Промо «5 десертов» ─── */}
+        <HomeReward giftProducts={dessertGifts} />
+
+        {/* ─── Популярное (poster-карточки) ─── */}
+        <HomePopularPosters products={popularProducts} />
+
+        {/* ─── Разделы каталога ─── */}
+        <HomeCategoryCards categories={categories} counts={categoryCounts} />
+
+        {/* ─── Ленты товаров ─── */}
         <HomeCatalogTabs categories={categories} products={allProducts} />
+
+        {/* ─── Доставка / как работает заказ ─── */}
+        <HomeDelivery />
 
         {/* ─── About ─── */}
         <section id="about" className="bg-cream px-5 py-16 lg:px-8 lg:py-24">
-          <div className="mx-auto max-w-7xl rounded-3xl bg-white p-8 shadow-sm lg:p-14">
-            <p className="text-[10px] font-bold uppercase tracking-[.12em] text-coral">{t("О компании")}</p>
-            <h2 className="mt-3 font-display text-2xl font-extrabold tracking-tight lg:text-3xl">
-              <EditableText field="aboutTitle" fallback={t(content.aboutTitle)} />
-            </h2>
-            <p className="mt-4 max-w-2xl text-[15px] leading-7 text-ink-soft">
-              <EditableText field="aboutText" fallback={t(content.aboutText)} multiline />
-            </p>
-            <ul className="mt-6 grid gap-2.5 sm:grid-cols-2">
-              {[
-                "Халал сертификаты на всё мясо и полуфабрикаты",
-                "Натуральные ингредиенты без консервантов",
-                "Доставка 98% заказов вовремя",
-                "Личный менеджер для каждого партнёра",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm font-medium text-dark">
-                  <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-coral" />
-                  {t(item)}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-8">
-              <Link href="/profile"
-                className="inline-flex min-h-12 items-center rounded-full bg-espresso px-6 text-[15px] font-semibold text-white transition hover:bg-espresso/90 active:scale-[.98]">
-                {t("Стать партнёром")}
-              </Link>
+          <div className="mx-auto grid max-w-7xl gap-8 rounded-3xl bg-white p-8 shadow-sm lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-14 lg:p-14">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[.12em] text-coral">{t("О компании")}</p>
+              <h2 className="mt-3 font-display text-2xl font-extrabold tracking-tight lg:text-3xl">
+                <EditableText field="aboutTitle" fallback={t(content.aboutTitle)} />
+              </h2>
+              <p className="mt-4 text-[15px] leading-7 text-ink-soft">
+                <EditableText field="aboutText" fallback={t(content.aboutText)} multiline />
+              </p>
+              <ul className="mt-6 grid gap-2.5 sm:grid-cols-2">
+                {[
+                  "Халал сертификаты на всё мясо и полуфабрикаты",
+                  "Натуральные ингредиенты без консервантов",
+                  "Доставка 98% заказов вовремя",
+                  "Личный менеджер для каждого партнёра",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm font-medium text-dark">
+                    <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-coral" />
+                    {t(item)}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {["Собственное производство", "Пекарня полного цикла", "Халал"].map((chip) => (
+                  <span key={chip} className="rounded-full bg-cream-deep px-3.5 py-2 text-xs font-semibold text-ink-soft">
+                    {t(chip)}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-8">
+                <Link href="/profile"
+                  className="inline-flex min-h-12 items-center rounded-full bg-espresso px-6 text-[15px] font-semibold text-white transition hover:bg-espresso/90 active:scale-[.98]">
+                  {t("Стать партнёром")}
+                </Link>
+              </div>
+            </div>
+
+            {/* фото-коллаж */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 aspect-[16/10] overflow-hidden rounded-2xl bg-cream">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/products/tort-medovik.webp" alt="" className="h-full w-full object-cover" />
+              </div>
+              <div className="aspect-square overflow-hidden rounded-2xl bg-cream">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-cover" />
+              </div>
+              <div className="aspect-square overflow-hidden rounded-2xl bg-cream">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-cover" />
+              </div>
             </div>
           </div>
         </section>
@@ -217,7 +268,7 @@ export default async function Home() {
               {t("Соберите первую оптовую заявку")}
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-white/85">
-              {t("Оптовые цены, живые остатки и товарный кредит — всё в одном кабинете.")}
+              {t("Оптовые цены, живые остатки и доступный лимит — всё в одном кабинете.")}
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/catalog"

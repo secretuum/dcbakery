@@ -516,6 +516,7 @@ export async function insertOrderWithItems(order: Order, items: OrderItem[]) {
     comment: order.comment ?? null,
     status: order.status,
     total_amount: order.total_amount,
+    delivery_amount: order.delivery_amount ?? 0,
     payment_status: order.payment_status ?? "unpaid",
     payment_provider: order.payment_provider ?? null,
     payment_url: order.payment_url ?? null,
@@ -606,7 +607,7 @@ export async function insertOrderWithItems(order: Order, items: OrderItem[]) {
 export async function fetchAdminOrders(status?: OrderStatus) {
   const params = new URLSearchParams({
     select:
-      "id,order_number,source,company_name,customer_name,customer_phone,status,payment_status,total_amount,created_at,delivery_date",
+      "id,order_number,source,company_name,customer_name,customer_phone,status,payment_status,total_amount,delivery_amount,created_at,delivery_date",
     order: "created_at.desc",
     limit: "100",
   });
@@ -637,7 +638,7 @@ export async function fetchClientOrderSummaries({
 
   const params = new URLSearchParams({
     select:
-      "id,order_number,company_name,status,payment_status,revision_note,total_amount,delivery_date,due_date,created_at,order_items(id,product_name,unit,qty,price,total_amount)",
+      "id,order_number,company_name,status,payment_status,revision_note,total_amount,delivery_amount,delivery_date,due_date,created_at,order_items(id,product_name,unit,qty,price,total_amount)",
     order: "created_at.desc",
     limit: "20",
   });
@@ -952,6 +953,7 @@ type OrderCreditRow = {
   status: string;
   payment_status: string | null;
   total_amount: number;
+  delivery_amount: number | null;
   due_date: string | null;
 };
 
@@ -1011,7 +1013,7 @@ export async function fetchAllClients(): Promise<Client[]> {
 export async function fetchClientOrdersForCredit(clientId: string): Promise<OrderCreditRow[]> {
   const excludedStatuses = ["pending_manager_confirmation", "canceled", "cancelled"].join(",");
   const params = new URLSearchParams({
-    select: "id,status,payment_status,total_amount,due_date",
+    select: "id,status,payment_status,total_amount,delivery_amount,due_date",
     client_id: `eq.${clientId}`,
     status: `not.in.(${excludedStatuses})`,
   });

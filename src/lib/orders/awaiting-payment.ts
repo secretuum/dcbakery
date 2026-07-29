@@ -7,7 +7,14 @@ import type { Order } from "@/src/types";
 
 export type AwaitingPaymentRow = Pick<
   Order,
-  "id" | "order_number" | "total_amount" | "created_at" | "due_date" | "company_name" | "status"
+  | "id"
+  | "order_number"
+  | "total_amount"
+  | "delivery_amount"
+  | "created_at"
+  | "due_date"
+  | "company_name"
+  | "status"
 >;
 
 export async function fetchAwaitingPaymentOrders(): Promise<AwaitingPaymentRow[]> {
@@ -17,7 +24,7 @@ export async function fetchAwaitingPaymentOrders(): Promise<AwaitingPaymentRow[]
 
   const params = new URLSearchParams({
     status: "in.(confirmed_waiting_payment,overdue)",
-    select: "id,order_number,total_amount,created_at,due_date,company_name,status",
+    select: "id,order_number,total_amount,delivery_amount,created_at,due_date,company_name,status",
     order: "created_at.desc",
     limit: "50",
   });

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { statusLabels } from "@/src/components/admin/OrderStatusBadge";
 import { OrderSlaStatus } from "@/src/components/admin/OrderSlaStatus";
 import { PaymentStatusBadge } from "@/src/components/admin/PaymentStatusBadge";
+import { orderTotalWithDelivery } from "@/app/constants";
 import { fetchAdminOrders } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
 import { canonicalOrderStatuses } from "@/src/lib/order-status";
@@ -107,7 +108,7 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
                       <p className="mt-0.5 text-xs text-muted">{order.customer_name}</p>
                     </td>
                     <td className="hidden px-4 py-3 text-muted md:table-cell">{order.customer_phone}</td>
-                    <td className="px-4 py-3 font-data font-semibold">{formatPrice(order.total_amount)}</td>
+                    <td className="px-4 py-3 font-data font-semibold">{formatPrice(orderTotalWithDelivery(order))}</td>
                     <td className="px-4 py-3">
                       <OrderSlaStatus createdAt={order.created_at} status={order.status} />
                     </td>

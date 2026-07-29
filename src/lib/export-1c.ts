@@ -62,7 +62,7 @@ const MAX_PAGES = 30;
 // и client_id) и максимум 100 заказов — для бухгалтерской выгрузки берём заказы
 // сами, с полным набором полей и пагинацией.
 const ORDER_EXPORT_COLUMNS =
-  "id,order_number,client_id,company_name,customer_bin,customer_name,customer_phone,customer_email,delivery_address,delivery_date,status,payment_status,total_amount,created_at";
+  "id,order_number,client_id,company_name,customer_bin,customer_name,customer_phone,customer_email,delivery_address,delivery_date,status,payment_status,total_amount,delivery_amount,created_at";
 
 async function fetchOrdersForExport(): Promise<Order[]> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -212,14 +212,19 @@ export async function collectOrders(
     email: order.customer_email ?? "",
     address: order.delivery_address ?? "",
     deliveryDate: order.delivery_date ?? "",
-    total: order.total_amount,
-    items: (itemsByOrderId.get(order.id) ?? []).map((item) => ({
-      name: item.product_name ?? "",
-      qty: item.qty ?? 0,
-      unit: item.unit ?? "шт",
-      price: item.price ?? 0,
-      sum: item.total_amount ?? 0,
-    })),
+    total: order.total_amount + (order.delivery_amount ?? 0),
+    items: [
+      ...(itemsByOrderId.get(order.id) ?? []).map((item) => ({
+        name: item.product_name ?? "",
+        qty: item.qty ?? 0,
+        unit: item.unit ?? "шт",
+        price: item.price ?? 0,
+        sum: item.total_amount ?? 0,
+      })),
+      ...((order.delivery_amount ?? 0) > 0
+        ? [{ name: "Доставка", qty: 1, unit: "усл.", price: order.delivery_amount ?? 0, sum: order.delivery_amount ?? 0 }]
+        : []),
+    ],
   }));
 }
 

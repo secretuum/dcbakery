@@ -407,318 +407,334 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
   }
 
   return (
-    <section className="mx-auto max-w-md">
-      <p className="text-sm font-bold uppercase text-raspberry">{t("Профиль")}</p>
-      <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{t("Вход в кабинет")}</h1>
-
-      <div className="mt-8 grid gap-4">
-        {/* Client login / registration */}
-        <div className="rounded-card bg-white p-6 shadow-sm">
-          {clientStep === "confirm_sent" ? (
-            <>
-              <h2 className="text-2xl font-bold tracking-tight">{t("Подтвердите почту")}</h2>
-              <div className="mt-4 rounded-xl bg-green-50 p-4">
-                <p className="text-sm font-bold text-green-700">{t("Аккаунт создан")}</p>
-                <p className="mt-1 text-sm font-semibold text-green-600/80">{t("Мы отправили письмо на")}<span className="font-bold">{regEmail}</span>{t(". Перейдите по ссылке из письма, затем войдите с паролем.")}</p>
-              </div>
+    <section className="mx-auto max-w-[468px]">
+      {/* Client login / registration — auth card */}
+      <div className="rounded-2xl bg-white p-6 shadow-md sm:p-8">
+        {clientStep === "confirm_sent" ? (
+          <>
+            <div className="text-center">
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-dark">{t("Подтвердите почту")}</h2>
+            </div>
+            <div className="mt-6 rounded-md bg-success-bg p-4">
+              <p className="text-sm font-bold text-success">{t("Аккаунт создан")}</p>
+              <p className="mt-1 text-sm font-semibold text-success/80">{t("Мы отправили письмо на")}<span className="font-bold">{regEmail}</span>{t(". Перейдите по ссылке из письма, затем войдите с паролем.")}</p>
+            </div>
+            <div className="mt-6 border-t border-black/10 pt-5">
               <Button
                 type="button"
                 variant="outline"
-                className="mt-5 w-full"
+                block
                 onClick={() => {
                   setClientStep("idle");
                   setClientError("");
                   setClientNotice("");
                 }}
               >{t("К форме входа")}</Button>
-            </>
-          ) : clientStep === "otp" || clientStep === "verifying" ? (
-            <>
-              <h2 className="text-2xl font-bold tracking-tight">{t("Введите код из WhatsApp")}</h2>
-              <div className="mt-4 rounded-xl bg-green-50 p-4">
-                <p className="text-sm font-bold text-green-700">{t("Код отправлен в WhatsApp")}</p>
-                <p className="mt-1 text-sm font-semibold text-green-600/80">
-                  {t("Мы написали на ")}<span className="font-bold">{regPhone}</span>{t(". Введите 6-значный код — он действует 2 минуты.")}
-                </p>
-              </div>
-              <label className="mt-4 block">
-                <span className="text-sm font-bold text-dark">{t("Код подтверждения")}</span>
-                <Input
-                  className="mt-2 text-center font-data text-2xl tracking-[.4em]"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.currentTarget.value.replace(/\D/g, "").slice(0, 6))}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      void handleVerifyOtp();
-                    }
-                  }}
-                  placeholder="000000"
-                  autoFocus
-                />
-              </label>
-              {clientError ? (
-                <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
-              ) : null}
-              <p className="mt-2 text-xs font-semibold text-muted">
-                {otpSeconds > 0
-                  ? t("Код действует ещё ${time}", { time: formatMmss(otpSeconds) })
-                  : t("Срок кода истёк — запросите новый.")}
+            </div>
+          </>
+        ) : clientStep === "otp" || clientStep === "verifying" ? (
+          <>
+            <div className="text-center">
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-dark">{t("Введите код из WhatsApp")}</h2>
+            </div>
+            <div className="mt-6 rounded-md bg-success-bg p-4">
+              <p className="text-sm font-bold text-success">{t("Код отправлен в WhatsApp")}</p>
+              <p className="mt-1 text-sm font-semibold text-success/80">
+                {t("Мы написали на ")}<span className="font-bold">{regPhone}</span>{t(". Введите 6-значный код — он действует 2 минуты.")}
               </p>
-              <div className="mt-5 flex gap-3">
-                <Button
-                  type="button"
-                  disabled={clientStep === "verifying" || otpCode.length !== 6}
-                  className="flex-1"
-                  onClick={() => void handleVerifyOtp()}
-                >
-                  {clientStep === "verifying" ? t("Проверяем...") : t("Подтвердить")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={otpResending || otpSeconds > 90}
-                  onClick={() => void handleResendOtp()}
-                >
-                  {otpResending ? t("Отправляем...") : t("Отправить снова")}
-                </Button>
-              </div>
+            </div>
+            <label className="mt-5 block">
+              <span className="text-sm font-bold text-dark">{t("Код подтверждения")}</span>
+              <Input
+                className="mt-2 text-center font-data text-2xl tracking-[.4em]"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={otpCode}
+                onChange={(e) => setOtpCode(e.currentTarget.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleVerifyOtp();
+                  }
+                }}
+                placeholder="000000"
+                autoFocus
+              />
+            </label>
+            {clientError ? (
+              <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
+            ) : null}
+            <p className="mt-2 text-xs font-semibold text-muted">
+              {otpSeconds > 0
+                ? t("Код действует ещё ${time}", { time: formatMmss(otpSeconds) })
+                : t("Срок кода истёк — запросите новый.")}
+            </p>
+            <div className="mt-5 flex gap-3">
+              <Button
+                type="button"
+                disabled={clientStep === "verifying" || otpCode.length !== 6}
+                className="flex-1"
+                onClick={() => void handleVerifyOtp()}
+              >
+                {clientStep === "verifying" ? t("Проверяем...") : t("Подтвердить")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={otpResending || otpSeconds > 90}
+                onClick={() => void handleResendOtp()}
+              >
+                {otpResending ? t("Отправляем...") : t("Отправить снова")}
+              </Button>
+            </div>
+            <div className="mt-6 border-t border-black/10 pt-5 text-center">
               <button
                 type="button"
-                className="mt-4 text-sm font-semibold text-muted underline-offset-2 hover:text-dark hover:underline"
+                className="text-sm font-semibold text-muted underline-offset-2 hover:text-dark hover:underline"
                 onClick={() => {
                   setClientStep("idle");
                   setClientError("");
                   setClientNotice("");
                 }}
               >{t("Назад ко входу")}</button>
-            </>
-          ) : clientStep === "reset_sent" ? (
-            <>
-              <h2 className="text-2xl font-bold tracking-tight">{t("Проверьте почту")}</h2>
-              <div className="mt-4 rounded-xl bg-green-50 p-4">
-                <p className="text-sm font-bold text-green-700">{t("Письмо отправлено")}</p>
-                <p className="mt-1 text-sm font-semibold text-green-600/80">{t("Если почта")}<span className="font-bold">{resetEmail}</span>{t("зарегистрирована, на неё придёт ссылка для установки нового пароля.")}</p>
-              </div>
+            </div>
+          </>
+        ) : clientStep === "reset_sent" ? (
+          <>
+            <div className="text-center">
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-dark">{t("Проверьте почту")}</h2>
+            </div>
+            <div className="mt-6 rounded-md bg-success-bg p-4">
+              <p className="text-sm font-bold text-success">{t("Письмо отправлено")}</p>
+              <p className="mt-1 text-sm font-semibold text-success/80">{t("Если почта")}<span className="font-bold">{resetEmail}</span>{t("зарегистрирована, на неё придёт ссылка для установки нового пароля.")}</p>
+            </div>
+            <div className="mt-6 border-t border-black/10 pt-5">
               <Button
                 type="button"
                 variant="outline"
-                className="mt-5 w-full"
+                block
                 onClick={() => {
                   setClientStep("idle");
                   setClientError("");
                 }}
               >{t("К форме входа")}</Button>
-            </>
-          ) : clientStep === "forgot" || clientStep === "sending_reset" ? (
-            <>
-              <h2 className="text-2xl font-bold tracking-tight">{t("Сброс пароля")}</h2>
-              <p className="mt-2 text-sm font-semibold leading-6 text-muted">{t("Укажите почту, на которую регистрировались, — пришлём ссылку для нового пароля.")}</p>
-              <label className="mt-4 block">
+            </div>
+          </>
+        ) : clientStep === "forgot" || clientStep === "sending_reset" ? (
+          <>
+            <div className="text-center">
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-dark">{t("Сброс пароля")}</h2>
+              <p className="mx-auto mt-2 max-w-sm text-sm font-semibold leading-6 text-muted">{t("Укажите почту, на которую регистрировались, — пришлём ссылку для нового пароля.")}</p>
+            </div>
+            <label className="mt-5 block">
+              <span className="text-sm font-bold text-dark">Email</span>
+              <Input
+                className="mt-2"
+                inputMode="email"
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void handleForgotPassword();
+                  }
+                }}
+                placeholder="company@example.com"
+                autoFocus
+              />
+            </label>
+            {clientError ? (
+              <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
+            ) : null}
+            <div className="mt-5 flex gap-3">
+              <Button
+                type="button"
+                disabled={clientStep === "sending_reset"}
+                className="flex-1"
+                onClick={() => void handleForgotPassword()}
+              >
+                {clientStep === "sending_reset" ? t("Отправляем...") : t("Отправить письмо")}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setClientStep("idle");
+                  setClientError("");
+                }}
+              >{t("Назад")}</Button>
+            </div>
+          </>
+        ) : clientStep === "register" || clientStep === "registering" ? (
+          <>
+            <div className="text-center">
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-dark">{t("Регистрация")}</h2>
+            </div>
+            {clientNotice ? (
+              <div className="mt-6 rounded-md border border-coral/20 bg-accent-50 px-4 py-3">
+                <p className="text-sm font-semibold text-dark/80">{clientNotice}</p>
+              </div>
+            ) : null}
+            <div className="mt-6 space-y-3">
+              <label className="block">
                 <span className="text-sm font-bold text-dark">Email</span>
                 <Input
                   className="mt-2"
                   inputMode="email"
                   type="email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.currentTarget.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      void handleForgotPassword();
-                    }
-                  }}
+                  value={regEmail}
+                  onChange={(e) => setRegEmail(e.currentTarget.value)}
                   placeholder="company@example.com"
                   autoFocus
                 />
               </label>
-              {clientError ? (
-                <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
-              ) : null}
-              <div className="mt-5 flex gap-3">
-                <Button
-                  type="button"
-                  disabled={clientStep === "sending_reset"}
-                  className="flex-1"
-                  onClick={() => void handleForgotPassword()}
-                >
-                  {clientStep === "sending_reset" ? t("Отправляем...") : t("Отправить письмо")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setClientStep("idle");
-                    setClientError("");
+              <label className="block">
+                <span className="text-sm font-bold text-dark">{t("Телефон WhatsApp")}</span>
+                <Input
+                  className="mt-2"
+                  inputMode="tel"
+                  type="tel"
+                  value={regPhone}
+                  onChange={(e) => setRegPhone(e.currentTarget.value)}
+                  placeholder="+7 (747) 000-00-00"
+                />
+                {regPhone.trim() && !isValidKzMobile(regPhone) ? (
+                  <p className="mt-1 text-xs font-semibold text-raspberry">
+                    {t("Похоже на некорректный номер. Формат: +7 705 123 45 67")}
+                  </p>
+                ) : null}
+              </label>
+              <label className="block">
+                <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
+                <Input
+                  className="mt-2"
+                  type="password"
+                  value={regPassword}
+                  onChange={(e) => setRegPassword(e.currentTarget.value)}
+                  placeholder={t("Минимум 8 символов")}
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-bold text-dark">{t("Компания / заведение")}</span>
+                <Input
+                  className="mt-2"
+                  value={regCompany}
+                  onChange={(e) => setRegCompany(e.currentTarget.value)}
+                  placeholder={t("Название компании")}
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-bold text-dark">{t("БИН / ИИН")}</span>
+                <Input
+                  className="mt-2"
+                  inputMode="numeric"
+                  value={regBin}
+                  onChange={(e) => setRegBin(e.currentTarget.value)}
+                  placeholder={t("12 цифр")}
+                />
+                {regBin.trim() && !isValidBin(regBin) ? (
+                  <p className="mt-1 text-xs font-semibold text-raspberry">
+                    {t("БИН/ИИН указан неверно — проверьте 12 цифр")}
+                  </p>
+                ) : null}
+              </label>
+              <label className="block">
+                <span className="text-sm font-bold text-dark">{t("Контактное лицо")}</span>
+                <Input
+                  className="mt-2"
+                  value={regName}
+                  onChange={(e) => setRegName(e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void handleClientRegister();
+                    }
                   }}
-                >{t("Назад")}</Button>
-              </div>
-            </>
-          ) : clientStep === "register" || clientStep === "registering" ? (
-            <>
-              <h2 className="text-2xl font-bold tracking-tight">{t("Регистрация")}</h2>
-              {clientNotice ? (
-                <div className="mt-4 rounded-xl border border-coral/20 bg-coral-light px-4 py-3">
-                  <p className="text-sm font-semibold text-dark/80">{clientNotice}</p>
-                </div>
-              ) : null}
-              <div className="mt-4 space-y-3">
-                <label className="block">
-                  <span className="text-sm font-bold text-dark">Email</span>
-                  <Input
-                    className="mt-2"
-                    inputMode="email"
-                    type="email"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.currentTarget.value)}
-                    placeholder="company@example.com"
-                    autoFocus
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-bold text-dark">{t("Телефон WhatsApp")}</span>
-                  <Input
-                    className="mt-2"
-                    inputMode="tel"
-                    type="tel"
-                    value={regPhone}
-                    onChange={(e) => setRegPhone(e.currentTarget.value)}
-                    placeholder="+7 (747) 000-00-00"
-                  />
-                  {regPhone.trim() && !isValidKzMobile(regPhone) ? (
-                    <p className="mt-1 text-xs font-semibold text-raspberry">
-                      {t("Похоже на некорректный номер. Формат: +7 705 123 45 67")}
-                    </p>
-                  ) : null}
-                </label>
-                <label className="block">
-                  <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
-                  <Input
-                    className="mt-2"
-                    type="password"
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.currentTarget.value)}
-                    placeholder={t("Минимум 8 символов")}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-bold text-dark">{t("Компания / заведение")}</span>
-                  <Input
-                    className="mt-2"
-                    value={regCompany}
-                    onChange={(e) => setRegCompany(e.currentTarget.value)}
-                    placeholder={t("Название компании")}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-bold text-dark">{t("БИН / ИИН")}</span>
-                  <Input
-                    className="mt-2"
-                    inputMode="numeric"
-                    value={regBin}
-                    onChange={(e) => setRegBin(e.currentTarget.value)}
-                    placeholder={t("12 цифр")}
-                  />
-                  {regBin.trim() && !isValidBin(regBin) ? (
-                    <p className="mt-1 text-xs font-semibold text-raspberry">
-                      {t("БИН/ИИН указан неверно — проверьте 12 цифр")}
-                    </p>
-                  ) : null}
-                </label>
-                <label className="block">
-                  <span className="text-sm font-bold text-dark">{t("Контактное лицо")}</span>
-                  <Input
-                    className="mt-2"
-                    value={regName}
-                    onChange={(e) => setRegName(e.currentTarget.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void handleClientRegister();
-                      }
-                    }}
-                    placeholder={t("Имя и фамилия")}
-                  />
-                </label>
-              </div>
-              {clientError ? (
-                <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
-              ) : null}
-              <div className="mt-5 flex gap-3">
-                <Button
-                  type="button"
-                  disabled={clientStep === "registering"}
-                  className="flex-1"
-                  onClick={() => void handleClientRegister()}
-                >
-                  {clientStep === "registering" ? t("Создаём аккаунт...") : t("Зарегистрироваться")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setClientStep("idle");
-                    setClientError("");
-                    setClientNotice("");
+                  placeholder={t("Имя и фамилия")}
+                />
+              </label>
+            </div>
+            {clientError ? (
+              <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
+            ) : null}
+            <div className="mt-5 flex gap-3">
+              <Button
+                type="button"
+                disabled={clientStep === "registering"}
+                className="flex-1"
+                onClick={() => void handleClientRegister()}
+              >
+                {clientStep === "registering" ? t("Создаём аккаунт...") : t("Зарегистрироваться")}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setClientStep("idle");
+                  setClientError("");
+                  setClientNotice("");
+                }}
+              >{t("Назад")}</Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="text-center">
+              <p className="text-xs font-bold uppercase tracking-[.08em] text-raspberry">{t("Профиль")}</p>
+              <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-dark">{t("Вход в кабинет")}</h2>
+            </div>
+            <div className="mt-6 space-y-3">
+              <label className="block">
+                <span className="text-sm font-bold text-dark">{t("Почта или номер телефона")}</span>
+                <Input
+                  className="mt-2"
+                  value={clientLogin}
+                  onChange={(e) => setClientLogin(e.currentTarget.value)}
+                  placeholder={t("company@example.com или +7 (747) 000-00-00")}
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
+                <Input
+                  className="mt-2"
+                  type="password"
+                  value={clientPassword}
+                  onChange={(e) => setClientPassword(e.currentTarget.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void handleClientLogin();
+                    }
                   }}
-                >{t("Назад")}</Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <h2 className="text-2xl font-bold tracking-tight">{t("Вход")}</h2>
-              <div className="mt-4 space-y-3">
-                <label className="block">
-                  <span className="text-sm font-bold text-dark">{t("Почта или номер телефона")}</span>
-                  <Input
-                    className="mt-2"
-                    value={clientLogin}
-                    onChange={(e) => setClientLogin(e.currentTarget.value)}
-                    placeholder={t("company@example.com или +7 (747) 000-00-00")}
-                  />
-                </label>
-                <label className="block">
-                  <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
-                  <Input
-                    className="mt-2"
-                    type="password"
-                    value={clientPassword}
-                    onChange={(e) => setClientPassword(e.currentTarget.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void handleClientLogin();
-                      }
-                    }}
-                    placeholder="••••••••"
-                  />
-                </label>
-              </div>
-              {clientError ? (
-                <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
-              ) : null}
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                <Button
-                  type="button"
-                  disabled={clientStep === "signing_in"}
-                  className="flex-1"
-                  onClick={() => void handleClientLogin()}
-                >
-                  {clientStep === "signing_in" ? t("Проверяем...") : t("Войти")}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => openRegistration()}
-                >{t("Зарегистрироваться")}</Button>
-              </div>
+                  placeholder="••••••••"
+                />
+              </label>
+            </div>
+            {clientError ? (
+              <p className="mt-3 text-sm font-bold text-burgundy">{clientError}</p>
+            ) : null}
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <Button
+                type="button"
+                disabled={clientStep === "signing_in"}
+                className="flex-1"
+                onClick={() => void handleClientLogin()}
+              >
+                {clientStep === "signing_in" ? t("Проверяем...") : t("Войти")}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => openRegistration()}
+              >{t("Зарегистрироваться")}</Button>
+            </div>
+            <div className="mt-6 border-t border-black/10 pt-5 text-center">
               <button
                 type="button"
-                className="mt-4 text-sm font-semibold text-muted underline-offset-2 hover:text-dark hover:underline"
+                className="text-sm font-semibold text-muted underline-offset-2 hover:text-dark hover:underline"
                 onClick={() => {
                   if (clientLogin.includes("@")) {
                     setResetEmail(clientLogin.trim().toLowerCase());
@@ -727,44 +743,46 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   setClientStep("forgot");
                 }}
               >{t("Забыли пароль?")}</button>
-            </>
-          )}
-        </div>
-
-        {/* Admin form */}
-        <form onSubmit={(e) => void handleAdminSubmit(e)} className="rounded-card bg-white p-6 shadow-sm">
-          <h2 className="text-2xl font-bold tracking-tight">{t("Email и пароль")}</h2>
-          <div className="mt-4 space-y-3">
-            <label className="block">
-              <span className="text-sm font-bold text-dark">Email</span>
-              <Input
-                className="mt-1.5"
-                inputMode="email"
-                type="email"
-                value={adminEmail}
-                onChange={(e) => setAdminEmail(e.currentTarget.value)}
-                placeholder="admin@example.com"
-              />
-            </label>
-            <label className="block">
-              <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
-              <Input
-                className="mt-1.5"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.currentTarget.value)}
-                placeholder="••••••••"
-              />
-            </label>
-          </div>
-          {adminError ? (
-            <p className="mt-3 text-sm font-bold text-burgundy">{adminError}</p>
-          ) : null}
-          <Button type="submit" disabled={isAdminSubmitting} variant="outline" className="mt-5 w-full">
-            {isAdminSubmitting ? t("Проверяем...") : t("Войти как менеджер")}
-          </Button>
-        </form>
+            </div>
+          </>
+        )}
       </div>
+
+      {/* Admin form — compact auth card */}
+      <form onSubmit={(e) => void handleAdminSubmit(e)} className="mt-4 rounded-2xl bg-white p-6 shadow-md sm:p-8">
+        <div className="text-center">
+          <h2 className="font-display text-xl font-semibold tracking-tight text-dark">{t("Email и пароль")}</h2>
+        </div>
+        <div className="mt-6 space-y-3">
+          <label className="block">
+            <span className="text-sm font-bold text-dark">Email</span>
+            <Input
+              className="mt-1.5"
+              inputMode="email"
+              type="email"
+              value={adminEmail}
+              onChange={(e) => setAdminEmail(e.currentTarget.value)}
+              placeholder="admin@example.com"
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
+            <Input
+              className="mt-1.5"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.currentTarget.value)}
+              placeholder="••••••••"
+            />
+          </label>
+        </div>
+        {adminError ? (
+          <p className="mt-3 text-sm font-bold text-burgundy">{adminError}</p>
+        ) : null}
+        <Button type="submit" disabled={isAdminSubmitting} variant="outline" block className="mt-5">
+          {isAdminSubmitting ? t("Проверяем...") : t("Войти как менеджер")}
+        </Button>
+      </form>
     </section>
   );
 }
@@ -782,12 +800,13 @@ function AdminDashboard({
   if (previewMode) {
     return (
       <div>
-        <div className="print-hidden mb-4 flex items-center justify-between rounded-card border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm font-bold text-amber-700">{t("Режим превью — вид клиента")}</p>
+        <div className="print-hidden mb-4 flex items-center justify-between rounded-xl border border-warning/30 bg-warning-bg px-4 py-3">
+          <p className="text-sm font-bold text-warning">{t("Режим превью — вид клиента")}</p>
           <Button
             type="button"
             variant="outline"
-            className="border-amber-300 text-amber-700 hover:bg-amber-100"
+            size="sm"
+            className="border-warning/40 text-warning hover:bg-warning/10"
             onClick={() => setPreviewMode(false)}
           >{t("Выйти из превью")}</Button>
         </div>
@@ -802,79 +821,83 @@ function AdminDashboard({
 
   return (
     <section className="mx-auto max-w-6xl">
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-card bg-dark px-5 py-4 text-white shadow-sm">
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl px-6 py-5 text-white shadow-md"
+        style={{ background: "linear-gradient(135deg, var(--color-espresso), color-mix(in srgb, var(--color-espresso) 82%, black))" }}
+      >
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase text-coral">{t("Админ-профиль")}</p>
+          <p className="text-xs font-bold uppercase tracking-[.08em] text-coral">{t("Админ-профиль")}</p>
           <p className="mt-1 break-all text-sm font-semibold text-white/70">{session.email}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
             variant="outline"
-            className="border-white text-white hover:bg-white/10"
+            size="sm"
+            className="border-white/40 bg-transparent text-white hover:bg-white/10 hover:text-white"
             onClick={() => setPreviewMode(true)}
           >{t("Вид клиента")}</Button>
-          <Button type="button" variant="ghost" className="text-white hover:bg-white/10" onClick={onLogout}>{t("Выйти")}</Button>
+          <Button type="button" variant="ghost" size="sm" className="text-white hover:bg-white/10" onClick={onLogout}>{t("Выйти")}</Button>
         </div>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           href="/admin/orders"
-          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
+          className="rounded-xl bg-white p-5 shadow-xs transition hover:-translate-y-0.5 hover:shadow-md"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">{t("Операции")}</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Заказы")}</h2>
+          <p className="text-xs font-bold uppercase tracking-[.06em] text-raspberry">{t("Операции")}</p>
+          <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-dark">{t("Заказы")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Новые заявки, подтверждение, оплата и статусы доставки.
           </p>
         </Link>
         <Link
           href="/admin/documents"
-          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
+          className="rounded-xl bg-white p-5 shadow-xs transition hover:-translate-y-0.5 hover:shadow-md"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">{t("Документы")}</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Накладные и счета")}</h2>
+          <p className="text-xs font-bold uppercase tracking-[.06em] text-raspberry">{t("Документы")}</p>
+          <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-dark">{t("Накладные и счета")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Счёт и накладная по каждому заказу в один клик.
           </p>
         </Link>
         <Link
           href="/admin/clients"
-          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
+          className="rounded-xl bg-white p-5 shadow-xs transition hover:-translate-y-0.5 hover:shadow-md"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">{t("Партнёры")}</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Наши клиенты")}</h2>
+          <p className="text-xs font-bold uppercase tracking-[.06em] text-raspberry">{t("Партнёры")}</p>
+          <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-dark">{t("Наши клиенты")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Компании, контакты, лимиты и история заказов.
           </p>
         </Link>
         <Link
           href="/admin/products"
-          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
+          className="rounded-xl bg-white p-5 shadow-xs transition hover:-translate-y-0.5 hover:shadow-md"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">{t("Каталог")}</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Товары")}</h2>
+          <p className="text-xs font-bold uppercase tracking-[.06em] text-raspberry">{t("Каталог")}</p>
+          <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-dark">{t("Товары")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Цены, остатки, фото и активность позиций.
           </p>
         </Link>
         <Link
           href="/admin/stop-list"
-          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
+          className="rounded-xl bg-white p-5 shadow-xs transition hover:-translate-y-0.5 hover:shadow-md"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">{t("Наличие")}</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Стоп-лист")}</h2>
+          <p className="text-xs font-bold uppercase tracking-[.06em] text-raspberry">{t("Наличие")}</p>
+          <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-dark">{t("Стоп-лист")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Временно снятые с продажи позиции.
           </p>
         </Link>
         <Link
           href="/admin/settings"
-          className="rounded-card bg-white p-5 shadow-sm transition hover:-translate-y-0.5"
+          className="rounded-xl bg-white p-5 shadow-xs transition hover:-translate-y-0.5 hover:shadow-md"
         >
-          <p className="text-xs font-bold uppercase text-raspberry">{t("Система")}</p>
-          <h2 className="mt-2 text-xl font-bold tracking-tight">{t("Настройки")}</h2>
+          <p className="text-xs font-bold uppercase tracking-[.06em] text-raspberry">{t("Система")}</p>
+          <h2 className="mt-2 font-display text-xl font-semibold tracking-tight text-dark">{t("Настройки")}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-muted">
             Контент сайта, режим редактирования и платежи.
           </p>
@@ -896,12 +919,12 @@ function CreditBlock({ state }: { state: CreditState }) {
       : 0;
 
   return (
-    <div className="overflow-hidden rounded border border-black/10 bg-white">
+    <div className="overflow-hidden rounded-xl bg-white shadow-xs">
       <div className="grid divide-y divide-black/10 lg:grid-cols-3 lg:divide-x lg:divide-y-0">
         {/* Cell 1 — лимит + бар */}
         <div className="p-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">{t("Товарный кредит")}</p>
-          <p className="mt-2 font-data text-2xl font-semibold leading-none">
+          <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">{t("Доступный лимит")}</p>
+          <p className="mt-2 font-data text-2xl font-semibold leading-none text-dark">
             {formatCurrency(state.used)}
             <span className="ml-1.5 text-sm font-normal text-muted">
               / {formatCurrency(state.limit)}
@@ -910,17 +933,17 @@ function CreditBlock({ state }: { state: CreditState }) {
           {state.limit > 0 ? (
             <>
               <div className="mt-3 flex h-1.5 overflow-hidden rounded-full bg-black/10">
-                <div className="h-full bg-dark" style={{ width: `${inTimePct}%` }} />
-                <div className="h-full bg-red-500" style={{ width: `${overduePct}%` }} />
+                <div className="h-full bg-espresso" style={{ width: `${inTimePct}%` }} />
+                <div className="h-full bg-danger" style={{ width: `${overduePct}%` }} />
               </div>
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted">
                 <span className="flex items-center gap-1">
-                  <span className="inline-block size-1.5 rounded-full bg-dark" />
+                  <span className="inline-block size-1.5 rounded-full bg-espresso" />
                   В срок {formatCurrency(state.used - state.overdue)}
                 </span>
                 {state.overdue > 0 && (
                   <span className="flex items-center gap-1">
-                    <span className="inline-block size-1.5 rounded-full bg-red-500" />
+                    <span className="inline-block size-1.5 rounded-full bg-danger" />
                     Просрочено {formatCurrency(state.overdue)}
                   </span>
                 )}
@@ -936,7 +959,7 @@ function CreditBlock({ state }: { state: CreditState }) {
         {/* Cell 2 — доступно */}
         <div className="p-5">
           <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">{t("Доступно сейчас")}</p>
-          <p className="mt-2 font-data text-2xl font-semibold leading-none text-green-700">
+          <p className="mt-2 font-data text-2xl font-semibold leading-none text-success">
             {formatCurrency(state.available)}
           </p>
           <p className="mt-2 text-[11px] text-muted">{t(creditStatusLabels[state.status])}</p>
@@ -946,14 +969,14 @@ function CreditBlock({ state }: { state: CreditState }) {
         <div className="p-5">
           <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-muted">{t("Ближайший платёж")}</p>
           <p
-            className={`mt-2 font-data text-2xl font-semibold leading-none ${
-              state.overdueDays > 0 ? "text-red-600" : ""
+            className={`mt-2 font-data text-2xl font-semibold leading-none text-dark ${
+              state.overdueDays > 0 ? "text-danger" : ""
             }`}
           >
             {state.nextDueDate ? formatDate(state.nextDueDate) : "—"}
           </p>
           {state.overdueDays > 0 ? (
-            <p className="mt-2 text-[11px] font-semibold text-red-600">
+            <p className="mt-2 text-[11px] font-semibold text-danger">
               Просрочка {state.overdueDays} дн · {formatCurrency(state.overdue)}
             </p>
           ) : null}
@@ -962,7 +985,7 @@ function CreditBlock({ state }: { state: CreditState }) {
 
       {/* Алерт просрочки */}
       {state.overdueDays > 0 ? (
-        <div className="flex items-start gap-3 border-t border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700">
+        <div className="flex items-start gap-3 border-t border-danger/15 bg-danger-bg px-5 py-3 text-sm text-danger">
           <svg className="mt-0.5 size-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="9" /><path d="M12 7v6M12 16.5v.5" />
           </svg>
@@ -997,12 +1020,12 @@ function OrderItemsList({ items }: { items: OrderItemSummary[] }) {
 }
 
 const ORDER_CHIP: Partial<Record<string, string>> = {
-  pending_manager_confirmation: "bg-amber-50 text-amber-700",
-  change_proposed: "bg-amber-50 text-amber-700",
-  confirmed_waiting_payment: "bg-coral-light text-burgundy",
-  delivering: "bg-blue-50 text-blue-700",
-  paid: "bg-green-50 text-green-700",
-  completed: "bg-green-50 text-green-700",
+  pending_manager_confirmation: "bg-warning-bg text-warning",
+  change_proposed: "bg-warning-bg text-warning",
+  confirmed_waiting_payment: "bg-accent-50 text-burgundy",
+  delivering: "bg-accent-50 text-accent-700",
+  paid: "bg-success-bg text-success",
+  completed: "bg-success-bg text-success",
   canceled: "bg-black/5 text-muted",
   cancelled: "bg-black/5 text-muted",
 };
@@ -1041,23 +1064,23 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-xs transition-colors hover:border-black/20">
-      {/* Header row */}
+    <article className="overflow-hidden rounded-xl bg-white p-4 shadow-xs transition-shadow hover:shadow-md sm:p-5">
+      {/* Top row */}
       <button
         type="button"
-        className="flex w-full items-center gap-3 px-4 py-3 text-left"
+        className="flex w-full items-center gap-3 text-left"
         onClick={() => setIsExpanded((v) => !v)}
       >
-        <span className="font-data font-semibold text-sm">{order.order_number}</span>
-        <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[.05em] ${chipClass}`}>
+        <span className="font-data text-sm font-semibold text-dark">{order.order_number}</span>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[.05em] ${chipClass}`}>
           {orderStatus}
         </span>
-        <span className="ml-auto font-data font-semibold">{formatCurrency(order.total_amount)}</span>
+        <span className="ml-auto font-display font-semibold text-dark">{formatCurrency(order.total_amount)}</span>
         <span className="text-[10px] text-muted">{isExpanded ? "▲" : "▼"}</span>
       </button>
 
       {/* Meta row */}
-      <div className="flex flex-wrap gap-x-5 gap-y-1 border-t border-black/5 px-4 py-2.5 text-xs text-muted">
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 border-t border-black/5 pt-3 text-xs text-muted">
         {order.delivery_date ? (
           <span>{t("Отгрузка")}<b className="font-data font-medium text-dark">{formatDate(order.delivery_date)}</b></span>
         ) : null}
@@ -1065,7 +1088,7 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
           <span>{t("Позиций")}<b className="font-data font-medium text-dark">{order.order_items.length}</b></span>
         ) : null}
         {order.due_date ? (
-          <span className={isOverdue ? "text-red-600 font-semibold" : ""}>{t("Оплата до")}<b className="font-data font-medium">{formatDate(order.due_date)}</b>
+          <span className={isOverdue ? "font-semibold text-danger" : ""}>{t("Оплата до")}<b className="font-data font-medium">{formatDate(order.due_date)}</b>
             {isOverdue ? ` · просрочка ${overdueDays} дн.` : ""}
           </span>
         ) : null}
@@ -1073,25 +1096,25 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
 
       {/* Expanded items */}
       {isExpanded && order.order_items && order.order_items.length > 0 ? (
-        <div className="border-t border-black/5 px-4 py-3">
+        <div className="mt-3 border-t border-black/5 pt-3">
           <OrderItemsList items={order.order_items} />
         </div>
       ) : null}
 
       {/* Revision note */}
       {order.revision_note ? (
-        <p className="border-t border-black/5 bg-coral-light px-4 py-2 text-sm font-semibold text-burgundy">
+        <p className="mt-3 rounded-md bg-accent-50 px-4 py-2 text-sm font-semibold text-burgundy">
           {order.revision_note}
         </p>
       ) : null}
 
       {/* Actions footer */}
-      <div className="flex flex-wrap items-center gap-2 border-t border-dashed border-black/10 px-4 py-3">
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-dashed border-black/10 pt-3">
         {canAcceptRevision ? (
           <button
             type="button"
             disabled={actionStatus === "loading"}
-            className="rounded border border-dark bg-dark px-3 py-1.5 text-xs font-semibold text-white hover:bg-dark/80 disabled:opacity-50"
+            className="rounded-full bg-espresso px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-espresso/90 disabled:opacity-50"
             onClick={() => void sendClientAction("accept_revision")}
           >{t("Принять изменения")}</button>
         ) : null}
@@ -1099,7 +1122,7 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
           <button
             type="button"
             disabled={actionStatus === "loading"}
-            className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5 disabled:opacity-50"
+            className="rounded-full border border-black/15 px-3.5 py-1.5 text-xs font-semibold text-dark transition hover:bg-black/5 disabled:opacity-50"
             onClick={() => {
               const comment = window.prompt("Что нужно изменить в заявке?");
               if (comment?.trim()) void sendClientAction("request_change", comment);
@@ -1109,23 +1132,23 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
         {order.payment_url ? (
           <a
             href={order.payment_url}
-            className="rounded border border-dark bg-dark px-3 py-1.5 text-xs font-semibold text-white hover:bg-dark/80"
+            className="rounded-full bg-coral px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-coral-hover"
           >
             Оплатить {formatCurrency(order.total_amount)}
           </a>
         ) : null}
         {showDocs ? (
           <>
-            <Link href={`/documents/invoice/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("Счет PDF")}</Link>
-            <Link href={`/documents/nakl/${order.id}`} className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("Накладная PDF")}</Link>
+            <Link href={`/documents/invoice/${order.id}`} className="rounded-full border border-black/15 px-3.5 py-1.5 text-xs font-semibold text-dark transition hover:bg-black/5">{t("Счет PDF")}</Link>
+            <Link href={`/documents/nakl/${order.id}`} className="rounded-full border border-black/15 px-3.5 py-1.5 text-xs font-semibold text-dark transition hover:bg-black/5">{t("Накладная PDF")}</Link>
           </>
         ) : null}
-        <Link href="/catalog" className="rounded border border-black/20 px-3 py-1.5 text-xs font-semibold text-dark hover:bg-black/5">{t("Повторить")}</Link>
+        <Link href="/catalog" className="rounded-full border border-black/15 px-3.5 py-1.5 text-xs font-semibold text-dark transition hover:bg-black/5">{t("Повторить")}</Link>
         {canCancel ? (
           <button
             type="button"
             disabled={actionStatus === "loading"}
-            className="rounded px-3 py-1.5 text-xs font-semibold text-muted hover:bg-black/5 disabled:opacity-50"
+            className="rounded-full px-3.5 py-1.5 text-xs font-semibold text-muted transition hover:bg-black/5 disabled:opacity-50"
             onClick={() => {
               const comment = window.prompt("Причина отмены");
               void sendClientAction("cancel", comment ?? "");
@@ -1133,7 +1156,7 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
           >{t("Отменить")}</button>
         ) : null}
         {actionStatus === "error" ? (
-          <span className="text-xs font-semibold text-red-600">{t("Ошибка, попробуйте снова")}</span>
+          <span className="text-xs font-semibold text-danger">{t("Ошибка, попробуйте снова")}</span>
         ) : null}
       </div>
     </article>
@@ -1147,16 +1170,16 @@ function PopularProductsSection({ products }: { products: Product[] }) {
   if (products.length === 0) return null;
 
   return (
-    <section className="mt-6 rounded-card bg-white p-6 shadow-sm">
-      <p className="text-xs font-bold uppercase text-raspberry">{t("Рекомендуем")}</p>
-      <h2 className="mt-2 text-2xl font-bold tracking-tight">{t("Популярное у клиентов")}</h2>
+    <section className="mt-6 rounded-xl bg-white p-6 shadow-xs">
+      <p className="text-xs font-bold uppercase tracking-[.06em] text-raspberry">{t("Рекомендуем")}</p>
+      <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight text-dark">{t("Популярное у клиентов")}</h2>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((product) => (
           <div
             key={product.id}
-            className="flex items-center gap-3 rounded-xl bg-cream p-3"
+            className="flex items-center gap-3 rounded-md bg-cream p-3"
           >
-            <div className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-white">
+            <div className="relative size-14 shrink-0 overflow-hidden rounded-sm bg-white">
               <FallbackImage
                 src={product.images[0]}
                 alt={product.name}
@@ -1192,7 +1215,7 @@ function PopularProductsSection({ products }: { products: Product[] }) {
 
 function SidebarBox({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-4 shadow-xs">
+    <div className="rounded-xl bg-white p-5 shadow-xs">
       <p className="font-display text-[11px] font-semibold uppercase tracking-[.07em] text-dark">
         {title}
       </p>
@@ -1205,7 +1228,7 @@ function KvRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between border-b border-black/5 py-1.5 text-xs last:border-0">
       <span className="text-muted">{label}</span>
-      <span className="font-data font-medium text-dark">{value}</span>
+      <span className="ml-auto font-data font-semibold text-dark">{value}</span>
     </div>
   );
 }
@@ -1214,7 +1237,7 @@ function ConditionsBox({ state }: { state: CreditState }) {
   const t = useT();
   return (
     <SidebarBox title={t("Условия")}>
-      <KvRow label={t("Кредитный лимит")} value={formatCurrency(state.limit)} />
+      <KvRow label={t("Лимит")} value={formatCurrency(state.limit)} />
       <KvRow label={t("Статус")} value={t(creditStatusLabels[state.status])} />
       {state.nextDueDate ? (
         <KvRow label={t("Ближайший платёж")} value={formatDate(state.nextDueDate)} />
@@ -1247,13 +1270,13 @@ function RecentOrdersBox({ orders }: { orders: ClientOrderSummary[] }) {
           </div>
           <Link
             href="/catalog"
-            className="rounded border border-dark bg-dark px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-dark/80"
+            className="rounded-full bg-espresso px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-espresso/90"
           >{t("В лист")}</Link>
         </div>
       ))}
       <Link
         href="/catalog"
-        className="mt-3 block w-full rounded border border-dashed border-black/20 py-2 text-center text-xs font-semibold text-muted transition hover:border-coral hover:text-coral"
+        className="mt-3 block w-full rounded-full border border-dashed border-black/20 py-2 text-center text-xs font-semibold text-muted transition hover:border-coral hover:text-coral"
       >{t("+ Открыть каталог")}</Link>
     </SidebarBox>
   );
@@ -1336,11 +1359,11 @@ function VerifyPhoneBanner({ phone, onVerified }: { phone: string; onVerified: (
   }
 
   return (
-    <div className="mt-5 rounded-card border border-amber-200 bg-amber-50 p-4">
+    <div className="mt-5 rounded-xl border border-coral/20 bg-accent-50 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-bold text-amber-800">{t("Подтвердите номер WhatsApp")}</p>
-          <p className="mt-0.5 text-xs font-semibold text-amber-700/80">
+          <p className="text-sm font-bold text-burgundy">{t("Подтвердите номер WhatsApp")}</p>
+          <p className="mt-0.5 text-xs font-semibold text-accent-700/80">
             {t("Подтвердите ")}<b>{phone}</b>{t(" — на него приходят счёт и документы. Пришлём код в WhatsApp.")}
           </p>
         </div>
@@ -1349,7 +1372,7 @@ function VerifyPhoneBanner({ phone, onVerified }: { phone: string; onVerified: (
             type="button"
             disabled={busy}
             onClick={() => void requestCode()}
-            className="shrink-0 rounded border border-amber-400 bg-white px-4 py-2 text-xs font-bold text-amber-800 transition hover:bg-amber-100 disabled:opacity-50"
+            className="shrink-0 rounded-full border border-coral bg-white px-4 py-2 text-xs font-bold text-coral transition hover:bg-coral-light disabled:opacity-50"
           >
             {busy ? t("Отправляем...") : t("Подтвердить номер")}
           </button>
@@ -1357,7 +1380,7 @@ function VerifyPhoneBanner({ phone, onVerified }: { phone: string; onVerified: (
       </div>
 
       {open ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-amber-200 pt-3">
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-coral/15 pt-3">
           <Input
             className="w-32 text-center font-data text-lg tracking-[.3em]"
             inputMode="numeric"
@@ -1378,7 +1401,7 @@ function VerifyPhoneBanner({ phone, onVerified }: { phone: string; onVerified: (
             type="button"
             disabled={busy || code.length !== 6}
             onClick={() => void confirmCode()}
-            className="rounded border border-amber-500 bg-amber-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-600 disabled:opacity-50"
+            className="rounded-full bg-coral px-4 py-2 text-xs font-bold text-white transition hover:bg-coral-hover disabled:opacity-50"
           >
             {t("Готово")}
           </button>
@@ -1386,7 +1409,7 @@ function VerifyPhoneBanner({ phone, onVerified }: { phone: string; onVerified: (
             type="button"
             disabled={busy || seconds > 90}
             onClick={() => void requestCode()}
-            className="rounded px-3 py-2 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-40"
+            className="rounded-full px-3 py-2 text-xs font-semibold text-burgundy transition hover:bg-coral-light disabled:opacity-40"
           >
             {seconds > 0 ? t("Ещё раз (${time})", { time: formatMmss(seconds) }) : t("Отправить снова")}
           </button>
@@ -1491,82 +1514,64 @@ function ClientDashboard({
     window.setTimeout(() => setSaved(false), 1800);
   }
 
+  const initials = (session.companyName || session.email || "?")
+    .trim()
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <section className="mx-auto max-w-6xl">
-      {/* Page header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
-            {session.companyName || "Кабинет партнёра"}
-          </h1>
-          <p className="mt-1 text-sm text-muted">{session.email}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/catalog" className="rounded border border-dark bg-dark px-4 py-2 text-sm font-semibold text-white hover:bg-dark/80">{t("В каталог")}</Link>
-          <Link href="/cart" className="rounded border border-black/20 px-4 py-2 text-sm font-semibold text-dark hover:bg-black/5">{t("Корзина")}</Link>
-          <button type="button" onClick={onLogout} className="rounded border border-black/20 px-4 py-2 text-sm font-semibold text-muted hover:bg-black/5">{t("Выйти")}</button>
-        </div>
-      </div>
+      {/* Cabinet grid: [340px, 1fr] */}
+      <div className="grid gap-5 lg:grid-cols-[340px_1fr] lg:items-start">
+        {/* Left sidebar column */}
+        <aside className="space-y-4">
+          {/* Client hero card — espresso gradient */}
+          <div
+            className="rounded-2xl p-6 text-white shadow-md"
+            style={{ background: "linear-gradient(150deg, var(--color-espresso), color-mix(in srgb, var(--color-espresso) 78%, black))" }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-white/10 font-display text-lg font-semibold">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate font-display text-lg font-semibold leading-tight">
+                  {session.companyName || "Кабинет партнёра"}
+                </p>
+                <p className="mt-0.5 truncate text-xs font-semibold text-white/60">{session.email}</p>
+              </div>
+            </div>
 
-      {/* Плашка: подтвердите второй способ (номер WhatsApp) */}
-      {!session.phoneVerified && session.phone ? (
-        <VerifyPhoneBanner
-          phone={session.phone}
-          onVerified={() => onUpdate({ ...session, phoneVerified: true })}
-        />
-      ) : null}
+            {creditState ? (
+              <div className="mt-5 grid grid-cols-2 gap-2.5">
+                <div className="rounded-md bg-white/10 p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-white/60">{t("Доступно")}</p>
+                  <p className="mt-1 font-data text-base font-semibold leading-none">{formatCurrency(creditState.available)}</p>
+                </div>
+                <div className="rounded-md bg-white/10 p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-white/60">{t("Лимит")}</p>
+                  <p className="mt-1 font-data text-base font-semibold leading-none">{formatCurrency(creditState.limit)}</p>
+                </div>
+              </div>
+            ) : null}
 
-      {/* Credit block */}
-      {creditState ? (
-        <div className="mt-5">
-          <CreditBlock state={creditState} />
-        </div>
-      ) : null}
-
-      {/* 2-column main layout */}
-      <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_300px] lg:items-start">
-        {/* Orders column */}
-        <div className="space-y-3">
-          <div className="flex items-baseline justify-between border-b border-black/10 pb-2">
-            <h2 className="font-display text-sm font-semibold uppercase tracking-[.05em]">{t("Заказы")}</h2>
-            <button
-              type="button"
-              onClick={() => setOrdersTab(ordersTab === "active" ? "all" : "active")}
-              className="text-xs font-semibold text-coral hover:underline"
-            >
-              {ordersTab === "active" ? "Все заказы →" : "← Активные"}
-            </button>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Link href="/catalog" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-espresso transition hover:bg-white/90">{t("В каталог")}</Link>
+              <Link href="/cart" className="rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">{t("Корзина")}</Link>
+              <button type="button" onClick={onLogout} className="rounded-full px-4 py-2 text-sm font-semibold text-white/70 transition hover:bg-white/10">{t("Выйти")}</button>
+            </div>
           </div>
 
-          {isLoadingOrders ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 animate-pulse rounded border border-black/10 bg-white" />
-              ))}
-            </div>
-          ) : ordersError ? (
-            <div className="rounded border border-coral/30 bg-coral-light p-5">
-              <p className="text-sm font-semibold text-burgundy">{ordersError}</p>
-            </div>
-          ) : visibleOrders.length > 0 ? (
-            <div className="space-y-2">
-              {visibleOrders.map((order) => (
-                <ClientOrderCard key={order.id} order={order} />
-              ))}
-            </div>
-          ) : (
-            <div className="rounded border border-dashed border-black/20 p-6 text-center">
-              <p className="font-display text-lg font-semibold">{t("Заказов пока нет")}</p>
-              <p className="mt-2 text-sm text-muted">{t("История подтягивается по email и телефону. Если заказ оформлялся на другой контакт — обратитесь к менеджеру.")}</p>
-              <Link href="/catalog" className="mt-4 inline-block rounded border border-dark bg-dark px-4 py-2 text-sm font-semibold text-white hover:bg-dark/80">{t("Открыть каталог")}</Link>
-            </div>
-          )}
-        </div>
+          {/* Плашка: подтвердите второй способ (номер WhatsApp) */}
+          {!session.phoneVerified && session.phone ? (
+            <VerifyPhoneBanner
+              phone={session.phone}
+              onVerified={() => onUpdate({ ...session, phoneVerified: true })}
+            />
+          ) : null}
 
-        {/* Sidebar */}
-        <aside className="space-y-3">
-          <RecentOrdersBox orders={orders} />
           {creditState ? <ConditionsBox state={creditState} /> : null}
+          <RecentOrdersBox orders={orders} />
           <DeliveryBox orders={orders} />
 
           {/* Profile settings */}
@@ -1582,13 +1587,13 @@ function ClientDashboard({
               </div>
               <div>
                 <p className="mb-1 text-xs font-semibold text-muted">Email</p>
-                <p className="rounded border border-black/10 bg-cream px-3 py-2 text-xs font-medium text-muted">
+                <p className="rounded-md border border-black/10 bg-cream px-3 py-2 text-xs font-medium text-muted">
                   {session.email}
                 </p>
               </div>
               <div>
                 <p className="mb-1 text-xs font-semibold text-muted">WhatsApp</p>
-                <p className="rounded border border-black/10 bg-cream px-3 py-2 text-xs font-medium text-muted">
+                <p className="rounded-md border border-black/10 bg-cream px-3 py-2 text-xs font-medium text-muted">
                   {session.phone || "Не указан"}
                 </p>
               </div>
@@ -1605,16 +1610,62 @@ function ClientDashboard({
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="rounded border border-dark bg-dark px-4 py-2 text-xs font-semibold text-white hover:bg-dark/80"
+                  className="rounded-full bg-espresso px-4 py-2 text-xs font-semibold text-white transition hover:bg-espresso/90"
                 >{t("Сохранить")}</button>
                 {saved ? <span className="text-xs font-semibold text-coral">{t("Сохранено")}</span> : null}
               </div>
             </div>
           </SidebarBox>
         </aside>
-      </div>
 
-      <PopularProductsSection products={popularProducts} />
+        {/* Right main column */}
+        <div className="space-y-5">
+          {/* Credit block */}
+          {creditState ? (
+            <CreditBlock state={creditState} />
+          ) : null}
+
+          {/* Orders */}
+          <div className="space-y-3">
+            <div className="flex items-baseline justify-between border-b border-black/10 pb-2">
+              <h2 className="font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">{t("Заказы")}</h2>
+              <button
+                type="button"
+                onClick={() => setOrdersTab(ordersTab === "active" ? "all" : "active")}
+                className="text-xs font-semibold text-coral hover:underline"
+              >
+                {ordersTab === "active" ? "Все заказы →" : "← Активные"}
+              </button>
+            </div>
+
+            {isLoadingOrders ? (
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-20 animate-pulse rounded-xl bg-white shadow-xs" />
+                ))}
+              </div>
+            ) : ordersError ? (
+              <div className="rounded-xl bg-accent-50 p-5 shadow-xs">
+                <p className="text-sm font-semibold text-burgundy">{ordersError}</p>
+              </div>
+            ) : visibleOrders.length > 0 ? (
+              <div className="space-y-2">
+                {visibleOrders.map((order) => (
+                  <ClientOrderCard key={order.id} order={order} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-black/20 bg-white p-8 text-center shadow-xs">
+                <p className="font-display text-lg font-semibold text-dark">{t("Заказов пока нет")}</p>
+                <p className="mx-auto mt-2 max-w-md text-sm text-muted">{t("История подтягивается по email и телефону. Если заказ оформлялся на другой контакт — обратитесь к менеджеру.")}</p>
+                <Link href="/catalog" className="mt-4 inline-block rounded-full bg-espresso px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-espresso/90">{t("Открыть каталог")}</Link>
+              </div>
+            )}
+          </div>
+
+          <PopularProductsSection products={popularProducts} />
+        </div>
+      </div>
     </section>
   );
 }
@@ -1689,7 +1740,7 @@ export function ProfileClient({ popularProducts = [] }: { popularProducts?: Prod
     <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
       {isLoading ? (
         <section className="mx-auto max-w-6xl">
-          <div className="h-72 animate-pulse rounded-card bg-white shadow-sm" />
+          <div className="h-72 animate-pulse rounded-2xl bg-white shadow-md" />
         </section>
       ) : session?.role === "admin" ? (
         <AdminDashboard session={session} onLogout={() => void handleLogout()} />

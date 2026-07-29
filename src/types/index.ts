@@ -139,6 +139,8 @@ export type Order = {
   client_response_at?: string | null;
   status: OrderStatus;
   total_amount: number;
+  /** Тариф доставки, хранится отдельно от суммы позиций (total_amount). */
+  delivery_amount?: number;
   payment_status?: PaymentStatus | null;
   payment_provider?: PaymentProvider | null;
   payment_url?: string | null;

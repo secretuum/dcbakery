@@ -6,6 +6,7 @@ import {
   getCompanyDetails,
   hasCompleteCompanyDetails,
 } from "@/src/lib/company-details";
+import { orderTotalWithDelivery } from "@/app/constants";
 import { formatPrice } from "@/src/lib/format";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 
@@ -128,12 +129,22 @@ export default async function AvrPage({ params }: AvrPageProps) {
                   </td>
                 </tr>
               ))}
+              {(order.delivery_amount ?? 0) > 0 ? (
+                <tr>
+                  <td className="border border-black/15 px-3 py-3">{items.length + 1}</td>
+                  <td className="border border-black/15 px-3 py-3 font-bold">Доставка</td>
+                  <td className="border border-black/15 px-3 py-3">1 усл.</td>
+                  <td className="border border-black/15 px-3 py-3 font-bold">
+                    {formatPrice(order.delivery_amount ?? 0)}
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
 
         <p className="mt-6 text-right text-2xl font-bold">
-          Всего: {formatPrice(order.total_amount)}
+          Всего: {formatPrice(orderTotalWithDelivery(order))}
         </p>
         <p className="mt-2 text-right text-sm font-bold">{company.taxNote}</p>
 

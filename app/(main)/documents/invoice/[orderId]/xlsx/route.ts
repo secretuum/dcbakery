@@ -64,19 +64,26 @@ export async function GET(
     bakery: company.bankIban,
     pf: company.bankIbanPf,
   };
-  const invoices: InvoiceSection[] = (
+  const sections =
     company.bankIbanPf && groups.pf.length > 0
       ? groups.bakery.length > 0
         ? (["bakery", "pf"] as const).map((key) => ({ key, items: groups[key] }))
         : [{ key: "pf" as const, items }]
-      : [{ key: "bakery" as const, items }]
-  ).map((invoice, index, list) => ({
-    label: list.length > 1 ? accountGroupLabels[invoice.key] : null,
-    number: list.length > 1 ? `${order.order_number}-${index + 1}` : order.order_number,
-    iban: ibanByGroup[invoice.key],
-    items: invoice.items,
-    totalAmount: sumItems(invoice.items),
-  }));
+      : [{ key: "bakery" as const, items }];
+  // Доставку вешаем целиком на счёт «Пекарня»; если его нет (только ПФ) — на единственный счёт.
+  const deliveryAmount = order.delivery_amount ?? 0;
+  const deliveryKey = sections.some((s) => s.key === "bakery") ? "bakery" : sections[0].key;
+  const invoices: InvoiceSection[] = sections.map((invoice, index, list) => {
+    const delivery = invoice.key === deliveryKey ? deliveryAmount : 0;
+    return {
+      label: list.length > 1 ? accountGroupLabels[invoice.key] : null,
+      number: list.length > 1 ? `${order.order_number}-${index + 1}` : order.order_number,
+      iban: ibanByGroup[invoice.key],
+      items: invoice.items,
+      deliveryAmount: delivery,
+      totalAmount: sumItems(invoice.items) + delivery,
+    };
+  });
 
   const issuedAt = order.confirmed_at ?? order.created_at;
   const validUntil = new Date(issuedAt);

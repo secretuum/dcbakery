@@ -1,6 +1,7 @@
 import "server-only";
 import type { Order, OrderItem } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
+import { orderTotalWithDelivery } from "@/app/constants";
 import { normalizeKzPhone } from "@/src/lib/phone";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
 import { formatResponsibleBlock } from "@/src/lib/responsibles";
@@ -96,7 +97,8 @@ export function formatWhatsAppNotification(order: Order, items: OrderItem[]) {
     "--------------------",
     formatResponsibleBlock(items),
     "--------------------",
-    `Итого: *${formatPrice(order.total_amount)}*`,
+    `Доставка: ${order.delivery_amount && order.delivery_amount > 0 ? formatPrice(order.delivery_amount) : "бесплатно"}`,
+    `Итого: *${formatPrice(orderTotalWithDelivery(order))}*`,
     `Оплата: ${optional(order.payment_method)}`,
     order.comment ? `Комментарий: ${order.comment}` : null,
     "",
@@ -116,7 +118,7 @@ export function formatResponsibleDirectNotification(order: Order, items: OrderIt
     "",
     `Компания: ${order.company_name}`,
     `Контакт: ${order.customer_name} / ${order.customer_phone}`,
-    `Итого: *${formatPrice(order.total_amount)}*`,
+    `Итого: *${formatPrice(orderTotalWithDelivery(order))}*`,
     "--------------------",
     itemLines,
     "--------------------",
@@ -136,7 +138,7 @@ export function formatWhatsAppOrderStatusNotification(order: Order) {
     "",
     `Компания: ${order.company_name}`,
     `Контакт: ${order.customer_name} / ${order.customer_phone}`,
-    `Итого: *${formatPrice(order.total_amount)}*`,
+    `Итого: *${formatPrice(orderTotalWithDelivery(order))}*`,
     "",
     getManagerCommandBlock(order),
   ].join("\n");
@@ -336,7 +338,7 @@ export function formatPaymentLinkNotification(order: Order, paymentUrl: string) 
     "",
     `Ваш заказ №${order.order_number} подтвержден.`,
     "",
-    `Сумма к оплате: ${formatPrice(order.total_amount)}`,
+    `Сумма к оплате: ${formatPrice(orderTotalWithDelivery(order))}`,
     "",
     "Счёт на оплату и документы — по ссылке:",
     paymentUrl,
@@ -380,7 +382,7 @@ export function formatCustomerDetailsRequestNotification(order: Order, paymentUr
     "DC Bakery",
     "",
     `Ваша заявка ${order.order_number} подтверждена менеджером.`,
-    `Сумма к оплате: ${formatPrice(order.total_amount)}`,
+    `Сумма к оплате: ${formatPrice(orderTotalWithDelivery(order))}`,
     "",
     "Чтобы закрепить реквизиты и подготовить доставку, ответьте одним сообщением по шаблону:",
     "",
@@ -423,7 +425,7 @@ export function formatCustomerPaymentStatusNotification(
       "DC Bakery",
       "",
       `Оплата по заказу ${order.order_number} успешно получена.`,
-      `Сумма: ${formatPrice(order.total_amount)}`,
+      `Сумма: ${formatPrice(orderTotalWithDelivery(order))}`,
       "",
       "Заказ передан в работу. Актуальный статус доступен на странице заказа:",
       order.payment_url,
@@ -514,8 +516,9 @@ export function formatCustomerRevisionProposalNotification(
     note ? `Комментарий: ${note}` : null,
     "",
     ...items.map(formatOrderLine),
+    `Доставка: ${order.delivery_amount && order.delivery_amount > 0 ? formatPrice(order.delivery_amount) : "бесплатно"}`,
     "",
-    `Итого: ${formatPrice(order.total_amount)}`,
+    `Итого: ${formatPrice(orderTotalWithDelivery(order))}`,
     "",
     "Ответьте:",
     "принять — согласиться с измененной заявкой",

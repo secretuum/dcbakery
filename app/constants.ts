@@ -15,6 +15,18 @@ export function deliveryFee(subtotal: number): number {
   return 3000;
 }
 
+/**
+ * Итоговая сумма заказа с учётом доставки.
+ * `total_amount` хранит сумму позиций, `delivery_amount` — тариф доставки отдельно.
+ * Использовать везде, где показывается/списывается «сумма к оплате» по заказу.
+ */
+export function orderTotalWithDelivery(order: {
+  total_amount: number;
+  delivery_amount?: number | null;
+}): number {
+  return Number(order.total_amount) + Number(order.delivery_amount ?? 0);
+}
+
 export const B2B_PAYMENT_METHODS = ["Выставить счет", "Безналичный расчет"] as const;
 
 export const WHATSAPP_SUPPORT_NUMBER =

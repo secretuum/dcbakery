@@ -62,19 +62,28 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
     bakery: company.bankIban,
     pf: company.bankIbanPf,
   };
-  const invoices = (
+  const invoiceDelivery = order.delivery_amount ?? 0;
+  const invoiceSections =
     company.bankIbanPf && groups.pf.length > 0
       ? groups.bakery.length > 0
         ? (["bakery", "pf"] as const).map((key) => ({ key, items: groups[key] }))
         : [{ key: "pf" as const, items }]
-      : [{ key: "bakery" as const, items }]
-  ).map((invoice, index, list) => ({
-    ...invoice,
-    label: accountGroupLabels[invoice.key],
-    iban: ibanByGroup[invoice.key],
-    number: list.length > 1 ? `${order.order_number}-${index + 1}` : order.order_number,
-    totalAmount: sumItems(invoice.items),
-  }));
+      : [{ key: "bakery" as const, items }];
+  // Доставку показываем целиком на счёте «Пекарня»; если его нет (только ПФ) — на единственном счёте.
+  const invoiceDeliveryKey = invoiceSections.some((s) => s.key === "bakery")
+    ? "bakery"
+    : invoiceSections[0].key;
+  const invoices = invoiceSections.map((invoice, index, list) => {
+    const delivery = invoice.key === invoiceDeliveryKey ? invoiceDelivery : 0;
+    return {
+      ...invoice,
+      label: accountGroupLabels[invoice.key],
+      iban: ibanByGroup[invoice.key],
+      number: list.length > 1 ? `${order.order_number}-${index + 1}` : order.order_number,
+      deliveryAmount: delivery,
+      totalAmount: sumItems(invoice.items) + delivery,
+    };
+  });
   const canIssueInvoice =
     hasCompleteCompanyDetails(company) &&
     !["pending_manager_confirmation", "new", "change_proposed", "canceled", "cancelled"].includes(
@@ -234,6 +243,22 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                         </td>
                       </tr>
                     ))}
+                    {invoice.deliveryAmount > 0 ? (
+                      <tr>
+                        <td className="border border-black/40 px-2 py-2 text-center">
+                          {invoice.items.length + 1}
+                        </td>
+                        <td className="border border-black/40 px-2 py-2 font-semibold">Доставка</td>
+                        <td className="border border-black/40 px-2 py-2 text-center">усл.</td>
+                        <td className="border border-black/40 px-2 py-2 text-center">1</td>
+                        <td className="border border-black/40 px-2 py-2 text-right">
+                          {formatPrice(invoice.deliveryAmount)}
+                        </td>
+                        <td className="border border-black/40 px-2 py-2 text-right font-semibold">
+                          {formatPrice(invoice.deliveryAmount)}
+                        </td>
+                      </tr>
+                    ) : null}
                     <tr className="bg-cream font-bold">
                       <td className="border border-black/40 px-2 py-2 text-right" colSpan={5}>
                         Итого к оплате

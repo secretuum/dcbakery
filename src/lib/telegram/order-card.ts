@@ -58,7 +58,8 @@ export function buildOrderCard(order: Order, items: OrderItem[]) {
     "————————",
     lines,
     "————————",
-    `Итого: ${formatPrice(order.total_amount)}`,
+    `Доставка: ${(order.delivery_amount ?? 0) > 0 ? formatPrice(order.delivery_amount ?? 0) : "бесплатно"}`,
+    `Итого: ${formatPrice(order.total_amount + (order.delivery_amount ?? 0))}`,
     order.comment ? `Комментарий: ${order.comment}` : null,
   ]
     .filter(Boolean)

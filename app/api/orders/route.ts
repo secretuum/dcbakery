@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT } from "@/app/constants";
+import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT, deliveryFee } from "@/app/constants";
 import { fetchProducts } from "@/src/lib/catalog";
 import {
   fetchClientByEmail,
@@ -280,7 +280,7 @@ export async function POST(request: Request) {
       : null;
 
   if (client) {
-    const creditCheck = await canPlaceOrder(client, totalAmount);
+    const creditCheck = await canPlaceOrder(client, totalAmount + deliveryFee(totalAmount));
     if (!creditCheck.allowed) {
       return NextResponse.json(
         { errors: [creditCheck.reason ?? "Заказ не может быть принят"] },
@@ -320,6 +320,7 @@ export async function POST(request: Request) {
     client_id: client?.id ?? null,
     status: "pending_manager_confirmation",
     total_amount: totalAmount,
+    delivery_amount: deliveryFee(totalAmount),
     payment_status: "unpaid",
     oferta_accepted_at: new Date().toISOString(),
     oferta_version: OFERTA_VERSION,

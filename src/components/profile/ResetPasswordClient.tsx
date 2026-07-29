@@ -86,10 +86,10 @@ export function ResetPasswordClient() {
   return (
     <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
       <section className="mx-auto max-w-md">
-        <p className="text-sm font-bold uppercase text-raspberry">{t("Профиль")}</p>
+        <p className="text-[11px] font-bold uppercase tracking-[.12em] text-coral">{t("Профиль")}</p>
         <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{t("Новый пароль")}</h1>
 
-        <div className="mt-8 rounded-card bg-white p-6 shadow-sm">
+        <div className="mt-8 rounded-2xl bg-white p-6 shadow-md sm:p-8">
           {step === "checking" ? (
             <p className="text-sm font-semibold text-muted">{t("Проверяем ссылку...")}</p>
           ) : step === "invalid" ? (
@@ -102,9 +102,9 @@ export function ResetPasswordClient() {
             </>
           ) : step === "done" ? (
             <>
-              <div className="rounded-xl bg-green-50 p-4">
-                <p className="text-sm font-bold text-green-700">{t("Пароль обновлён")}</p>
-                <p className="mt-1 text-sm font-semibold text-green-600/80">{t("Теперь войдите с новым паролем.")}</p>
+              <div className="rounded-xl bg-success-bg p-4">
+                <p className="text-sm font-bold text-success">{t("Пароль обновлён")}</p>
+                <p className="mt-1 text-sm font-semibold text-success/80">{t("Теперь войдите с новым паролем.")}</p>
               </div>
               <Link
                 href="/profile"

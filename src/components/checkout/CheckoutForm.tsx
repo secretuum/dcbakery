@@ -30,7 +30,7 @@ type CheckoutFormState = {
 type CheckoutFormErrors = Partial<Record<keyof CheckoutFormState, string>>;
 
 const fieldClassName =
-  "min-h-[52px] w-full rounded-md border-[1.5px] border-black/10 bg-white px-4 py-3 text-[15px] font-medium text-dark outline-none transition placeholder:text-muted-light hover:border-black/20 focus:border-coral focus:ring-4 focus:ring-coral/15";
+  "min-h-[52px] w-full rounded-md border-[1.5px] border-black/10 bg-white px-4 py-3.5 text-[15px] text-dark outline-none transition placeholder:text-muted-light hover:border-black/[.16] focus:border-coral focus:ring-4 focus:ring-coral/15";
 
 const DELIVERY_WINDOW_DAYS = 14;
 // Дефолты дублируют defaultSiteContent — используются, пока настройки не загрузились
@@ -338,10 +338,10 @@ export function CheckoutForm({
   if (!isReady || items.length === 0) {
     return (
       <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
-        <section className="mx-auto max-w-2xl rounded-card border border-black/10 bg-white p-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Оформление")}</p>
-          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">{t("Проверяем корзину")}</h1>
-          <p className="mt-4 text-sm leading-6 text-muted">{t("Если корзина пуста, вернем вас в каталог.")}</p>
+        <section className="mx-auto max-w-2xl rounded-2xl bg-white p-8 text-center shadow-md">
+          <p className="text-[11px] font-bold uppercase tracking-[.12em] text-coral">{t("Оформление")}</p>
+          <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{t("Проверяем корзину")}</h1>
+          <p className="mt-4 text-[15px] leading-7 text-muted">{t("Если корзина пуста, вернем вас в каталог.")}</p>
         </section>
       </main>
     );
@@ -350,15 +350,15 @@ export function CheckoutForm({
   if (!canCheckout) {
     return (
       <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
-        <section className="mx-auto max-w-2xl rounded-card border border-black/10 bg-white p-8 text-center">
-          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Минимальный заказ")}</p>
-          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">{t("Нужно добрать корзину")}</h1>
-          <p className="mt-4 text-sm leading-6 text-muted">
+        <section className="mx-auto max-w-2xl rounded-2xl bg-white p-8 text-center shadow-md">
+          <p className="text-[11px] font-bold uppercase tracking-[.12em] text-coral">{t("Минимальный заказ")}</p>
+          <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{t("Нужно добрать корзину")}</h1>
+          <p className="mt-4 text-[15px] leading-7 text-muted">
             Для B2B-заявки минимальная сумма составляет {formatPrice(MIN_ORDER_AMOUNT)}.
           </p>
           <Link
             href="/cart"
-            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-btn border border-coral bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
+            className="mt-6 inline-flex min-h-12 items-center justify-center rounded-btn bg-coral px-6 py-3 text-[15px] font-semibold text-white transition hover:bg-coral-hover"
           >{t("Вернуться в корзину")}</Link>
         </section>
       </main>
@@ -367,180 +367,194 @@ export function CheckoutForm({
 
   return (
     <main className="min-h-screen bg-cream px-5 pb-24 pt-10 text-dark lg:px-8 lg:pb-14 lg:pt-14">
-      <section className="mx-auto max-w-7xl">
+      <section className="mx-auto max-w-[1240px]">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Оформление заявки")}</p>
-          <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">{t("Контакты и доставка")}</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-muted">{t("Заполните контакты и удобное время доставки — менеджер подтвердит заявку и пришлёт счёт в WhatsApp.")}</p>
+          <p className="text-[11px] font-bold uppercase tracking-[.12em] text-coral">{t("Оформление заявки")}</p>
+          <h1 className="mt-2 font-display text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl lg:text-[clamp(30px,4vw,44px)]">{t("Контакты и доставка")}</h1>
+          <p className="mt-4 max-w-2xl text-[15px] leading-7 text-muted">{t("Заполните контакты и удобное время доставки — менеджер подтвердит заявку и пришлёт счёт в WhatsApp.")}</p>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_388px] lg:items-start">
           <form
             onSubmit={handleSubmit}
-            className="min-w-0 rounded-card border border-black/10 bg-white p-5 sm:p-6"
+            className="min-w-0 rounded-2xl bg-white p-5 shadow-md sm:p-8"
           >
-            <p className="font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">{t("Контакты")}</p>
-            <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">{t("Название компании / заведения")}</span>
-                <Input
-                  className="mt-2"
-                  value={form.company_name}
-                  onChange={(event) => updateField("company_name", event.currentTarget.value)}
-                  placeholder={t("Например, Coffee Point")}
-                />
-                <FieldError>{errors.company_name}</FieldError>
-              </label>
+            {/* Контакты */}
+            <div className="pb-6">
+              <p className="mb-4 text-[11px] font-bold uppercase tracking-[.12em] text-coral">{t("Контакты")}</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">
+                    {t("Название компании / заведения")} <span className="text-coral">*</span>
+                  </span>
+                  <Input
+                    value={form.company_name}
+                    onChange={(event) => updateField("company_name", event.currentTarget.value)}
+                    placeholder={t("Например, Coffee Point")}
+                  />
+                  <FieldError>{errors.company_name}</FieldError>
+                </label>
 
-              <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">{t("БИН / ИП")}</span>
-                <Input
-                  className="mt-2"
-                  value={form.customer_bin}
-                  onChange={(event) => updateField("customer_bin", event.currentTarget.value)}
-                  placeholder={t("Например, 123456789012")}
-                />
-              </label>
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">{t("БИН / ИП")}</span>
+                  <Input
+                    value={form.customer_bin}
+                    onChange={(event) => updateField("customer_bin", event.currentTarget.value)}
+                    placeholder={t("Например, 123456789012")}
+                  />
+                </label>
 
-              <label className="block">
-                <span className="text-sm font-semibold text-dark">{t("Контактное лицо")}</span>
-                <Input
-                  className="mt-2"
-                  value={form.customer_name}
-                  onChange={(event) => updateField("customer_name", event.currentTarget.value)}
-                  placeholder={t("Имя менеджера")}
-                />
-                <FieldError>{errors.customer_name}</FieldError>
-              </label>
+                <label className="block">
+                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">
+                    {t("Контактное лицо")} <span className="text-coral">*</span>
+                  </span>
+                  <Input
+                    value={form.customer_name}
+                    onChange={(event) => updateField("customer_name", event.currentTarget.value)}
+                    placeholder={t("Имя менеджера")}
+                  />
+                  <FieldError>{errors.customer_name}</FieldError>
+                </label>
 
-              <label className="block">
-                <span className="text-sm font-semibold text-dark">{t("Телефон")}</span>
-                <Input
-                  className="mt-2"
-                  inputMode="tel"
-                  value={form.customer_phone}
-                  onChange={(event) =>
-                    updateField("customer_phone", formatPhone(event.currentTarget.value))
-                  }
-                  placeholder="+7 (___) ___-__-__"
-                />
-                <FieldError>{errors.customer_phone}</FieldError>
-              </label>
+                <label className="block">
+                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">
+                    {t("Телефон")} <span className="text-coral">*</span>
+                  </span>
+                  <Input
+                    inputMode="tel"
+                    value={form.customer_phone}
+                    onChange={(event) =>
+                      updateField("customer_phone", formatPhone(event.currentTarget.value))
+                    }
+                    placeholder="+7 (___) ___-__-__"
+                  />
+                  <FieldError>{errors.customer_phone}</FieldError>
+                </label>
 
-              <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">{t("Email для документов")}</span>
-                <Input
-                  className="mt-2"
-                  inputMode="email"
-                  type="email"
-                  value={form.customer_email}
-                  onChange={(event) => updateField("customer_email", event.currentTarget.value)}
-                  placeholder="accounting@example.com"
-                />
-              </label>
-
-            </div>
-
-            <p className="mt-6 border-t border-black/5 pt-6 font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">{t("Доставка")}</p>
-            <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">{t("Адрес доставки")}</span>
-                <Input
-                  className="mt-2"
-                  value={form.delivery_address}
-                  onChange={(event) => updateField("delivery_address", event.currentTarget.value)}
-                  placeholder={t("Город, улица, дом, точка")}
-                />
-              </label>
-
-              <div className="min-w-0 sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">{t("Дата доставки")}</span>
-                {deliveryOptions ? (
-                  <div className="no-scrollbar mt-2 flex max-w-full gap-2 overflow-x-auto pb-1">
-                    {deliveryOptions.map((option) => {
-                      const isSelected = selectedDeliveryDate === option.value;
-
-                      return (
-                        <button
-                          key={option.value}
-                          type="button"
-                          disabled={option.disabled}
-                          onClick={() => updateField("delivery_date", option.value)}
-                          aria-pressed={isSelected}
-                          title={option.reason}
-                          className={`flex min-w-16 shrink-0 flex-col items-center rounded-btn border px-3 py-2 transition ${
-                            isSelected
-                              ? "border-coral bg-coral text-white"
-                              : option.disabled
-                                ? "cursor-not-allowed border-black/5 bg-black/5 text-muted/50 line-through"
-                                : "border-black/10 bg-white text-dark hover:border-coral"
-                          }`}
-                        >
-                          <span className="text-[10px] font-semibold uppercase tracking-[.08em]">
-                            {option.weekdayLabel}
-                          </span>
-                          <span className="mt-0.5 whitespace-nowrap text-sm font-semibold">
-                            {option.dayLabel}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="mt-2 h-[3.75rem] rounded-btn border border-black/5 bg-black/5" />
-                )}
-                <p className="mt-2 text-xs font-semibold leading-5 text-muted">
-                  Доставка: {formatShortDeliveryDays(schedule.deliveryDays)}. Приём заявок до{" "}
-                  {schedule.cutoffHour}:00 накануне дня доставки.
-                </p>
-                <FieldError>{errors.delivery_date}</FieldError>
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">{t("Email для документов")}</span>
+                  <Input
+                    inputMode="email"
+                    type="email"
+                    value={form.customer_email}
+                    onChange={(event) => updateField("customer_email", event.currentTarget.value)}
+                    placeholder="accounting@example.com"
+                  />
+                </label>
               </div>
-
-              <label className="block">
-                <span className="text-sm font-semibold text-dark">{t("Время")}</span>
-                <select
-                  className={`${fieldClassName} mt-2`}
-                  value={form.delivery_time}
-                  onChange={(event) => updateField("delivery_time", event.currentTarget.value)}
-                >
-                  <option>{t("Утро 8-12")}</option>
-                  <option>{t("День 12-18")}</option>
-                  <option>{t("Договориться с менеджером")}</option>
-                </select>
-              </label>
-
             </div>
 
-            <p className="mt-6 border-t border-black/5 pt-6 font-display text-sm font-semibold uppercase tracking-[.05em] text-dark">{t("Оплата и документы")}</p>
-            <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
-              {/* Оплата всегда по счёту — выбор не показываем, значение уходит в заявку по умолчанию */}
-              <p className="rounded-btn border border-black/10 bg-cream px-4 py-3 text-sm font-semibold text-dark sm:col-span-2">
-                Оплата — по счёту на оплату.
-                <span className="mt-1 block text-xs font-semibold leading-5 text-muted">
-                  После подтверждения заявки менеджер выставит счёт с реквизитами.
-                </span>
-              </p>
+            {/* Доставка */}
+            <div className="border-t border-black/10 py-6">
+              <p className="mb-4 text-[11px] font-bold uppercase tracking-[.12em] text-coral">{t("Доставка")}</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">{t("Адрес доставки")}</span>
+                  <Input
+                    value={form.delivery_address}
+                    onChange={(event) => updateField("delivery_address", event.currentTarget.value)}
+                    placeholder={t("Город, улица, дом, точка")}
+                  />
+                </label>
 
-              <label className="block sm:col-span-2">
-                <span className="text-sm font-semibold text-dark">{t("Комментарий")}</span>
-                <textarea
-                  className={`${fieldClassName} mt-2 min-h-32 resize-y`}
-                  value={form.comment}
-                  onChange={(event) => updateField("comment", event.currentTarget.value)}
-                  placeholder={t("Особые условия, удобный контакт, детали доставки")}
-                />
-              </label>
+                <div className="min-w-0 sm:col-span-2">
+                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">
+                    {t("Дата доставки")} <span className="text-coral">*</span>
+                  </span>
+                  {deliveryOptions ? (
+                    <div className="no-scrollbar flex max-w-full gap-2 overflow-x-auto pb-1">
+                      {deliveryOptions.map((option) => {
+                        const isSelected = selectedDeliveryDate === option.value;
+
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            disabled={option.disabled}
+                            onClick={() => updateField("delivery_date", option.value)}
+                            aria-pressed={isSelected}
+                            title={option.reason}
+                            className={`flex min-w-[76px] shrink-0 flex-col items-center rounded-md border-[1.5px] px-2.5 py-2.5 text-center transition ${
+                              isSelected
+                                ? "border-coral bg-coral text-white"
+                                : option.disabled
+                                  ? "cursor-not-allowed border-transparent bg-black/5 text-muted-light line-through"
+                                  : "border-black/10 bg-white text-dark hover:border-coral"
+                            }`}
+                          >
+                            <span
+                              className={`text-[10px] font-medium uppercase tracking-wide ${
+                                isSelected ? "text-white/75" : "text-muted"
+                              }`}
+                            >
+                              {option.weekdayLabel}
+                            </span>
+                            <span className="mt-0.5 whitespace-nowrap text-[13.5px] font-bold">
+                              {option.dayLabel}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="h-[3.75rem] rounded-md border-[1.5px] border-black/10 bg-black/5" />
+                  )}
+                  <p className="mt-2 text-xs leading-5 text-muted">
+                    Доставка: {formatShortDeliveryDays(schedule.deliveryDays)}. Приём заявок до{" "}
+                    {schedule.cutoffHour}:00 накануне дня доставки.
+                  </p>
+                  <FieldError>{errors.delivery_date}</FieldError>
+                </div>
+
+                <label className="block">
+                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">{t("Время")}</span>
+                  <select
+                    className={fieldClassName}
+                    value={form.delivery_time}
+                    onChange={(event) => updateField("delivery_time", event.currentTarget.value)}
+                  >
+                    <option>{t("Утро 8-12")}</option>
+                    <option>{t("День 12-18")}</option>
+                    <option>{t("Договориться с менеджером")}</option>
+                  </select>
+                </label>
+              </div>
             </div>
 
-            <div className="mt-6 border-t border-black/5 pt-5">
-              <label className="flex cursor-pointer items-start gap-3 rounded-btn bg-cream px-4 py-3">
+            {/* Оплата и документы */}
+            <div className="border-t border-black/10 py-6">
+              <p className="mb-4 text-[11px] font-bold uppercase tracking-[.12em] text-coral">{t("Оплата и документы")}</p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {/* Оплата всегда по счёту — выбор не показываем, значение уходит в заявку по умолчанию */}
+                <p className="rounded-md bg-cream px-4 py-3.5 text-[15px] font-semibold text-dark sm:col-span-2">
+                  Оплата — по счёту на оплату.
+                  <span className="mt-1 block text-xs font-semibold leading-5 text-muted">
+                    После подтверждения заявки менеджер выставит счёт с реквизитами.
+                  </span>
+                </p>
+
+                <label className="block sm:col-span-2">
+                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">{t("Комментарий")}</span>
+                  <textarea
+                    className={`${fieldClassName} min-h-[120px] resize-y`}
+                    value={form.comment}
+                    onChange={(event) => updateField("comment", event.currentTarget.value)}
+                    placeholder={t("Особые условия, удобный контакт, детали доставки")}
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Оферта */}
+            <div className="border-t border-black/10 py-6">
+              <label className="flex cursor-pointer items-start gap-3 rounded-md bg-cream px-4 py-3.5">
                 <input
                   checked={form.oferta_accepted}
                   className="mt-0.5 size-4 shrink-0 accent-coral"
                   type="checkbox"
                   onChange={(event) => updateField("oferta_accepted", event.currentTarget.checked)}
                 />
-                <span className="text-sm font-semibold leading-6 text-dark">
+                <span className="text-[13.5px] font-semibold leading-6 text-dark">
                   Я ознакомлен(а) и принимаю условия{" "}
                   <a
                     href="/oferta"
@@ -562,40 +576,40 @@ export function CheckoutForm({
               <FieldError>{errors.oferta_accepted}</FieldError>
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <Link href="/cart" className="inline-flex min-h-11 items-center text-sm font-semibold text-muted transition hover:text-dark">{t("Вернуться в корзину")}</Link>
+            <div className="flex flex-col gap-3 border-t border-black/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <Link href="/cart" className="inline-flex min-h-11 items-center text-[13.5px] font-semibold text-muted transition hover:text-dark">{t("Вернуться в корзину")}</Link>
               <Button type="submit" disabled={isSubmitting} className="min-h-12 px-6">
                 {isSubmitting ? "Отправляем..." : "Отправить заявку"}
               </Button>
             </div>
           </form>
 
-          <aside className="rounded-card border border-black/10 bg-white p-5 lg:sticky lg:top-28">
-            <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Сводка")}</p>
-            <h2 className="mt-2 font-display text-lg font-semibold tracking-tight">{t("Ваш заказ")}</h2>
-            <div className="mt-6 space-y-3 text-sm font-semibold">
-              <div className="flex items-center justify-between gap-4">
+          <aside className="rounded-2xl bg-white p-6 shadow-md lg:sticky lg:top-28">
+            <p className="text-[11px] font-bold uppercase tracking-[.12em] text-coral">{t("Сводка")}</p>
+            <h2 className="mt-2 font-display text-[17px] font-extrabold tracking-tight">{t("Ваш заказ")}</h2>
+            <div className="mt-6 space-y-3">
+              <div className="flex gap-3 text-[13.5px]">
                 <span className="text-muted">{t("Товаров")}</span>
-                <span className="font-data">{totalItems}</span>
+                <span className="ml-auto font-semibold tabular-nums">{totalItems}</span>
               </div>
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex gap-3 text-[13.5px]">
                 <span className="text-muted">{t("Позиций")}</span>
-                <span className="font-data">{items.length}</span>
+                <span className="ml-auto font-semibold tabular-nums">{items.length}</span>
               </div>
-              <div className="flex items-center justify-between gap-4">
+              <div className="flex gap-3 text-[13.5px]">
                 <span className="text-muted">{t("Доставка")}</span>
-                <span className={deliveryFee(totalAmount) === 0 ? "font-data text-success" : "font-data"}>
+                <span className={`ml-auto font-semibold tabular-nums ${deliveryFee(totalAmount) === 0 ? "text-success" : ""}`}>
                   {deliveryFee(totalAmount) === 0 ? t("Бесплатно") : formatPrice(deliveryFee(totalAmount))}
                 </span>
               </div>
-              <div className="flex items-end justify-between gap-4 border-t border-black/10 pt-4">
-                <span className="text-muted">{t("Итого")}</span>
-                <span className="font-data text-xl font-bold text-coral">{formatPrice(totalAmount + deliveryFee(totalAmount))}</span>
+              <div className="flex items-end gap-3 border-t border-black/10 pt-3">
+                <span className="text-[13.5px] text-muted">{t("Итого")}</span>
+                <span className="ml-auto font-display text-2xl font-extrabold tabular-nums text-coral">{formatPrice(totalAmount + deliveryFee(totalAmount))}</span>
               </div>
             </div>
 
             {hasQuoteItems ? (
-              <p className="mt-5 rounded-btn bg-coral-light px-4 py-3 text-xs font-semibold leading-5 text-burgundy">{t("В заявке есть товары с ценой по запросу. Менеджер подтвердит их стоимость отдельно.")}</p>
+              <p className="mt-5 rounded-md bg-coral-light px-4 py-3 text-xs font-semibold leading-5 text-burgundy">{t("В заявке есть товары с ценой по запросу. Менеджер подтвердит их стоимость отдельно.")}</p>
             ) : null}
           </aside>
         </div>

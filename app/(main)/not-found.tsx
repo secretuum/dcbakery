@@ -5,15 +5,15 @@ export default async function NotFound() {
   const t = await getT();
   return (
     <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
-      <section className="mx-auto max-w-2xl rounded-card bg-white p-8 text-center shadow-[0_18px_60px_rgba(120,51,38,0.10)]">
-        <p className="text-sm font-bold uppercase text-raspberry">404</p>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight">{t("Страница не найдена")}</h1>
+      <section className="mx-auto max-w-2xl rounded-card border border-black/10 bg-white p-8 text-center shadow-lg sm:p-10">
+        <p className="text-[11px] font-bold uppercase tracking-[.15em] text-coral">404</p>
+        <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight">{t("Страница не найдена")}</h1>
         <p className="mt-4 text-sm font-semibold leading-6 text-muted">
           {t("Такой раздел или товар пока не добавлен в каталог DC Bakery.")}
         </p>
         <Link
           href="/catalog"
-          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-btn bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
+          className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
         >
           {t("Вернуться в каталог")}
         </Link>

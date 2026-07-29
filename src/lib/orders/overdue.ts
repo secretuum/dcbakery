@@ -11,7 +11,12 @@ import type { Order } from "@/src/types";
 
 export type OverdueRow = Pick<
   Order,
-  "id" | "order_number" | "total_amount" | "due_date" | "telegram_message_id"
+  | "id"
+  | "order_number"
+  | "total_amount"
+  | "delivery_amount"
+  | "due_date"
+  | "telegram_message_id"
 >;
 
 export async function markOverdueOrders(today: string): Promise<OverdueRow[]> {
@@ -23,7 +28,7 @@ export async function markOverdueOrders(today: string): Promise<OverdueRow[]> {
   const params = new URLSearchParams({
     status: "eq.confirmed_waiting_payment",
     due_date: `lt.${today}`,
-    select: "id,order_number,total_amount,due_date,telegram_message_id",
+    select: "id,order_number,total_amount,delivery_amount,due_date,telegram_message_id",
   });
 
   const response = await fetch(`${url}/rest/v1/orders?${params.toString()}`, {

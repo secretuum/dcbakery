@@ -21,10 +21,10 @@ export async function getCreditState(client: Client): Promise<CreditState> {
     (o) => CREDIT_STATUSES.has(o.status) && o.payment_status !== "paid",
   );
 
-  const used = unpaid.reduce((s, o) => s + Number(o.total_amount), 0);
+  const used = unpaid.reduce((s, o) => s + Number(o.total_amount) + Number(o.delivery_amount ?? 0), 0);
 
   const overdueOrders = unpaid.filter((o) => o.due_date != null && o.due_date < today);
-  const overdue = overdueOrders.reduce((s, o) => s + Number(o.total_amount), 0);
+  const overdue = overdueOrders.reduce((s, o) => s + Number(o.total_amount) + Number(o.delivery_amount ?? 0), 0);
   const overdueDays = overdueOrders.length
     ? Math.max(...overdueOrders.map((o) => daysBetween(o.due_date!, today)))
     : 0;
@@ -71,7 +71,7 @@ export async function canPlaceOrder(client: Client, orderSum: number): Promise<O
     return {
       allowed: true,
       requiresPrepay: true,
-      reason: "Сумма превышает доступный кредит",
+      reason: "Сумма превышает доступный лимит",
     };
   }
   return { allowed: true, requiresPrepay: false };

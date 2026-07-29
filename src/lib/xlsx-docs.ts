@@ -335,6 +335,9 @@ export type InvoiceSection = {
   number: string;
   iban: string;
   items: OrderItem[];
+  /** Доставка на этой части счёта (доставку вешаем целиком на один счёт). */
+  deliveryAmount?: number;
+  /** Итог к оплате = сумма позиций + deliveryAmount. */
   totalAmount: number;
 };
 
@@ -434,6 +437,16 @@ export async function buildInvoiceWorkbook(
       tableCell(ws, row, 6, money(item.total_amount), { align: "right", numFmt: NUM_FMT });
       row++;
     });
+
+    if (invoice.deliveryAmount && invoice.deliveryAmount > 0) {
+      tableCell(ws, row, 1, invoice.items.length + 1, { align: "center" });
+      tableCell(ws, row, 2, "Доставка");
+      tableCell(ws, row, 3, "усл.", { align: "center" });
+      tableCell(ws, row, 4, 1, { align: "center" });
+      tableCell(ws, row, 5, money(invoice.deliveryAmount), { align: "right", numFmt: NUM_FMT });
+      tableCell(ws, row, 6, money(invoice.deliveryAmount), { align: "right", numFmt: NUM_FMT });
+      row++;
+    }
 
     ws.mergeCells(`A${row}:E${row}`);
     tableCell(ws, row, 1, "Итого к оплате", { bold: true, align: "right" });
@@ -537,6 +550,18 @@ export async function buildAvrWorkbook(order: Order, items: OrderItem[], company
     tableCell(ws, row, 6, money(item.total_amount), { align: "right", numFmt: NUM_FMT });
     row++;
   });
+
+  const avrDelivery = order.delivery_amount ?? 0;
+  if (avrDelivery > 0) {
+    total += avrDelivery;
+    tableCell(ws, row, 1, items.length + 1, { align: "center" });
+    tableCell(ws, row, 2, "Доставка");
+    tableCell(ws, row, 3, "усл.", { align: "center" });
+    tableCell(ws, row, 4, 1, { align: "center" });
+    tableCell(ws, row, 5, money(avrDelivery), { align: "right", numFmt: NUM_FMT });
+    tableCell(ws, row, 6, money(avrDelivery), { align: "right", numFmt: NUM_FMT });
+    row++;
+  }
 
   ws.mergeCells(`A${row}:E${row}`);
   tableCell(ws, row, 1, "Итого", { bold: true, align: "right" });

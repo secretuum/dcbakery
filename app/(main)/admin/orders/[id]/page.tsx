@@ -12,6 +12,7 @@ import { PaymentStatusBadge } from "@/src/components/admin/PaymentStatusBadge";
 import { fetchProducts } from "@/src/lib/catalog";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
+import { orderTotalWithDelivery } from "@/app/constants";
 
 type AdminOrderPageProps = {
   params: Promise<{
@@ -83,7 +84,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
         </div>
         <div className="rounded-card border border-black/10 bg-white p-5">
           <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Сумма</p>
-          <p className="mt-2 font-data text-4xl font-semibold text-dark">{formatPrice(order.total_amount)}</p>
+          <p className="mt-2 font-data text-4xl font-semibold text-dark">{formatPrice(orderTotalWithDelivery(order))}</p>
         </div>
       </div>
 
@@ -149,6 +150,24 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
                 </tbody>
               </table>
             </div>
+            <dl className="space-y-2 border-t border-black/10 p-5 text-sm font-semibold sm:p-6">
+              <div className="flex items-center justify-between text-muted">
+                <dt>Товары</dt>
+                <dd className="font-data">{formatPrice(order.total_amount)}</dd>
+              </div>
+              <div className="flex items-center justify-between text-muted">
+                <dt>Доставка</dt>
+                <dd className="font-data">
+                  {order.delivery_amount && order.delivery_amount > 0
+                    ? formatPrice(order.delivery_amount)
+                    : "бесплатно"}
+                </dd>
+              </div>
+              <div className="flex items-center justify-between text-dark">
+                <dt>Итого</dt>
+                <dd className="font-data text-lg">{formatPrice(orderTotalWithDelivery(order))}</dd>
+              </div>
+            </dl>
           </section>
 
           <OrderRevisionForm

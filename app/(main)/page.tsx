@@ -6,6 +6,7 @@ import { getHomeLayout } from "@/src/lib/home-layout.server";
 import { getIsSuperAdmin } from "@/src/lib/superadmin";
 import { getT } from "@/src/i18n/server";
 import { promotions } from "@/src/data/promotions";
+import { RETAIL_SITE_URL } from "@/app/constants";
 import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
 import { PromoSection } from "@/src/components/home/PromoSection";
 import { EditableText, SiteEditProvider } from "@/src/components/home/SiteEditMode";
@@ -71,52 +72,100 @@ export default async function Home() {
         <JsonLd data={organizationJsonLd} />
 
         {/* ─── Hero ─── */}
-        <section className="bg-gradient-to-b from-cream-deep to-cream px-5 py-14 lg:px-8 lg:py-20">
-          <div className="mx-auto max-w-7xl">
-            <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-              <div>
-                <span className="inline-flex items-center rounded-full bg-white px-3.5 py-1.5 text-xs font-bold uppercase tracking-[.12em] text-coral shadow-sm">
-                  {t("B2B поставщик · Казахстан")}
+        <section
+          className="relative overflow-hidden"
+          style={{
+            background:
+              "radial-gradient(120% 90% at 78% 8%, rgba(240,144,144,0.30) 0%, transparent 58%), radial-gradient(90% 70% at 6% 96%, rgba(168,24,96,0.10) 0%, transparent 60%), linear-gradient(168deg, var(--dc-cream) 0%, var(--dc-cream-deep) 46%, var(--dc-cream-warm) 100%)",
+          }}
+        >
+          {/* грейн */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 opacity-50"
+            style={{
+              backgroundImage: "radial-gradient(circle at 1px 1px, rgba(86,34,13,0.09) 1px, transparent 0)",
+              backgroundSize: "22px 22px",
+            }}
+          />
+
+          <div className="relative mx-auto max-w-7xl px-5 pb-14 pt-10 lg:px-8 lg:pb-20 lg:pt-14">
+            <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:gap-10">
+              {/* Контент */}
+              <div className="relative z-[2] max-w-[640px]">
+                <span className="inline-flex h-[34px] items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3.5 text-xs font-semibold text-accent-700 backdrop-blur-md">
+                  <span className="size-[7px] rounded-full bg-coral" />
+                  {t("B2B-поставки · Алматы")}
                 </span>
-                <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
+                <h1 className="mt-5 font-display text-[clamp(38px,7.4vw,72px)] font-extrabold leading-[0.98] tracking-[-0.035em]" style={{ whiteSpace: "pre-line" }}>
                   <EditableText field="heroTitle" fallback={t(content.heroTitle)} multiline />
                 </h1>
-                <p className="mt-5 max-w-xl text-base leading-7 text-ink-soft lg:text-lg">
+                <p className="mt-5 max-w-[30em] text-[17px] leading-[1.6] text-ink-soft">
                   <EditableText field="heroSubtitle" fallback={t(content.heroSubtitle)} multiline />
                 </p>
-                <div className="mt-8 flex flex-wrap gap-3">
+                <div className="mt-7 flex flex-wrap gap-3">
                   <Link href="/catalog"
-                    className="inline-flex min-h-12 items-center rounded-full bg-coral px-6 text-[15px] font-semibold text-white shadow-accent transition hover:bg-coral-hover active:scale-[.98]">
+                    className="inline-flex min-h-14 items-center gap-2 rounded-full bg-coral px-[30px] text-[17px] font-semibold text-white shadow-accent transition hover:bg-coral-hover active:scale-[.98]">
                     {t("Открыть каталог")}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                   </Link>
                   <Link href="/profile"
-                    className="inline-flex min-h-12 items-center rounded-full border border-black/15 bg-white px-6 text-[15px] font-semibold text-dark transition hover:border-coral hover:text-coral">
+                    className="inline-flex min-h-14 items-center rounded-full border border-black/15 bg-white px-[30px] text-[17px] font-semibold text-dark transition hover:border-coral hover:text-coral">
                     {t("Стать партнёром")}
                   </Link>
                 </div>
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted">
+                  <span>{t("Нужен один торт или коробка пирожных?")}</span>
+                  <a href={RETAIL_SITE_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-coral hover:underline">
+                    {t("Заказать в розницу →")}
+                  </a>
+                </div>
               </div>
 
-              {/* Stat grid — desktop */}
-              <div className="hidden grid-cols-2 gap-3 lg:grid">
-                {stats.map((stat) => (
-                  <div key={stat.value} className="rounded-xl bg-white p-6 shadow-sm">
-                    <p className="font-data text-3xl font-bold text-coral">{t(stat.value)}</p>
-                    <p className="mt-2 text-xs leading-relaxed text-muted" style={{ whiteSpace: "pre-line" }}>
-                      {t(stat.label)}
-                    </p>
-                  </div>
-                ))}
+              {/* Сцена — слоёные фото продукции */}
+              <div aria-hidden className="relative z-[1] mx-auto aspect-square w-full max-w-[520px] lg:aspect-[1/1.02] lg:max-w-none">
+                <div className="absolute rounded-full" style={{ inset: "8% 6%", background: "radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 66%)" }} />
+                {/* главный кадр — тает краями в фон */}
+                <div
+                  className="absolute overflow-hidden"
+                  style={{
+                    inset: "2% 12% 6% 12%",
+                    WebkitMaskImage: "radial-gradient(72% 62% at 50% 48%, #000 58%, transparent 100%)",
+                    maskImage: "radial-gradient(72% 62% at 50% 48%, #000 58%, transparent 100%)",
+                    filter: "drop-shadow(0 30px 42px rgba(86,34,13,0.18))",
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/products/tort-medovik.webp" alt="" className="h-full w-full object-cover" />
+                </div>
+                {/* фото A — повёрнуто +4° */}
+                <div className="absolute overflow-hidden rounded-2xl border-[5px] border-white shadow-lg" style={{ width: "34%", aspectRatio: "3 / 4", right: "-2%", top: "6%", rotate: "4deg" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-cover" />
+                </div>
+                {/* фото B — повёрнуто −6° */}
+                <div className="absolute overflow-hidden rounded-xl border-[5px] border-white shadow-lg" style={{ width: "29%", aspectRatio: "1 / 1", left: "-3%", bottom: "10%", rotate: "-6deg" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-cover" />
+                </div>
+                {/* плавающий тег */}
+                <div className="absolute flex items-center gap-3 rounded-full border border-white/80 bg-white/[0.86] py-2.5 pl-2.5 pr-4 shadow-md backdrop-blur-lg" style={{ right: "4%", bottom: "6%" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/products/pelmeni-s-govyadinoy.webp" alt="" className="size-10 rounded-full object-cover" />
+                  <span className="leading-tight">
+                    <b className="block text-sm font-bold text-dark">{t("53 позиции")}</b>
+                    <span className="block text-[11px] text-muted">{t("десерты · полуфабрикаты · мясо")}</span>
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Stats — mobile */}
-            <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:hidden">
+            {/* Показатели — стеклянные */}
+            <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-black/10 shadow-md sm:grid-cols-4 lg:mt-14">
               {stats.map((stat) => (
-                <div key={stat.value} className="rounded-xl bg-white p-4 shadow-sm">
-                  <p className="font-data text-2xl font-bold text-coral">{t(stat.value)}</p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-muted" style={{ whiteSpace: "pre-line" }}>
-                    {t(stat.label)}
-                  </p>
+                <div key={stat.value} className="bg-white/90 px-4 py-5 text-center backdrop-blur-md sm:px-5 sm:py-6">
+                  <b className="block font-display text-[clamp(24px,3.6vw,36px)] font-extrabold leading-none tracking-[-0.03em] text-coral">{t(stat.value)}</b>
+                  <span className="mt-2 block text-xs leading-tight text-muted" style={{ whiteSpace: "pre-line" }}>{t(stat.label)}</span>
                 </div>
               ))}
             </div>

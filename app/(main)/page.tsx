@@ -2,20 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { getSiteContent } from "@/src/lib/site-content";
-import { getHomeLayout } from "@/src/lib/home-layout.server";
 import { getIsSuperAdmin } from "@/src/lib/superadmin";
 import { getT } from "@/src/i18n/server";
-import { promotions } from "@/src/data/promotions";
 import { RETAIL_SITE_URL } from "@/app/constants";
 import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
-import { PromoSection } from "@/src/components/home/PromoSection";
 import { HomeCatBar } from "@/src/components/home/HomeCatBar";
 import { HomeReward } from "@/src/components/home/HomeReward";
 import { HomePopularPosters } from "@/src/components/home/HomePopularPosters";
 import { HomeCategoryCards } from "@/src/components/home/HomeCategoryCards";
 import { HomeDelivery } from "@/src/components/home/HomeDelivery";
-import { EditableText, SiteEditProvider } from "@/src/components/home/SiteEditMode";
-import { HomeBuilder, EnableBuilderGate } from "@/src/components/home/HomeBuilder";
+import { EditableText, EditableImage, SiteEditProvider } from "@/src/components/home/SiteEditMode";
 import { JsonLd } from "@/src/components/seo/JsonLd";
 import { SITE_URL } from "@/src/lib/site-url";
 
@@ -45,31 +41,13 @@ const stats = [
 ];
 
 export default async function Home() {
-  const [categories, allProducts, content, layout, isSuperAdmin, t] = await Promise.all([
+  const [categories, allProducts, content, isSuperAdmin, t] = await Promise.all([
     fetchCategories(),
     fetchProducts(),
     getSiteContent(),
-    getHomeLayout(),
     getIsSuperAdmin(),
     getT(),
   ]);
-
-  // Конструктор включён и есть что показывать → рендерим сетку вместо классической главной.
-  if (layout.enabled && layout.sections.length > 0) {
-    return (
-      <>
-        <JsonLd data={organizationJsonLd} />
-        <HomeBuilder
-          isSuperAdmin={isSuperAdmin}
-          initialLayout={layout}
-          bands={{
-            promos: <PromoSection promotions={promotions} />,
-            catalog: <HomeCatalogTabs categories={categories} products={allProducts} />,
-          }}
-        />
-      </>
-    );
-  }
 
   const categoryCounts = allProducts.reduce<Record<string, number>>((acc, p) => {
     acc[p.category_id] = (acc[p.category_id] ?? 0) + 1;
@@ -149,18 +127,15 @@ export default async function Home() {
                     filter: "drop-shadow(0 30px 42px rgba(86,34,13,0.18))",
                   }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/products/tort-medovik.webp" alt="" className="h-full w-full object-cover" />
+                  <EditableImage field="home.hero.imgMain" fallbackSrc="/products/tort-medovik.webp" alt="" className="h-full w-full object-cover" />
                 </div>
                 {/* фото A — повёрнуто +4° */}
                 <div className="absolute overflow-hidden rounded-2xl border-[5px] border-white shadow-lg" style={{ width: "34%", aspectRatio: "3 / 4", right: "-2%", top: "6%", rotate: "4deg" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-cover" />
+                  <EditableImage field="home.hero.imgA" fallbackSrc="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-cover" />
                 </div>
                 {/* фото B — повёрнуто −6° */}
                 <div className="absolute overflow-hidden rounded-xl border-[5px] border-white shadow-lg" style={{ width: "29%", aspectRatio: "1 / 1", left: "-3%", bottom: "10%", rotate: "-6deg" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-cover" />
+                  <EditableImage field="home.hero.imgB" fallbackSrc="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-cover" />
                 </div>
                 {/* плавающий тег */}
                 <div className="absolute flex items-center gap-3 rounded-full border border-white/80 bg-white/[0.86] py-2.5 pl-2.5 pr-4 shadow-md backdrop-blur-lg" style={{ right: "4%", bottom: "6%" }}>
@@ -246,16 +221,13 @@ export default async function Home() {
             {/* фото-коллаж */}
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2 aspect-[16/10] overflow-hidden rounded-2xl bg-cream">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/products/tort-medovik.webp" alt="" className="h-full w-full object-cover" />
+                <EditableImage field="home.about.img1" fallbackSrc="/products/tort-medovik.webp" alt="" className="h-full w-full object-cover" />
               </div>
               <div className="aspect-square overflow-hidden rounded-2xl bg-cream">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-cover" />
+                <EditableImage field="home.about.img2" fallbackSrc="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-cover" />
               </div>
               <div className="aspect-square overflow-hidden rounded-2xl bg-cream">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-cover" />
+                <EditableImage field="home.about.img3" fallbackSrc="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-cover" />
               </div>
             </div>
           </div>
@@ -284,7 +256,6 @@ export default async function Home() {
         </section>
 
       </main>
-      <EnableBuilderGate isSuperAdmin={isSuperAdmin} />
     </SiteEditProvider>
   );
 }

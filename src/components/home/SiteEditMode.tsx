@@ -3,10 +3,12 @@
 import {
   createContext,
   useContext,
+  useRef,
   useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 // ВАЖНО: только тип (import type — стирается при сборке). site-content.ts помечен
 // "server-only" и тянет admin.ts; импорт значения из него в этот КЛИЕНТСКИЙ модуль
@@ -264,5 +266,158 @@ export function EditableText({ field, fallback, multiline = false, className }: 
         </span>
       ) : null}
     </span>
+  );
+}
+
+// ─────────────────────────── редактируемое изображение ───────────────────────────
+
+type EditableImageProps = {
+  /** Уникальный id override в site_content (URL картинки). */
+  field: EditableField;
+  /** Картинка по умолчанию (пока суперадмин не заменил). */
+  fallbackSrc: string;
+  alt?: string;
+  className?: string;
+  sizesHint?: string;
+};
+
+/**
+ * Изображение, редактируемое суперадмином прямо на реальной странице: клик по фото
+ * в режиме редактирования → «Заменить фото» (загрузка через /api/admin/upload-image)
+ * или «Сбросить» (вернуть исходное). Override (URL) хранится в site_content по field.
+ * Вне режима — обычный <img>, раскладка не меняется.
+ */
+export function EditableImage({ field, fallbackSrc, alt = "", className, sizesHint }: EditableImageProps) {
+  const ctx = useContext(SiteEditContext);
+  const [open, setOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const src = ctx ? siteText(ctx.content, field, fallbackSrc) : fallbackSrc;
+  const hasStored =
+    !!ctx && typeof ctx.content[field] === "string" && (ctx.content[field] as string).trim().length > 0;
+
+  // eslint-disable-next-line @next/next/no-img-element
+  const img = <img src={src} alt={alt} className={className} />;
+
+  if (!ctx || !ctx.editMode) {
+    return img;
+  }
+
+  async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
+    if (!ctx) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      body.append("folder", "site");
+      body.append("slug", "home");
+      const res = await fetch("/api/admin/upload-image", { method: "POST", body });
+      const json = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || !json.url) throw new Error(json.error ?? "Ошибка загрузки");
+      const ok = await ctx.save(field, json.url);
+      if (ok) setOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Ошибка загрузки");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function handleReset() {
+    if (!ctx) return;
+    const ok = await ctx.reset(field);
+    if (ok) setOpen(false);
+  }
+
+  return (
+    <>
+      <span
+        role="button"
+        tabIndex={0}
+        title={sizesHint ?? "Заменить фото"}
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen(true);
+        }}
+        className="relative block h-full w-full cursor-pointer outline outline-2 outline-dashed outline-coral/70 transition hover:outline-coral"
+      >
+        {img}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute right-1.5 top-1.5 z-10 rounded-full bg-coral px-2 py-0.5 text-[10px] font-bold text-white shadow"
+        >
+          ✎ фото
+        </span>
+      </span>
+
+      {open
+        ? createPortal(
+            <div
+              className="print-hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
+              onClick={() => setOpen(false)}
+            >
+              <div
+                onClick={(event) => event.stopPropagation()}
+                className="w-full max-w-sm rounded-lg border border-black/15 bg-white p-4 shadow-2xl"
+              >
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wide text-coral">Изображение</p>
+                  <button type="button" onClick={() => setOpen(false)} className="text-xl leading-none text-muted hover:text-dark">
+                    ×
+                  </button>
+                </div>
+                <div className="overflow-hidden rounded-md border border-black/10 bg-cream">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="max-h-40 w-full object-contain" />
+                </div>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleFile}
+                />
+                {error ? <p className="mt-2 text-xs font-semibold text-burgundy">{error}</p> : null}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={uploading}
+                    onClick={() => fileRef.current?.click()}
+                    className="rounded-md border border-coral bg-coral px-4 py-1.5 text-xs font-bold text-white transition hover:bg-coral-hover disabled:opacity-50"
+                  >
+                    {uploading ? "Загружается…" : "Заменить фото"}
+                  </button>
+                  {hasStored ? (
+                    <button
+                      type="button"
+                      disabled={uploading}
+                      onClick={handleReset}
+                      className="rounded-md border border-black/15 bg-white px-4 py-1.5 text-xs font-semibold text-dark transition hover:bg-black/5 disabled:opacity-50"
+                    >
+                      Сбросить
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    className="ml-auto rounded-md px-3 py-1.5 text-xs font-semibold text-muted hover:text-dark"
+                  >
+                    Отмена
+                  </button>
+                </div>
+                <p className="mt-2 text-[11px] leading-4 text-muted">JPG / PNG / WebP. Заменится только это фото.</p>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
+    </>
   );
 }

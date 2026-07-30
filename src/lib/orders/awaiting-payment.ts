@@ -22,8 +22,14 @@ export async function fetchAwaitingPaymentOrders(): Promise<AwaitingPaymentRow[]
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return [];
 
+  // Все НЕоплаченные заказы в рабочем конвейере: по новому флоу менеджер берёт заказ
+  // в работу/доставку до оплаты — такие тоже должны быть видны бухгалтеру, иначе их
+  // негде отметить оплаченными.
   const params = new URLSearchParams({
-    status: "in.(confirmed_waiting_payment,overdue)",
+    payment_status: "neq.paid",
+    // «paid» включён для легаси-заказов старой модели (status=paid при payment_status≠paid),
+    // иначе они невидимы бухгалтеру в обоих списках.
+    status: "in.(confirmed_waiting_payment,overdue,in_progress,delivering,paid)",
     select: "id,order_number,total_amount,delivery_amount,created_at,due_date,company_name,status",
     order: "created_at.desc",
     limit: "50",

@@ -8,9 +8,10 @@ export const MIN_ORDER_AMOUNT = 0;
 // Доставка: бесплатно от этой суммы, иначе тариф по deliveryFee().
 export const FREE_DELIVERY_THRESHOLD = 15000;
 
-/** Тариф доставки по сумме корзины: >15000 — бесплатно, 10000–15000 — 1500 ₸, ниже — 3000 ₸. */
+/** Тариф доставки по сумме корзины: от 15000 — бесплатно, 10000–14999 — 1500 ₸, ниже — 3000 ₸. */
 export function deliveryFee(subtotal: number): number {
-  if (subtotal > FREE_DELIVERY_THRESHOLD) return 0;
+  // «от 15 000 бесплатно» — граница включительна (>=), как в прогресс-барах корзины.
+  if (subtotal >= FREE_DELIVERY_THRESHOLD) return 0;
   if (subtotal >= 10000) return 1500;
   return 3000;
 }

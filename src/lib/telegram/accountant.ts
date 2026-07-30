@@ -64,9 +64,14 @@ function requisitesBlock(order: Order): string {
   return lines.join("\n");
 }
 
-/** Оплаченный заказ: компактно «№ + ✓», без кнопки. */
+/** Оплаченный заказ: компактно «№ + ✓» + кнопка отката оплаты (на случай ошибки). */
 export function buildAccountantPaidCard(order: Order): CardMessage {
-  return { text: `✅ Счёт №${order.order_number} — оплачено` };
+  return {
+    text: `✅ Счёт №${order.order_number} — оплачено`,
+    replyMarkup: {
+      inline_keyboard: [[{ text: "↩️ Снять оплату", callback_data: `unpaid:${order.id}` }]],
+    },
+  };
 }
 
 /**

@@ -6,9 +6,13 @@ import { orderTotalWithDelivery } from "@/app/constants";
 /** Ставка пени за просрочку оплаты (оферта §11.2): 1% в день. */
 const PENALTY_RATE_PER_DAY = 0.01;
 
+// Статусы, при которых неоплаченный заказ = долг по консигнации (тратит лимит,
+// копит просрочку/пеню). in_progress включён: по новому флоу менеджер берёт заказ
+// в работу ДО оплаты — иначе такой долг был бы невидим для лимита.
 const CREDIT_STATUSES = new Set([
   "confirmed_waiting_payment",
   "overdue",
+  "in_progress",
   "delivering",
   "completed",
 ]);
@@ -17,8 +21,14 @@ function daysBetween(isoFrom: string, isoTo: string): number {
   return Math.floor((Date.parse(isoTo) - Date.parse(isoFrom)) / 86_400_000);
 }
 
+/** Сегодняшняя дата по Алматы (UTC+5, без переходов) — иначе ночью 00:00–05:00
+ * просрочка/пеня отставали бы на сутки (UTC-дата ещё «вчерашняя»). */
+function almatyToday(): string {
+  return new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 export async function getCreditState(client: Client): Promise<CreditState> {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = almatyToday();
   const orders = await fetchClientOrdersForCredit(client.id);
 
   const unpaid = orders.filter(

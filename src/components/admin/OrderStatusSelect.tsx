@@ -10,10 +10,15 @@ import {
 } from "@/src/lib/order-status";
 import type { OrderStatus } from "@/src/types";
 
-const statusOptions = canonicalOrderStatuses.map((status) => ({
-  label: orderStatusLabels[status],
-  value: status,
-}));
+// «paid» — не статус заказа, а отдельная ось оплаты (отмечается кнопкой «Оплачено»).
+// Выбор его в дропдауне десинхронизировал заказ (status=paid, payment_status=unpaid),
+// поэтому из списка выбора убран.
+const statusOptions = canonicalOrderStatuses
+  .filter((status) => status !== "paid")
+  .map((status) => ({
+    label: orderStatusLabels[status],
+    value: status,
+  }));
 
 type OrderStatusSelectProps = {
   orderId: string;
@@ -62,7 +67,7 @@ export function OrderStatusSelect({ orderId, status }: OrderStatusSelectProps) {
         disabled={isSaving}
         onChange={(event) => handleChange(event.currentTarget.value as OrderStatus)}
       >
-        {!isCanonicalOrderStatus(status) ? (
+        {!isCanonicalOrderStatus(status) || status === "paid" ? (
           <option value={status}>{orderStatusLabels[status]}</option>
         ) : null}
         {statusOptions.map((option) => (

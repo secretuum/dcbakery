@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { markOverdueOrders } from "@/src/lib/orders/overdue";
+import { fetchUnpaidWorkOverdue, markOverdueOrders } from "@/src/lib/orders/overdue";
 import { sendMessage } from "@/src/lib/telegram/api";
 import { logAction } from "@/src/lib/audit";
 import { formatPrice } from "@/src/lib/format";
@@ -28,7 +28,8 @@ async function handle(request: Request) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Дата по Алматы (UTC+5) — согласованно с credit.ts, чтобы просрочка не отставала на сутки.
+  const today = new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
   let overdue;
   try {
@@ -40,9 +41,10 @@ async function handle(request: Request) {
     );
   }
 
+  const chatId =
+    process.env.TELEGRAM_GROUP_CHAT_ID?.trim() || process.env.TELEGRAM_CHAT_ID?.trim();
+
   if (overdue.length > 0) {
-    const chatId =
-      process.env.TELEGRAM_GROUP_CHAT_ID?.trim() || process.env.TELEGRAM_CHAT_ID?.trim();
     if (chatId) {
       const lines = overdue
         .map((o) => `• ${o.order_number} — ${formatPrice(o.total_amount)} (срок был до ${o.due_date})`)
@@ -64,7 +66,35 @@ async function handle(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, marked: overdue.length });
+  // Неоплаченные заказы, уже взятые в работу/доставку, с прошедшим сроком: статус НЕ
+  // меняем (иначе затрём прогресс), только напоминаем в чат (напоминание повторяется).
+  let workOverdue: Awaited<ReturnType<typeof fetchUnpaidWorkOverdue>> = [];
+  try {
+    workOverdue = await fetchUnpaidWorkOverdue(today);
+  } catch {
+    workOverdue = [];
+  }
+
+  if (workOverdue.length > 0 && chatId) {
+    const lines = workOverdue
+      .map(
+        (o) =>
+          `• ${o.order_number} — ${formatPrice(o.total_amount + (o.delivery_amount ?? 0))} (${
+            o.status === "delivering" ? "доставляется" : "в работе"
+          }, срок был до ${o.due_date})`,
+      )
+      .join("\n");
+    await sendMessage({
+      chatId,
+      text: `⏰ В работе/доставке, НЕ оплачены (${workOverdue.length}):\n${lines}`,
+    });
+  }
+
+  return NextResponse.json({
+    ok: true,
+    marked: overdue.length,
+    workOverdueNotified: workOverdue.length,
+  });
 }
 
 export async function GET(request: Request) {

@@ -19,8 +19,10 @@ function getConfig() {
  * Атомарно снимает отметку оплаты: UPDATE проходит только если payment_status
  * всё ещё 'paid' (гонка с повторным кликом/вебхуком исключена). Возвращает
  * обновлённый заказ или null, если снимать уже нечего.
- * Заказ возвращается в 'confirmed_waiting_payment', payment_status — к состоянию
- * до оплаты (счёт отправлен/готов), paid_at очищается.
+ * payment_status возвращается к состоянию до оплаты (счёт отправлен/готов), paid_at
+ * очищается. Статус заказа НЕ трогаем (оплата — отдельная ось), кроме легаси-случая
+ * status='paid' (старая модель) — его возвращаем в 'confirmed_waiting_payment',
+ * иначе заказ залипнет (нельзя ни отметить оплату, ни завершить).
  */
 export async function unmarkOrderPaid(order: Order): Promise<Order | null> {
   const config = getConfig();
@@ -49,9 +51,11 @@ export async function unmarkOrderPaid(order: Order): Promise<Order | null> {
       Prefer: "return=representation",
     },
     body: JSON.stringify({
-      // Снимаем только оплату; статус заказа не меняем (оплата — отдельная ось).
+      // Снимаем только оплату; статус заказа не меняем (оплата — отдельная ось),
+      // кроме легаси status='paid' → возвращаем в 'confirmed_waiting_payment'.
       paid_at: null,
       payment_status: restoredPaymentStatus,
+      ...(order.status === "paid" ? { status: "confirmed_waiting_payment" } : {}),
     }),
     cache: "no-store",
   });

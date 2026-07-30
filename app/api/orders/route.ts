@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT, deliveryFee } from "@/app/constants";
 import { fetchProducts } from "@/src/lib/catalog";
+import { getSiteContent } from "@/src/lib/site-content";
 import {
   fetchClientByEmail,
   fetchClientByPhone,
@@ -78,7 +79,11 @@ function getTomorrowDate() {
 function generateOrderNumber() {
   const year = new Date().getFullYear();
   const suffix = Date.now().toString().slice(-6);
-  return `DCB-${year}-${suffix}`;
+  // 6 цифр ms повторяются каждые ~16 мин → при UNIQUE(order_number) заказ мог не
+  // сохраниться. Добавляем 4 случайных hex-символа (пространство ×65536), чтобы
+  // совпадение стало практически невозможным.
+  const rand = crypto.randomUUID().slice(0, 4);
+  return `DCB-${year}-${suffix}-${rand}`;
 }
 
 function parseItems(value: unknown) {
@@ -121,7 +126,13 @@ function parseBody(value: unknown): IncomingOrderBody {
   };
 }
 
-function validateOrder(body: IncomingOrderBody) {
+// Локальная дата delivery_date («YYYY-MM-DD») → день недели (0=вс…6=сб). Парсим как
+// UTC-полночь, чтобы день недели не «плавал» от таймзоны сервера.
+function deliveryWeekday(dateStr: string): number {
+  return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
+}
+
+function validateOrder(body: IncomingOrderBody, deliveryDays: number[]) {
   const errors: string[] = [];
   const phoneDigits = body.customer_phone?.replace(/\D/g, "") ?? "";
   const items = body.items ?? [];
@@ -143,6 +154,10 @@ function validateOrder(body: IncomingOrderBody) {
     errors.push("delivery_date is required");
   } else if (body.delivery_date < getTomorrowDate()) {
     errors.push("delivery_date must be tomorrow or later");
+  } else if (deliveryDays.length > 0 && !deliveryDays.includes(deliveryWeekday(body.delivery_date))) {
+    // Дата должна попадать на разрешённый день доставки (по умолчанию вт/чт/сб) —
+    // тот же график, что показывает клиент; защищает от прямого вызова API/устаревшей вкладки.
+    errors.push("delivery_date is not an allowed delivery day");
   }
 
   if (items.length === 0) {
@@ -263,7 +278,10 @@ export async function POST(request: Request) {
       };
     }),
   };
-  const { errors, totalAmount } = validateOrder(body);
+  // График доставки берём из настроек (тот же источник, что и клиентский календарь).
+  const siteContent = await getSiteContent().catch(() => null);
+  const deliveryDays = siteContent?.deliveryDays ?? [2, 4, 6];
+  const { errors, totalAmount } = validateOrder(body, deliveryDays);
   errors.push(...itemErrors);
 
   if (errors.length > 0) {

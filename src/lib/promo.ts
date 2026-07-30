@@ -19,16 +19,22 @@ export function almatyWeekRange(nowMs: number): { startMs: number; endMs: number
   return { startMs, endMs: startMs + 7 * 86_400_000 };
 }
 
+// «Переданные» заказы для акции — завершённые (доставлены и закрыты).
+const DELIVERED_STATUSES = new Set(["completed", "delivered"]);
+
 /**
- * Сумма заказов (по позициям) за текущую неделю, кроме отменённых.
- * Пустая история → 0 (шкала стартует с нуля).
+ * Сумма заказов за текущую неделю, засчитываемых в акцию СТРОГО по условиям:
+ * только подтверждённые + полностью ОПЛАЧЕННЫЕ (payment_status='paid') + ПЕРЕДАННЫЕ
+ * (завершённые) заказы. Неделя — по дате передачи (доставки), иначе по дате создания.
+ * Пустая/неоплаченная история → 0 (шкала стартует с нуля).
  */
 export function weeklyPromoCollected(orders: ClientOrderSummary[], nowMs: number): number {
   const { startMs, endMs } = almatyWeekRange(nowMs);
   return orders.reduce((sum, order) => {
-    if (order.status === "canceled" || order.status === "cancelled") return sum;
-    const created = Date.parse(order.created_at);
-    if (Number.isNaN(created) || created < startMs || created >= endMs) return sum;
+    if (order.payment_status !== "paid") return sum;
+    if (!DELIVERED_STATUSES.has(order.status)) return sum;
+    const when = Date.parse(order.delivery_date ?? order.created_at);
+    if (Number.isNaN(when) || when < startMs || when >= endMs) return sum;
     return sum + Number(order.total_amount || 0);
   }, 0);
 }

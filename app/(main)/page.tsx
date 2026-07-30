@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { getSiteContent } from "@/src/lib/site-content";
-import { getIsSuperAdmin } from "@/src/lib/superadmin";
 import { getT } from "@/src/i18n/server";
 import { RETAIL_SITE_URL } from "@/app/constants";
 import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
@@ -11,7 +10,7 @@ import { HomeReward } from "@/src/components/home/HomeReward";
 import { HomePopularPosters } from "@/src/components/home/HomePopularPosters";
 import { HomeCategoryCards } from "@/src/components/home/HomeCategoryCards";
 import { HomeDelivery } from "@/src/components/home/HomeDelivery";
-import { EditableText, EditableImage, SiteEditProvider } from "@/src/components/home/SiteEditMode";
+import { EditableText, EditableImage } from "@/src/components/home/SiteEditMode";
 import { JsonLd } from "@/src/components/seo/JsonLd";
 import { SITE_URL } from "@/src/lib/site-url";
 
@@ -41,11 +40,10 @@ const stats = [
 ];
 
 export default async function Home() {
-  const [categories, allProducts, content, isSuperAdmin, t] = await Promise.all([
+  const [categories, allProducts, content, t] = await Promise.all([
     fetchCategories(),
     fetchProducts(),
     getSiteContent(),
-    getIsSuperAdmin(),
     getT(),
   ]);
 
@@ -59,8 +57,7 @@ export default async function Home() {
   const popularProducts = allProducts.slice(0, 6);
 
   return (
-    <SiteEditProvider isSuperAdmin={isSuperAdmin} content={content}>
-      <main className="text-dark">
+    <main className="text-dark">
         <JsonLd data={organizationJsonLd} />
 
         {/* ─── Hero ─── */}
@@ -256,6 +253,5 @@ export default async function Home() {
         </section>
 
       </main>
-    </SiteEditProvider>
   );
 }

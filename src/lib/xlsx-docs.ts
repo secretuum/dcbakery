@@ -60,8 +60,10 @@ function plural(value: number, forms: [string, string, string]) {
 }
 
 export function amountInWordsKzt(amount: number) {
-  const whole = Math.floor(amount);
-  const tiyn = Math.round((amount - whole) * 100);
+  // Считаем через тиыны, чтобы дробь вида 0.99x переносилась в тенге (иначе tiyn=100).
+  const cents = Math.round(amount * 100);
+  const whole = Math.floor(cents / 100);
+  const tiyn = cents % 100;
 
   if (whole === 0) {
     return `ноль теңге ${String(tiyn).padStart(2, "0")} тиын`;

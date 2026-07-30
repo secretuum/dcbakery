@@ -298,8 +298,20 @@ export async function changeStatus(
     return { ok: false, status: 404, error: "Order not found" };
   }
 
+  // Оплата — отдельная ось (payment_status), а не статус заказа. Ставить статус
+  // «paid» напрямую нельзя — иначе заказ рассинхронизируется (status=paid при
+  // payment_status=unpaid). Оплату отмечают только через markPaid.
+  if (status === "paid") {
+    return { ok: false, status: 400, error: "Оплату отмечайте кнопкой «Оплачено», а не статусом" };
+  }
+
   // Завершить заказ можно только после подтверждения оплаты (оплата — отдельная ось).
-  if (status === "completed" && previousOrder.payment_status !== "paid") {
+  // Легаси status='paid' (старая модель) считаем оплаченным.
+  if (
+    status === "completed" &&
+    previousOrder.payment_status !== "paid" &&
+    previousOrder.status !== "paid"
+  ) {
     return { ok: false, status: 400, error: "Нельзя завершить неоплаченный заказ" };
   }
 

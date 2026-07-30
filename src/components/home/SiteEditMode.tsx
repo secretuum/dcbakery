@@ -8,7 +8,16 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { siteText, type SiteContent } from "@/src/lib/site-content";
+// ВАЖНО: только тип (import type — стирается при сборке). site-content.ts помечен
+// "server-only" и тянет admin.ts; импорт значения из него в этот КЛИЕНТСКИЙ модуль
+// ломает сборку. Поэтому siteText определён локально ниже.
+import type { SiteContent } from "@/src/lib/site-content";
+
+/** Значение редактируемого текста по id: сохранённый override или запасной текст. */
+function siteText(content: Record<string, unknown>, id: string, fallback: string): string {
+  const value = content[id];
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
 
 // Режим «редактирование сайта» для суперадмина: включается тумблером
 // в Админке → Настройки (хранится в localStorage), после чего у редактируемых

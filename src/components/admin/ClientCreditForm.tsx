@@ -124,7 +124,7 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
         <label className="block">
           <span className="text-sm font-semibold text-dark">Прайс-лист</span>
           <select
-            className="mt-2 w-full rounded-btn border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark focus:outline-none focus:ring-2 focus:ring-coral/40"
+            className="mt-2 w-full rounded-md border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark focus:outline-none focus:ring-2 focus:ring-coral/40"
             value={priceListId}
             onChange={(e) => setPriceListId(e.currentTarget.value)}
           >
@@ -147,7 +147,7 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
         <label className="block sm:col-span-2">
           <span className="text-sm font-semibold text-dark">Статус отгрузок</span>
           <select
-            className="mt-2 w-full rounded-btn border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark focus:outline-none focus:ring-2 focus:ring-coral/40"
+            className="mt-2 w-full rounded-md border border-black/10 bg-white px-3 py-2.5 text-sm font-semibold text-dark focus:outline-none focus:ring-2 focus:ring-coral/40"
             value={status}
             onChange={(e) => setStatus(e.currentTarget.value as Client["status"])}
           >

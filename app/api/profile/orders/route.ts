@@ -6,9 +6,9 @@ import {
 } from "@/src/lib/supabase/admin";
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 import { CLIENT_SESSION_COOKIE, verifyClientSession } from "@/src/lib/client-session";
+import { normalizeKzPhone } from "@/src/lib/phone";
 
 const EMAIL_RE = /^[^,()[\]\s]+@[^,()[\]\s]+\.[^,()[\]\s]+$/;
-const PHONE_RE = /^\+?\d{10,15}$/;
 
 export async function POST(request: Request) {
   const rateLimit = await checkRateLimit({
@@ -36,12 +36,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.email && !EMAIL_RE.test(session.email)) {
-    return NextResponse.json({ error: "Bad Request" }, { status: 400 });
-  }
+  // Телефон в сессии может быть в человекочитаемом виде («+7 705 123 45 67») —
+  // нормализуем к «+7XXXXXXXXXX», чтобы пройти валидацию запроса и матчинг заказа.
+  const emailForQuery = session.email && EMAIL_RE.test(session.email) ? session.email : undefined;
+  const phoneDigits = session.phone ? normalizeKzPhone(session.phone) : "";
+  const phoneForQuery = /^\d{10,15}$/.test(phoneDigits) ? `+${phoneDigits}` : undefined;
 
-  if (session.phone && !PHONE_RE.test(session.phone)) {
-    return NextResponse.json({ error: "Bad Request" }, { status: 400 });
+  // Без валидного идентификатора не запрашиваем (иначе выборка без фильтра вернёт чужие заказы).
+  if (!emailForQuery && !phoneForQuery) {
+    return NextResponse.json({ orders: [] });
   }
 
   const supabaseConfigError = getSupabaseAdminConfigError();
@@ -52,8 +55,8 @@ export async function POST(request: Request) {
 
   try {
     const orders = await fetchClientOrderSummaries({
-      email: session.email,
-      phone: session.phone,
+      email: emailForQuery,
+      phone: phoneForQuery,
     });
 
     return NextResponse.json({ orders });

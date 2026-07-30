@@ -16,11 +16,18 @@ import {
 } from "@/src/lib/payments";
 import { isHalykConfigured } from "@/src/lib/providers/halyk";
 import { getT } from "@/src/i18n/server";
+import { LOCALES, isLocale, localeLabels, type Locale } from "@/src/i18n/config";
+
+// Страницу счёта открывают по ссылке из WhatsApp. Язык по умолчанию — русский
+// (не зависит от старой cookie NEXT_LOCALE в браузере), но клиент может выбрать
+// язык переключателем — он передаётся через ?lang= и не трогает cookie сайта.
+const PAY_LOCALE: Locale = "ru";
 
 type PayPageProps = {
   params: Promise<{
     orderId: string;
   }>;
+  searchParams?: Promise<{ lang?: string }>;
 };
 
 export const metadata: Metadata = {
@@ -77,8 +84,10 @@ function getPayState(status: string, paymentStatus?: string | null) {
   };
 }
 
-export default async function PayPage({ params }: PayPageProps) {
-  const t = await getT();
+export default async function PayPage({ params, searchParams }: PayPageProps) {
+  const requestedLang = (await searchParams)?.lang;
+  const locale = isLocale(requestedLang) ? requestedLang : PAY_LOCALE;
+  const t = await getT(locale);
   const { orderId } = await params;
 
   if (!isUuid(orderId)) {
@@ -129,6 +138,25 @@ export default async function PayPage({ params }: PayPageProps) {
         {order.status === "pending_manager_confirmation" || order.status === "new" ? (
           <PaymentStatusRefresh />
         ) : null}
+
+        {/* Выбор языка страницы счёта (через ?lang=, без изменения cookie сайта). */}
+        <div className="mb-5 flex justify-end">
+          <div className="inline-flex overflow-hidden rounded-full border border-black/10" role="group" aria-label={t("Язык")}>
+            {LOCALES.map((loc) => (
+              <Link
+                key={loc}
+                href={`?lang=${loc}`}
+                aria-current={loc === locale ? "true" : undefined}
+                className={`px-3 py-1.5 text-xs font-bold uppercase transition ${
+                  loc === locale ? "bg-espresso text-white" : "text-muted hover:bg-black/5 hover:text-dark"
+                }`}
+              >
+                {localeLabels[loc]}
+              </Link>
+            ))}
+          </div>
+        </div>
+
         <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t(state.eyebrow)}</p>
         <h1 className="mt-3 break-all font-data text-3xl font-semibold tracking-tight sm:text-5xl">
           {order.order_number}

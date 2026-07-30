@@ -1,6 +1,10 @@
 import "server-only";
 import type { Client, CreditState } from "@/src/types";
 import { fetchClientOrdersForCredit } from "@/src/lib/supabase/admin";
+import { orderTotalWithDelivery } from "@/app/constants";
+
+/** Ставка пени за просрочку оплаты (оферта §11.2): 1% в день. */
+const PENALTY_RATE_PER_DAY = 0.01;
 
 const CREDIT_STATUSES = new Set([
   "confirmed_waiting_payment",
@@ -29,6 +33,15 @@ export async function getCreditState(client: Client): Promise<CreditState> {
     ? Math.max(...overdueOrders.map((o) => daysBetween(o.due_date!, today)))
     : 0;
 
+  // Пеня (оферта §11.2): 1% в день от суммы каждого просроченного заказа за фактическое
+  // число дней просрочки. Оценочно — точная сумма фиксируется актом сверки.
+  const penalty = Math.round(
+    overdueOrders.reduce(
+      (s, o) => s + orderTotalWithDelivery(o) * PENALTY_RATE_PER_DAY * daysBetween(o.due_date!, today),
+      0,
+    ),
+  );
+
   const upcomingDue = unpaid
     .filter((o) => o.due_date != null && o.due_date >= today)
     .sort((a, b) => a.due_date!.localeCompare(b.due_date!));
@@ -45,7 +58,17 @@ export async function getCreditState(client: Client): Promise<CreditState> {
     status = "active";
   }
 
-  return { limit: client.credit_limit, used, overdue, overdueDays, available, nextDueDate, status };
+  return {
+    limit: client.credit_limit,
+    used,
+    overdue,
+    overdueDays,
+    available,
+    nextDueDate,
+    status,
+    penalty,
+    penaltyRatePct: PENALTY_RATE_PER_DAY * 100,
+  };
 }
 
 export type OrderCheckResult = {

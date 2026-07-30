@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useT } from "@/src/i18n/client";
+import { EditableText } from "@/src/components/home/SiteEditMode";
 
 /**
  * Тёмный блок «как работает заказ» + доставка.
@@ -46,10 +47,10 @@ export function HomeDelivery() {
           <div className="mb-6 flex flex-col gap-3 md:mb-8 md:flex-row md:items-end md:justify-between md:gap-6">
             <div className="min-w-0">
               <span className="mb-2 block font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-200">
-                {t("Как работает заказ")}
+                <EditableText field="home.delivery.eyebrow" fallback={t("Как работает заказ")} />
               </span>
               <h2 className="max-w-[18ch] font-display text-[clamp(24px,3vw,34px)] font-bold leading-tight text-white">
-                {t("Заявка → подтверждение → счёт → доставка")}
+                <EditableText field="home.delivery.heading" fallback={t("Заявка → подтверждение → счёт → доставка")} />
               </h2>
             </div>
             <div className="flex-shrink-0">
@@ -57,7 +58,7 @@ export function HomeDelivery() {
                 href="/oplata-i-dostavka"
                 className="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-[22px] text-[13.5px] font-semibold text-white transition-colors hover:bg-white/20"
               >
-                {t("Оплата и доставка")}
+                <EditableText field="home.delivery.link" fallback={t("Оплата и доставка")} />
               </Link>
             </div>
           </div>
@@ -67,19 +68,29 @@ export function HomeDelivery() {
             {steps.map((s) => (
               <div key={s.n} className="rounded-xl border border-white/[0.14] bg-white/[0.06] p-5 backdrop-blur-xl">
                 <p className="font-data text-[clamp(19px,2vw,24px)] font-semibold tabular-nums text-accent-300">{s.n}</p>
-                <p className="mt-5 font-display text-[17px] font-bold text-white">{s.title}</p>
-                <p className="mt-2 text-[13.5px] leading-relaxed text-white/[0.68]">{s.text}</p>
+                <p className="mt-5 font-display text-[17px] font-bold text-white">
+                  <EditableText field={`home.delivery.step${s.n}.title`} fallback={t(s.title)} />
+                </p>
+                <p className="mt-2 text-[13.5px] leading-relaxed text-white/[0.68]">
+                  <EditableText field={`home.delivery.step${s.n}.text`} fallback={t(s.text)} multiline />
+                </p>
               </div>
             ))}
           </div>
 
           {/* delivery schedule glass cards */}
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-3">
-            {infoCards.map((c) => (
+            {infoCards.map((c, i) => (
               <div key={c.eyebrow} className="rounded-xl border border-white/[0.14] bg-white/[0.06] p-5 backdrop-blur-xl">
-                <p className="font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-200">{c.eyebrow}</p>
-                <p className="mt-2 font-display text-[17px] font-bold tabular-nums text-white">{c.value}</p>
-                <p className="mt-2 text-[12px] text-white/[0.68]">{c.note}</p>
+                <p className="font-display text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-200">
+                  <EditableText field={`home.delivery.info${i}.eyebrow`} fallback={t(c.eyebrow)} />
+                </p>
+                <p className="mt-2 font-display text-[17px] font-bold tabular-nums text-white">
+                  <EditableText field={`home.delivery.info${i}.value`} fallback={t(c.value)} />
+                </p>
+                <p className="mt-2 text-[12px] text-white/[0.68]">
+                  <EditableText field={`home.delivery.info${i}.note`} fallback={t(c.note)} multiline />
+                </p>
               </div>
             ))}
           </div>

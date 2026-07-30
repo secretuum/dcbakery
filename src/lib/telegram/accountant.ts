@@ -1,30 +1,44 @@
 import "server-only";
-import type { Order, OrderItem } from "@/src/types";
+import type { Order } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
 import { orderTotalWithDelivery } from "@/app/constants";
-import { orderStatusLabels } from "@/src/lib/order-status";
 import { getCompanyDetails } from "@/src/lib/company-details";
 import { idsForRole } from "@/src/lib/telegram/roles";
 import { sendMessage } from "@/src/lib/telegram/api";
-import { fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import type { AwaitingPaymentRow } from "@/src/lib/orders/awaiting-payment";
+
+type CardMessage = {
+  text: string;
+  replyMarkup?: { inline_keyboard: { text: string; callback_data: string }[][] };
+};
 
 // Интерфейс бухгалтера в боте:
 //  • при подтверждении заявки — реквизиты + состав приходят ей в ЛС (кнопка «Оплачено»);
 //  • раздел «📋 Заказы» — список ждущих оплаты → детали заказа → отметить оплату.
 // Оплату отмечает только бухгалтер/админ; в общем чате кнопки «Оплачено» больше нет.
 
-const ORDERS_BUTTON = "📋 Заказы";
+const AWAITING_BUTTON = "⏳ Ждут оплаты";
+const PAID_BUTTON = "✅ Оплаченные";
 
-/** Постоянная клавиатура с кнопкой «Заказы» (для ЛС бухгалтера/админа). */
+/** Постоянная клавиатура бухгалтера/админа: две кнопки — ждут оплаты / оплаченные. */
 export function accountantKeyboard(): { keyboard: { text: string }[][]; resize_keyboard: boolean; is_persistent: boolean } {
-  return { keyboard: [[{ text: ORDERS_BUTTON }]], resize_keyboard: true, is_persistent: true };
+  return {
+    keyboard: [[{ text: AWAITING_BUTTON }, { text: PAID_BUTTON }]],
+    resize_keyboard: true,
+    is_persistent: true,
+  };
 }
 
-/** Текст сообщения — команда открытия раздела «Заказы»? */
-export function isOrdersCommand(text: string): boolean {
+/** Команда «Ждут оплаты». */
+export function isAwaitingCommand(text: string): boolean {
   const t = text.trim();
-  return t === "/orders" || t === ORDERS_BUTTON;
+  return t === "/orders" || t === AWAITING_BUTTON;
+}
+
+/** Команда «Оплаченные». */
+export function isPaidCommand(text: string): boolean {
+  const t = text.trim();
+  return t === "/paid" || t === PAID_BUTTON;
 }
 
 // created_at приходит ISO-строкой — показываем компактно ДД.ММ.
@@ -50,30 +64,28 @@ function requisitesBlock(order: Order): string {
   return lines.join("\n");
 }
 
-/** Полная карточка заказа для бухгалтера: инфо + состав + реквизиты + кнопка оплаты. */
-export function buildAccountantDetail(order: Order, items: OrderItem[], origin: string) {
-  const itemLines = items
-    .map((i) => {
-      const sum = i.price > 0 ? formatPrice(i.total_amount) : "уточняется";
-      return `• ${i.product_name} × ${i.qty} ${i.unit} = ${sum}`;
-    })
-    .join("\n");
+/** Оплаченный заказ: компактно «№ + ✓», без кнопки. */
+export function buildAccountantPaidCard(order: Order): CardMessage {
+  return { text: `✅ Счёт №${order.order_number} — оплачено` };
+}
 
+/**
+ * Компактная карточка для бухгалтера: номер счёта + сумма + реквизиты + PDF.
+ * Состав/статус/контакты убраны — их видно в карточке заказа у менеджера.
+ * Оплаченный заказ показываем как «№ + ✓» (кнопки нет).
+ */
+export function buildAccountantDetail(order: Order, origin: string): CardMessage {
   const isPaid = order.status === "paid" || order.payment_status === "paid";
-  const invoiceUrl = `${origin.replace(/\/$/, "")}/documents/invoice/${order.id}`;
+  if (isPaid) {
+    return buildAccountantPaidCard(order);
+  }
 
+  const invoiceUrl = `${origin.replace(/\/$/, "")}/documents/invoice/${order.id}`;
   const text = [
-    `🧾 Заявка ${order.order_number}`,
-    `Статус: ${orderStatusLabels[order.status] ?? order.status}`,
-    `Компания: ${order.company_name}`,
-    order.customer_name || order.customer_phone
-      ? `Контакт: ${[order.customer_name, order.customer_phone].filter(Boolean).join(" / ")}`
-      : null,
+    `🧾 Счёт №${order.order_number} · ${formatPrice(orderTotalWithDelivery(order))}`,
+    order.company_name || null,
     order.due_date ? `Оплатить до: ${order.due_date}` : null,
     "————————",
-    itemLines || "—",
-    "————————",
-    "Реквизиты для оплаты:",
     requisitesBlock(order),
     "————————",
     `Счёт (PDF): ${invoiceUrl}`,
@@ -81,14 +93,10 @@ export function buildAccountantDetail(order: Order, items: OrderItem[], origin: 
     .filter(Boolean)
     .join("\n");
 
-  const button = isPaid
-    ? { text: "↩️ Снять оплату", action: "unpaid" }
-    : { text: "💰 Оплачено", action: "paid" };
-
   return {
     text,
     replyMarkup: {
-      inline_keyboard: [[{ text: button.text, callback_data: `${button.action}:${order.id}` }]],
+      inline_keyboard: [[{ text: "💰 Оплачено", callback_data: `paid:${order.id}` }]],
     },
   };
 }
@@ -99,7 +107,7 @@ export function buildAwaitingPaymentList(orders: AwaitingPaymentRow[]) {
     return { text: "📋 Заказы\n\nНет заказов, ждущих оплаты 👍", replyMarkup: undefined };
   }
 
-  const text = `📋 Заказы, ждущие оплаты (${orders.length})\nВыберите заказ, чтобы открыть детали:`;
+  const text = `⏳ Ждут оплаты (${orders.length})\nВыберите заказ, чтобы открыть детали:`;
   const rows = orders.map((o) => {
     const overdue = o.status === "overdue" ? " ⏰" : "";
     const label = `№${o.order_number} · ${shortDate(o.created_at)} · ${formatPrice(orderTotalWithDelivery(o))}${overdue}`;
@@ -109,18 +117,33 @@ export function buildAwaitingPaymentList(orders: AwaitingPaymentRow[]) {
   return { text, replyMarkup: { inline_keyboard: rows } };
 }
 
+/** Список оплаченных заказов (кнопка «Оплаченные»). */
+export function buildPaidList(orders: AwaitingPaymentRow[]): CardMessage {
+  if (orders.length === 0) {
+    return { text: "✅ Оплаченные\n\nПока нет оплаченных заказов." };
+  }
+
+  const text = `✅ Оплаченные (${orders.length})\nВыберите заказ, чтобы открыть детали:`;
+  const rows = orders.map((o) => [
+    {
+      text: `№${o.order_number} · ${shortDate(o.created_at)} · ${formatPrice(orderTotalWithDelivery(o))}`,
+      callback_data: `open:${o.id}`,
+    },
+  ]);
+
+  return { text, replyMarkup: { inline_keyboard: rows } };
+}
+
 /** Разослать реквизиты заказа всем бухгалтерам в ЛС (после подтверждения заявки). */
 export async function notifyAccountantsAwaitingPayment(order: Order, origin: string): Promise<void> {
   const ids = idsForRole("accountant");
   if (ids.length === 0) return;
 
-  const items = await fetchAdminOrderItems(order.id).catch(() => []);
-  const { text, replyMarkup } = buildAccountantDetail(order, items, origin);
-  const header = "💵 Новый заказ ждёт оплаты. Проверьте поступление и отметьте «Оплачено»:";
+  const { text, replyMarkup } = buildAccountantDetail(order, origin);
 
   await Promise.all(
     ids.map((id) =>
-      sendMessage({ chatId: id, text: `${header}\n\n${text}`, replyMarkup }).catch(() => null),
+      sendMessage({ chatId: id, text, replyMarkup }).catch(() => null),
     ),
   );
 }

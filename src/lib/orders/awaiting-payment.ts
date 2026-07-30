@@ -37,3 +37,26 @@ export async function fetchAwaitingPaymentOrders(): Promise<AwaitingPaymentRow[]
   if (!response.ok) return [];
   return (await response.json()) as AwaitingPaymentRow[];
 }
+
+/** Оплаченные заказы (для второй кнопки бухгалтера «Оплаченные»). */
+export async function fetchPaidOrders(): Promise<AwaitingPaymentRow[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return [];
+
+  const params = new URLSearchParams({
+    payment_status: "eq.paid",
+    status: "not.in.(canceled,cancelled)",
+    select: "id,order_number,total_amount,delivery_amount,created_at,due_date,company_name,status",
+    order: "paid_at.desc.nullslast",
+    limit: "30",
+  });
+
+  const response = await fetch(`${url}/rest/v1/orders?${params.toString()}`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+    cache: "no-store",
+  });
+
+  if (!response.ok) return [];
+  return (await response.json()) as AwaitingPaymentRow[];
+}

@@ -43,7 +43,7 @@ export function CancelOrderForm({
   }
 
   return (
-    <div className="mt-4 rounded-btn border border-black/5 bg-cream px-4 py-3">
+    <div className="mt-4 rounded-lg border border-black/5 bg-cream px-4 py-3">
       <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Отмена</p>
       <textarea
         value={reason}
@@ -51,7 +51,7 @@ export function CancelOrderForm({
         placeholder="Причина отмены для клиента"
         rows={3}
         disabled={disabled || isSubmitting}
-        className="mt-2 w-full rounded-btn border border-black/10 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 disabled:opacity-60"
+        className="mt-2 w-full rounded-md border border-black/10 bg-white px-3 py-2 text-sm font-medium outline-none focus:border-coral focus:ring-2 focus:ring-coral/20 disabled:opacity-60"
       />
       <button
         type="button"

@@ -8,8 +8,13 @@ export async function getLocale(): Promise<Locale> {
   return isLocale(value) ? value : DEFAULT_LOCALE;
 }
 
-/** Серверный переводчик: const t = await getT(); t("Каталог") */
-export async function getT(): Promise<Translator> {
-  const locale = await getLocale();
+/**
+ * Серверный переводчик: const t = await getT(); t("Каталог").
+ * forceLocale фиксирует язык независимо от cookie посетителя — нужно для
+ * клиентских документов (страница счёта/оплаты), которые должны быть на понятном
+ * клиенту языке, а не на языке из чужой/старой cookie NEXT_LOCALE.
+ */
+export async function getT(forceLocale?: Locale): Promise<Translator> {
+  const locale = forceLocale ?? (await getLocale());
   return (text, vars) => translate(locale, text, vars);
 }

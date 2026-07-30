@@ -7,10 +7,12 @@ import {
   accountantKeyboard,
   buildAccountantDetail,
   buildAwaitingPaymentList,
-  isOrdersCommand,
+  buildPaidList,
+  isAwaitingCommand,
+  isPaidCommand,
   notifyAccountantsAwaitingPayment,
 } from "@/src/lib/telegram/accountant";
-import { fetchAwaitingPaymentOrders } from "@/src/lib/orders/awaiting-payment";
+import { fetchAwaitingPaymentOrders, fetchPaidOrders } from "@/src/lib/orders/awaiting-payment";
 import { logAction } from "@/src/lib/audit";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import {
@@ -168,9 +170,8 @@ export async function POST(request: Request) {
         await answerCallbackQuery(cb.id, "Заявка не найдена");
         return NextResponse.json({ ok: true });
       }
-      const items = await fetchAdminOrderItems(order.id).catch(() => []);
       const openOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
-      const detail = buildAccountantDetail(order, items, openOrigin);
+      const detail = buildAccountantDetail(order, openOrigin);
       if (cb.message) {
         await sendMessage({ chatId: cb.message.chat.id, text: detail.text, replyMarkup: detail.replyMarkup });
       }
@@ -242,6 +243,18 @@ export async function POST(request: Request) {
       await refreshGroupCard(outcome.order);
     }
 
+    // Оплата/снятие оплаты нажата в ЛС бухгалтера — обновляем ЭТО же сообщение:
+    // «Оплачено» → «✅ №… — оплачено» (кнопка исчезает), «Снять оплату» → снова карточка с кнопкой.
+    if ((action === "paid" || action === "unpaid") && cb.message && outcome.order) {
+      const dm = buildAccountantDetail(outcome.order, origin);
+      await editMessageText({
+        chatId: cb.message.chat.id,
+        messageId: cb.message.message_id,
+        text: dm.text,
+        replyMarkup: dm.replyMarkup,
+      }).catch(() => undefined);
+    }
+
     // Подтверждение → реквизиты заказа бухгалтеру(ам) в ЛС (кнопка «Оплачено»)
     if (action === "confirm" && outcome.order) {
       await notifyAccountantsAwaitingPayment(outcome.order, origin).catch(() => undefined);
@@ -274,11 +287,12 @@ export async function POST(request: Request) {
         text: `Привет${name ? `, ${name}` : ""}!\nВаш Telegram ID: ${from.id}\n${roleLine}`,
         replyMarkup: withKeyboard ? accountantKeyboard() : undefined,
       });
-    } else if (isPrivate && isOrdersCommand(trimmed)) {
-      // Раздел «Заказы» — только бухгалтеру/админу и только в ЛС.
+    } else if (isPrivate && (isAwaitingCommand(trimmed) || isPaidCommand(trimmed))) {
+      // Разделы «Ждут оплаты» / «Оплаченные» — только бухгалтеру/админу и только в ЛС.
       if (role === "accountant" || role === "admin") {
-        const orders = await fetchAwaitingPaymentOrders();
-        const list = buildAwaitingPaymentList(orders);
+        const list = isPaidCommand(trimmed)
+          ? buildPaidList(await fetchPaidOrders())
+          : buildAwaitingPaymentList(await fetchAwaitingPaymentOrders());
         await sendMessage({ chatId: message.chat.id, text: list.text, replyMarkup: list.replyMarkup });
       } else {
         await sendMessage({ chatId: message.chat.id, text: "Доступа нет." });

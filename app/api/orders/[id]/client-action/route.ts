@@ -71,7 +71,13 @@ export async function POST(request: Request, { params }: ClientActionRouteProps)
     return NextResponse.json({ error: "Paid order requires manual handling" }, { status: 400 });
   }
 
-  if (order.status === "completed" || order.status === "canceled" || order.status === "cancelled") {
+  // После «Доставляется» (товар поехал/списан) клиент уже не может отменить/изменить сам.
+  if (
+    order.status === "delivering" ||
+    order.status === "completed" ||
+    order.status === "canceled" ||
+    order.status === "cancelled"
+  ) {
     return NextResponse.json({ error: "Order cannot be changed" }, { status: 400 });
   }
 

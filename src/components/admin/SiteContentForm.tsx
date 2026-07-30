@@ -22,7 +22,7 @@ const dayOptions = [
 ];
 
 const inputClassName =
-  "min-h-11 w-full rounded-btn border border-black/10 bg-cream px-3 py-2 text-sm font-medium text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25";
+  "min-h-11 w-full rounded-md border border-black/10 bg-cream px-3 py-2 text-sm font-medium text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25";
 
 export function SiteContentForm({ initialContent }: Props) {
   const [content, setContent] = useState(initialContent);

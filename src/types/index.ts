@@ -114,6 +114,10 @@ export type CreditState = {
   available: number;
   nextDueDate: string | null;
   status: ClientStatus;
+  /** Оценка пени за просрочку (оферта §11.2: 1%/день). Точная сумма — по акту сверки. */
+  penalty: number;
+  /** Ставка пени, % в день (для подписи в кабинете). */
+  penaltyRatePct: number;
 };
 
 export type Order = {

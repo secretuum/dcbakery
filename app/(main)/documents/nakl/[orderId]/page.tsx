@@ -248,6 +248,7 @@ export default async function NaklPage({ params, searchParams }: NaklPageProps) 
                 <div>
                   <p className="font-bold">Отпуск разрешил</p>
                   <p className="mt-8">Руководитель __________________ {otpuskRazreshil}</p>
+                  <p className="mt-6 font-semibold">М.П.</p>
                 </div>
                 <div>
                   <p className="font-bold">Главный бухгалтер</p>

@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import type { SiteContent } from "@/src/lib/site-content";
+import { siteText, type SiteContent } from "@/src/lib/site-content";
 
 // Режим «редактирование сайта» для суперадмина: включается тумблером
 // в Админке → Настройки (хранится в localStorage), после чего у редактируемых
@@ -48,20 +48,16 @@ export function useSiteEditFlag() {
   return useSyncExternalStore(subscribeSiteEditFlag, readSiteEditFlag, () => false);
 }
 
-type EditableField =
-  | "contactWhatsapp"
-  | "contactPhone"
-  | "address"
-  | "workHours"
-  | "heroTitle"
-  | "heroSubtitle"
-  | "aboutTitle"
-  | "aboutText";
+// Любой уникальный строковый id (не только фиксированные поля) — так редактируется
+// «любая деталь» сайта: обернул текст в <EditableText field="уникальный.id" ...>.
+type EditableField = string;
 
 type SiteEditContextValue = {
-  content: SiteContent;
+  content: Record<string, unknown>;
   editMode: boolean;
   save: (field: EditableField, value: string) => Promise<boolean>;
+  /** Сброс детали к первоначальному виду (убирает override). */
+  reset: (field: EditableField) => Promise<boolean>;
 };
 
 const SiteEditContext = createContext<SiteEditContextValue | null>(null);
@@ -76,15 +72,14 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
   const router = useRouter();
   // Режим включается в Админке → Настройки; здесь только читаем флаг из localStorage
   const editMode = useSiteEditFlag() && isSuperAdmin;
-  const [content, setContent] = useState(initialContent);
+  const [content, setContent] = useState<Record<string, unknown>>(initialContent);
   const [error, setError] = useState<string | null>(null);
 
   if (!isSuperAdmin) {
     return <>{children}</>;
   }
 
-  async function save(field: EditableField, value: string) {
-    const next = { ...content, [field]: value };
+  async function persist(next: Record<string, unknown>) {
     setError(null);
 
     try {
@@ -108,8 +103,20 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
     }
   }
 
+  async function save(field: EditableField, value: string) {
+    return persist({ ...content, [field]: value });
+  }
+
+  // Сброс к первоначальному виду: убираем override-ключ → значение возвращается
+  // к дефолту (defaultSiteContent) или к fallback-пропу компонента.
+  async function reset(field: EditableField) {
+    const next = { ...content };
+    delete next[field];
+    return persist(next);
+  }
+
   return (
-    <SiteEditContext.Provider value={{ content, editMode, save }}>
+    <SiteEditContext.Provider value={{ content, editMode, save, reset }}>
       {children}
 
       {editMode ? (
@@ -148,7 +155,9 @@ export function EditableText({ field, fallback, multiline = false, className }: 
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const value = ctx ? ctx.content[field] : fallback;
+  const value = ctx ? siteText(ctx.content, field, fallback) : fallback;
+  const hasStored =
+    !!ctx && typeof ctx.content[field] === "string" && (ctx.content[field] as string).trim().length > 0;
 
   if (!ctx || !ctx.editMode) {
     return <span className={className} style={{ whiteSpace: "pre-line" }}>{value}</span>;
@@ -164,23 +173,42 @@ export function EditableText({ field, fallback, multiline = false, className }: 
     }
   }
 
+  async function handleReset() {
+    if (!ctx) return;
+    setSaving(true);
+    const ok = await ctx.reset(field);
+    setSaving(false);
+    if (ok) {
+      setOpen(false);
+    }
+  }
+
+  // Слой редактирования НЕ меняет раскладку: тот же inline-поток, что и обычный
+  // текст (без inline-block и абсолютного карандаша, которые сдвигали текст в
+  // скруглённых блоках). Подсветка — через outline (рисуется снаружи, не двигает
+  // содержимое). Клик по самому тексту открывает редактор.
   return (
-    <span className={`relative inline-block outline-dashed outline-1 outline-coral/60 ${className ?? ""}`}>
-      <span style={{ whiteSpace: "pre-line" }}>{value}</span>
-      <button
-        type="button"
-        aria-label="Редактировать"
-        onClick={() => {
-          setDraft(value);
-          setOpen(true);
-        }}
-        className="absolute -right-3 -top-3 z-10 flex size-6 items-center justify-center rounded-full border border-coral bg-white text-xs text-coral shadow hover:bg-coral hover:text-white"
-      >
-        ✎
-      </button>
+    <span
+      role="button"
+      tabIndex={0}
+      title="Редактировать"
+      onClick={(event) => {
+        // Текст может быть внутри <Link>/<button> — гасим переход/сабмит.
+        event.preventDefault();
+        event.stopPropagation();
+        setDraft(value);
+        setOpen(true);
+      }}
+      className={`relative cursor-text rounded-[3px] outline outline-1 outline-dashed outline-coral/60 transition hover:outline-coral hover:outline-offset-1 ${className ?? ""}`}
+      style={{ whiteSpace: "pre-line" }}
+    >
+      {value}
 
       {open ? (
-        <span className="absolute left-0 top-full z-50 mt-2 block w-72 max-w-[80vw] border border-black/15 bg-white p-3 text-left shadow-xl sm:w-96">
+        <span
+          onClick={(event) => event.stopPropagation()}
+          className="absolute left-0 top-full z-50 mt-2 block w-72 max-w-[80vw] cursor-auto rounded-md border border-black/15 bg-white p-3 text-left text-base font-normal normal-case leading-normal tracking-normal text-dark shadow-xl sm:w-96"
+        >
           {multiline ? (
             <textarea
               className="min-h-28 w-full border border-black/10 bg-cream px-3 py-2 text-sm font-medium text-dark outline-none focus:border-coral"
@@ -212,6 +240,17 @@ export function EditableText({ field, fallback, multiline = false, className }: 
             >
               Отмена
             </button>
+            {hasStored ? (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={handleReset}
+                title="Вернуть первоначальный вид"
+                className="ml-auto self-center text-xs font-semibold text-muted underline-offset-2 transition hover:text-burgundy hover:underline disabled:opacity-50"
+              >
+                Сбросить
+              </button>
+            ) : null}
           </span>
         </span>
       ) : null}

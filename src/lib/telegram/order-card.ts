@@ -18,14 +18,25 @@ function buttonsForStatus(status: OrderStatus): CardButton[] {
       ];
     case "confirmed_waiting_payment":
     case "overdue":
-      // Оплату отмечает бухгалтер — в ЛС или в разделе «Заказы», не в общем чате.
-      // Менеджеру в чате оставляем только отмену.
-      return [{ text: "✖️ Отменить", action: "cancel" }];
+      // Статус НЕ зависит от оплаты (консигнация): после подтверждения менеджер
+      // сразу берёт заказ в работу. Оплату отмечает бухгалтер отдельной осью
+      // (кнопка «Оплачено» в ЛС/«Заказы»), она не блокирует движение заказа.
+      return [
+        { text: "🏭 В работу", action: "work" },
+        { text: "✖️ Отменить", action: "cancel" },
+      ];
     case "paid":
+      // Легаси: заказы, отмеченные оплаченными по старой модели (status=paid).
+      // Новые заказы сюда не попадают (оплата теперь только payment_status).
       return [{ text: "🏭 В работу", action: "work" }];
     case "in_progress":
-      return [{ text: "🚚 Доставляется", action: "deliver" }];
+      // Отменить можно до отгрузки; после «Доставляется» — только вручную.
+      return [
+        { text: "🚚 Доставляется", action: "deliver" },
+        { text: "✖️ Отменить", action: "cancel" },
+      ];
     case "delivering":
+      // «Выполнен» сработает только после отметки оплаты (проверка на сервере).
       return [{ text: "✔️ Выполнен", action: "done" }];
     default:
       return [];
@@ -47,9 +58,7 @@ export function buildOrderCard(order: Order, items: OrderItem[]) {
   const text = [
     `🧾 Заявка ${order.order_number}`,
     `Статус: ${orderStatusLabels[order.status] ?? order.status}`,
-    order.status === "confirmed_waiting_payment" || order.status === "overdue"
-      ? "⏳ оплату проверяет бухгалтер"
-      : null,
+    order.payment_status === "paid" ? "💰 Оплачено" : "⏳ Ожидает оплаты",
     `Компания: ${order.company_name}`,
     `Контакт: ${order.customer_name} / ${order.customer_phone}`,
     order.delivery_date

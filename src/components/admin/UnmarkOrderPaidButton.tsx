@@ -21,8 +21,12 @@ export function UnmarkOrderPaidButton({
   const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  // Снять можно, только пока заказ не ушёл дальше «оплачен»
-  const canUnmark = paymentStatus === "paid" && status === "paid";
+  // Снять отметку оплаты можно, пока заказ не завершён/не отменён (оплата — отдельная ось).
+  const canUnmark =
+    paymentStatus === "paid" &&
+    status !== "completed" &&
+    status !== "canceled" &&
+    status !== "cancelled";
 
   async function handleUnmark() {
     setIsSaving(true);

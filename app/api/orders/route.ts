@@ -309,7 +309,9 @@ export async function POST(request: Request) {
     company_name: body.company_name ?? "",
     customer_bin: body.customer_bin || null,
     customer_name: body.customer_name ?? "",
-    customer_phone: body.customer_phone ?? "",
+    // Храним номер в нормализованном виде (+7XXXXXXXXXX) — чтобы кабинет находил
+    // заказ по телефону, а не по человекочитаемой строке с пробелами/скобками.
+    customer_phone: normalizedPhone ?? body.customer_phone ?? "",
     customer_email: body.customer_email || null,
     delivery_address: body.delivery_address || null,
     delivery_date: body.delivery_date || null,

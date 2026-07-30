@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { InstagramIcon, WhatsAppIcon } from "@/src/components/ui/BrandIcons";
 import { formatDeliveryDaysLabel, getSiteContent } from "@/src/lib/site-content";
+import { EditableText } from "@/src/components/home/SiteEditMode";
 import { getT } from "@/src/i18n/server";
 
 // Единый блок контактов сайта (дубль на главной удалён — контакты живут здесь).
@@ -62,9 +63,13 @@ export async function Footer() {
             </span>
           </Link>
           <p className="mt-5 max-w-md text-sm leading-6 text-white/70">
-            {t(
-              "B2B-каталог десертов, полуфабрикатов и мясных позиций для кофеен, ресторанов, магазинов и отелей.",
-            )}
+            <EditableText
+              field="footer.tagline"
+              multiline
+              fallback={t(
+                "B2B-каталог десертов, полуфабрикатов и мясных позиций для кофеен, ресторанов, магазинов и отелей.",
+              )}
+            />
           </p>
         </div>
 

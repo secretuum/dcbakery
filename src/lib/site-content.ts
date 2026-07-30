@@ -24,6 +24,16 @@ export type SiteContent = {
 
 export const SITE_CONTENT_KEY = "site_content";
 
+/** Лимиты произвольных override-ключей (защита от разрастания JSON). */
+export const MAX_OVERRIDE_KEYS = 800;
+export const MAX_OVERRIDE_VALUE_LENGTH = 5000;
+
+/** Значение редактируемого текста по id: сохранённый override или запасной текст. */
+export function siteText(content: Record<string, unknown>, id: string, fallback: string): string {
+  const value = content[id];
+  return typeof value === "string" && value.trim() ? value : fallback;
+}
+
 export const defaultSiteContent: SiteContent = {
   contactWhatsapp: "+7 747 727 2650",
   contactPhone: "+7 747 694 0766",
@@ -85,6 +95,25 @@ function sanitize(raw: unknown): Partial<SiteContent> {
   const cutoff = Number(value.orderCutoffHour);
   if (Number.isInteger(cutoff) && cutoff >= 0 && cutoff <= 23) {
     result.orderCutoffHour = cutoff;
+  }
+
+  // Произвольные строковые ключи (любая деталь сайта, обёрнутая в EditableText
+  // с уникальным id). Типизированные поля и числовые настройки выше уже учтены.
+  const RESERVED = new Set<string>([
+    "contactWhatsapp", "contactPhone", "address", "workHours",
+    "heroTitle", "heroSubtitle", "aboutTitle", "aboutText",
+    "deliveryDays", "orderCutoffHour",
+    "__proto__", "constructor", "prototype",
+  ]);
+  const extra = result as Record<string, string>;
+  let extraCount = 0;
+  for (const key of Object.keys(value)) {
+    if (RESERVED.has(key) || extraCount >= MAX_OVERRIDE_KEYS) continue;
+    const v = value[key];
+    if (typeof v === "string" && v.trim() && v.length <= MAX_OVERRIDE_VALUE_LENGTH) {
+      extra[key] = v.trim();
+      extraCount++;
+    }
   }
 
   return result;

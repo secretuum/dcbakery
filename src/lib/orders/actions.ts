@@ -207,10 +207,10 @@ export async function markPaid(
   if (!order) {
     return { ok: false, status: 404, error: "Order not found" };
   }
-  if (order.status === "paid" || order.payment_status === "paid") {
+  if (order.payment_status === "paid") {
     return { ok: true, order, managerMessageId: null, noop: true };
   }
-  if (order.status === "canceled" || order.status === "completed") {
+  if (order.status === "canceled" || order.status === "cancelled") {
     return { ok: false, status: 400, error: "Order cannot be marked as paid" };
   }
 
@@ -252,13 +252,6 @@ export async function unmarkPaid(
   }
   if (order.payment_status !== "paid") {
     return { ok: false, status: 400, error: "Заказ не отмечен оплаченным" };
-  }
-  if (order.status !== "paid") {
-    return {
-      ok: false,
-      status: 400,
-      error: "Заказ уже в работе или завершён — сначала верните его статус, затем снимайте оплату",
-    };
   }
 
   const updatedOrder = await unmarkOrderPaid(order);
@@ -305,10 +298,12 @@ export async function changeStatus(
     return { ok: false, status: 404, error: "Order not found" };
   }
 
-  const order =
-    status === "paid"
-      ? await markOrderPaid(id)
-      : await updateAdminOrderStatus(id, status as OrderStatus);
+  // Завершить заказ можно только после подтверждения оплаты (оплата — отдельная ось).
+  if (status === "completed" && previousOrder.payment_status !== "paid") {
+    return { ok: false, status: 400, error: "Нельзя завершить неоплаченный заказ" };
+  }
+
+  const order = await updateAdminOrderStatus(id, status as OrderStatus);
   const managerMessageId = order
     ? await refreshManagerMessage(order, previousOrder.whatsapp_message_id)
     : null;
@@ -343,7 +338,14 @@ export async function cancelOrderAction(
   if (order.payment_status === "paid" || order.status === "paid") {
     return { ok: false, status: 400, error: "Paid order requires manual refund handling" };
   }
-  if (order.status === "completed" || order.status === "canceled" || order.status === "cancelled") {
+  // Отменять можно до отгрузки: как только заказ «доставляется» (товар списан/поехал),
+  // отмена только вручную.
+  if (
+    order.status === "delivering" ||
+    order.status === "completed" ||
+    order.status === "canceled" ||
+    order.status === "cancelled"
+  ) {
     return { ok: false, status: 400, error: "Order cannot be canceled" };
   }
 

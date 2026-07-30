@@ -9,6 +9,8 @@ import { Input } from "@/src/components/ui/Input";
 import { isValidBin } from "@/src/lib/bin";
 import { isValidKzMobile } from "@/src/lib/phone";
 import { clientOrderStatusLabels, creditStatusLabels, orderStatusLabels } from "@/src/lib/order-status";
+import { HomeReward } from "@/src/components/home/HomeReward";
+import { weeklyPromoCollected } from "@/src/lib/promo";
 import { useCart } from "@/src/contexts/CartContext";
 import { useT } from "@/src/i18n/client";
 import type { ClientOrderSummary, CreditState, OrderItemSummary, Product } from "@/src/types";
@@ -239,7 +241,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       return;
     }
 
-    if (!isValidBin(regBin)) {
+    if (regBin.trim() && !isValidBin(regBin)) {
       setClientError(t("БИН/ИИН указан неверно — проверьте 12 цифр"));
       return;
     }
@@ -980,6 +982,11 @@ function CreditBlock({ state }: { state: CreditState }) {
               Просрочка {state.overdueDays} дн · {formatCurrency(state.overdue)}
             </p>
           ) : null}
+          {state.penalty > 0 ? (
+            <p className="mt-1 text-[11px] text-muted">
+              {t("Пеня")} {state.penaltyRatePct}%/{t("день")} · ~{formatCurrency(state.penalty)}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -992,6 +999,15 @@ function CreditBlock({ state }: { state: CreditState }) {
           <span>
             <b className="font-semibold">{t("Просрочка ${days} дн.", { days: state.overdueDays })}</b>{" "}
             Отгрузки приостановлены до погашения {formatCurrency(state.overdue)}.
+            {state.penalty > 0 ? (
+              <>
+                {" "}
+                {t("Начисляется пеня ${rate}%/день (оферта §11.2), ориентировочно ${sum}; точная сумма — по акту сверки.", {
+                  rate: state.penaltyRatePct,
+                  sum: formatCurrency(state.penalty),
+                })}
+              </>
+            ) : null}
           </span>
         </div>
       ) : null}
@@ -1045,7 +1061,7 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const canCancel =
     order.payment_status !== "paid" &&
-    !["paid", "completed", "canceled", "cancelled"].includes(order.status);
+    !["delivering", "paid", "completed", "canceled", "cancelled"].includes(order.status);
   const canAcceptRevision = order.status === "change_proposed";
   const showDocs = !["pending_manager_confirmation", "change_proposed", "canceled", "cancelled"].includes(order.status);
 
@@ -1438,6 +1454,8 @@ function ClientDashboard({
   const [creditState, setCreditState] = useState<CreditState | null>(null);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [orders, setOrders] = useState<ClientOrderSummary[]>([]);
+  // Момент захода фиксируем один раз (граница недели акции) — без Date.now() в рендере.
+  const [nowMs] = useState(() => Date.now());
   const [ordersError, setOrdersError] = useState("");
   const [ordersTab, setOrdersTab] = useState<"active" | "all">("active");
   const [saved, setSaved] = useState(false);
@@ -1624,6 +1642,9 @@ function ClientDashboard({
           {creditState ? (
             <CreditBlock state={creditState} />
           ) : null}
+
+          {/* Промо «5 десертов» — прогресс считается по заказам текущей недели (0, если заказов нет) */}
+          <HomeReward collected={weeklyPromoCollected(orders, nowMs)} />
 
           {/* Orders */}
           <div className="space-y-3">

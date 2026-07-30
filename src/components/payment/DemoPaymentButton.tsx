@@ -47,7 +47,7 @@ export function DemoPaymentButton({ orderId, paymentToken }: DemoPaymentButtonPr
         <label>
           <span className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Номер карты</span>
           <input
-            className="mt-1 min-h-12 w-full rounded-btn border border-black/10 bg-white px-4 font-data font-semibold outline-none focus:border-coral"
+            className="mt-1 min-h-12 w-full rounded-md border border-black/10 bg-white px-4 font-data font-semibold outline-none focus:border-coral"
             inputMode="numeric"
             value={cardNumber}
             onChange={(event) => setCardNumber(event.currentTarget.value)}
@@ -57,7 +57,7 @@ export function DemoPaymentButton({ orderId, paymentToken }: DemoPaymentButtonPr
           <label>
             <span className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Срок</span>
             <input
-              className="mt-1 min-h-12 w-full rounded-btn border border-black/10 bg-white px-4 font-data font-semibold outline-none focus:border-coral"
+              className="mt-1 min-h-12 w-full rounded-md border border-black/10 bg-white px-4 font-data font-semibold outline-none focus:border-coral"
               value={expiry}
               onChange={(event) => setExpiry(event.currentTarget.value)}
             />
@@ -65,7 +65,7 @@ export function DemoPaymentButton({ orderId, paymentToken }: DemoPaymentButtonPr
           <label>
             <span className="text-xs font-semibold uppercase tracking-[.08em] text-muted">CVC</span>
             <input
-              className="mt-1 min-h-12 w-full rounded-btn border border-black/10 bg-white px-4 font-data font-semibold outline-none focus:border-coral"
+              className="mt-1 min-h-12 w-full rounded-md border border-black/10 bg-white px-4 font-data font-semibold outline-none focus:border-coral"
               inputMode="numeric"
               value={cvc}
               onChange={(event) => setCvc(event.currentTarget.value)}

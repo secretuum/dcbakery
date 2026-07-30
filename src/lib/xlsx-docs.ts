@@ -294,25 +294,33 @@ export async function buildNaklWorkbook(
     setCell(ws, `A${row}`, company.taxNote, { size: 9 });
     row += 3;
 
+    // Подписи. Метки — в объединённой ячейке A:B (в одиночной колонке A шириной 5
+    // текст обрезался). Место печати — слева, под строкой «Отпуск разрешил»; справа
+    // М.П. не дублируем.
+    ws.mergeCells(`A${row}:B${row}`);
     setCell(ws, `A${row}`, "Отпуск разрешил:", { bold: true });
-    ws.mergeCells(`B${row}:D${row}`);
-    setCell(ws, `B${row}`, `Руководитель ____________________ ${company.directorName}`, { wrap: true });
-    ws.mergeCells(`F${row}:H${row}`);
-    setCell(ws, `F${row}`, "М.П.", { align: "right" });
+    ws.mergeCells(`C${row}:H${row}`);
+    setCell(ws, `C${row}`, `Руководитель ____________________ ${company.directorName}`, { wrap: true });
+    row += 1;
+    ws.mergeCells(`A${row}:B${row}`);
+    setCell(ws, `A${row}`, "М.П.", { align: "left" });
     row += 2;
+    ws.mergeCells(`A${row}:B${row}`);
     setCell(ws, `A${row}`, "Главный бухгалтер:", { bold: true });
-    ws.mergeCells(`B${row}:D${row}`);
-    setCell(ws, `B${row}`, `____________________ ${chiefAccountant}`);
+    ws.mergeCells(`C${row}:H${row}`);
+    setCell(ws, `C${row}`, `____________________ ${chiefAccountant}`);
     row += 2;
+    ws.mergeCells(`A${row}:B${row}`);
     setCell(ws, `A${row}`, "Отпустил:", { bold: true });
-    ws.mergeCells(`B${row}:D${row}`);
-    setCell(ws, `B${row}`, `____________________ ${supplyResponsible}`);
+    ws.mergeCells(`C${row}:H${row}`);
+    setCell(ws, `C${row}`, `____________________ ${supplyResponsible}`);
     row += 2;
+    ws.mergeCells(`A${row}:B${row}`);
     setCell(ws, `A${row}`, "Получил:", { bold: true });
-    ws.mergeCells(`B${row}:F${row}`);
+    ws.mergeCells(`C${row}:H${row}`);
     setCell(
       ws,
-      `B${row}`,
+      `C${row}`,
       `по доверенности № ______ от __________  ____________________ ${order.customer_name} (${order.company_name})`,
       { wrap: true },
     );

@@ -2,20 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { getSiteContent } from "@/src/lib/site-content";
-import { getHomeLayout } from "@/src/lib/home-layout.server";
 import { getIsSuperAdmin } from "@/src/lib/superadmin";
 import { getT } from "@/src/i18n/server";
-import { promotions } from "@/src/data/promotions";
 import { RETAIL_SITE_URL } from "@/app/constants";
 import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
-import { PromoSection } from "@/src/components/home/PromoSection";
 import { HomeCatBar } from "@/src/components/home/HomeCatBar";
 import { HomeReward } from "@/src/components/home/HomeReward";
 import { HomePopularPosters } from "@/src/components/home/HomePopularPosters";
 import { HomeCategoryCards } from "@/src/components/home/HomeCategoryCards";
 import { HomeDelivery } from "@/src/components/home/HomeDelivery";
 import { EditableText, SiteEditProvider } from "@/src/components/home/SiteEditMode";
-import { HomeBuilder, EnableBuilderGate } from "@/src/components/home/HomeBuilder";
 import { JsonLd } from "@/src/components/seo/JsonLd";
 import { SITE_URL } from "@/src/lib/site-url";
 
@@ -45,31 +41,13 @@ const stats = [
 ];
 
 export default async function Home() {
-  const [categories, allProducts, content, layout, isSuperAdmin, t] = await Promise.all([
+  const [categories, allProducts, content, isSuperAdmin, t] = await Promise.all([
     fetchCategories(),
     fetchProducts(),
     getSiteContent(),
-    getHomeLayout(),
     getIsSuperAdmin(),
     getT(),
   ]);
-
-  // Конструктор включён и есть что показывать → рендерим сетку вместо классической главной.
-  if (layout.enabled && layout.sections.length > 0) {
-    return (
-      <>
-        <JsonLd data={organizationJsonLd} />
-        <HomeBuilder
-          isSuperAdmin={isSuperAdmin}
-          initialLayout={layout}
-          bands={{
-            promos: <PromoSection promotions={promotions} />,
-            catalog: <HomeCatalogTabs categories={categories} products={allProducts} />,
-          }}
-        />
-      </>
-    );
-  }
 
   const categoryCounts = allProducts.reduce<Record<string, number>>((acc, p) => {
     acc[p.category_id] = (acc[p.category_id] ?? 0) + 1;
@@ -109,7 +87,7 @@ export default async function Home() {
               <div className="relative z-[2] max-w-[640px]">
                 <span className="inline-flex h-[34px] items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3.5 text-xs font-semibold text-accent-700 backdrop-blur-md">
                   <span className="size-[7px] rounded-full bg-coral" />
-                  {t("B2B-поставки · Алматы")}
+                  <EditableText field="home.hero.badge" fallback={t("B2B-поставки · Алматы")} />
                 </span>
                 <h1 className="mt-5 font-display text-[clamp(38px,7.4vw,72px)] font-extrabold leading-[0.98] tracking-[-0.035em]" style={{ whiteSpace: "pre-line" }}>
                   <EditableText field="heroTitle" fallback={t(content.heroTitle)} multiline />
@@ -120,18 +98,18 @@ export default async function Home() {
                 <div className="mt-7 flex flex-wrap gap-3">
                   <Link href="/catalog"
                     className="inline-flex min-h-14 items-center gap-2 rounded-full bg-coral px-[30px] text-[17px] font-semibold text-white shadow-accent transition hover:bg-coral-hover active:scale-[.98]">
-                    {t("Открыть каталог")}
+                    <EditableText field="home.hero.ctaPrimary" fallback={t("Открыть каталог")} />
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                   </Link>
                   <Link href="/profile"
                     className="inline-flex min-h-14 items-center rounded-full border border-black/15 bg-white px-[30px] text-[17px] font-semibold text-dark transition hover:border-coral hover:text-coral">
-                    {t("Стать партнёром")}
+                    <EditableText field="home.hero.ctaSecondary" fallback={t("Стать партнёром")} />
                   </Link>
                 </div>
                 <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted">
-                  <span>{t("Нужен один торт или коробка пирожных?")}</span>
+                  <span><EditableText field="home.hero.retailPrompt" fallback={t("Нужен один торт или коробка пирожных?")} /></span>
                   <a href={RETAIL_SITE_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-coral hover:underline">
-                    {t("Заказать в розницу →")}
+                    <EditableText field="home.hero.retailLink" fallback={t("Заказать в розницу →")} />
                   </a>
                 </div>
               </div>
@@ -167,8 +145,8 @@ export default async function Home() {
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/products/pelmeni-s-govyadinoy.webp" alt="" className="size-10 rounded-full object-cover" />
                   <span className="leading-tight">
-                    <b className="block text-sm font-bold text-dark">{t("53 позиции")}</b>
-                    <span className="block text-[11px] text-muted">{t("десерты · полуфабрикаты · мясо")}</span>
+                    <b className="block text-sm font-bold text-dark"><EditableText field="home.hero.tagCount" fallback={t("53 позиции")} /></b>
+                    <span className="block text-[11px] text-muted"><EditableText field="home.hero.tagKinds" fallback={t("десерты · полуфабрикаты · мясо")} /></span>
                   </span>
                 </div>
               </div>
@@ -176,10 +154,10 @@ export default async function Home() {
 
             {/* Показатели — стеклянные */}
             <div className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-black/10 shadow-md sm:grid-cols-4 lg:mt-14">
-              {stats.map((stat) => (
+              {stats.map((stat, i) => (
                 <div key={stat.value} className="bg-white/90 px-4 py-5 text-center backdrop-blur-md sm:px-5 sm:py-6">
                   <b className="block font-display text-[clamp(24px,3.6vw,36px)] font-extrabold leading-none tracking-[-0.03em] text-coral">{t(stat.value)}</b>
-                  <span className="mt-2 block text-xs leading-tight text-muted" style={{ whiteSpace: "pre-line" }}>{t(stat.label)}</span>
+                  <span className="mt-2 block text-xs leading-tight text-muted" style={{ whiteSpace: "pre-line" }}><EditableText field={`home.hero.stat${i}Label`} fallback={t(stat.label)} multiline /></span>
                 </div>
               ))}
             </div>
@@ -208,7 +186,7 @@ export default async function Home() {
         <section id="about" className="bg-cream px-5 py-16 lg:px-8 lg:py-24">
           <div className="mx-auto grid max-w-7xl gap-8 rounded-3xl bg-white p-8 shadow-sm lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-14 lg:p-14">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[.12em] text-coral">{t("О компании")}</p>
+              <p className="text-[10px] font-bold uppercase tracking-[.12em] text-coral"><EditableText field="home.about.eyebrow" fallback={t("О компании")} /></p>
               <h2 className="mt-3 font-display text-2xl font-extrabold tracking-tight lg:text-3xl">
                 <EditableText field="aboutTitle" fallback={t(content.aboutTitle)} />
               </h2>
@@ -221,24 +199,24 @@ export default async function Home() {
                   "Натуральные ингредиенты без консервантов",
                   "Доставка 98% заказов вовремя",
                   "Личный менеджер для каждого партнёра",
-                ].map((item) => (
+                ].map((item, i) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm font-medium text-dark">
                     <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-coral" />
-                    {t(item)}
+                    <EditableText field={`home.about.feat${i}`} fallback={t(item)} />
                   </li>
                 ))}
               </ul>
               <div className="mt-6 flex flex-wrap gap-2">
-                {["Собственное производство", "Пекарня полного цикла", "Халал"].map((chip) => (
+                {["Собственное производство", "Пекарня полного цикла", "Халал"].map((chip, i) => (
                   <span key={chip} className="rounded-full bg-cream-deep px-3.5 py-2 text-xs font-semibold text-ink-soft">
-                    {t(chip)}
+                    <EditableText field={`home.about.chip${i}`} fallback={t(chip)} />
                   </span>
                 ))}
               </div>
               <div className="mt-8">
                 <Link href="/profile"
                   className="inline-flex min-h-12 items-center rounded-full bg-espresso px-6 text-[15px] font-semibold text-white transition hover:bg-espresso/90 active:scale-[.98]">
-                  {t("Стать партнёром")}
+                  <EditableText field="home.about.cta" fallback={t("Стать партнёром")} />
                 </Link>
               </div>
             </div>
@@ -265,26 +243,25 @@ export default async function Home() {
         <section className="px-5 pb-16 lg:px-8 lg:pb-24">
           <div className="mx-auto max-w-7xl overflow-hidden rounded-3xl bg-coral px-8 py-14 text-center text-white lg:py-20">
             <h2 className="mx-auto max-w-2xl font-display text-3xl font-extrabold leading-tight tracking-tight lg:text-4xl">
-              {t("Соберите первую оптовую заявку")}
+              <EditableText field="home.cta.title" fallback={t("Соберите первую оптовую заявку")} />
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-white/85">
-              {t("Оптовые цены, живые остатки и доступный лимит — всё в одном кабинете.")}
+              <EditableText field="home.cta.subtitle" fallback={t("Оптовые цены, живые остатки и доступный лимит — всё в одном кабинете.")} multiline />
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link href="/catalog"
                 className="inline-flex min-h-12 items-center rounded-full bg-white px-6 text-[15px] font-semibold text-coral shadow-sm transition hover:bg-white/90 active:scale-[.98]">
-                {t("Открыть каталог")}
+                <EditableText field="home.cta.primary" fallback={t("Открыть каталог")} />
               </Link>
               <Link href="/profile"
                 className="inline-flex min-h-12 items-center rounded-full border border-white/25 bg-white/10 px-6 text-[15px] font-semibold text-white transition hover:bg-white/20 active:scale-[.98]">
-                {t("Стать партнёром")}
+                <EditableText field="home.cta.secondary" fallback={t("Стать партнёром")} />
               </Link>
             </div>
           </div>
         </section>
 
       </main>
-      <EnableBuilderGate isSuperAdmin={isSuperAdmin} />
     </SiteEditProvider>
   );
 }

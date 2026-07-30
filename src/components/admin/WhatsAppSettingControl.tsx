@@ -79,7 +79,7 @@ export function WhatsAppSettingControl({
 
         <div className="flex flex-wrap items-center gap-3">
           <select
-            className="min-h-11 rounded-btn border border-black/10 bg-cream px-4 py-2 text-sm font-semibold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
+            className="min-h-11 rounded-md border border-black/10 bg-cream px-4 py-2 text-sm font-semibold text-dark outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/25"
             value={enabled ? "true" : "false"}
             onChange={(event) => {
               setEnabled(event.currentTarget.value === "true");

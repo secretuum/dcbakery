@@ -636,6 +636,18 @@ export async function fetchClientOrderSummaries({
     throw new Error("Invalid phone format");
   }
 
+  // Заказ с сайта привязывается к клиенту через client_id. Резолвим id по телефону
+  // или почте и матчим заказы по client_id — это надёжнее текстового сравнения
+  // телефона (форматы могут отличаться). Плюс оставляем совпадение по email/phone
+  // как запасное (для заказов без client_id).
+  let clientId: string | null = null;
+  if (phone) {
+    clientId = (await fetchClientByPhone(phone).catch(() => null))?.id ?? null;
+  }
+  if (!clientId && email) {
+    clientId = (await fetchClientByEmail(email).catch(() => null))?.id ?? null;
+  }
+
   const params = new URLSearchParams({
     select:
       "id,order_number,company_name,status,payment_status,revision_note,total_amount,delivery_amount,delivery_date,due_date,created_at,order_items(id,product_name,unit,qty,price,total_amount)",
@@ -644,21 +656,22 @@ export async function fetchClientOrderSummaries({
   });
   const filters: string[] = [];
 
+  if (clientId) {
+    filters.push(`client_id.eq.${clientId}`);
+  }
   if (email) {
     filters.push(`customer_email.eq.${email}`);
   }
-
   if (phone) {
     filters.push(`customer_phone.eq.${phone}`);
   }
 
-  if (filters.length > 1) {
-    params.set("or", `(${filters.join(",")})`);
-  } else if (email) {
-    params.set("customer_email", `eq.${email}`);
-  } else if (phone) {
-    params.set("customer_phone", `eq.${phone}`);
+  if (filters.length === 0) {
+    return [];
   }
+
+  // PostgREST: несколько условий — через or(...); одно — тоже допустимо в or().
+  params.set("or", `(${filters.join(",")})`);
 
   return supabaseGet<ClientOrderSummary[]>("orders", params.toString());
 }
@@ -904,10 +917,12 @@ export async function markOrderPaid(orderId: string) {
     id: `eq.${orderId}`,
     payment_status: "neq.paid",
   });
+  // Оплата — отдельная ось от статуса заказа (консигнация: доставка возможна до
+  // оплаты). Отмечаем только payment_status/paid_at, статус НЕ трогаем, чтобы не
+  // сбрасывать прогресс (в работе/доставляется).
   const [order] = await supabasePatch<Order[]>("orders", params.toString(), {
     paid_at: new Date().toISOString(),
     payment_status: "paid",
-    status: "paid",
   });
 
   return order ?? null;

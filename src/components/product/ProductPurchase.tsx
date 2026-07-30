@@ -66,7 +66,7 @@ export function ProductPurchase({ product }: ProductPurchaseProps) {
         value={qty}
       />
 
-      <div className="mt-5 flex items-end justify-between gap-4 rounded-btn border border-black/5 bg-cream px-4 py-3">
+      <div className="mt-5 flex items-end justify-between gap-4 rounded-lg border border-black/5 bg-cream px-4 py-3">
         <span className="text-sm font-semibold text-muted">{t("Итого")}</span>
         <span className="font-data text-xl font-semibold text-coral">{totalText}</span>
       </div>

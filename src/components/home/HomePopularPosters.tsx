@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
+import { EditableText } from "@/src/components/home/SiteEditMode";
 import { formatPrice } from "@/src/lib/format";
 import { useT } from "@/src/i18n/client";
 
@@ -36,10 +37,10 @@ export function HomePopularPosters({ products }: Props) {
         <div className="mb-6 flex flex-col gap-3 md:mb-8 md:flex-row md:items-end md:justify-between md:gap-6">
           <div className="min-w-0">
             <span className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-coral">
-              {t("Популярное")}
+              <EditableText field="home.posters.eyebrow" fallback={t("Популярное")} />
             </span>
             <h2 className="font-display text-[clamp(24px,3vw,34px)] font-bold leading-[1.15] tracking-[-0.02em] text-dark">
-              {t("Часто берут партнёры")}
+              <EditableText field="home.posters.title" fallback={t("Часто берут партнёры")} />
             </h2>
           </div>
           <div className="flex-shrink-0">
@@ -47,7 +48,7 @@ export function HomePopularPosters({ products }: Props) {
               href="/catalog"
               className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-[13.5px] font-semibold text-dark transition-colors hover:bg-cream-deep"
             >
-              {t("Смотреть все")}
+              <EditableText field="home.posters.viewAll" fallback={t("Смотреть все")} />
             </Link>
           </div>
         </div>

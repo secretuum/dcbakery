@@ -49,9 +49,9 @@ export async function unmarkOrderPaid(order: Order): Promise<Order | null> {
       Prefer: "return=representation",
     },
     body: JSON.stringify({
+      // Снимаем только оплату; статус заказа не меняем (оплата — отдельная ось).
       paid_at: null,
       payment_status: restoredPaymentStatus,
-      status: "confirmed_waiting_payment",
     }),
     cache: "no-store",
   });

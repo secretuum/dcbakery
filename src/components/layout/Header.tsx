@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/src/contexts/CartContext";
 import { LanguageSwitcher } from "@/src/components/layout/LanguageSwitcher";
+import { EditableText } from "@/src/components/home/SiteEditMode";
 import { useT } from "@/src/i18n/client";
 
 const navItems = [
@@ -69,10 +70,10 @@ export function Header() {
           <Image src="/brand/dc-bakery_icon_1.png" alt="" width={40} height={40} priority className="size-9 object-contain" />
           <span className="flex flex-col leading-none">
             <span className="font-display text-[15px] font-extrabold uppercase tracking-[.13em] text-dark lg:text-[17px]">
-              DC BAKERY
+              <EditableText field="brand.wordmark" fallback="DC BAKERY" />
             </span>
             <span className="mt-0.5 text-[9px] font-semibold uppercase tracking-[.16em] text-coral">
-              by del Cappuccino
+              <EditableText field="brand.sub" fallback="by del Cappuccino" />
             </span>
           </span>
         </Link>

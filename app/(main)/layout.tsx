@@ -2,10 +2,17 @@ import { CartBottomBarClient } from "@/src/components/cart/CartBottomBarClient";
 import { Footer } from "@/src/components/layout/Footer";
 import { Header } from "@/src/components/layout/Header";
 import { BottomNav } from "@/src/components/layout/BottomNav";
+import { SiteEditProvider } from "@/src/components/home/SiteEditMode";
+import { getSiteContent } from "@/src/lib/site-content";
+import { getIsSuperAdmin } from "@/src/lib/superadmin";
 
-export default function MainLayout({ children }: { children: React.ReactNode }) {
+export default async function MainLayout({ children }: { children: React.ReactNode }) {
+  // Один провайдер редактирования на весь сайт: карандашики суперадмина работают
+  // в шапке, подвале и на любой странице (для обычных гостей — просто дети без оверхеда).
+  const [content, isSuperAdmin] = await Promise.all([getSiteContent(), getIsSuperAdmin()]);
+
   return (
-    <>
+    <SiteEditProvider isSuperAdmin={isSuperAdmin} content={content}>
       <Header />
       <div className="flex-1">{children}</div>
       <Footer />
@@ -16,6 +23,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       </a>
       <CartBottomBarClient />
       <BottomNav />
-    </>
+    </SiteEditProvider>
   );
 }

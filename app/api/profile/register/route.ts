@@ -109,7 +109,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Укажите название компании" }, { status: 422 });
   }
 
-  if (!isValidBin(customerBin)) {
+  // БИН/ИИН необязателен: проверяем формат только если клиент его указал.
+  if (customerBin && !isValidBin(customerBin)) {
     return NextResponse.json(
       { error: "БИН/ИИН указан неверно — проверьте 12 цифр" },
       { status: 422 },

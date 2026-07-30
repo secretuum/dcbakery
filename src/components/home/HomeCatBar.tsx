@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useT } from "@/src/i18n/client";
+import { EditableText } from "@/src/components/home/SiteEditMode";
 
 type Category = { id: string; slug: string; name: string };
 
@@ -28,7 +29,7 @@ export function HomeCatBar({ categories, counts }: Props) {
             className="relative shrink-0 whitespace-nowrap pb-1.5 font-display font-bold tracking-[-0.02em] text-dark transition-colors"
             style={{ fontSize: "clamp(20px,3.4vw,26px)", scrollSnapAlign: "start" }}
           >
-            {t("популярное")}
+            <EditableText field="home.catbar.popular" fallback={t("популярное")} />
             <span
               aria-hidden
               className="absolute bottom-0 left-0 h-1 rounded-full bg-coral"

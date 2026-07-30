@@ -1,6 +1,7 @@
 "use client";
 
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
+import { EditableText } from "@/src/components/home/SiteEditMode";
 import { useT } from "@/src/i18n/client";
 
 type Product = {
@@ -14,10 +15,10 @@ type Product = {
 
 type HomeRewardProps = {
   giftProducts?: Product[];
+  /** Набрано за текущую неделю, ₸. Не передан → 0 (тизер на публичной главной). */
+  collected?: number;
 };
 
-/** Визуальный статический прогресс шкалы (без расчёта на клиента). */
-const PROGRESS_PCT = 65;
 const THRESHOLD = 100000;
 
 const MILESTONES = [
@@ -41,10 +42,12 @@ const TERMS = [
   "Акционная продукция не обменивается на деньги и не засчитывается как скидка.",
 ];
 
-export function HomeReward({ giftProducts }: HomeRewardProps) {
+export function HomeReward({ giftProducts, collected: collectedProp }: HomeRewardProps) {
   const t = useT();
 
-  const collected = Math.round((PROGRESS_PCT / 100) * THRESHOLD);
+  // Прогресс считается по реальным заказам клиента (0, пока заказов нет).
+  const collected = Math.max(0, Math.round(collectedProp ?? 0));
+  const pct = Math.min(100, Math.round((collected / THRESHOLD) * 100));
   const remaining = Math.max(THRESHOLD - collected, 0);
   const gifts = (giftProducts ?? []).slice(0, 5);
   const useThumbs = gifts.length > 0;
@@ -56,10 +59,10 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-accent-700">
-              {t("Бонусная программа")}
+              <EditableText field="home.reward.eyebrow" fallback={t("Бонусная программа")} />
             </span>
             <h2 className="mt-1 font-display text-[clamp(24px,3.4vw,34px)] font-extrabold tracking-tight text-dark">
-              {t("Награда за объём недели")}
+              <EditableText field="home.reward.title" fallback={t("Награда за объём недели")} />
             </h2>
           </div>
         </div>
@@ -76,19 +79,19 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
                     <path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
                     <path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8" />
                   </svg>
-                  {t("Бонусная программа")}
+                  <EditableText field="home.reward.cardEyebrow" fallback={t("Бонусная программа")} />
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-coral" aria-hidden>
                     <circle cx="12" cy="12" r="10" />
                     <path d="M12 6v6l4 2" />
                   </svg>
-                  {t("с 1 августа по 30 ноября 2026")}
+                  <EditableText field="home.reward.dateLabel" fallback={t("с 1 августа по 30 ноября 2026")} />
                 </span>
               </div>
 
               <h3 className="mt-4 font-display text-[clamp(24px,3vw,34px)] font-extrabold tracking-tight text-dark">
-                {t("5 десертов в подарок за заказы недели")}
+                <EditableText field="home.reward.headline" fallback={t("5 десертов в подарок за заказы недели")} />
               </h3>
 
               <div className="mt-5 flex flex-wrap items-baseline gap-3">
@@ -96,7 +99,10 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
                   {formatTenge(remaining)}
                 </b>
                 <span className="text-base text-muted">
-                  {t("до подарка")} · {t("набрано")} {formatTenge(collected)} {t("из")}{" "}
+                  <EditableText field="home.reward.progressToGift" fallback={t("до подарка")} /> ·{" "}
+                  <EditableText field="home.reward.progressCollected" fallback={t("набрано")} />{" "}
+                  {formatTenge(collected)}{" "}
+                  <EditableText field="home.reward.progressOf" fallback={t("из")} />{" "}
                   {formatTenge(THRESHOLD)}
                 </span>
               </div>
@@ -108,7 +114,7 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
                   <div className="relative h-10 overflow-hidden rounded-full bg-cream-warm">
                     <div
                       className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-accent-400 to-coral"
-                      style={{ width: `${PROGRESS_PCT}%` }}
+                      style={{ width: `${pct}%` }}
                     />
                   </div>
 
@@ -116,7 +122,7 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
                   <div className="pointer-events-none absolute inset-0 flex items-center">
                     {MILESTONES.map((m) => {
                       const at = (m.value / THRESHOLD) * 100;
-                      const reached = PROGRESS_PCT >= at;
+                      const reached = pct >= at;
                       return (
                         <span
                           key={m.value}
@@ -144,7 +150,7 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
                 <div className="relative mt-3 h-[34px]">
                   {MILESTONES.map((m, i) => {
                     const at = (m.value / THRESHOLD) * 100;
-                    const reached = PROGRESS_PCT >= at;
+                    const reached = pct >= at;
                     const isFirst = i === 0;
                     const isLast = i === MILESTONES.length - 1;
                     const transform = isFirst
@@ -161,7 +167,7 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
                         <b className={`block text-[13.5px] font-bold tabular-nums ${reached ? "text-accent-700" : "text-dark"}`}>
                           {m.label}
                         </b>
-                        <span className="mt-px block text-[10.5px] text-muted">{t(m.caption)}</span>
+                        <span className="mt-px block text-[10.5px] text-muted"><EditableText field={`home.reward.milestone${m.value}Caption`} fallback={t(m.caption)} /></span>
                       </span>
                     );
                   })}
@@ -169,13 +175,13 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
               </div>
 
               <p className="mt-5 text-sm text-muted">
-                {t("Оформляйте заказы на общую сумму от 100 000 ₸ за календарную неделю — и получайте комплимент: пять десертов на выбор вместе со следующим заказом.")}
+                <EditableText field="home.reward.description" fallback={t("Оформляйте заказы на общую сумму от 100 000 ₸ за календарную неделю — и получайте комплимент: пять десертов на выбор вместе со следующим заказом.")} multiline />
               </p>
             </div>
 
             {/* gifts aside */}
             <aside className="rounded-[32px] bg-gradient-to-br from-cream-deep to-cream-warm p-5">
-              <h4 className="text-[13.5px] font-bold text-dark">{t("Десерты на выбор")}</h4>
+              <h4 className="text-[13.5px] font-bold text-dark"><EditableText field="home.reward.giftsTitle" fallback={t("Десерты на выбор")} /></h4>
               <div className="mt-4 grid grid-cols-5 gap-2">
                 {useThumbs
                   ? gifts.map((p) => (
@@ -196,7 +202,7 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
                         </span>
                       </div>
                     ))
-                  : GIFT_NAMES.map((name) => (
+                  : GIFT_NAMES.map((name, i) => (
                       <div key={name} className="min-w-0 text-center">
                         <div className="grid aspect-square place-items-center overflow-hidden rounded-xl bg-white text-coral shadow-sm">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -206,13 +212,13 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
                           </svg>
                         </div>
                         <span className="mt-1.5 line-clamp-2 block text-[9.5px] font-medium leading-tight text-ink-soft">
-                          {t(name)}
+                          <EditableText field={`home.reward.giftName${i}`} fallback={t(name)} />
                         </span>
                       </div>
                     ))}
               </div>
               <p className="mt-4 text-[11px] text-muted">
-                {t("Пять позиций на выбор партнёра — приезжают со следующим подтверждённым заказом.")}
+                <EditableText field="home.reward.giftsNote" fallback={t("Пять позиций на выбор партнёра — приезжают со следующим подтверждённым заказом.")} multiline />
               </p>
             </aside>
           </div>
@@ -224,17 +230,17 @@ export function HomeReward({ giftProducts }: HomeRewardProps) {
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" />
               </svg>
-              {t("Условия акции")}
+              <EditableText field="home.reward.termsLabel" fallback={t("Условия акции")} />
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-auto transition-transform group-open:rotate-180" aria-hidden>
                 <path d="m6 9 6 6 6-6" />
               </svg>
             </summary>
             <div className="px-6 pb-6 lg:px-8">
               <ul className="grid gap-3">
-                {TERMS.map((term) => (
+                {TERMS.map((term, i) => (
                   <li key={term} className="flex gap-3 text-[13.5px] leading-relaxed text-ink-soft">
                     <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-accent-200" />
-                    {t(term)}
+                    <EditableText field={`home.reward.term${i}`} fallback={t(term)} multiline />
                   </li>
                 ))}
               </ul>

@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { ProductCard } from "@/src/components/catalog/ProductCard";
 import { useT } from "@/src/i18n/client";
+import { EditableText } from "@/src/components/home/SiteEditMode";
 import type { Category, Product } from "@/src/types";
 
 type Props = {
@@ -32,13 +33,13 @@ export function HomeCatalogTabs({ categories, products }: Props) {
         {/* Section header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <h2 className="font-display text-3xl font-extrabold tracking-tight text-dark lg:text-4xl">
-            {t("Каталог продукции")}
+            <EditableText field="home.catalog.title" fallback={t("Каталог продукции")} />
           </h2>
           <Link
             href="/catalog"
             className="text-sm font-semibold text-coral transition hover:text-coral-hover"
           >
-            {t("Весь каталог →")}
+            <EditableText field="home.catalog.viewAll" fallback={t("Весь каталог →")} />
           </Link>
         </div>
 
@@ -55,7 +56,11 @@ export function HomeCatalogTabs({ categories, products }: Props) {
                   : "text-muted hover:text-dark"
               }`}
             >
-              {t(tab.name)}
+              {tab.id === "all" ? (
+                <EditableText field="home.catalog.tabAll" fallback={t(tab.name)} />
+              ) : (
+                t(tab.name)
+              )}
             </button>
           ))}
         </div>
@@ -67,7 +72,7 @@ export function HomeCatalogTabs({ categories, products }: Props) {
           ))}
           {filtered.length === 0 && (
             <p className="col-span-full py-16 text-center text-muted">
-              {t("В этой категории нет товаров")}
+              <EditableText field="home.catalog.empty" fallback={t("В этой категории нет товаров")} />
             </p>
           )}
         </div>
@@ -77,7 +82,7 @@ export function HomeCatalogTabs({ categories, products }: Props) {
             href="/catalog"
             className="inline-flex min-h-12 items-center rounded-full border border-black/15 bg-white px-6 text-[15px] font-semibold text-dark transition hover:border-coral hover:text-coral active:scale-[.98]"
           >
-            {t("Смотреть все товары")}
+            <EditableText field="home.catalog.seeAllBtn" fallback={t("Смотреть все товары")} />
           </Link>
         </div>
       </div>

@@ -52,7 +52,7 @@ export function HalykPaymentWidget({ jsUrl, paymentObject }: HalykPaymentWidgetP
 
   if (state === "error") {
     return (
-      <p className="rounded-btn bg-raspberry/10 px-4 py-3 text-sm font-semibold text-raspberry">
+      <p className="rounded-md bg-raspberry/10 px-4 py-3 text-sm font-semibold text-raspberry">
         Не удалось загрузить платёжную страницу банка. Обновите страницу или попробуйте позже.
       </p>
     );

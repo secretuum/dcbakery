@@ -68,7 +68,7 @@ export function CheckoutAuthGate({ prefill, onClose, onAuthenticated }: Props) {
       setError(t("Укажите название компании в заказе"));
       return;
     }
-    if (!isValidBin(bin)) {
+    if (bin.trim() && !isValidBin(bin)) {
       setError(t("БИН/ИИН указан неверно — проверьте 12 цифр"));
       return;
     }

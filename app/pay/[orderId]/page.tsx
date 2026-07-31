@@ -9,6 +9,7 @@ import {
 } from "@/src/lib/company-details";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
+import { orderTotalWithDelivery } from "@/app/constants";
 import { orderStatusLabels, paymentStatusLabels } from "@/src/lib/order-status";
 import {
   createDemoPaymentToken,
@@ -170,7 +171,7 @@ export default async function PayPage({ params, searchParams }: PayPageProps) {
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           <div className="rounded-btn border border-black/5 bg-cream px-4 py-3">
             <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Сумма")}</p>
-            <p className="mt-1 font-data text-xl font-semibold">{formatPrice(order.total_amount)}</p>
+            <p className="mt-1 font-data text-xl font-semibold">{formatPrice(orderTotalWithDelivery(order))}</p>
           </div>
           <div className="rounded-btn border border-black/5 bg-cream px-4 py-3">
             <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("Статус")}</p>
@@ -204,6 +205,14 @@ export default async function PayPage({ params, searchParams }: PayPageProps) {
                   </span>
                 </li>
               ))}
+              {order.delivery_amount && Number(order.delivery_amount) > 0 ? (
+                <li className="flex items-baseline justify-between gap-3 rounded-btn border border-black/5 bg-white px-4 py-3 text-sm">
+                  <span className="font-semibold text-dark">{t("Доставка")}</span>
+                  <span className="shrink-0 font-data font-semibold text-dark">
+                    {formatPrice(Number(order.delivery_amount))}
+                  </span>
+                </li>
+              ) : null}
             </ul>
           </section>
         ) : null}

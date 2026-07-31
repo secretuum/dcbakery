@@ -1,5 +1,6 @@
 import "server-only";
 import type { Order } from "@/src/types";
+import { orderTotalWithDelivery } from "@/app/constants";
 
 // Попытки платежа (таблица payments) — подготовка к Halyk ePay.
 // Отдельный модуль: запросы к БД намеренно не добавляются в admin.ts.
@@ -98,7 +99,7 @@ export async function getOrCreatePaymentAttempt(
 ): Promise<PaymentAttempt> {
   const active = await getActivePaymentAttempt(order.id);
 
-  if (active && Number(active.amount) === Number(order.total_amount) && active.provider === provider) {
+  if (active && Number(active.amount) === orderTotalWithDelivery(order) && active.provider === provider) {
     return active;
   }
 
@@ -115,7 +116,7 @@ export async function getOrCreatePaymentAttempt(
     method: "POST",
     headers: headers(serviceRoleKey),
     body: JSON.stringify({
-      amount: order.total_amount,
+      amount: orderTotalWithDelivery(order),
       currency: "KZT",
       expires_at: expiresAt,
       order_id: order.id,

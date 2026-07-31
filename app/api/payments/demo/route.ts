@@ -10,6 +10,7 @@ import {
   verifyDemoPaymentToken,
 } from "@/src/lib/payments";
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
+import { orderTotalWithDelivery } from "@/app/constants";
 import {
   replaceWhatsAppOrderMessage,
   sendCustomerPaymentStatusNotification,
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
   }
 
   await insertPaymentEvent({
-    amount: Number(order.total_amount),
+    amount: orderTotalWithDelivery(order),
     event_id: `demo-${crypto.randomUUID()}`,
     order_id: order.id,
     payment_id: order.payment_id,

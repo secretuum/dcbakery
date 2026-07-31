@@ -12,6 +12,7 @@ import {
   sendCustomerPaymentStatusNotification,
 } from "@/src/lib/whatsapp";
 import type { OrderStatus, PaymentProvider, PaymentStatus } from "@/src/types";
+import { orderTotalWithDelivery } from "@/app/constants";
 
 type PaymentWebhookBody = {
   amount?: number;
@@ -159,7 +160,7 @@ export async function POST(request: Request) {
     status: paymentStatus,
   });
 
-  if (body.amount !== undefined && Number(order.total_amount) !== body.amount) {
+  if (body.amount !== undefined && orderTotalWithDelivery(order) !== body.amount) {
     const failedOrder = await updateOrderPaymentStatus(order.id, "failed");
     const [, managerMessageId] = await Promise.all([
       failedOrder

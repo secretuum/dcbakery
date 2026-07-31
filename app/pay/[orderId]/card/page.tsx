@@ -10,6 +10,7 @@ import {
 import { getOrCreatePaymentAttempt } from "@/src/lib/supabase/payments-store";
 import { fetchAdminOrder } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
+import { orderTotalWithDelivery } from "@/app/constants";
 
 // Оплата банковской картой через Halyk ePay. Страница активна только когда
 // заданы HALYK_* env; заказ должен быть подтверждён и не оплачен.
@@ -79,6 +80,8 @@ export default async function CardPaymentPage({
   }
 
   const origin = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://dc-bakery.kz").replace(/\/$/, "");
+  // Сумма к списанию = позиции + доставка (не голый total_amount).
+  const payable = orderTotalWithDelivery(order);
 
   let paymentObject: Record<string, unknown>;
 
@@ -90,7 +93,7 @@ export default async function CardPaymentPage({
     const postLink = `${origin}/api/payments/halyk/postlink`;
     const auth = await createHalykPaymentAuth({
       invoiceId,
-      amount: Number(order.total_amount),
+      amount: payable,
       postLink,
       failurePostLink: postLink,
     });
@@ -104,7 +107,7 @@ export default async function CardPaymentPage({
       language: "rus",
       description: `Заказ ${order.order_number}, DC Bakery`,
       terminal: config.terminalId,
-      amount: Number(order.total_amount),
+      amount: payable,
       currency: "KZT",
       secret_hash: secretHash,
       auth,
@@ -128,7 +131,7 @@ export default async function CardPaymentPage({
           </p>
           <h1 className="mt-3 break-all font-data text-3xl font-semibold">{order.order_number}</h1>
           <p className="mt-2 font-data text-xl font-semibold text-coral">
-            {formatPrice(order.total_amount)}
+            {formatPrice(payable)}
           </p>
           <p className="mt-4 text-sm leading-6 text-muted">
             Оплата проходит на защищённой странице Halyk Bank (Visa / Mastercard).

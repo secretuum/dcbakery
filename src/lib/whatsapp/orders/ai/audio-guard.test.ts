@@ -1,10 +1,23 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { detectAudioFormat, guardAudio } from "./audio-guard";
+import { detectAudioFormat, guardAudio, estimateOggOpusDurationSeconds } from "./audio-guard";
 import { LIMITS } from "../config";
 
 function bytes(...b: number[]): Uint8Array {
   return Uint8Array.from(b);
+}
+
+// Минимальная OGG-страница (27 байт заголовка, 0 сегментов) с заданным granule.
+function oggWithGranule(granule: number): Uint8Array {
+  const page = new Uint8Array(27);
+  page.set([0x4f, 0x67, 0x67, 0x53], 0); // "OggS"
+  let g = granule;
+  for (let i = 0; i < 8; i++) {
+    page[6 + i] = g & 0xff;
+    g = Math.floor(g / 256);
+  }
+  // page[26] = nsegs = 0 (уже 0)
+  return page;
 }
 
 test("detectAudioFormat: распознаёт форматы по magic-bytes", () => {
@@ -51,4 +64,20 @@ test("guardAudio: неразрешённый MIME отклоняется", () =>
   const r = guardAudio({ bytes: bytes(0x4f, 0x67, 0x67, 0x53), mimeType: "application/pdf" });
   assert.equal(r.ok, false);
   if (!r.ok) assert.equal(r.reason, "mime_not_allowed");
+});
+
+test("estimateOggOpusDurationSeconds: granule → секунды", () => {
+  assert.equal(estimateOggOpusDurationSeconds(oggWithGranule(48000 * 30)), 30);
+  assert.equal(estimateOggOpusDurationSeconds(bytes(1, 2, 3)), null); // не ogg
+});
+
+test("guardAudio: длинный ogg (>60с по granule) отклоняется", () => {
+  const r = guardAudio({ bytes: oggWithGranule(48000 * 70), mimeType: "audio/ogg" });
+  assert.equal(r.ok, false);
+  if (!r.ok) assert.equal(r.reason, "too_long");
+});
+
+test("guardAudio: короткий ogg (по granule) проходит", () => {
+  const r = guardAudio({ bytes: oggWithGranule(48000 * 10), mimeType: "audio/ogg" });
+  assert.equal(r.ok, true);
 });

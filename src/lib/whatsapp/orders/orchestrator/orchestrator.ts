@@ -23,6 +23,8 @@ export type DialogContext = {
   retail?: string[];
   address?: string;
   period?: "morning" | "afternoon";
+  /** Сохранённые адреса клиента, показанные для выбора номером. */
+  savedAddresses?: string[];
 };
 
 export type DialogSnapshot = { state: DialogState; context: DialogContext; phone: string | null };
@@ -79,6 +81,8 @@ export type OrchestratorDeps = {
     }): Promise<void>;
   };
   order: { create(input: CreateOrderInput): Promise<{ orderId: string; orderNumber: string }> };
+  /** Опционально: одноразовая ссылка регистрации (дозаполнение профиля на сайте). */
+  registration?: { createLink(phone: string, nowMs: number): Promise<string | null> };
   history: { lastOrderItems(phone: string): Promise<CartItemQty[] | null> };
   profile: {
     get(chatId: string): Promise<{
@@ -86,6 +90,7 @@ export type OrchestratorDeps = {
       customerName?: string | null;
       customerBin?: string | null;
       customerEmail?: string | null;
+      addresses?: string[] | null;
     } | null>;
   };
   consent: {
@@ -368,10 +373,13 @@ export async function handleIncomingMessage(
       const { view, adjustments } = await deps.cart.apply(msg.chatId, { phone, senderName }, ops, products);
       const nameById = new Map(view.lines.map((l) => [l.productId, l.name]));
 
+      const hasUnknown = Boolean(clarifications && clarifications.length > 0);
       const parts = [
         M.formatAdjustments(adjustments, nameById),
         M.formatRetailNotice(retail, deps.retailUrl),
         M.formatClarifications(clarifications ?? []),
+        // Для неизвестных позиций — ссылка на розницу (если розничная заметка её ещё не дала).
+        hasUnknown && retail.length === 0 ? M.formatRetailHint(deps.retailUrl) : null,
         M.formatCart(view),
       ].filter((p): p is string => Boolean(p));
 
@@ -393,14 +401,25 @@ export async function handleIncomingMessage(
         await reply(M.MSG_EMPTY_AFTER_POLICY);
         return;
       }
+      // Существующий клиент с сохранёнными адресами — предлагаем выбрать номером.
+      const profile = await deps.profile.get(msg.chatId).catch(() => null);
+      const saved = (profile?.addresses ?? [])
+        .filter((a): a is string => Boolean(a && a.trim()))
+        .slice(0, 5);
+      if (saved.length > 0) {
+        await persist("awaiting_address", { ...context, savedAddresses: saved });
+        await reply(M.askAddressWithSaved(saved));
+        return;
+      }
       await persist("awaiting_address", context);
       await reply(M.askAddress());
     }
 
     async function handleAddress(orderIntent: OrderIntent, rawText: string) {
+      const trimmed = rawText.trim();
       const looksConfirm =
         orderIntent.confirmation ||
-        /^(да|ага|верно|ок|окей|подтвержда|все верно|всё верно)/.test(rawText.trim().toLowerCase());
+        /^(да|ага|верно|ок|окей|подтвержда|все верно|всё верно)/.test(trimmed.toLowerCase());
       // Подтверждение ранее показанного адреса (в сообщении нет нового адреса).
       if (state === "awaiting_address_confirmation" && looksConfirm && !orderIntent.addressText) {
         await persist("awaiting_delivery_period", context);
@@ -408,7 +427,12 @@ export async function handleIncomingMessage(
         return;
       }
 
-      const addrText = orderIntent.addressText ?? rawText;
+      // Выбор сохранённого адреса номером (1..N), иначе — адрес из сообщения.
+      const saved = context.savedAddresses ?? [];
+      const pick = /^\d+$/.test(trimmed) ? Number(trimmed) : 0;
+      const addrText =
+        pick >= 1 && pick <= saved.length ? saved[pick - 1] : orderIntent.addressText ?? rawText;
+
       const res = await deps.address.validate(addrText);
       if (res.status === "outside_almaty") {
         await createLead("delivery_outside_almaty", rawText);
@@ -518,6 +542,13 @@ export async function handleIncomingMessage(
       await deps.cart.clear(msg.chatId).catch(() => {});
       await persist("order_submitted", {});
       await reply(M.formatOrderCreated(created.orderNumber));
+
+      // Новый клиент (профиль не заполнен) — одноразовая ссылка для дозаполнения на сайте.
+      const isNewClient = !profile?.companyName || profile.companyName === "WhatsApp клиент";
+      if (isNewClient && phone && deps.registration) {
+        const link = await deps.registration.createLink(phone, nowMs).catch(() => null);
+        if (link) await reply(M.formatRegistrationLink(link));
+      }
     }
   } finally {
     await deps.dialog.releaseLock(msg.chatId, lockToken).catch(() => {});

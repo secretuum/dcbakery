@@ -56,6 +56,14 @@ export function formatRetailNotice(retailNames: string[], retailUrl: string): st
   ].join("\n");
 }
 
+/**
+ * Мягкая подсказка со ссылкой на розницу для НЕизвестных позиций (без объявления их
+ * розницей). Даём ссылку вместо перечисления меню кафе.
+ */
+export function formatRetailHint(retailUrl: string): string {
+  return `Если что-то из этого — позиция кафе del Cappuccino, её можно заказать здесь: ${retailUrl}`;
+}
+
 /** Неизвестные позиции с уточнением (до 3 вариантов). */
 export function formatClarifications(
   clarifications: Array<{ rawName: string; candidates: Array<{ name: string }> }>,
@@ -73,6 +81,15 @@ export function formatClarifications(
 
 export function askAddress(): string {
   return "Отлично! Теперь напишите адрес доставки (по Алматы).";
+}
+
+export function askAddressWithSaved(saved: string[]): string {
+  const list = saved.map((a, i) => `${i + 1}) ${a}`).join("\n");
+  return [
+    "Куда доставить? Выберите сохранённый адрес номером или напишите новый (по Алматы):",
+    "",
+    list,
+  ].join("\n");
 }
 
 export function confirmAddress(normalized: string): string {
@@ -108,6 +125,14 @@ export function formatFinalSummary(input: {
     `Телефон: ${input.phone}`,
     "",
     "Оформляем? Напишите «да» — отправлю заявку менеджеру.",
+  ].join("\n");
+}
+
+export function formatRegistrationLink(url: string): string {
+  return [
+    "Чтобы в следующий раз оформлять быстрее — заполните профиль (компания, реквизиты):",
+    url,
+    "Ссылка одноразовая, действует 30 минут.",
   ].join("\n");
 }
 

@@ -5,8 +5,13 @@ import "server-only";
 // (там circuit-breaker / fallback на менеджера).
 
 import { TIMEOUTS } from "../config";
+import { createCircuitBreaker } from "../reliability/circuit-breaker";
 
 const OPENAI_BASE = (process.env.OPENAI_API_BASE ?? "https://api.openai.com/v1").replace(/\/$/, "");
+
+// Общий брейкер на весь OpenAI (chat + Whisper): при серии ошибок мгновенно
+// фейлим вызовы (fast-fail) → оркестратор уводит на менеджера, не долбя провайдера.
+const aiBreaker = createCircuitBreaker({ failureThreshold: 5, cooldownMs: 30_000, now: () => Date.now() });
 
 export function isOpenAiConfigured(): boolean {
   return Boolean(process.env.OPENAI_API_KEY);
@@ -27,6 +32,7 @@ export async function openaiChatJson(params: {
   schemaName: string;
   timeoutMs?: number;
 }): Promise<unknown> {
+  if (!aiBreaker.canAttempt()) throw new Error("OpenAI circuit open");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), params.timeoutMs ?? TIMEOUTS.intentMs);
   try {
@@ -59,7 +65,12 @@ export async function openaiChatJson(params: {
     const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
     const content = data.choices?.[0]?.message?.content;
     if (!content) throw new Error("OpenAI chat: empty content");
-    return JSON.parse(content);
+    const parsed = JSON.parse(content);
+    aiBreaker.recordSuccess();
+    return parsed;
+  } catch (error) {
+    aiBreaker.recordFailure();
+    throw error;
   } finally {
     clearTimeout(timer);
   }
@@ -73,6 +84,7 @@ export async function openaiTranscribe(params: {
   model: string;
   timeoutMs?: number;
 }): Promise<{ text: string; lang?: string }> {
+  if (!aiBreaker.canAttempt()) throw new Error("OpenAI circuit open");
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), params.timeoutMs ?? TIMEOUTS.transcribeMs);
   try {
@@ -99,7 +111,11 @@ export async function openaiTranscribe(params: {
     }
 
     const data = (await res.json()) as { text?: string; language?: string };
+    aiBreaker.recordSuccess();
     return { text: (data.text ?? "").trim(), lang: data.language };
+  } catch (error) {
+    aiBreaker.recordFailure();
+    throw error;
   } finally {
     clearTimeout(timer);
   }

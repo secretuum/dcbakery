@@ -23,6 +23,7 @@ import { OpenAiIntentExtractor } from "../ai/intent-extractor";
 import { OpenAiWhisperTranscriber } from "../ai/transcriber";
 import { AlmatyHeuristicAddressProvider } from "../address/provider";
 import { createOrderFromWhatsApp } from "../order/create-order";
+import { createRegistrationLink } from "../registration/reg-link";
 import { notifyManagersText } from "../notify/telegram-notify";
 import { getRetailKeywords } from "../settings";
 
@@ -110,6 +111,8 @@ export async function buildOrchestratorDeps(provider: WhatsAppProvider): Promise
       },
     },
 
+    registration: { createLink: (phone, nowMs) => createRegistrationLink(phone, nowMs) },
+
     history: {
       lastOrderItems: async (phone) => {
         const order = await fetchLatestWhatsAppOrderByPhone(phone).catch(() => null);
@@ -129,6 +132,9 @@ export async function buildOrchestratorDeps(provider: WhatsAppProvider): Promise
           customerName: p.customerName,
           customerBin: p.customerBin,
           customerEmail: p.customerEmail,
+          addresses: (p.addresses ?? [])
+            .map((a) => a.address)
+            .filter((a): a is string => Boolean(a && a.trim())),
         };
       },
     },

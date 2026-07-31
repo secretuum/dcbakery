@@ -37,6 +37,32 @@ export function detectAudioFormat(bytes: Uint8Array): AudioFormat | null {
   return null;
 }
 
+/**
+ * Оценка длительности OGG/Opus по granule-позициям страниц (WhatsApp voice = opus в ogg).
+ * Opus считает granule в единицах 48 кГц → duration ≈ maxGranule / 48000. null — не разобрать.
+ * Нужна, т.к. Green API не присылает длительность в webhook.
+ */
+export function estimateOggOpusDurationSeconds(bytes: Uint8Array): number | null {
+  let maxGranule = -1;
+  let i = 0;
+  while (i + 27 <= bytes.length) {
+    if (bytes[i] === 0x4f && bytes[i + 1] === 0x67 && bytes[i + 2] === 0x67 && bytes[i + 3] === 0x53) {
+      let granule = 0;
+      for (let b = 0; b < 8; b++) granule += bytes[i + 6 + b] * 2 ** (8 * b);
+      if (granule > maxGranule) maxGranule = granule;
+      const nsegs = bytes[i + 26];
+      if (i + 27 + nsegs > bytes.length) break;
+      let bodyLen = 0;
+      for (let s = 0; s < nsegs; s++) bodyLen += bytes[i + 27 + s];
+      i = i + 27 + nsegs + bodyLen;
+    } else {
+      i += 1;
+    }
+  }
+  if (maxGranule <= 0) return null;
+  return maxGranule / 48000;
+}
+
 export type AudioGuardInput = {
   bytes: Uint8Array;
   mimeType?: string | null;
@@ -49,10 +75,6 @@ export function guardAudio(input: AudioGuardInput): AudioGuardResult {
   if (size <= 0) return { ok: false, reason: "empty" };
   if (size > LIMITS.maxVoiceBytes) return { ok: false, reason: "too_large" };
 
-  if (input.durationSeconds != null && input.durationSeconds > LIMITS.maxVoiceSeconds) {
-    return { ok: false, reason: "too_long" };
-  }
-
   if (input.mimeType) {
     const base = input.mimeType.toLowerCase().split(";")[0].trim();
     if (base && !ALLOWED_AUDIO_MIME.has(base)) {
@@ -62,6 +84,11 @@ export function guardAudio(input: AudioGuardInput): AudioGuardResult {
 
   const format = detectAudioFormat(input.bytes);
   if (!format) return { ok: false, reason: "not_audio" };
+
+  // Длительность: заявленная провайдером И вычисленная из ogg — берём максимум.
+  const computed = format === "ogg" ? estimateOggOpusDurationSeconds(input.bytes) : null;
+  const duration = Math.max(input.durationSeconds ?? 0, computed ?? 0);
+  if (duration > LIMITS.maxVoiceSeconds) return { ok: false, reason: "too_long" };
 
   return { ok: true, format };
 }

@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { fetchAppSettings } from "@/src/lib/supabase/admin";
 
 // Редактируемый контент сайта. Хранится одной JSON-строкой в app_settings
@@ -119,17 +120,34 @@ function sanitize(raw: unknown): Partial<SiteContent> {
   return result;
 }
 
-export async function getSiteContent(): Promise<SiteContent> {
-  try {
-    const settings = await fetchAppSettings();
-    const raw = settings.find((setting) => setting.key === SITE_CONTENT_KEY)?.value;
+/** Тег кэша контента сайта — сбрасывается при сохранении в /api/admin/settings. */
+export const SITE_CONTENT_CACHE_TAG = "site-content";
 
-    if (!raw) {
+// Контент сайта читается в layout НА КАЖДЫЙ рендер. Без кэша это `SELECT *` из
+// app_settings (вместе с крупным home_layout) на любой заход/краулер → огромный
+// egress Supabase. Кэшируем на весь инстанс: реально в БД ходим не чаще раза в
+// revalidate-окно, а правки суперадмина мгновенно видны через revalidateTag.
+const loadSiteContent = unstable_cache(
+  async (): Promise<SiteContent> => {
+    try {
+      const settings = await fetchAppSettings();
+      const raw = settings.find((setting) => setting.key === SITE_CONTENT_KEY)?.value;
+
+      if (!raw) {
+        return defaultSiteContent;
+      }
+
+      return { ...defaultSiteContent, ...sanitize(JSON.parse(raw)) };
+    } catch {
       return defaultSiteContent;
     }
+  },
+  ["site-content-v1"],
+  // Контент меняется редко (ручные правки суперадмина) → длинное фоновое окно;
+  // правки видны сразу через revalidateTag в /api/admin/settings.
+  { revalidate: 3600, tags: [SITE_CONTENT_CACHE_TAG] },
+);
 
-    return { ...defaultSiteContent, ...sanitize(JSON.parse(raw)) };
-  } catch {
-    return defaultSiteContent;
-  }
+export async function getSiteContent(): Promise<SiteContent> {
+  return loadSiteContent();
 }

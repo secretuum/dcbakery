@@ -26,6 +26,8 @@ import {
   sendCustomerOrderCanceledNotification,
 } from "@/src/lib/whatsapp";
 import type { Order } from "@/src/types";
+// Новый AI/голосовой путь оформления (за флагом whatsapp_nl_orders_enabled, ВЫКЛ по умолчанию).
+import { tryHandleNlOrder } from "@/src/lib/whatsapp/orders/handle";
 
 type WhatsAppCommand = "cancel" | "confirm" | "help" | "mark_paid" | "status";
 
@@ -781,6 +783,13 @@ export async function POST(request: Request) {
 
     if (!featureFlags.customerBotEnabled) {
       return respondWithIgnored("WhatsApp customer bot disabled");
+    }
+
+    // Новый путь: пока флаг whatsapp_nl_orders_enabled ВЫКЛ — tryHandleNlOrder сразу
+    // вернёт false, и всё идёт старым ботом без изменений. При ВКЛ и взятии сообщения
+    // в обработку старый бот его не трогает.
+    if (await tryHandleNlOrder(payload)) {
+      return NextResponse.json({ forwarded, ok: true, handledBy: "nl-orders" });
     }
 
     try {

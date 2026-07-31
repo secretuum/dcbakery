@@ -20,7 +20,23 @@ type LocalizedOverride = CatalogProductOverride & {
   composition_en?: string | null;
 };
 import { fetchProductOrderCounts } from "@/src/lib/supabase/popularity";
+import { unstable_cache } from "next/cache";
 import type { Category, Product } from "@/src/types";
+
+/** Тег кэша каталога — сбрасывать при правке товаров/остатков в админке. */
+export const CATALOG_CACHE_TAG = "catalog";
+
+// Переопределения каталога (цены/остатки/стоп-лист) читаются из Supabase на КАЖДЫЙ
+// рендер каталога/главной/карточки. Кэшируем на инстанс, чтобы не жечь egress под
+// нагрузкой краулеров; свежесть — в пределах revalidate-окна (остаток от менеджера
+// отражается в течение минуты), либо мгновенно через revalidateTag(CATALOG_CACHE_TAG).
+const loadCatalogOverrides = unstable_cache(
+  async () => fetchCatalogProductOverrides(),
+  ["catalog-overrides-v1"],
+  // Остатки/цены меняются нечасто → фоновое окно 10 мин (минимум egress под
+  // нагрузкой краулеров); правки в админке товаров сбрасывают кэш сразу по тегу.
+  { revalidate: 600, tags: [CATALOG_CACHE_TAG] },
+);
 
 function bySortOrder<T extends { sort_order: number }>(a: T, b: T) {
   return a.sort_order - b.sort_order;
@@ -280,7 +296,7 @@ async function getCatalogProducts({
   let overrides: CatalogProductOverride[] = [];
 
   try {
-    overrides = await fetchCatalogProductOverrides();
+    overrides = await loadCatalogOverrides();
   } catch (error) {
     console.warn("[catalog] Failed to fetch product overrides, using static catalog:", error);
   }

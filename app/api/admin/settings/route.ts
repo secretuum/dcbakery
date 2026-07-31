@@ -1,6 +1,6 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
-import { SITE_CONTENT_KEY } from "@/src/lib/site-content";
+import { SITE_CONTENT_KEY, SITE_CONTENT_CACHE_TAG } from "@/src/lib/site-content";
 import { HOME_LAYOUT_KEY } from "@/src/lib/home-layout";
 import { getIsSuperAdmin } from "@/src/lib/superadmin";
 import { upsertAppSetting } from "@/src/lib/supabase/admin";
@@ -66,6 +66,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Setting was not saved" }, { status: 500 });
       }
 
+      // Сбрасываем кэш контента сайта, чтобы правка суперадмина появилась сразу.
+      if (key === SITE_CONTENT_KEY) {
+        revalidateTag(SITE_CONTENT_CACHE_TAG, "max");
+      }
       revalidatePath("/", "layout");
       return NextResponse.json({ setting });
     } catch (error) {

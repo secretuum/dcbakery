@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { upsertCatalogProductOverride } from "@/src/lib/supabase/admin";
+import { CATALOG_CACHE_TAG } from "@/src/lib/catalog";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -112,6 +113,7 @@ export async function updateCatalogProductAction(formData: FormData) {
     is_archived: isArchived,
   });
 
+  revalidateTag(CATALOG_CACHE_TAG, "max");
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
 }
@@ -129,6 +131,7 @@ export async function createCatalogProductAction(formData: FormData) {
     is_archived: false,
   });
 
+  revalidateTag(CATALOG_CACHE_TAG, "max");
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
   redirect("/admin/products?created=1");
@@ -183,6 +186,7 @@ export async function bulkUpdateCatalogProductsAction(formData: FormData) {
     }),
   );
 
+  revalidateTag(CATALOG_CACHE_TAG, "max");
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
 }

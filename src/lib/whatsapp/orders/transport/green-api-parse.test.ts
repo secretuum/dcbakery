@@ -75,10 +75,13 @@ test("не-сообщения и мусор → null", () => {
   assert.equal(normalizeGreenWebhook(null), null);
 });
 
-test("isTrustedGreenHost: только green-api.com", () => {
+test("isTrustedGreenHost: green-api.com и greenapi.com", () => {
   assert.equal(isTrustedGreenHost("https://media.green-api.com/a.ogg"), true);
   assert.equal(isTrustedGreenHost("https://api.green-api.com/x"), true);
+  assert.equal(isTrustedGreenHost("https://7105.media.greenapi.com/a.ogg"), true);
+  assert.equal(isTrustedGreenHost("https://7105.api.greenapi.com/x"), true);
   assert.equal(isTrustedGreenHost("https://evil.com/a.ogg"), false);
   assert.equal(isTrustedGreenHost("https://green-api.com.evil.com/a"), false);
+  assert.equal(isTrustedGreenHost("https://greenapi.com.evil.com/a"), false);
   assert.equal(isTrustedGreenHost("not a url"), false);
 });

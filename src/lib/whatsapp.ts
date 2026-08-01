@@ -35,6 +35,9 @@ function getGreenApiConfig() {
   return {
     apiToken,
     instanceId,
+    // База API инстанса. У новых инстансов Green API это per-host адрес
+    // (напр. https://7105.api.greenapi.com), а не общий api.green-api.com.
+    baseUrl: (process.env.GREEN_API_BASE_URL ?? "https://api.green-api.com").replace(/\/$/, ""),
   };
 }
 
@@ -151,7 +154,7 @@ export async function sendGreenApiTextMessage(chatId: string, message: string) {
     return null;
   }
 
-  const url = `https://api.green-api.com/waInstance${config.instanceId}/sendMessage/${config.apiToken}`;
+  const url = `${config.baseUrl}/waInstance${config.instanceId}/sendMessage/${config.apiToken}`;
 
   try {
     const response = await fetch(url, {
@@ -185,7 +188,7 @@ async function deleteGreenApiMessage(chatId: string, idMessage: string) {
     return false;
   }
 
-  const url = `https://api.green-api.com/waInstance${config.instanceId}/deleteMessage/${config.apiToken}`;
+  const url = `${config.baseUrl}/waInstance${config.instanceId}/deleteMessage/${config.apiToken}`;
 
   try {
     const response = await fetch(url, {
@@ -218,7 +221,7 @@ async function editGreenApiMessage(chatId: string, idMessage: string, message: s
     return false;
   }
 
-  const url = `https://api.green-api.com/waInstance${config.instanceId}/editMessage/${config.apiToken}`;
+  const url = `${config.baseUrl}/waInstance${config.instanceId}/editMessage/${config.apiToken}`;
 
   try {
     const response = await fetch(url, {
@@ -314,7 +317,7 @@ export async function checkWhatsappExists(phone: string): Promise<boolean | null
     return null;
   }
 
-  const url = `https://api.green-api.com/waInstance${config.instanceId}/checkWhatsapp/${config.apiToken}`;
+  const url = `${config.baseUrl}/waInstance${config.instanceId}/checkWhatsapp/${config.apiToken}`;
   try {
     const response = await fetch(url, {
       method: "POST",

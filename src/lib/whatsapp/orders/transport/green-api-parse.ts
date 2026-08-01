@@ -13,11 +13,20 @@ function asString(v: unknown): string {
   return typeof v === "string" ? v : "";
 }
 
-/** Хост доверенного файлового хранилища Green API (защита от SSRF при скачивании). */
+/**
+ * Хост доверенного файлового хранилища Green API (защита от SSRF при скачивании).
+ * Green API использует два домена: старый `green-api.com` и новый `greenapi.com`
+ * (per-host, напр. `7105.media.greenapi.com`) — разрешаем оба.
+ */
 export function isTrustedGreenHost(url: string): boolean {
   try {
     const host = new URL(url).hostname.toLowerCase();
-    return host === "green-api.com" || host.endsWith(".green-api.com");
+    return (
+      host === "green-api.com" ||
+      host.endsWith(".green-api.com") ||
+      host === "greenapi.com" ||
+      host.endsWith(".greenapi.com")
+    );
   } catch {
     return false;
   }

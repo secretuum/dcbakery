@@ -231,6 +231,16 @@ test("манипуляция без товаров — заявка не соз�
   assert.equal((t.carts.get("77051234567@c.us") ?? []).length, 0);
 });
 
+test("первый контакт «привет» → приветствие и выяснение предпочтений", async () => {
+  const t = setup();
+  t.setIntent(intent({ intent: "unknown", items: [] }));
+  await handleIncomingMessage(msg({ messageId: "g1", text: "привет" }), t.deps);
+  const reply = t.lastSent();
+  assert.match(reply, /Здравствуйте/);
+  assert.match(reply, /ассистент DC Bakery/i);
+  assert.equal((t.carts.get("77051234567@c.us") ?? []).length, 0);
+});
+
 test("адрес вне Алматы → передача менеджеру + черновик лида", async () => {
   const t = setup();
   // Доводим до ожидания адреса.

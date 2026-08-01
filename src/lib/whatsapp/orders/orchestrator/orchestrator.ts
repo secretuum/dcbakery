@@ -366,7 +366,18 @@ export async function handleIncomingMessage(
       }
 
       if (ops.length === 0 && retail.length === 0 && clarifications.length === 0) {
-        await reply(M.MSG_EMPTY_AFTER_POLICY);
+        const current = await deps.cart.getItems(msg.chatId).catch(() => [] as CartItemQty[]);
+        if (current.length === 0) {
+          // Первый контакт / «привет» / непонятный ввод при пустой корзине — приветствуем
+          // и выясняем предпочтения (а не сухое «напишите заказ»).
+          const categories = [
+            ...new Set(products.map((p) => p.category?.name).filter((n): n is string => Boolean(n))),
+          ];
+          await persist("idle", context);
+          await reply(M.formatGreeting(categories));
+        } else {
+          await reply(M.MSG_EMPTY_AFTER_POLICY);
+        }
         return;
       }
 

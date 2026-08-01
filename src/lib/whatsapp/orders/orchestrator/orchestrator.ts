@@ -11,6 +11,7 @@ import type { DialogState } from "../state/machine";
 import { isBotSuppressed } from "../state/machine";
 import type { OrderIntent } from "../intent/schema";
 import { enforcePolicy } from "../policy/policy";
+import { detectEscalation } from "../policy/escalation";
 import { classifyItem } from "../match/matcher";
 import type { CartView, CartItemQty, CartOp, CartAdjustment } from "../cart/cart-math";
 import { guardAudio } from "../ai/audio-guard";
@@ -250,6 +251,15 @@ export async function handleIncomingMessage(
 
     if (!text.trim()) {
       await reply(M.MSG_UNKNOWN);
+      return;
+    }
+
+    // Эскалация: КАПС / мат / оскорбления / жалобы / угрозы → сразу менеджеру, без AI.
+    const escalation = detectEscalation(text);
+    if (escalation.escalate) {
+      await createLead(`escalation:${escalation.reason ?? "abuse"}`, text);
+      await persist("human_handoff", context);
+      await reply(M.MSG_HANDOFF);
       return;
     }
 

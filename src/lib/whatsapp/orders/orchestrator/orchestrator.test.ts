@@ -241,6 +241,16 @@ test("первый контакт «привет» → приветствие и
   assert.equal((t.carts.get("77051234567@c.us") ?? []).length, 0);
 });
 
+test("абьюз/жалоба → сразу менеджеру (без AI и без заявки)", async () => {
+  const t = setup();
+  t.setIntent(intent({ intent: "unknown", items: [] }));
+  await handleIncomingMessage(msg({ messageId: "esc1", text: "вы мошенники, верните деньги немедленно" }), t.deps);
+  assert.equal(t.dialog.get("77051234567@c.us")?.state, "human_handoff");
+  assert.equal(t.drafts.length, 1);
+  assert.equal(t.managerNotes.length, 1);
+  assert.equal(t.orders.length, 0);
+});
+
 test("адрес вне Алматы → передача менеджеру + черновик лида", async () => {
   const t = setup();
   // Доводим до ожидания адреса.

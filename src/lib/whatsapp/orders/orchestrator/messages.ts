@@ -138,7 +138,7 @@ export function formatRegistrationLink(url: string): string {
 
 export function formatOrderCreated(orderNumber: string): string {
   return [
-    `Заявка ${orderNumber} принята ✅`,
+    `Заявка ${orderNumber} принята.`,
     "",
     "Менеджер проверит наличие и сумму, затем подтвердит заказ и пришлёт счёт.",
     "Статус придёт сюда, в WhatsApp.",

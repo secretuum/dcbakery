@@ -2,8 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import type { Product } from "@/src/types";
 import type { NormalizedIncomingMessage } from "../transport/types";
-import type { AgentOutput } from "../agent/schema";
+import type { AgentResponse } from "../agent/schema";
 import { handleIncomingMessage, type OrchestratorDeps, type DialogSnapshot } from "./orchestrator";
+import * as M from "./messages";
 import { applyOps, reconcileStock, computeCartView, type CartItemQty } from "../cart/cart-math";
 import { AlmatyHeuristicAddressProvider } from "../address/provider";
 
@@ -24,9 +25,11 @@ const PRODUCTS: Product[] = [
 
 const OGG = Uint8Array.from([0x4f, 0x67, 0x67, 0x53, 1, 2, 3, 4]);
 
-function agentOut(p: Partial<AgentOutput>): AgentOutput {
+function agentOut(p: Partial<AgentResponse>): AgentResponse {
   return { reply: "", cartActions: [], showCart: false, intent: "chat", ...p };
 }
+
+type AgentInput = Parameters<OrchestratorDeps["agent"]["respond"]>[0];
 
 function msg(over: Partial<NormalizedIncomingMessage> & { messageId: string }): NormalizedIncomingMessage {
   return { phone: "77051234567", chatId: "77051234567@c.us", kind: "text", text: "", ...over };
@@ -41,7 +44,8 @@ function setup(opts: { transcript?: string; newClient?: boolean } = {}) {
   const orders: Array<Record<string, unknown>> = [];
   const managerNotes: string[] = [];
   const productById = new Map(PRODUCTS.map((p) => [p.id, p]));
-  let nextAgent: AgentOutput = agentOut({ reply: "..." });
+  let nextAgent: AgentResponse = agentOut({ reply: "..." });
+  let lastAgentInput: AgentInput | null = null;
   let lastActivityOverride: number | null = null;
 
   const deps: OrchestratorDeps = {
@@ -85,7 +89,7 @@ function setup(opts: { transcript?: string; newClient?: boolean } = {}) {
       getItems: async (c) => carts.get(c) ?? [],
       clear: async (c) => { carts.delete(c); },
     },
-    agent: { respond: async () => nextAgent },
+    agent: { respond: async (input) => { lastAgentInput = input; return nextAgent; } },
     transcribe: async () => ({ text: opts.transcript ?? "2 медовика", lang: "ru" }),
     address: new AlmatyHeuristicAddressProvider(),
     voice: {
@@ -115,9 +119,10 @@ function setup(opts: { transcript?: string; newClient?: boolean } = {}) {
 
   return {
     deps, sent, dialog, carts, drafts, orders, managerNotes,
-    setAgent: (a: AgentOutput) => { nextAgent = a; },
+    setAgent: (a: AgentResponse) => { nextAgent = a; },
     staleDialog: () => { lastActivityOverride = NOW - 61 * 60 * 1000; },
     lastSent: () => sent[sent.length - 1] ?? "",
+    agentInput: () => lastAgentInput,
     state: () => dialog.get("77051234567@c.us")?.state,
     items: () => carts.get("77051234567@c.us") ?? [],
   };
@@ -294,4 +299,236 @@ test("новый клиент → после заявки рег-ссылка", 
   await handleIncomingMessage(m("n6", "да"), t.deps);
   assert.equal(t.orders.length, 1);
   assert.ok(t.sent.some((s) => /register\?rt=/.test(s)));
+});
+
+// ——— Улучшения разговорного агента (память, устойчивость, намерения) ———
+
+test("«Привет» при сбое LLM (первый контакт) → приветствие, НЕ «нет товаров»", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ degraded: true }));
+  await handleIncomingMessage(msg({ messageId: "gd1", text: "Привет" }), t.deps);
+  assert.match(t.lastSent(), /DC Bakery/);
+  assert.doesNotMatch(t.lastSent(), /обычными словами/); // не MSG_UNKNOWN
+  assert.notEqual(t.lastSent(), M.MSG_CLARIFY);
+});
+
+test("сбой LLM в продолжающемся диалоге → мягкое «тех. неполадки», НЕ «нет товаров»", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ reply: "Здравствуйте!" }));
+  await handleIncomingMessage(msg({ messageId: "gd2a", text: "привет" }), t.deps);
+  t.setAgent(agentOut({ degraded: true }));
+  await handleIncomingMessage(msg({ messageId: "gd2b", text: "а что есть?" }), t.deps);
+  assert.equal(t.lastSent(), M.MSG_TEMPORARY_ISSUE);
+});
+
+test("вопрос про доставку без товаров → ответ агента проходит, без «нет товаров»", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ reply: "Доставка по Алматы: до 10 000 ₸ — 3 000 ₸, дальше дешевле." }));
+  await handleIncomingMessage(msg({ messageId: "dlv1", text: "сколько стоит доставка?" }), t.deps);
+  assert.match(t.lastSent(), /Доставка/);
+  assert.doesNotMatch(t.lastSent(), /обычными словами/);
+  assert.equal(t.items().length, 0);
+});
+
+test("история диалога передаётся агенту следующим сообщением", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ reply: "Здравствуйте! Что интересует?" }));
+  await handleIncomingMessage(msg({ messageId: "h1", text: "привет" }), t.deps);
+  t.setAgent(agentOut({ reply: "Есть медовик и наполеон." }));
+  await handleIncomingMessage(msg({ messageId: "h2", text: "что есть?" }), t.deps);
+  const input = t.agentInput();
+  assert.ok(input);
+  assert.match(input!.history, /Клиент: привет/);
+  assert.match(input!.history, /Ассистент: Здравствуйте/);
+});
+
+test("сводка корзины содержит productId (для контекстных remove/set)", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 3, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(msg({ messageId: "cs1", text: "3 медовика" }), t.deps);
+  t.setAgent(agentOut({ reply: "Есть ещё наполеон." }));
+  await handleIncomingMessage(msg({ messageId: "cs2", text: "а что ещё посоветуете?" }), t.deps);
+  assert.match(t.agentInput()!.cartSummary, /id=medovik/);
+});
+
+test("контекстное уменьшение количества (remove по id из корзины)", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 3, operation: "add" }] }));
+  await handleIncomingMessage(msg({ messageId: "rm1", text: "3 медовика" }), t.deps);
+  t.setAgent(agentOut({ reply: "Убрал два.", cartActions: [{ productId: "medovik", quantity: 2, operation: "remove" }], showCart: true }));
+  await handleIncomingMessage(msg({ messageId: "rm2", text: "убери два" }), t.deps);
+  assert.deepEqual(t.items(), [{ productId: "medovik", qty: 1 }]);
+});
+
+test("несколько действий в одном сообщении", async () => {
+  const t = setup();
+  t.setAgent(agentOut({
+    reply: "Добавил медовик и наполеон.",
+    cartActions: [
+      { productId: "medovik", quantity: 3, operation: "add" },
+      { productId: "napoleon", quantity: 1, operation: "add" },
+    ],
+    showCart: true,
+  }));
+  await handleIncomingMessage(msg({ messageId: "multi1", text: "3 медовика и 1 наполеон" }), t.deps);
+  assert.deepEqual(
+    t.items().sort((a, b) => a.productId.localeCompare(b.productId)),
+    [{ productId: "medovik", qty: 3 }, { productId: "napoleon", qty: 1 }],
+  );
+});
+
+test("пустой ответ модели (не сбой) в диалоге → уточнение, НЕ «нет товаров»", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ reply: "Здравствуйте!" }));
+  await handleIncomingMessage(msg({ messageId: "cl1", text: "привет" }), t.deps);
+  t.setAgent(agentOut({ reply: "" })); // модель вернула пустой reply без действий
+  await handleIncomingMessage(msg({ messageId: "cl2", text: "хм" }), t.deps);
+  assert.equal(t.lastSent(), M.MSG_CLARIFY);
+});
+
+test("checkout с пустой корзиной → НЕ уходит к адресу, продолжает диалог", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ intent: "checkout", reply: "Оформляем?" }));
+  await handleIncomingMessage(msg({ messageId: "eco1", text: "оформляй" }), t.deps);
+  assert.notEqual(t.state(), "awaiting_address");
+  assert.match(t.lastSent(), /Оформляем/);
+});
+
+test("«да» после показанной карточки корзины детерминированно ведёт к оформлению (без LLM)", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(msg({ messageId: "bc1", text: "1 медовик" }), t.deps);
+  assert.equal(t.state(), "awaiting_cart_confirmation");
+  t.setAgent(agentOut({ intent: "chat", reply: "агент не должен решать за оформление" }));
+  await handleIncomingMessage(msg({ messageId: "bc2", text: "да, спасибо" }), t.deps);
+  assert.equal(t.state(), "awaiting_address");
+  assert.match(t.lastSent(), /адрес/i);
+});
+
+test("вежливое/казахское подтверждение на финале создаёт заказ (не подвисает)", async () => {
+  for (const confirmText of ["да, оформляйте пожалуйста", "хорошо, оформляйте", "иә", "+"]) {
+    const t = setup();
+    const m = (id: string, text: string) => msg({ messageId: id, text });
+    t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 2, operation: "add" }] }));
+    await handleIncomingMessage(m("p1", "2 медовика"), t.deps);
+    await handleIncomingMessage(m("p2", "да"), t.deps);
+    await handleIncomingMessage(m("p3", "г. Алматы, ул. Абая 10"), t.deps);
+    await handleIncomingMessage(m("p4", "да"), t.deps);
+    await handleIncomingMessage(m("p5", "утро"), t.deps);
+    assert.equal(t.state(), "awaiting_final_confirmation");
+    await handleIncomingMessage(m("p6", confirmText), t.deps);
+    assert.equal(t.orders.length, 1, `«${confirmText}» должно оформить заказ`);
+    assert.equal(t.state(), "order_submitted");
+  }
+});
+
+test("голая вежливость на финале НЕ создаёт заказ (нужно слово-подтверждение)", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }] }));
+  await handleIncomingMessage(m("gp1", "1 медовик"), t.deps);
+  await handleIncomingMessage(m("gp2", "да"), t.deps);
+  await handleIncomingMessage(m("gp3", "г. Алматы, ул. Абая 10"), t.deps);
+  await handleIncomingMessage(m("gp4", "да"), t.deps);
+  await handleIncomingMessage(m("gp5", "утро"), t.deps);
+  assert.equal(t.state(), "awaiting_final_confirmation");
+  t.setAgent(agentOut({ reply: "Всё готово? Напишите «да» для оформления." }));
+  await handleIncomingMessage(m("gp6", "спасибо"), t.deps); // одна вежливость, без «да»
+  assert.equal(t.orders.length, 0);
+});
+
+test("вежливое подтверждение адреса продвигает (не зацикливает переспрос)", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }] }));
+  await handleIncomingMessage(m("av1", "1 медовик"), t.deps);
+  await handleIncomingMessage(m("av2", "да"), t.deps);
+  await handleIncomingMessage(m("av3", "г. Алматы, ул. Абая 10"), t.deps);
+  assert.equal(t.state(), "awaiting_address_confirmation");
+  await handleIncomingMessage(m("av4", "да, всё верно, спасибо"), t.deps);
+  assert.equal(t.state(), "awaiting_delivery_period");
+});
+
+test("«давай» в ответ на Q&A-ход (building_cart, карточка не показана) не проскакивает к адресу", async () => {
+  const t = setup();
+  // 1) добавили товар — карточка показана → awaiting_cart_confirmation.
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(msg({ messageId: "fp1", text: "1 медовик" }), t.deps);
+  assert.equal(t.state(), "awaiting_cart_confirmation");
+  // 2) агент отвечает вопросом БЕЗ карточки (showCart:false, без cartActions) → building_cart.
+  t.setAgent(agentOut({ reply: "Есть ещё наполеон — интересно?", showCart: false }));
+  await handleIncomingMessage(msg({ messageId: "fp2", text: "а что ещё есть?" }), t.deps);
+  assert.equal(t.state(), "building_cart");
+  // 3) «давай» отвечает на вопрос агента (не на карточку) → в гейт НЕ попадает, решает агент.
+  t.setAgent(agentOut({ reply: "Добавил наполеон.", cartActions: [{ productId: "napoleon", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(msg({ messageId: "fp3", text: "давай" }), t.deps);
+  assert.notEqual(t.state(), "awaiting_address");
+  assert.deepEqual(
+    t.items().sort((a, b) => a.productId.localeCompare(b.productId)),
+    [{ productId: "medovik", qty: 1 }, { productId: "napoleon", qty: 1 }],
+  );
+});
+
+test("повтор заказа → «да» детерминированно ведёт к адресу", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ intent: "repeat_order", reply: "Собрал прошлый заказ." }));
+  await handleIncomingMessage(msg({ messageId: "rp1", text: "повтори прошлый" }), t.deps);
+  assert.equal(t.state(), "awaiting_cart_confirmation");
+  t.setAgent(agentOut({ intent: "chat", reply: "..." })); // НЕ checkout: не зависим от LLM
+  await handleIncomingMessage(msg({ messageId: "rp2", text: "да" }), t.deps);
+  assert.equal(t.state(), "awaiting_address");
+});
+
+test("исправление адреса с префиксом-подтверждением НЕ подтверждает старый адрес", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }] }));
+  await handleIncomingMessage(m("ac1", "1 медовик"), t.deps);
+  await handleIncomingMessage(m("ac2", "да"), t.deps);
+  assert.equal(t.state(), "awaiting_address");
+  await handleIncomingMessage(m("ac3", "г. Алматы, ул. Абая 10"), t.deps);
+  assert.equal(t.state(), "awaiting_address_confirmation");
+  await handleIncomingMessage(m("ac4", "давай г. Алматы, ул. Сатпаева 90"), t.deps);
+  assert.notEqual(t.state(), "awaiting_delivery_period"); // не проскочил со старым адресом
+  assert.match(t.lastSent(), /сатпаева/i);
+  assert.doesNotMatch(t.lastSent(), /абая/i);
+});
+
+test("правка на финальном подтверждении («да, только убери…») не создаёт заказ", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 3, operation: "add" }] }));
+  await handleIncomingMessage(m("fe1", "3 медовика"), t.deps);
+  await handleIncomingMessage(m("fe2", "да"), t.deps);
+  await handleIncomingMessage(m("fe3", "г. Алматы, ул. Абая 10"), t.deps);
+  await handleIncomingMessage(m("fe4", "да"), t.deps);
+  await handleIncomingMessage(m("fe5", "утро"), t.deps);
+  assert.equal(t.state(), "awaiting_final_confirmation");
+  t.setAgent(agentOut({
+    reply: "Убрал один медовик.",
+    cartActions: [{ productId: "medovik", quantity: 1, operation: "remove" }],
+    showCart: true,
+  }));
+  await handleIncomingMessage(m("fe6", "да, только убери один медовик"), t.deps);
+  assert.equal(t.orders.length, 0);
+  assert.deepEqual(t.items(), [{ productId: "medovik", qty: 2 }]);
+});
+
+test("повторное подтверждение уже созданной заявки → без дубля заказа", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 2, operation: "add" }] }));
+  await handleIncomingMessage(m("d1", "2 медовика"), t.deps);
+  t.setAgent(agentOut({ intent: "checkout" }));
+  await handleIncomingMessage(m("d2", "оформляй"), t.deps);
+  await handleIncomingMessage(m("d3", "г. Алматы, ул. Абая 10"), t.deps);
+  await handleIncomingMessage(m("d4", "да"), t.deps);
+  await handleIncomingMessage(m("d5", "утро"), t.deps);
+  await handleIncomingMessage(m("d6", "да"), t.deps);
+  assert.equal(t.orders.length, 1);
+  assert.equal(t.state(), "order_submitted");
+  // Ещё одно «да» уже после оформления не должно создать вторую заявку.
+  t.setAgent(agentOut({ reply: "Заявка уже принята, менеджер свяжется." }));
+  await handleIncomingMessage(m("d7", "да"), t.deps);
+  assert.equal(t.orders.length, 1);
 });

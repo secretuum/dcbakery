@@ -26,6 +26,13 @@ export type AgentOutput = {
   intent: AgentIntent;
 };
 
+/**
+ * Ответ агента для оркестратора: вывод модели + серверный флаг деградации.
+ * `degraded` НЕ входит в JSON-схему LLM — его ставит сервер, когда модель
+ * недоступна/вернула мусор (тогда оркестратор даёт мягкий фолбэк).
+ */
+export type AgentResponse = AgentOutput & { degraded?: boolean };
+
 export const AGENT_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,

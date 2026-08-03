@@ -11,12 +11,15 @@ import type { DialogState } from "../state/machine";
 import { isBotSuppressed } from "../state/machine";
 import { detectEscalation } from "../policy/escalation";
 import { buildCatalogContext, catalogProductIds } from "../agent/catalog-context";
-import type { AgentOutput } from "../agent/schema";
+import type { AgentResponse } from "../agent/schema";
 import type { CartView, CartItemQty, CartOp, CartAdjustment } from "../cart/cart-math";
 import { guardAudio } from "../ai/audio-guard";
 import type { CreateOrderInput } from "../order/create-order";
 import { LIMITS, CONSENT_VERSION } from "../config";
 import * as M from "./messages";
+
+/** Один ход диалога, хранимый для памяти агента (компактно, в context JSONB). */
+export type HistoryTurn = { role: "user" | "bot"; text: string };
 
 export type DialogContext = {
   clarifications?: Array<{ rawName: string; candidates: Array<{ id: string; name: string }> }>;
@@ -25,6 +28,8 @@ export type DialogContext = {
   period?: "morning" | "afternoon";
   /** Сохранённые адреса клиента, показанные для выбора номером. */
   savedAddresses?: string[];
+  /** Недавние ходы диалога — передаём агенту как контекст (без миграции, в JSONB). */
+  history?: HistoryTurn[];
 };
 
 export type DialogSnapshot = { state: DialogState; context: DialogContext; phone: string | null };
@@ -68,7 +73,7 @@ export type OrchestratorDeps = {
       cartSummary: string;
       history: string;
       shouldGreet: boolean;
-    }): Promise<AgentOutput>;
+    }): Promise<AgentResponse>;
   };
   transcribe(input: { bytes: Uint8Array; mimeType: string }): Promise<{ text: string; lang?: string }>;
   address: {
@@ -134,13 +139,91 @@ function parsePeriodFromText(text: string): "morning" | "afternoon" | null {
   return null;
 }
 
-function looksConfirm(text: string): boolean {
-  return /^(да|ага|верно|ок|окей|подтвержда|оформля|все верно|всё верно|давай|погнали|годится)/.test(
-    text.trim().toLowerCase(),
-  );
+// Слова-подтверждения + вежливость/филлеры (рус/каз/англ). Сообщение считаем
+// подтверждением, только если ВСЕ его слова из этого набора. Такой allow-list
+// безопасен: любое «постороннее» слово (товар/улица/число — «убери», «сатпаева»,
+// «90») отсутствует в наборе → НЕ подтверждение → уходит агенту/валидации адреса.
+// Значит «да, но убери один» и «давай ул. Сатпаева 90» не создадут заказ/не
+// подтвердят старый адрес, а вежливые «да, спасибо», «хорошо оформляйте», «иә» —
+// корректно продвигают диалог (не подвисают).
+// Слова, ДОСТАТОЧНЫЕ для подтверждения (рус/каз/англ).
+const CONFIRM_WORDS = new Set([
+  "да", "даа", "ага", "угу", "конечно", "верно", "ок", "окей", "подтверждаю", "подтвердить",
+  "подтверждено", "подтверждаем", "оформляй", "оформляйте", "оформляем", "оформляю", "оформим",
+  "оформи", "оформить", "давай", "давайте", "погнали", "годится", "договорились", "пойдет", "беру",
+  "заказывай", "заказываю", "заказываем", "хорошо", "отлично", "супер", "класс", "все", "точно", "именно",
+  "иа", "иә", "ия", "жарайды", "болды", "макул", "мақул", "дурыс",
+  "yes", "yeah", "ok", "okay", "confirm",
+]);
+// Вежливость/филлеры — допустимы рядом с подтверждением, но САМИ по себе подтверждением не являются
+// («спасибо» в одиночку ≠ «оформляем»).
+const FILLER_WORDS = new Set(["спасибо", "пожалуйста", "плиз", "please", "рахмет", "благодарю"]);
+
+/**
+ * true, если сообщение — подтверждение: есть хотя бы одно слово-подтверждение, а всё
+ * остальное — вежливость. Любое постороннее слово (товар/улица/число: «убери»,
+ * «сатпаева», «90») делает его НЕ подтверждением → уходит агенту/валидации адреса.
+ * Голый «+»/эмодзи-лайк тоже считаем подтверждением.
+ */
+function isConfirmation(text: string): boolean {
+  const raw = text.trim();
+  if (/^[+👍✅🆗\s]+$/u.test(raw) && /[+👍✅🆗]/u.test(raw)) return true;
+  const tokens = raw
+    .toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (tokens.length === 0 || tokens.length > 6) return false;
+  let hasConfirm = false;
+  for (const t of tokens) {
+    if (CONFIRM_WORDS.has(t)) hasConfirm = true;
+    else if (!FILLER_WORDS.has(t)) return false; // постороннее слово → не подтверждение
+  }
+  return hasConfirm;
 }
 
 const GREET_GAP_MS = 6 * 60 * 60 * 1000;
+
+// Память диалога: сколько ходов и по сколько символов держим в context (анти-раздувание JSONB/токенов).
+const HISTORY_MAX_TURNS = 12;
+const HISTORY_TEXT_CAP = 400;
+
+/** Компактный рендер истории для промпта агента. */
+function renderHistory(history: HistoryTurn[]): string {
+  return history
+    .map((t) => `${t.role === "user" ? "Клиент" : "Ассистент"}: ${t.text}`)
+    .join("\n");
+}
+
+/** Дописать обмен (клиент → ассистент) в историю с обрезкой длины и числа ходов. */
+function appendExchange(history: HistoryTurn[], userText: string, botText: string): HistoryTurn[] {
+  return [
+    ...history,
+    { role: "user" as const, text: userText.slice(0, HISTORY_TEXT_CAP) },
+    { role: "bot" as const, text: botText.slice(0, HISTORY_TEXT_CAP) },
+  ].slice(-HISTORY_MAX_TURNS);
+}
+
+/** Сводка корзины С id — чтобы агент адресовал remove/set по реальному productId. */
+function buildCartSummary(view: CartView): string {
+  return view.lines.map((l) => `id=${l.productId} ${l.name} ×${l.qty}`).join("; ");
+}
+
+/** Уникальные категории каталога (для детерминированного приветствия при сбое LLM). */
+function catalogCategories(products: Product[]): string[] {
+  const seen = new Set<string>();
+  const cats: string[] = [];
+  for (const p of products) {
+    const cat = p.category?.name ?? p.subcategory ?? "";
+    if (cat && !seen.has(cat)) {
+      seen.add(cat);
+      cats.push(cat);
+    }
+  }
+  return cats.slice(0, 6);
+}
 
 /** Главный обработчик входящего сообщения клиента. Все эффекты — через deps. */
 export async function handleIncomingMessage(
@@ -291,9 +374,21 @@ export async function handleIncomingMessage(
       await handlePeriod(text);
       return;
     }
-    if (state === "awaiting_final_confirmation" && looksConfirm(text)) {
+    if (state === "awaiting_final_confirmation" && isConfirmation(text)) {
       await createOrder();
       return;
+    }
+
+    // Подтверждение собранной корзины («да» после ПОКАЗАННОЙ карточки корзины) → к адресу.
+    // Только в awaiting_cart_confirmation (карточка реально показана и обещала «да — оформим»);
+    // в обычном building_cart «давай»/«ок» может отвечать на другой вопрос — тогда решает агент.
+    if (state === "awaiting_cart_confirmation" && isConfirmation(text)) {
+      const products = await deps.catalog.getProducts();
+      const { view } = await deps.cart.load(msg.chatId, products);
+      if (view.lines.length > 0) {
+        await goToAddress();
+        return;
+      }
     }
 
     // 4) Разговорная фаза — LLM-агент (диалог, вопросы по каталогу, сбор корзины, оформление).
@@ -322,7 +417,8 @@ export async function handleIncomingMessage(
     async function runAgent(userText: string) {
       const products = await deps.catalog.getProducts();
       const { view: beforeView } = await deps.cart.load(msg.chatId, products);
-      const cartSummary = beforeView.lines.map((l) => `${l.name} ×${l.qty}`).join("; ");
+      const cartSummary = buildCartSummary(beforeView);
+      const history = context.history ?? [];
       const shouldGreet = !existing || nowMs - existing.lastActivityMs > GREET_GAP_MS;
 
       const out = await deps.agent.respond({
@@ -330,9 +426,18 @@ export async function handleIncomingMessage(
         catalogContext: buildCatalogContext(products),
         validProductIds: catalogProductIds(products),
         cartSummary,
-        history: "",
+        history: renderHistory(history),
         shouldGreet,
       });
+
+      // Деградация LLM (недоступен/мусор): мягкий фолбэк — приветствие на первом контакте,
+      // иначе «тех. неполадки». НИКОГДА не «перечислите товары».
+      if (out.degraded) {
+        const fallback = shouldGreet ? M.formatGreeting(catalogCategories(products)) : M.MSG_TEMPORARY_ISSUE;
+        await persist(state, { ...context, history: appendExchange(history, userText, fallback) });
+        await reply(fallback);
+        return;
+      }
 
       if (out.intent === "cancel") {
         await deps.cart.clear(msg.chatId).catch(() => {});
@@ -342,7 +447,7 @@ export async function handleIncomingMessage(
       }
       if (out.intent === "handoff") {
         await createLead("agent_handoff", userText);
-        await persist("human_handoff", context);
+        await persist("human_handoff", { ...context, history: appendExchange(history, userText, out.reply || M.MSG_HANDOFF) });
         await reply(out.reply || M.MSG_HANDOFF);
         return;
       }
@@ -367,9 +472,12 @@ export async function handleIncomingMessage(
       }
 
       if (out.intent === "checkout") {
-        if (out.reply) await reply(out.reply);
-        await goToAddress();
-        return;
+        // Готов оформлять только если в корзине что-то есть — иначе продолжаем диалог.
+        if (view.lines.length > 0) {
+          if (out.reply) await reply(out.reply);
+          await goToAddress();
+          return;
+        }
       }
 
       // Обычный диалог: ответ агента + (при изменении/показе) серверная корзина с реальной суммой.
@@ -381,8 +489,22 @@ export async function handleIncomingMessage(
         showCart ? M.formatCart(view) : null,
       ].filter((p): p is string => Boolean(p));
 
-      await persist(view.lines.length > 0 ? "building_cart" : "idle", context);
-      await reply(parts.length > 0 ? parts.join("\n\n") : M.MSG_UNKNOWN);
+      // Пусто (модель вернула пустой reply без действий): не «нет товаров», а мягко —
+      // приветствие на первом контакте, иначе уточнение.
+      const replyText =
+        parts.length > 0
+          ? parts.join("\n\n")
+          : shouldGreet
+            ? M.formatGreeting(catalogCategories(products))
+            : M.MSG_CLARIFY;
+
+      // Показали карточку корзины («да — оформим») → awaiting_cart_confirmation: следующее «да»
+      // детерминированно ведёт к оформлению. Q&A-ход без карточки (showCart=false) при непустой
+      // корзине → building_cart (там «да»/«давай» может отвечать на вопрос — решает агент).
+      const nextState =
+        view.lines.length === 0 ? "idle" : showCart ? "awaiting_cart_confirmation" : "building_cart";
+      await persist(nextState, { ...context, history: appendExchange(history, userText, replyText) });
+      await reply(replyText);
     }
 
     async function goToAddress() {
@@ -409,8 +531,9 @@ export async function handleIncomingMessage(
 
     async function handleAddress(rawText: string) {
       const trimmed = rawText.trim();
-      // Подтверждение ранее показанного адреса.
-      if (state === "awaiting_address_confirmation" && looksConfirm(trimmed)) {
+      // Подтверждение ранее показанного адреса — только если сообщение это ТОЛЬКО «да»
+      // (иначе внутри исправленный адрес — его надо перепроверить, а не подтвердить старый).
+      if (state === "awaiting_address_confirmation" && isConfirmation(trimmed)) {
         await persist("awaiting_delivery_period", context);
         await reply(M.askDeliveryPeriod());
         return;

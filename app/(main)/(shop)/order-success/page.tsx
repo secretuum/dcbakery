@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { WHATSAPP_SUPPORT_NUMBER } from "@/app/constants";
 import { getT } from "@/src/i18n/server";
+import { TrackOrderSuccess } from "@/src/components/analytics/TrackOrderSuccess";
 
 type OrderSuccessPageProps = {
   searchParams: Promise<{
@@ -32,6 +33,7 @@ export default async function OrderSuccessPage({ searchParams }: OrderSuccessPag
 
   return (
     <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
+      <TrackOrderSuccess orderNumber={orderNumber} />
       <section className="mx-auto max-w-3xl rounded-card border border-black/10 bg-white p-8 text-center sm:p-10">
         <div className="mx-auto flex size-20 items-center justify-center rounded border border-black/10 bg-coral-light">
           <span className="block size-10 rounded bg-coral" />

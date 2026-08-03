@@ -24,12 +24,14 @@ export async function Footer() {
       value: content.contactWhatsapp,
       href: `https://wa.me/${digits(content.contactWhatsapp)}`,
       icon: WhatsAppIcon,
+      person: t("Менеджер"),
     },
     {
       label: t("Телефон"),
       value: content.contactPhone,
       href: `tel:+${digits(content.contactPhone)}`,
       icon: WhatsAppIcon,
+      person: "Евгений",
     },
     {
       label: "Instagram",
@@ -90,6 +92,9 @@ export async function Footer() {
               ) : (
                 <p className="mt-2 text-sm font-semibold text-white">{item.value}</p>
               )}
+              {"person" in item && item.person ? (
+                <p className="mt-1 text-xs text-white/55">{item.person}</p>
+              ) : null}
               {"hint" in item && item.hint ? (
                 <p className="mt-1 text-xs text-white/55">{item.hint}</p>
               ) : null}

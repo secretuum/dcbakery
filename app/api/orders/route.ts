@@ -11,6 +11,7 @@ import {
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
 import { canPlaceOrder } from "@/src/lib/credit";
+import { reportError } from "@/src/lib/monitoring";
 import { sendTelegramNotification } from "@/src/lib/telegram";
 import {
   getWhatsAppChatIdFromPhone,
@@ -349,7 +350,10 @@ export async function POST(request: Request) {
 
   try {
     await insertOrderWithItems(order, orderItems);
-  } catch {
+  } catch (error) {
+    // Раньше ошибка проглатывалась молча — теперь логируем и репортим в мониторинг
+    // (поведение ответа не меняется: тот же 500).
+    reportError(error, { where: "orders:insert", extra: { orderNumber: order.order_number } });
     return NextResponse.json(
       {
         error: "Failed to save order",

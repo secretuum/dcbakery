@@ -5,6 +5,7 @@ import { ToastProvider } from "@/src/contexts/ToastContext";
 import { LocaleProvider } from "@/src/i18n/client";
 import { getLocale } from "@/src/i18n/server";
 import { SITE_URL } from "@/src/lib/site-url";
+import { Analytics } from "@/src/components/analytics/Analytics";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -37,11 +38,41 @@ const SITE_TITLE = "DC Bakery — B2B кондитерская и полуфаб
 const SITE_DESCRIPTION =
   "B2B-каталог десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей.";
 
+// Верификация вебмастеров (Google Search Console / Яндекс.Вебмастер) — через env,
+// чтобы подключить аналитику и рекламу без правки кода.
+const verification: NonNullable<Metadata["verification"]> = {};
+if (process.env.GOOGLE_SITE_VERIFICATION) verification.google = process.env.GOOGLE_SITE_VERIFICATION;
+if (process.env.YANDEX_VERIFICATION) verification.yandex = process.env.YANDEX_VERIFICATION;
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
   applicationName: "DC Bakery",
+  keywords: [
+    "DC Bakery",
+    "десерты оптом Алматы",
+    "полуфабрикаты оптом",
+    "мясо оптом Алматы",
+    "B2B поставки продуктов",
+    "оптовая кондитерская Алматы",
+    "поставки для кафе и ресторанов",
+    "халал мясо оптом",
+    "торты оптом",
+    "выпечка оптом",
+  ],
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  verification,
   openGraph: {
     type: "website",
     siteName: "DC Bakery",
@@ -71,6 +102,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${montserrat.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
+        <Analytics />
         <LocaleProvider locale={locale}>
           <CartProvider>
             <ToastProvider>

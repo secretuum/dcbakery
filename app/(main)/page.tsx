@@ -11,19 +11,6 @@ import { HomePopularPosters } from "@/src/components/home/HomePopularPosters";
 import { HomeCategoryCards } from "@/src/components/home/HomeCategoryCards";
 import { HomeDelivery } from "@/src/components/home/HomeDelivery";
 import { EditableText, EditableImage } from "@/src/components/home/SiteEditMode";
-import { JsonLd } from "@/src/components/seo/JsonLd";
-import { SITE_URL } from "@/src/lib/site-url";
-
-const organizationJsonLd = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "DC Bakery",
-  url: SITE_URL,
-  image: `${SITE_URL}/opengraph-image`,
-  description:
-    "B2B-поставщик десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Алматы, Казахстан.",
-  areaServed: "KZ",
-};
 
 export const metadata: Metadata = {
   title: "DC Bakery — B2B поставщик продуктов питания",
@@ -58,8 +45,6 @@ export default async function Home() {
 
   return (
     <main className="text-dark">
-        <JsonLd data={organizationJsonLd} />
-
         {/* ─── Hero ─── */}
         <section
           className="relative overflow-hidden"

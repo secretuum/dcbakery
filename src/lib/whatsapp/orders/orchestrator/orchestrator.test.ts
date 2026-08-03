@@ -538,6 +538,45 @@ test("«позовите менеджера» на финале выводит �
   assert.equal(t.orders.length, 0);
 });
 
+test("«я не давал команду на доставку» на шаге адреса выводит из оформления", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(m("nd1", "1 медовик"), t.deps);
+  await handleIncomingMessage(m("nd2", "да"), t.deps);
+  assert.equal(t.state(), "awaiting_address");
+  t.setAgent(agentOut({ reply: "Прошу прощения! Вернул вас к заказу — что добавим?" }));
+  await handleIncomingMessage(m("nd3", "я не давал команду на доставку"), t.deps);
+  assert.notEqual(t.state(), "awaiting_address");
+  assert.deepEqual(t.items(), [{ productId: "medovik", qty: 1 }]);
+});
+
+test("«хочу утром» на шаге интервала — это ответ, а не выход (адрес сохранён)", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(m("hu1", "1 медовик"), t.deps);
+  await handleIncomingMessage(m("hu2", "да"), t.deps);
+  await handleIncomingMessage(m("hu3", "г. Алматы, ул. Абая 10"), t.deps);
+  await handleIncomingMessage(m("hu4", "да"), t.deps);
+  assert.equal(t.state(), "awaiting_delivery_period");
+  await handleIncomingMessage(m("hu5", "хочу утром"), t.deps);
+  assert.equal(t.state(), "awaiting_final_confirmation"); // ответ принят, не выкинуло
+  assert.match(t.lastSent(), /Абая 10/i); // адрес сохранён в финальной сводке
+});
+
+test("адрес с «добавочный» (телефон) не выкидывает из оформления", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(m("db1", "1 медовик"), t.deps);
+  await handleIncomingMessage(m("db2", "да"), t.deps);
+  assert.equal(t.state(), "awaiting_address");
+  await handleIncomingMessage(m("db3", "г. Алматы, ул. Абая 10, добавочный 210"), t.deps);
+  assert.equal(t.state(), "awaiting_address_confirmation"); // распознан как адрес, не escape
+  assert.match(t.lastSent(), /добавочный/i);
+});
+
 test("исправление адреса с префиксом-подтверждением НЕ подтверждает старый адрес", async () => {
   const t = setup();
   const m = (id: string, text: string) => msg({ messageId: id, text });

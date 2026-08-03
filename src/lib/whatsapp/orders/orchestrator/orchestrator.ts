@@ -166,7 +166,7 @@ const FILLER_WORDS = new Set(["спасибо", "пожалуйста", "пли�
 // Без \b — в JS \b не работает с кириллицей. Матчим по подстрокам/явным формам
 // (формы «верну/верни…» вместо «верн», чтобы не задеть «верно» = подтверждение).
 const ESCAPE_RE =
-  /(наза[дн]|верну|верни|верня|вернут|в начал|снача|меню|катал|добав|дозаказ|докуп|еще|переду[мй]ал|отмен|стоп|подожд|секунд|поменя|замен|измен|не надо|не хочу|не буду|не готов|погоди|покажи|что есть|а есть|хочу|менеджер|человек|оператор|помощ)/;
+  /(наза[дн]|верну|верни|верня|вернут|в начал|снача|заново|меню|катал|добав|дозаказ|докуп|еще|переду[мй]ал|отмен|стоп|стой|подожд|погоди|секунд|минут|поменя|замен|измен|не надо|не хочу|не буду|не готов|не оформл|не давал|не заказыв|не просил|ошибк|хватит|покажи|что есть|а есть|менеджер|человек|оператор|помощ)/;
 
 /** Похоже ли сообщение на «выход» из шага оформления (навигация/добавление/отмена/менеджер). */
 function isCheckoutEscape(text: string): boolean {
@@ -379,26 +379,10 @@ export async function handleIncomingMessage(
       return;
     }
 
-    // 2.5) ГИБКОСТЬ: из любого шага оформления клиент может вернуться/добавить/передумать/
-    // позвать менеджера. Такой ввод — не ответ на вопрос шага: выходим в диалог (корзину
-    // сохраняем, адрес/интервал сбрасываем) и отдаём сообщение агенту — он поймёт нюанс.
-    const inCheckoutPhase =
-      state === "awaiting_address" ||
-      state === "awaiting_address_confirmation" ||
-      state === "awaiting_delivery_period" ||
-      state === "awaiting_final_confirmation";
-    if (inCheckoutPhase && isCheckoutEscape(text)) {
-      await persist("building_cart", {
-        ...context,
-        address: undefined,
-        period: undefined,
-        savedAddresses: undefined,
-      });
-      await runAgent(text);
-      return;
-    }
-
     // 3) Структурированная фаза оформления (адрес/интервал/подтверждение) — детерминированно.
+    // ГИБКОСТЬ: в каждом шаге СНАЧАЛА пытаемся понять ответ на текущий вопрос, и только если
+    // это НЕ ответ, а навигация (назад/добавить/меню/менеджер…) — выходим в диалог (escapeToChat).
+    // Так валидный ответ («хочу утром», «Алматы, … добавочный 210») не крадётся escape-эвристикой.
     if (state === "awaiting_address" || state === "awaiting_address_confirmation") {
       await handleAddress(text);
       return;
@@ -407,9 +391,15 @@ export async function handleIncomingMessage(
       await handlePeriod(text);
       return;
     }
-    if (state === "awaiting_final_confirmation" && isConfirmation(text)) {
-      await createOrder();
-      return;
+    if (state === "awaiting_final_confirmation") {
+      if (isConfirmation(text)) {
+        await createOrder();
+        return;
+      }
+      if (isCheckoutEscape(text)) {
+        await escapeToChat(text);
+        return;
+      }
     }
 
     // Подтверждение собранной корзины («да» после ПОКАЗАННОЙ карточки корзины) → к адресу.
@@ -445,6 +435,18 @@ export async function handleIncomingMessage(
         })
         .catch(() => {});
       await deps.notifyManager(`Нужна помощь менеджера (WhatsApp). Причина: ${reason}. Чат: ${msg.chatId}`).catch(() => {});
+    }
+
+    // Выход из шага оформления обратно в диалог: корзину сохраняем, адрес/интервал сбрасываем,
+    // отдаём сообщение агенту (он поймёт «назад»/«добавь X»/«отмени»/«менеджер»).
+    async function escapeToChat(userText: string) {
+      await persist("building_cart", {
+        ...context,
+        address: undefined,
+        period: undefined,
+        savedAddresses: undefined,
+      });
+      await runAgent(userText);
     }
 
     async function runAgent(userText: string) {
@@ -611,6 +613,11 @@ export async function handleIncomingMessage(
         return;
       }
       if (res.status === "uncertain") {
+        // Не распознали адрес: если это навигация (назад/меню/добавить/менеджер…) — выходим в диалог.
+        if (isCheckoutEscape(rawText)) {
+          await escapeToChat(rawText);
+          return;
+        }
         await persist("awaiting_address", context);
         await reply(M.addressUncertain());
         return;
@@ -622,6 +629,11 @@ export async function handleIncomingMessage(
     async function handlePeriod(rawText: string) {
       const period = parsePeriodFromText(rawText);
       if (!period) {
+        // Не интервал: навигация (назад/меню/менеджер…) → выходим в диалог; иначе переспрашиваем.
+        if (isCheckoutEscape(rawText)) {
+          await escapeToChat(rawText);
+          return;
+        }
         await persist("awaiting_delivery_period", context);
         await reply(M.askDeliveryPeriod());
         return;

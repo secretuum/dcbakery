@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { Button } from "@/src/components/ui/Button";
 import { useT } from "@/src/i18n/client";
+import { reportError } from "@/src/lib/monitoring";
 
 type ErrorPageProps = {
   error: Error & { digest?: string };
@@ -10,6 +12,9 @@ type ErrorPageProps = {
 
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
   const t = useT();
+  useEffect(() => {
+    reportError(error, { where: "route-error", extra: { digest: error.digest } });
+  }, [error]);
   return (
     <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
       <section className="mx-auto max-w-2xl rounded-card bg-white p-8 text-center shadow-[0_18px_60px_rgba(120,51,38,0.10)]">

@@ -3,6 +3,7 @@ import { Footer } from "@/src/components/layout/Footer";
 import { Header } from "@/src/components/layout/Header";
 import { BottomNav } from "@/src/components/layout/BottomNav";
 import { SiteEditProvider } from "@/src/components/home/SiteEditMode";
+import { OrganizationJsonLd } from "@/src/components/seo/OrganizationJsonLd";
 import { getSiteContent } from "@/src/lib/site-content";
 import { getIsSuperAdmin } from "@/src/lib/superadmin";
 
@@ -13,6 +14,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
 
   return (
     <SiteEditProvider isSuperAdmin={isSuperAdmin} content={content}>
+      <OrganizationJsonLd />
       <Header />
       <div className="flex-1">{children}</div>
       <Footer />

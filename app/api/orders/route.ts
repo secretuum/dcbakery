@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { revalidateTag } from "next/cache";
 import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT, deliveryFee } from "@/app/constants";
-import { fetchProducts } from "@/src/lib/catalog";
+import { CATALOG_CACHE_TAG, fetchProducts } from "@/src/lib/catalog";
+import { CLIENT_SESSION_COOKIE, verifyClientSession } from "@/src/lib/client-session";
 import { getSiteContent } from "@/src/lib/site-content";
 import {
   fetchClientByEmail,
@@ -9,6 +12,7 @@ import {
   insertOrderWithItems,
   updateOrderTelegramMessageId,
   updateOrderWhatsAppMessageId,
+  upsertCatalogProductOverride,
 } from "@/src/lib/supabase/admin";
 import { canPlaceOrder } from "@/src/lib/credit";
 import { reportError } from "@/src/lib/monitoring";
@@ -252,6 +256,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: supabaseConfigError }, { status: 503 });
   }
 
+  // Серверная проверка сессии: заказ может создать только авторизованный клиент.
+  // Раньше требование аккаунта было только на фронте (CheckoutAuthGate) — прямой POST
+  // его обходил. Килл-свитч ORDERS_REQUIRE_SESSION=false отключает enforce на случай сбоя.
+  if (process.env.ORDERS_REQUIRE_SESSION !== "false") {
+    const sessionCookie = (await cookies()).get(CLIENT_SESSION_COOKIE)?.value;
+    const session = sessionCookie ? await verifyClientSession(sessionCookie) : null;
+    if (!session) {
+      return NextResponse.json({ error: "Требуется вход в аккаунт" }, { status: 401 });
+    }
+  }
+
   let payload: unknown;
 
   try {
@@ -360,6 +375,21 @@ export async function POST(request: Request) {
       },
       { status: 500 },
     );
+  }
+
+  // Списываем остаток по каждой позиции (заказ уже создан → best-effort, не роняем его).
+  // Read-modify-write через override: приложение знает эффективный остаток (статика+override),
+  // чего не знает чистый SQL. Под экстремальной конкуренцией одного SKU возможна гонка —
+  // атомарный вариант потребует RPC-миграцию (follow-up). revalidateTag убирает 10-мин лаг кэша.
+  try {
+    for (const item of orderItems) {
+      const current = Number(productMap.get(item.product_id)?.stock_qty ?? 0);
+      const nextStock = Math.max(0, current - item.qty);
+      await upsertCatalogProductOverride(item.product_id, { stock_qty: nextStock });
+    }
+    revalidateTag(CATALOG_CACHE_TAG, "max");
+  } catch (error) {
+    reportError(error, { where: "orders:stock-decrement", extra: { orderNumber } });
   }
 
   const customerChatId = getWhatsAppChatIdFromPhone(order.customer_phone);

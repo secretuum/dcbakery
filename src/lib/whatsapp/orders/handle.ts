@@ -17,12 +17,22 @@ import { checkRateLimit } from "@/src/lib/rate-limit";
  */
 export async function tryHandleNlOrder(payload: unknown): Promise<boolean> {
   try {
-    if (!(await isNlOrdersEnabled())) return false;
+    const enabled = await isNlOrdersEnabled();
+    console.info("[whatsapp:nl] enter", { enabled });
+    if (!enabled) return false;
 
     const provider = new GreenApiProvider();
     const message = provider.normalizeWebhook(payload);
     // Только клиентские сообщения; менеджерский групповой чат — старый путь (команды).
-    if (!message || message.isManagerChat) return false;
+    if (!message) {
+      console.info("[whatsapp:nl] no normalized message");
+      return false;
+    }
+    if (message.isManagerChat) {
+      console.info("[whatsapp:nl] manager chat → skip");
+      return false;
+    }
+    console.info("[whatsapp:nl] message", { kind: message.kind });
 
     // Rate limit на номер (анти-флуд/стоимость AI). Upstash Redis или in-memory fallback.
     const rl = await checkRateLimit({
@@ -38,6 +48,7 @@ export async function tryHandleNlOrder(payload: unknown): Promise<boolean> {
 
     const deps = await buildOrchestratorDeps(provider);
     await handleIncomingMessage(message, deps);
+    console.info("[whatsapp:nl] handled");
     return true;
   } catch (error) {
     // Любой сбой нового пути НЕ должен ронять webhook; логируем без пользовательских данных.

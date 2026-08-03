@@ -19,7 +19,7 @@ import { recordConsent, hasConsent } from "../repo/consent-repo";
 import { upsertLeadDraft } from "../repo/lead-draft-repo";
 import { insertVoiceMessage } from "../repo/voice-repo";
 import { applyCartOps, loadCartView, setCartItems, getCartItems, clearCart } from "../cart/cart-service";
-import { OpenAiIntentExtractor } from "../ai/intent-extractor";
+import { OpenAiOrderAgent } from "../agent/agent";
 import { OpenAiWhisperTranscriber } from "../ai/transcriber";
 import { AlmatyHeuristicAddressProvider } from "../address/provider";
 import { createOrderFromWhatsApp } from "../order/create-order";
@@ -34,7 +34,7 @@ const RETAIL_URL = process.env.WHATSAPP_RETAIL_URL ?? "https://tap.delcappuccino
 /** Собрать зависимости оркестратора для одного входящего сообщения. */
 export async function buildOrchestratorDeps(provider: WhatsAppProvider): Promise<OrchestratorDeps> {
   const retailKeywords = await getRetailKeywords();
-  const intent = new OpenAiIntentExtractor();
+  const agent = new OpenAiOrderAgent();
   const transcriber = new OpenAiWhisperTranscriber();
   const address = new AlmatyHeuristicAddressProvider();
 
@@ -80,7 +80,7 @@ export async function buildOrchestratorDeps(provider: WhatsAppProvider): Promise
       clear: (chatId) => clearCart(chatId),
     },
 
-    intent: { extract: (text) => intent.extract(text) },
+    agent: { respond: (input) => agent.respond(input) },
     transcribe: (input) => transcriber.transcribe(input),
     address: { validate: (text) => address.validate(text) },
 

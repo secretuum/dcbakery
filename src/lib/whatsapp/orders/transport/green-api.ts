@@ -40,10 +40,18 @@ export class GreenApiProvider implements WhatsAppProvider {
         signal: controller.signal,
         cache: "no-store",
       });
-      if (!res.ok) return null;
+      if (!res.ok) {
+        console.error("[whatsapp:nl] sendText failed", res.status, GREEN_BASE);
+        return null;
+      }
       const data = (await res.json()) as { idMessage?: string };
       return data.idMessage ?? null;
-    } catch {
+    } catch (error) {
+      console.error(
+        "[whatsapp:nl] sendText error",
+        error instanceof Error ? error.message : "unknown",
+        GREEN_BASE,
+      );
       return null;
     } finally {
       clearTimeout(timer);

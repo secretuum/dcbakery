@@ -9,10 +9,9 @@ import type { Product } from "@/src/types";
 import type { NormalizedIncomingMessage, IncomingVoiceRef } from "../transport/types";
 import type { DialogState } from "../state/machine";
 import { isBotSuppressed } from "../state/machine";
-import type { OrderIntent } from "../intent/schema";
-import { enforcePolicy } from "../policy/policy";
 import { detectEscalation } from "../policy/escalation";
-import { classifyItem } from "../match/matcher";
+import { buildCatalogContext, catalogProductIds } from "../agent/catalog-context";
+import type { AgentOutput } from "../agent/schema";
 import type { CartView, CartItemQty, CartOp, CartAdjustment } from "../cart/cart-math";
 import { guardAudio } from "../ai/audio-guard";
 import type { CreateOrderInput } from "../order/create-order";
@@ -61,7 +60,16 @@ export type OrchestratorDeps = {
     getItems(chatId: string): Promise<CartItemQty[]>;
     clear(chatId: string): Promise<void>;
   };
-  intent: { extract(text: string): Promise<OrderIntent> };
+  agent: {
+    respond(input: {
+      message: string;
+      catalogContext: string;
+      validProductIds: Set<string>;
+      cartSummary: string;
+      history: string;
+      shouldGreet: boolean;
+    }): Promise<AgentOutput>;
+  };
   transcribe(input: { bytes: Uint8Array; mimeType: string }): Promise<{ text: string; lang?: string }>;
   address: {
     validate(text: string): Promise<{ status: "in_almaty" | "outside_almaty" | "uncertain"; normalized: string }>;
@@ -126,6 +134,14 @@ function parsePeriodFromText(text: string): "morning" | "afternoon" | null {
   return null;
 }
 
+function looksConfirm(text: string): boolean {
+  return /^(да|ага|верно|ок|окей|подтвержда|оформля|все верно|всё верно|давай|погнали|годится)/.test(
+    text.trim().toLowerCase(),
+  );
+}
+
+const GREET_GAP_MS = 6 * 60 * 60 * 1000;
+
 /** Главный обработчик входящего сообщения клиента. Все эффекты — через deps. */
 export async function handleIncomingMessage(
   msg: NormalizedIncomingMessage,
@@ -150,7 +166,10 @@ export async function handleIncomingMessage(
   const senderName = msg.profileName ?? null;
 
   // Передан менеджеру — бот молчит.
-  if (isBotSuppressed(state)) return;
+  if (isBotSuppressed(state)) {
+    console.info("[whatsapp:nl] suppressed (human_handoff)", { chat: msg.chatId.slice(0, 6) });
+    return;
+  }
 
   // TTL сессии (60 мин): не продолжаем старое оформление молча.
   const stale =
@@ -263,71 +282,22 @@ export async function handleIncomingMessage(
       return;
     }
 
-    // 3) Извлечь намерение (AI) → policy (недоверенные данные, манипуляции игнорируются).
-    let rawIntent: OrderIntent | null;
-    try {
-      rawIntent = await deps.intent.extract(text.slice(0, LIMITS.maxInboundTextLength));
-    } catch {
-      rawIntent = null;
-    }
-    if (!rawIntent) {
-      // Сбой AI → безопасный fallback на менеджера.
-      await toHumanHandoff("ai_unavailable", text);
-      return;
-    }
-    const { intent } = enforcePolicy(rawIntent, text);
-
-    // 4) Глобальные намерения (в любом состоянии).
-    if (intent.intent === "cancel") {
-      await deps.cart.clear(msg.chatId).catch(() => {});
-      await persist("cancelled", {});
-      await reply(M.MSG_CANCELLED);
-      return;
-    }
-    if (intent.intent === "human_help") {
-      await toHumanHandoff("client_requested", text);
-      return;
-    }
-
-    // 5) Маршрутизация по состоянию.
+    // 3) Структурированная фаза оформления (адрес/интервал/подтверждение) — детерминированно.
     if (state === "awaiting_address" || state === "awaiting_address_confirmation") {
-      await handleAddress(intent, text);
+      await handleAddress(text);
       return;
     }
     if (state === "awaiting_delivery_period") {
-      await handlePeriod(intent, text);
+      await handlePeriod(text);
       return;
     }
-    if (state === "awaiting_final_confirmation") {
-      if (intent.confirmation || intent.intent === "confirm_delivery" || intent.intent === "confirm_cart") {
-        await createOrder();
-        return;
-      }
-      // Иначе трактуем как правку корзины.
-      await buildCart(intent);
-      return;
-    }
-    if (state === "awaiting_cart_confirmation") {
-      if (intent.confirmation || intent.intent === "confirm_cart") {
-        await goToAddress();
-        return;
-      }
-      await buildCart(intent);
+    if (state === "awaiting_final_confirmation" && looksConfirm(text)) {
+      await createOrder();
       return;
     }
 
-    // 6) Прочие намерения по составу заказа.
-    if (intent.intent === "repeat_order") {
-      await repeatOrder();
-      return;
-    }
-    if (intent.intent === "confirm_cart" || intent.confirmation) {
-      // Подтверждение без корзины — покажем текущую/попросим товары.
-      await goToAddress();
-      return;
-    }
-    // new_order / cart_update / new_order_instead / unknown-с-товарами
-    await buildCart(intent);
+    // 4) Разговорная фаза — LLM-агент (диалог, вопросы по каталогу, сбор корзины, оформление).
+    await runAgent(text);
     return;
 
     // ——— вложенные хелперы (замыкание на deps/persist/reply/context) ———
@@ -349,69 +319,70 @@ export async function handleIncomingMessage(
       await deps.notifyManager(`Нужна помощь менеджера (WhatsApp). Причина: ${reason}. Чат: ${msg.chatId}`).catch(() => {});
     }
 
-    async function toHumanHandoff(reason: string, lastText: string) {
-      await createLead(reason, lastText);
-      await persist("human_handoff", context);
-      await reply(M.MSG_HANDOFF);
-    }
-
-    async function buildCart(orderIntent: OrderIntent) {
+    async function runAgent(userText: string) {
       const products = await deps.catalog.getProducts();
-      const ops: CartOp[] = [];
-      const retail: string[] = [];
-      const clarifications: DialogContext["clarifications"] = [];
+      const { view: beforeView } = await deps.cart.load(msg.chatId, products);
+      const cartSummary = beforeView.lines.map((l) => `${l.name} ×${l.qty}`).join("; ");
+      const shouldGreet = !existing || nowMs - existing.lastActivityMs > GREET_GAP_MS;
 
-      for (const item of orderIntent.items) {
-        const c = classifyItem(item.rawName, products, deps.retailKeywords);
-        if (c.kind === "b2b" && c.product) {
-          ops.push({ productId: c.product.id, qty: item.quantity, operation: item.operation });
-        } else if (c.kind === "retail") {
-          retail.push(item.rawName);
-        } else {
-          clarifications.push({
-            rawName: item.rawName,
-            candidates: c.candidates.map((x) => ({ id: x.product.id, name: x.product.name })),
-          });
-        }
+      const out = await deps.agent.respond({
+        message: userText,
+        catalogContext: buildCatalogContext(products),
+        validProductIds: catalogProductIds(products),
+        cartSummary,
+        history: "",
+        shouldGreet,
+      });
+
+      if (out.intent === "cancel") {
+        await deps.cart.clear(msg.chatId).catch(() => {});
+        await persist("cancelled", {});
+        await reply(out.reply || M.MSG_CANCELLED);
+        return;
       }
-
-      if (ops.length === 0 && retail.length === 0 && clarifications.length === 0) {
-        const current = await deps.cart.getItems(msg.chatId).catch(() => [] as CartItemQty[]);
-        if (current.length === 0) {
-          // Первый контакт / «привет» / непонятный ввод при пустой корзине — приветствуем
-          // и выясняем предпочтения (а не сухое «напишите заказ»).
-          const categories = [
-            ...new Set(products.map((p) => p.category?.name).filter((n): n is string => Boolean(n))),
-          ];
-          await persist("idle", context);
-          await reply(M.formatGreeting(categories));
-        } else {
-          await reply(M.MSG_EMPTY_AFTER_POLICY);
-        }
+      if (out.intent === "handoff") {
+        await createLead("agent_handoff", userText);
+        await persist("human_handoff", context);
+        await reply(out.reply || M.MSG_HANDOFF);
+        return;
+      }
+      if (out.intent === "repeat_order") {
+        if (out.reply) await reply(out.reply);
+        await repeatOrder();
         return;
       }
 
-      const { view, adjustments } = await deps.cart.apply(msg.chatId, { phone, senderName }, ops, products);
-      const nameById = new Map(view.lines.map((l) => [l.productId, l.name]));
+      // Действия с корзиной — сервер валидирует id, клэмпит остаток, ставит цену.
+      let view = beforeView;
+      let adjustments: CartAdjustment[] = [];
+      if (out.cartActions.length > 0) {
+        const ops: CartOp[] = out.cartActions.map((a) => ({
+          productId: a.productId,
+          qty: a.quantity,
+          operation: a.operation,
+        }));
+        const res = await deps.cart.apply(msg.chatId, { phone, senderName }, ops, products);
+        view = res.view;
+        adjustments = res.adjustments;
+      }
 
-      const hasUnknown = Boolean(clarifications && clarifications.length > 0);
+      if (out.intent === "checkout") {
+        if (out.reply) await reply(out.reply);
+        await goToAddress();
+        return;
+      }
+
+      // Обычный диалог: ответ агента + (при изменении/показе) серверная корзина с реальной суммой.
+      const nameById = new Map(view.lines.map((l) => [l.productId, l.name]));
+      const showCart = (out.showCart || out.cartActions.length > 0) && view.lines.length > 0;
       const parts = [
+        out.reply || null,
         M.formatAdjustments(adjustments, nameById),
-        M.formatRetailNotice(retail, deps.retailUrl),
-        M.formatClarifications(clarifications ?? []),
-        // Для неизвестных позиций — ссылка на розницу (если розничная заметка её ещё не дала).
-        hasUnknown && retail.length === 0 ? M.formatRetailHint(deps.retailUrl) : null,
-        M.formatCart(view),
+        showCart ? M.formatCart(view) : null,
       ].filter((p): p is string => Boolean(p));
 
-      const nextState: DialogState =
-        clarifications && clarifications.length > 0
-          ? "awaiting_product_clarification"
-          : view.lines.length > 0
-            ? "awaiting_cart_confirmation"
-            : "building_cart";
-      await persist(nextState, { ...context, retail, clarifications });
-      await reply(parts.join("\n\n"));
+      await persist(view.lines.length > 0 ? "building_cart" : "idle", context);
+      await reply(parts.length > 0 ? parts.join("\n\n") : M.MSG_UNKNOWN);
     }
 
     async function goToAddress() {
@@ -436,13 +407,10 @@ export async function handleIncomingMessage(
       await reply(M.askAddress());
     }
 
-    async function handleAddress(orderIntent: OrderIntent, rawText: string) {
+    async function handleAddress(rawText: string) {
       const trimmed = rawText.trim();
-      const looksConfirm =
-        orderIntent.confirmation ||
-        /^(да|ага|верно|ок|окей|подтвержда|все верно|всё верно)/.test(trimmed.toLowerCase());
-      // Подтверждение ранее показанного адреса (в сообщении нет нового адреса).
-      if (state === "awaiting_address_confirmation" && looksConfirm && !orderIntent.addressText) {
+      // Подтверждение ранее показанного адреса.
+      if (state === "awaiting_address_confirmation" && looksConfirm(trimmed)) {
         await persist("awaiting_delivery_period", context);
         await reply(M.askDeliveryPeriod());
         return;
@@ -451,8 +419,7 @@ export async function handleIncomingMessage(
       // Выбор сохранённого адреса номером (1..N), иначе — адрес из сообщения.
       const saved = context.savedAddresses ?? [];
       const pick = /^\d+$/.test(trimmed) ? Number(trimmed) : 0;
-      const addrText =
-        pick >= 1 && pick <= saved.length ? saved[pick - 1] : orderIntent.addressText ?? rawText;
+      const addrText = pick >= 1 && pick <= saved.length ? saved[pick - 1] : rawText;
 
       const res = await deps.address.validate(addrText);
       if (res.status === "outside_almaty") {
@@ -470,8 +437,8 @@ export async function handleIncomingMessage(
       await reply(M.confirmAddress(res.normalized));
     }
 
-    async function handlePeriod(orderIntent: OrderIntent, rawText: string) {
-      const period = orderIntent.deliveryPeriod ?? parsePeriodFromText(rawText);
+    async function handlePeriod(rawText: string) {
+      const period = parsePeriodFromText(rawText);
       if (!period) {
         await persist("awaiting_delivery_period", context);
         await reply(M.askDeliveryPeriod());

@@ -159,6 +159,20 @@ const CONFIRM_WORDS = new Set([
 // («спасибо» в одиночку ≠ «оформляем»).
 const FILLER_WORDS = new Set(["спасибо", "пожалуйста", "плиз", "please", "рахмет", "благодарю"]);
 
+// Сигналы «вырваться из шага оформления»: назад/меню/каталог/добавить ещё/передумал/
+// поменять/отмена/подожди/менеджер. В шагах адрес/интервал/финал это НЕ ответ на
+// текущий вопрос — значит клиент хочет вернуться к диалогу. Отдаём агенту: он поймёт
+// нюанс («назад»→продолжить, «отмени»→отмена, «добавь X»→добавить, «менеджер»→handoff).
+// Без \b — в JS \b не работает с кириллицей. Матчим по подстрокам/явным формам
+// (формы «верну/верни…» вместо «верн», чтобы не задеть «верно» = подтверждение).
+const ESCAPE_RE =
+  /(наза[дн]|верну|верни|верня|вернут|в начал|снача|меню|катал|добав|дозаказ|докуп|еще|переду[мй]ал|отмен|стоп|подожд|секунд|поменя|замен|измен|не надо|не хочу|не буду|не готов|погоди|покажи|что есть|а есть|хочу|менеджер|человек|оператор|помощ)/;
+
+/** Похоже ли сообщение на «выход» из шага оформления (навигация/добавление/отмена/менеджер). */
+function isCheckoutEscape(text: string): boolean {
+  return ESCAPE_RE.test(text.toLowerCase().replace(/ё/g, "е"));
+}
+
 /**
  * true, если сообщение — подтверждение: есть хотя бы одно слово-подтверждение, а всё
  * остальное — вежливость. Любое постороннее слово (товар/улица/число: «убери»,
@@ -365,6 +379,25 @@ export async function handleIncomingMessage(
       return;
     }
 
+    // 2.5) ГИБКОСТЬ: из любого шага оформления клиент может вернуться/добавить/передумать/
+    // позвать менеджера. Такой ввод — не ответ на вопрос шага: выходим в диалог (корзину
+    // сохраняем, адрес/интервал сбрасываем) и отдаём сообщение агенту — он поймёт нюанс.
+    const inCheckoutPhase =
+      state === "awaiting_address" ||
+      state === "awaiting_address_confirmation" ||
+      state === "awaiting_delivery_period" ||
+      state === "awaiting_final_confirmation";
+    if (inCheckoutPhase && isCheckoutEscape(text)) {
+      await persist("building_cart", {
+        ...context,
+        address: undefined,
+        period: undefined,
+        savedAddresses: undefined,
+      });
+      await runAgent(text);
+      return;
+    }
+
     // 3) Структурированная фаза оформления (адрес/интервал/подтверждение) — детерминированно.
     if (state === "awaiting_address" || state === "awaiting_address_confirmation") {
       await handleAddress(text);
@@ -420,6 +453,9 @@ export async function handleIncomingMessage(
       const cartSummary = buildCartSummary(beforeView);
       const history = context.history ?? [];
       const shouldGreet = !existing || nowMs - existing.lastActivityMs > GREET_GAP_MS;
+      // Клиент был на финальном подтверждении (адрес+интервал уже собраны). Если он вместо
+      // «да» правит корзину / спрашивает — НЕ выкидываем из оформления и не переспрашиваем адрес.
+      const wasFinalConfirm = state === "awaiting_final_confirmation";
 
       const out = await deps.agent.respond({
         message: userText,
@@ -471,13 +507,36 @@ export async function handleIncomingMessage(
         adjustments = res.adjustments;
       }
 
-      if (out.intent === "checkout") {
+      if (out.intent === "checkout" && !wasFinalConfirm) {
         // Готов оформлять только если в корзине что-то есть — иначе продолжаем диалог.
         if (view.lines.length > 0) {
           if (out.reply) await reply(out.reply);
           await goToAddress();
           return;
         }
+      }
+
+      // Правка/вопрос на шаге финального подтверждения: остаёмся в оформлении, отвечаем и
+      // ЗАНОВО показываем финальную сводку (адрес/интервал не переспрашиваем). Следующее «да»
+      // создаст заказ. Если корзину опустошили — падаем в обычную ветку (уйдём в idle).
+      if (wasFinalConfirm && view.lines.length > 0) {
+        const nameById = new Map(view.lines.map((l) => [l.productId, l.name]));
+        const summary = M.formatFinalSummary({
+          view,
+          address: context.address ?? "—",
+          period: context.period ? M.periodLabel(context.period) : "—",
+          phone: phone ?? "—",
+        });
+        const parts = [out.reply || null, M.formatAdjustments(adjustments, nameById), summary].filter(
+          (p): p is string => Boolean(p),
+        );
+        const replyText = parts.join("\n\n");
+        await persist("awaiting_final_confirmation", {
+          ...context,
+          history: appendExchange(history, userText, replyText),
+        });
+        await reply(replyText);
+        return;
       }
 
       // Обычный диалог: ответ агента + (при изменении/показе) серверная корзина с реальной суммой.

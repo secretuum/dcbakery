@@ -479,6 +479,65 @@ test("повтор заказа → «да» детерминированно в
   assert.equal(t.state(), "awaiting_address");
 });
 
+test("«назад» на шаге адреса выводит из оформления (корзина сохранена)", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(m("nb1", "1 медовик"), t.deps);
+  await handleIncomingMessage(m("nb2", "да"), t.deps);
+  assert.equal(t.state(), "awaiting_address");
+  t.setAgent(agentOut({ reply: "Конечно, вернулись к заказу. Что добавить или изменить?" }));
+  await handleIncomingMessage(m("nb3", "назад"), t.deps);
+  assert.notEqual(t.state(), "awaiting_address");
+  assert.deepEqual(t.items(), [{ productId: "medovik", qty: 1 }]); // корзина не потеряна
+});
+
+test("«добавь ещё …» на шаге адреса добавляет товар, а не трактуется как адрес", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(m("ad1", "1 медовик"), t.deps);
+  await handleIncomingMessage(m("ad2", "да"), t.deps);
+  assert.equal(t.state(), "awaiting_address");
+  t.setAgent(agentOut({ reply: "Добавил наполеон.", cartActions: [{ productId: "napoleon", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(m("ad3", "добавь ещё наполеон"), t.deps);
+  assert.notEqual(t.state(), "awaiting_address");
+  assert.deepEqual(
+    t.items().sort((a, b) => a.productId.localeCompare(b.productId)),
+    [{ productId: "medovik", qty: 1 }, { productId: "napoleon", qty: 1 }],
+  );
+});
+
+test("«меню» на шаге интервала доставки выводит из оформления", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(m("mn1", "1 медовик"), t.deps);
+  await handleIncomingMessage(m("mn2", "да"), t.deps);
+  await handleIncomingMessage(m("mn3", "г. Алматы, ул. Абая 10"), t.deps);
+  await handleIncomingMessage(m("mn4", "да"), t.deps);
+  assert.equal(t.state(), "awaiting_delivery_period");
+  t.setAgent(agentOut({ reply: "Вот что у нас есть…" }));
+  await handleIncomingMessage(m("mn5", "меню"), t.deps);
+  assert.notEqual(t.state(), "awaiting_delivery_period");
+});
+
+test("«позовите менеджера» на финале выводит из оформления и передаёт человеку", async () => {
+  const t = setup();
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 1, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(m("mg1", "1 медовик"), t.deps);
+  await handleIncomingMessage(m("mg2", "да"), t.deps);
+  await handleIncomingMessage(m("mg3", "г. Алматы, ул. Абая 10"), t.deps);
+  await handleIncomingMessage(m("mg4", "да"), t.deps);
+  await handleIncomingMessage(m("mg5", "утро"), t.deps);
+  assert.equal(t.state(), "awaiting_final_confirmation");
+  t.setAgent(agentOut({ intent: "handoff", reply: "Передаю менеджеру." }));
+  await handleIncomingMessage(m("mg6", "позовите менеджера"), t.deps);
+  assert.equal(t.state(), "human_handoff");
+  assert.equal(t.orders.length, 0);
+});
+
 test("исправление адреса с префиксом-подтверждением НЕ подтверждает старый адрес", async () => {
   const t = setup();
   const m = (id: string, text: string) => msg({ messageId: id, text });
@@ -512,6 +571,13 @@ test("правка на финальном подтверждении («да, �
   await handleIncomingMessage(m("fe6", "да, только убери один медовик"), t.deps);
   assert.equal(t.orders.length, 0);
   assert.deepEqual(t.items(), [{ productId: "medovik", qty: 2 }]);
+  // Остаёмся в оформлении и заново показываем сводку (адрес не переспрашиваем).
+  assert.equal(t.state(), "awaiting_final_confirmation");
+  assert.match(t.lastSent(), /Абая 10|Проверьте заказ/i);
+  // Следующее «да» создаёт заказ с правкой, без повторного ввода адреса.
+  await handleIncomingMessage(m("fe7", "да"), t.deps);
+  assert.equal(t.orders.length, 1);
+  assert.equal(t.state(), "order_submitted");
 });
 
 test("повторное подтверждение уже созданной заявки → без дубля заказа", async () => {

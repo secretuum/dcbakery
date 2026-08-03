@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { revalidateTag } from "next/cache";
-import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT, deliveryFee } from "@/app/constants";
+import { deliveryFee } from "@/app/constants";
 import { CATALOG_CACHE_TAG, fetchProducts } from "@/src/lib/catalog";
 import { CLIENT_SESSION_COOKIE, verifyClientSession } from "@/src/lib/client-session";
+import { resolveCartItems, validateOrderFields } from "@/src/lib/orders/order-validation";
 import { getSiteContent } from "@/src/lib/site-content";
 import {
   fetchClientByEmail,
@@ -131,109 +132,14 @@ function parseBody(value: unknown): IncomingOrderBody {
   };
 }
 
-// Локальная дата delivery_date («YYYY-MM-DD») → день недели (0=вс…6=сб). Парсим как
-// UTC-полночь, чтобы день недели не «плавал» от таймзоны сервера.
-function deliveryWeekday(dateStr: string): number {
-  return new Date(`${dateStr}T00:00:00Z`).getUTCDay();
-}
-
+// Валидация вынесена в чистый модуль order-validation (покрыта тестами) — делегируем.
 function validateOrder(body: IncomingOrderBody, deliveryDays: number[]) {
-  const errors: string[] = [];
-  const phoneDigits = body.customer_phone?.replace(/\D/g, "") ?? "";
-  const items = body.items ?? [];
-  const totalAmount = items.reduce((sum, item) => sum + (item.price ?? 0) * item.qty, 0);
-
-  if (!body.company_name) {
-    errors.push("company_name is required");
-  }
-
-  if (!body.customer_name) {
-    errors.push("customer_name is required");
-  }
-
-  if (phoneDigits.length < 11) {
-    errors.push("customer_phone is invalid");
-  }
-
-  if (!body.delivery_date) {
-    errors.push("delivery_date is required");
-  } else if (body.delivery_date < getTomorrowDate()) {
-    errors.push("delivery_date must be tomorrow or later");
-  } else if (deliveryDays.length > 0 && !deliveryDays.includes(deliveryWeekday(body.delivery_date))) {
-    // Дата должна попадать на разрешённый день доставки (по умолчанию вт/чт/сб) —
-    // тот же график, что показывает клиент; защищает от прямого вызова API/устаревшей вкладки.
-    errors.push("delivery_date is not an allowed delivery day");
-  }
-
-  if (items.length === 0) {
-    errors.push("items are required");
-  }
-
-  if (
-    !body.payment_method ||
-    !B2B_PAYMENT_METHODS.includes(
-      body.payment_method as (typeof B2B_PAYMENT_METHODS)[number],
-    )
-  ) {
-    errors.push("payment_method is invalid");
-  }
-
-  // Жёсткого минимума нет (MIN_ORDER_AMOUNT=0 — «минимум» реализован тарифами доставки),
-  // но заказ на нулевую сумму (только quote-позиции по 0 ₸) создавать нельзя.
-  if (totalAmount <= 0) {
-    errors.push("order total must be greater than zero");
-  } else if (totalAmount < MIN_ORDER_AMOUNT) {
-    errors.push("minimum order amount is not reached");
-  }
-
-  if (!body.oferta_accepted) {
-    errors.push("oferta must be accepted");
-  }
-
-  return { errors, totalAmount };
+  return validateOrderFields(body, deliveryDays, getTomorrowDate());
 }
 
 async function resolveItemsFromServer(items: IncomingItem[]) {
   const products = await fetchProducts();
-  const productMap = new Map(products.map((product) => [product.id, product]));
-  const errors: string[] = [];
-  const resolvedItems = items.flatMap((item): IncomingItem[] => {
-    const product = productMap.get(item.product_id);
-
-    if (!product) {
-      errors.push(`unknown product: ${item.product_id}`);
-      return [];
-    }
-
-    if (product.stock_qty <= 0) {
-      errors.push(`product is out of stock: ${product.name}`);
-      return [];
-    }
-
-    if (!Number.isInteger(item.qty)) {
-      errors.push(`quantity must be a whole number: ${product.name}`);
-      return [];
-    }
-
-    if (item.qty > product.stock_qty) {
-      errors.push(`requested quantity exceeds stock: ${product.name}`);
-      return [];
-    }
-
-    if (item.qty < product.min_qty) {
-      errors.push(`requested quantity is below minimum: ${product.name}`);
-      return [];
-    }
-
-    return [
-      {
-        product_id: product.id,
-        qty: item.qty,
-      },
-    ];
-  });
-
-  return { errors, productMap, resolvedItems };
+  return resolveCartItems(items, products);
 }
 
 export async function POST(request: Request) {

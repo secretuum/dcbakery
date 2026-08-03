@@ -3,14 +3,11 @@ import { cookies } from "next/headers";
 import { CLIENT_SESSION_COOKIE, verifyClientSession } from "@/src/lib/client-session";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import { fetchProducts } from "@/src/lib/catalog";
+import { orderMatchesSession } from "@/src/lib/orders/order-ownership";
 import type { Product } from "@/src/types";
 
 // Повтор заказа: по orderId (владелец = сессия) собираем текущие товары из каталога
 // (актуальные цена/остаток), недоступные — пропускаем. Клиент добавляет их в корзину.
-
-function digits(value?: string | null) {
-  return (value ?? "").replace(/\D/g, "");
-}
 
 export async function POST(request: Request) {
   const sessionCookie = (await cookies()).get(CLIENT_SESSION_COOKIE)?.value;
@@ -37,17 +34,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  // Владелец заказа: телефон ИЛИ email совпадает с сессией. Телефоны сверяем ТОЛЬКО по
-  // непустым цифрам с обеих сторон — иначе пустая сессия («») совпала бы с заказом,
-  // где телефон не-цифровой (digits("нет")===""). Email — обе стороны непустые.
-  const sessionPhone = digits(session.phone);
-  const orderPhone = digits(order.customer_phone);
-  const ownsByPhone = sessionPhone.length > 0 && orderPhone.length > 0 && sessionPhone === orderPhone;
-  const ownsByEmail =
-    Boolean(order.customer_email) &&
-    Boolean(session.email) &&
-    order.customer_email!.toLowerCase() === session.email.toLowerCase();
-  if (!ownsByPhone && !ownsByEmail) {
+  // Владелец заказа: телефон ИЛИ email совпадает с сессией (логика в order-ownership, тесты там же).
+  if (!orderMatchesSession(order, session)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

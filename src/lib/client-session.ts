@@ -14,7 +14,16 @@ export const CLIENT_SESSION_COOKIE = "dc_client_session";
 export const SESSION_MAX_AGE_S = 60 * 60 * 24 * 30; // 30 days
 
 function secret() {
-  return process.env.CLIENT_SESSION_SECRET ?? "dev-only-insecure-please-set-env";
+  const value = process.env.CLIENT_SESSION_SECRET;
+  if (value && value.length > 0) return value;
+  // Fail-fast в проде: без секрета сессии клиентов и OTP-челленджи подделываемы.
+  // Отказываемся подписывать/проверять на небезопасном дев-фолбэке в production.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "CLIENT_SESSION_SECRET is not set — refusing to use the insecure dev fallback in production",
+    );
+  }
+  return "dev-only-insecure-please-set-env";
 }
 
 async function hmacKey(usage: "sign" | "verify") {

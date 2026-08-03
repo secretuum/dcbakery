@@ -26,7 +26,15 @@ export type OtpChallenge = {
 };
 
 function secret() {
-  return process.env.CLIENT_SESSION_SECRET ?? "dev-only-insecure-please-set-env";
+  const value = process.env.CLIENT_SESSION_SECRET;
+  if (value && value.length > 0) return value;
+  // Тот же fail-fast, что и в client-session: без секрета OTP-челленджи подделываемы.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "CLIENT_SESSION_SECRET is not set — refusing to use the insecure dev fallback in production",
+    );
+  }
+  return "dev-only-insecure-please-set-env";
 }
 
 async function hmacKey() {

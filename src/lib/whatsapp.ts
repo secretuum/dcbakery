@@ -484,6 +484,29 @@ export async function sendCustomerPaymentStatusNotification(
   );
 }
 
+/**
+ * Уведомление клиенту о смене статуса заказа. Шлём только на клиенто-значимых
+ * переходах (в работе / доставка / выполнен); для остальных статусов → null.
+ */
+export function formatCustomerOrderStatusNotification(order: Order): string | null {
+  const messages: Partial<Record<string, string>> = {
+    in_progress: `Ваш заказ ${order.order_number} принят в работу — готовим к отгрузке.`,
+    delivering: `Заказ ${order.order_number} передан в доставку. Спасибо за ожидание!`,
+    completed: `Заказ ${order.order_number} выполнен. Спасибо, что выбираете DC Bakery!`,
+  };
+  const line = messages[order.status];
+  if (!line) return null;
+  return ["DC Bakery", "", line, "", "Детали и история — в личном кабинете на сайте."].join("\n");
+}
+
+export async function sendCustomerOrderStatusNotification(order: Order) {
+  const chatId = getWhatsAppChatIdFromPhone(order.customer_phone);
+  if (!chatId) return null;
+  const message = formatCustomerOrderStatusNotification(order);
+  if (!message) return null;
+  return sendGreenApiTextMessage(chatId, message);
+}
+
 export function formatCustomerOrderCanceledNotification(order: Order) {
   return [
     "DC Bakery",

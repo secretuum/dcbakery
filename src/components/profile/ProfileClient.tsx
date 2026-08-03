@@ -12,6 +12,7 @@ import { clientOrderStatusLabels, creditStatusLabels, orderStatusLabels } from "
 import { HomeReward } from "@/src/components/home/HomeReward";
 import { weeklyPromoCollected } from "@/src/lib/promo";
 import { useCart } from "@/src/contexts/CartContext";
+import { useToast } from "@/src/contexts/ToastContext";
 import { useT } from "@/src/i18n/client";
 import type { ClientOrderSummary, CreditState, OrderItemSummary, Product } from "@/src/types";
 
@@ -1048,6 +1049,10 @@ const ORDER_CHIP: Partial<Record<string, string>> = {
 
 function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   const t = useT();
+  const { add } = useCart();
+  const router = useRouter();
+  const { showToast } = useToast();
+  const [reordering, setReordering] = useState(false);
   const orderStatus =
     t(clientOrderStatusLabels[order.status] ?? orderStatusLabels[order.status] ?? order.status);
   const chipClass = ORDER_CHIP[order.status] ?? "bg-black/5 text-muted";
@@ -1077,6 +1082,39 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
     });
     if (!response.ok) { setActionStatus("error"); return; }
     window.location.reload();
+  }
+
+  // Повтор заказа: сервер отдаёт актуальные товары (цена/остаток) по этому заказу,
+  // добавляем в корзину и ведём в /cart. Недоступные позиции пропускаются.
+  async function handleReorder() {
+    setReordering(true);
+    try {
+      const response = await fetch("/api/profile/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id }),
+      });
+      if (!response.ok) throw new Error("reorder failed");
+      const data = (await response.json()) as {
+        items?: { product: Product; qty: number }[];
+        skipped?: number;
+      };
+      const list = data.items ?? [];
+      if (list.length === 0) {
+        showToast(t("Товары из этого заказа сейчас недоступны"), "error");
+        return;
+      }
+      for (const { product, qty } of list) add(product, qty);
+      showToast(
+        data.skipped ? t("Добавлено в корзину, часть позиций недоступна") : t("Добавлено в корзину"),
+        "success",
+      );
+      router.push("/cart");
+    } catch {
+      showToast(t("Не удалось повторить заказ"), "error");
+    } finally {
+      setReordering(false);
+    }
   }
 
   return (
@@ -1159,7 +1197,12 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
             <Link href={`/documents/nakl/${order.id}`} className="rounded-full border border-black/15 px-3.5 py-1.5 text-xs font-semibold text-dark transition hover:bg-black/5">{t("Накладная PDF")}</Link>
           </>
         ) : null}
-        <Link href="/catalog" className="rounded-full border border-black/15 px-3.5 py-1.5 text-xs font-semibold text-dark transition hover:bg-black/5">{t("Повторить")}</Link>
+        <button
+          type="button"
+          disabled={reordering}
+          onClick={() => void handleReorder()}
+          className="rounded-full border border-black/15 px-3.5 py-1.5 text-xs font-semibold text-dark transition hover:bg-black/5 disabled:opacity-50"
+        >{reordering ? t("Добавляем…") : t("Повторить")}</button>
         {canCancel ? (
           <button
             type="button"

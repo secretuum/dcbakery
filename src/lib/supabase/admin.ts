@@ -619,6 +619,45 @@ export async function fetchAdminOrders(status?: OrderStatus) {
   return supabaseGet<Order[]>("orders", params.toString());
 }
 
+/**
+ * Страница заказов админки: статус-фильтр + поиск (номер/компания/имя/телефон) +
+ * offset-пагинация. Запрашиваем limit+1 строку, чтобы понять, есть ли следующая
+ * страница, без отдельного count-запроса.
+ */
+export async function fetchAdminOrdersPage(options?: {
+  status?: OrderStatus;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ orders: Order[]; hasNext: boolean }> {
+  const limit = Math.min(Math.max(options?.limit ?? 50, 1), 200);
+  const offset = Math.max(options?.offset ?? 0, 0);
+  const params = new URLSearchParams({
+    select:
+      "id,order_number,source,company_name,customer_name,customer_phone,status,payment_status,total_amount,delivery_amount,created_at,delivery_date",
+    order: "created_at.desc",
+    limit: String(limit + 1),
+    offset: String(offset),
+  });
+
+  if (options?.status) {
+    params.set("status", `eq.${options.status}`);
+  }
+
+  // Экранируем символы, ломающие or-фильтр PostgREST (запятые/скобки/звёздочки).
+  const search = options?.search?.replace(/[,()*]/g, " ").trim();
+  if (search) {
+    params.set(
+      "or",
+      `(order_number.ilike.*${search}*,company_name.ilike.*${search}*,customer_name.ilike.*${search}*,customer_phone.ilike.*${search}*)`,
+    );
+  }
+
+  const rows = await supabaseGet<Order[]>("orders", params.toString());
+  const hasNext = rows.length > limit;
+  return { orders: hasNext ? rows.slice(0, limit) : rows, hasNext };
+}
+
 const CLIENT_EMAIL_RE = /^[^,()[\]\s]+@[^,()[\]\s]+\.[^,()[\]\s]+$/;
 const CLIENT_PHONE_RE = /^\+?\d{10,15}$/;
 

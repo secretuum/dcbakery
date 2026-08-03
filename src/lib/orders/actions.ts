@@ -18,7 +18,9 @@ import {
   getWhatsAppChatIdFromPhone,
   replaceWhatsAppOrderMessage,
   sendCustomerOrderCanceledNotification,
+  sendCustomerOrderStatusNotification,
   sendCustomerPaymentLinkNotification,
+  sendCustomerPaymentStatusNotification,
   sendGreenApiTextMessage,
   whatsappClientNotifyEnabled,
   whatsappEnabled,
@@ -233,6 +235,12 @@ export async function markPaid(
   });
 
   const managerMessageId = await refreshManagerMessage(paidOrder, order.whatsapp_message_id);
+
+  // Клиенту: «оплата принята» (раньше при ручной отметке клиента не уведомляли).
+  if (whatsappClientNotifyEnabled()) {
+    await sendCustomerPaymentStatusNotification(paidOrder, "paid").catch(() => null);
+  }
+
   return { ok: true, order: paidOrder, managerMessageId, noop: false };
 }
 
@@ -320,6 +328,13 @@ export async function changeStatus(
     ? await refreshManagerMessage(order, previousOrder.whatsapp_message_id)
     : null;
 
+  // Клиенту: уведомление о смене статуса (в работе / доставка / выполнен). Раньше клиент
+  // видел статус только на сайте. Только при РЕАЛЬНОМ переходе (не дубль на повторный клик).
+  // Best-effort, за флагом клиентских уведомлений.
+  if (order && status !== previousOrder.status && whatsappClientNotifyEnabled()) {
+    await sendCustomerOrderStatusNotification(order).catch(() => null);
+  }
+
   // Списание в iiko — при ПЕРЕХОДЕ в «Доставляется» (best-effort: не роняет смену
   // статуса; идемпотентность = срабатывает только на переходе, не на повторной установке).
   if (order && status === "delivering" && previousOrder.status !== "delivering") {
@@ -366,7 +381,9 @@ export async function cancelOrderAction(
     ? await refreshManagerMessage(canceledOrder, order.whatsapp_message_id)
     : null;
 
-  if (canceledOrder && whatsappEnabled()) {
+  // Клиентские уведомления живут за флагом WHATSAPP_CLIENT_NOTIFY (в проде включён),
+  // а не за общим whatsappEnabled (в проде выключен) — иначе отмена не доходила клиенту.
+  if (canceledOrder && whatsappClientNotifyEnabled()) {
     await sendCustomerOrderCanceledNotification(canceledOrder).catch(() => null);
   }
 

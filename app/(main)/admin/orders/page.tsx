@@ -4,7 +4,7 @@ import { statusLabels } from "@/src/components/admin/OrderStatusBadge";
 import { OrderSlaStatus } from "@/src/components/admin/OrderSlaStatus";
 import { PaymentStatusBadge } from "@/src/components/admin/PaymentStatusBadge";
 import { orderTotalWithDelivery } from "@/app/constants";
-import { fetchAdminOrders } from "@/src/lib/supabase/admin";
+import { fetchAdminOrdersPage } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
 import { canonicalOrderStatuses } from "@/src/lib/order-status";
 import type { OrderStatus } from "@/src/types";
@@ -12,8 +12,25 @@ import type { OrderStatus } from "@/src/types";
 type AdminOrdersPageProps = {
   searchParams: Promise<{
     status?: string | string[];
+    q?: string | string[];
+    page?: string | string[];
   }>;
 };
+
+const PAGE_SIZE = 50;
+
+function firstParam(value: string | string[] | undefined) {
+  return (Array.isArray(value) ? value[0] : value) ?? "";
+}
+
+function ordersHref(opts: { status?: OrderStatus; q?: string; page?: number }) {
+  const params = new URLSearchParams();
+  if (opts.status) params.set("status", opts.status);
+  if (opts.q) params.set("q", opts.q);
+  if (opts.page && opts.page > 1) params.set("page", String(opts.page));
+  const qs = params.toString();
+  return qs ? `/admin/orders?${qs}` : "/admin/orders";
+}
 
 const statusFilters: Array<{ label: string; value?: OrderStatus }> = [
   { label: "Все" },
@@ -42,9 +59,16 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageProps) {
-  const { status } = await searchParams;
+  const { status, q, page } = await searchParams;
   const selectedStatus = getSelectedStatus(status);
-  const orders = await fetchAdminOrders(selectedStatus);
+  const search = firstParam(q).trim();
+  const currentPage = Math.max(1, Number(firstParam(page)) || 1);
+  const { orders, hasNext } = await fetchAdminOrdersPage({
+    status: selectedStatus,
+    search: search || undefined,
+    limit: PAGE_SIZE,
+    offset: (currentPage - 1) * PAGE_SIZE,
+  });
 
   return (
     <div>
@@ -56,10 +80,25 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
         </p>
       </div>
 
-      <nav className="mt-7 flex gap-2 overflow-x-auto pb-2" aria-label="Фильтр статуса">
+      <form method="get" action="/admin/orders" className="mt-6 flex flex-wrap gap-2">
+        {selectedStatus ? <input type="hidden" name="status" value={selectedStatus} /> : null}
+        <input
+          type="search"
+          name="q"
+          defaultValue={search}
+          placeholder="Поиск: номер, компания, имя, телефон"
+          className="min-w-[220px] flex-1 rounded-btn border border-black/15 bg-white px-4 py-2 text-sm text-dark outline-none focus:border-coral"
+        />
+        <button type="submit" className="rounded-btn border border-dark bg-dark px-4 py-2 text-sm font-semibold text-white transition hover:bg-dark/90">Найти</button>
+        {search ? (
+          <Link href={ordersHref({ status: selectedStatus })} className="rounded-btn border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-muted transition hover:bg-black/5">Сброс</Link>
+        ) : null}
+      </form>
+
+      <nav className="mt-4 flex gap-2 overflow-x-auto pb-2" aria-label="Фильтр статуса">
         {statusFilters.map((filter) => {
           const isActive = filter.value === selectedStatus || (!filter.value && !selectedStatus);
-          const href = filter.value ? `/admin/orders?status=${filter.value}` : "/admin/orders";
+          const href = ordersHref({ status: filter.value, q: search });
 
           return (
             <Link
@@ -123,13 +162,39 @@ export default async function AdminOrdersPage({ searchParams }: AdminOrdersPageP
           </div>
         ) : (
           <div className="p-8 text-center">
-            <h2 className="font-display text-xl font-semibold">Заказов пока нет</h2>
+            <h2 className="font-display text-xl font-semibold">
+              {search || selectedStatus ? "Ничего не найдено" : "Заказов пока нет"}
+            </h2>
             <p className="mt-3 text-sm text-muted">
-              Новые заявки появятся здесь после оформления на сайте.
+              {search || selectedStatus
+                ? "Измените запрос или сбросьте фильтр."
+                : "Новые заявки появятся здесь после оформления на сайте."}
             </p>
           </div>
         )}
       </div>
+
+      {currentPage > 1 || hasNext ? (
+        <div className="mt-4 flex items-center justify-between">
+          {currentPage > 1 ? (
+            <Link
+              href={ordersHref({ status: selectedStatus, q: search, page: currentPage - 1 })}
+              className="rounded-btn border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-black/5"
+            >← Назад</Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-sm text-muted">Стр. {currentPage}</span>
+          {hasNext ? (
+            <Link
+              href={ordersHref({ status: selectedStatus, q: search, page: currentPage + 1 })}
+              className="rounded-btn border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-black/5"
+            >Вперёд →</Link>
+          ) : (
+            <span />
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

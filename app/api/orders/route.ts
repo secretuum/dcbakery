@@ -178,7 +178,11 @@ function validateOrder(body: IncomingOrderBody, deliveryDays: number[]) {
     errors.push("payment_method is invalid");
   }
 
-  if (totalAmount < MIN_ORDER_AMOUNT) {
+  // Жёсткого минимума нет (MIN_ORDER_AMOUNT=0 — «минимум» реализован тарифами доставки),
+  // но заказ на нулевую сумму (только quote-позиции по 0 ₸) создавать нельзя.
+  if (totalAmount <= 0) {
+    errors.push("order total must be greater than zero");
+  } else if (totalAmount < MIN_ORDER_AMOUNT) {
     errors.push("minimum order amount is not reached");
   }
 

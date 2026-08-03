@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
-import { consumeRegistrationToken } from "@/src/lib/whatsapp/orders/registration/reg-link";
+import { consumeRegistrationToken } from "@/src/lib/registration/reg-link";
 
 // Гашение одноразового регистрационного токена (single-use). Вызывается формой /register
 // в момент отправки — не на GET-рендере (чтобы префетч не сжёг токен).

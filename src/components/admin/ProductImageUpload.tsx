@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { ImageCropper } from "./ImageCropper";
 
 type Props = {
   defaultValue?: string;
@@ -13,18 +14,25 @@ export function ProductImageUpload({ defaultValue = "", form, inputName = "image
   const [urlValue, setUrlValue] = useState(defaultValue);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+  // Выбор файла → открываем кадратор (загружается уже обрезанный результат).
+  function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = ""; // чтобы можно было выбрать тот же файл повторно
     if (!file) return;
+    setError(null);
+    setPendingFile(file);
+  }
 
+  async function uploadBlob(blob: Blob) {
+    setPendingFile(null);
     setError(null);
     setUploading(true);
-
     try {
       const body = new FormData();
-      body.append("file", file);
+      body.append("file", new File([blob], `${slug ?? "new"}.png`, { type: "image/png" }));
       body.append("slug", slug ?? "new");
 
       const res = await fetch("/api/admin/upload-image", { method: "POST", body });
@@ -68,6 +76,13 @@ export function ProductImageUpload({ defaultValue = "", form, inputName = "image
         form={form}
         name={inputName}
       />
+      {pendingFile ? (
+        <ImageCropper
+          file={pendingFile}
+          onCancel={() => setPendingFile(null)}
+          onCropped={(blob) => void uploadBlob(blob)}
+        />
+      ) : null}
     </div>
   );
 }

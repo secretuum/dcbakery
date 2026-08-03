@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { peekRegistrationToken } from "@/src/lib/whatsapp/orders/registration/reg-link";
+import { peekRegistrationToken } from "@/src/lib/registration/reg-link";
 import { RegisterFromLinkForm } from "@/src/components/profile/RegisterFromLinkForm";
 
 // Регистрация по одноразовой ссылке из WhatsApp. Токен ЧИТАЕМ (peek), но НЕ гасим на

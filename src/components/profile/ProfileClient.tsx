@@ -1047,12 +1047,52 @@ const ORDER_CHIP: Partial<Record<string, string>> = {
   cancelled: "bg-black/5 text-muted",
 };
 
-function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
+// Повтор заказа: сервер отдаёт актуальные товары (цена/остаток) по orderId, кладём в
+// корзину и ведём в /cart. Общий хук для карточки заказа и сайдбара «Быстрый повтор».
+function useReorder() {
   const t = useT();
   const { add } = useCart();
   const router = useRouter();
   const { showToast } = useToast();
-  const [reordering, setReordering] = useState(false);
+  const [reorderingId, setReorderingId] = useState<string | null>(null);
+
+  async function reorder(orderId: string) {
+    setReorderingId(orderId);
+    try {
+      const response = await fetch("/api/profile/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
+      if (!response.ok) throw new Error("reorder failed");
+      const data = (await response.json()) as {
+        items?: { product: Product; qty: number }[];
+        skipped?: number;
+      };
+      const list = data.items ?? [];
+      if (list.length === 0) {
+        showToast(t("Товары из этого заказа сейчас недоступны"), "error");
+        return;
+      }
+      for (const { product, qty } of list) add(product, qty);
+      showToast(
+        data.skipped ? t("Добавлено в корзину, часть позиций недоступна") : t("Добавлено в корзину"),
+        "success",
+      );
+      router.push("/cart");
+    } catch {
+      showToast(t("Не удалось повторить заказ"), "error");
+    } finally {
+      setReorderingId(null);
+    }
+  }
+
+  return { reorder, reorderingId };
+}
+
+function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
+  const t = useT();
+  const { reorder, reorderingId } = useReorder();
   const orderStatus =
     t(clientOrderStatusLabels[order.status] ?? orderStatusLabels[order.status] ?? order.status);
   const chipClass = ORDER_CHIP[order.status] ?? "bg-black/5 text-muted";
@@ -1082,39 +1122,6 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
     });
     if (!response.ok) { setActionStatus("error"); return; }
     window.location.reload();
-  }
-
-  // Повтор заказа: сервер отдаёт актуальные товары (цена/остаток) по этому заказу,
-  // добавляем в корзину и ведём в /cart. Недоступные позиции пропускаются.
-  async function handleReorder() {
-    setReordering(true);
-    try {
-      const response = await fetch("/api/profile/reorder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: order.id }),
-      });
-      if (!response.ok) throw new Error("reorder failed");
-      const data = (await response.json()) as {
-        items?: { product: Product; qty: number }[];
-        skipped?: number;
-      };
-      const list = data.items ?? [];
-      if (list.length === 0) {
-        showToast(t("Товары из этого заказа сейчас недоступны"), "error");
-        return;
-      }
-      for (const { product, qty } of list) add(product, qty);
-      showToast(
-        data.skipped ? t("Добавлено в корзину, часть позиций недоступна") : t("Добавлено в корзину"),
-        "success",
-      );
-      router.push("/cart");
-    } catch {
-      showToast(t("Не удалось повторить заказ"), "error");
-    } finally {
-      setReordering(false);
-    }
   }
 
   return (
@@ -1199,10 +1206,10 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
         ) : null}
         <button
           type="button"
-          disabled={reordering}
-          onClick={() => void handleReorder()}
+          disabled={reorderingId === order.id}
+          onClick={() => void reorder(order.id)}
           className="rounded-full border border-black/15 px-3.5 py-1.5 text-xs font-semibold text-dark transition hover:bg-black/5 disabled:opacity-50"
-        >{reordering ? t("Добавляем…") : t("Повторить")}</button>
+        >{reorderingId === order.id ? t("Добавляем…") : t("Повторить")}</button>
         {canCancel ? (
           <button
             type="button"
@@ -1311,6 +1318,7 @@ function ConditionsBox({ state }: { state: CreditState }) {
 
 function RecentOrdersBox({ orders }: { orders: ClientOrderSummary[] }) {
   const t = useT();
+  const { reorder, reorderingId } = useReorder();
   const recent = orders.filter((o) => o.order_items && o.order_items.length > 0).slice(0, 2);
   if (recent.length === 0) return null;
 
@@ -1327,10 +1335,12 @@ function RecentOrdersBox({ orders }: { orders: ClientOrderSummary[] }) {
               {order.order_items!.length} поз. · {formatCurrency(order.total_amount)}
             </p>
           </div>
-          <Link
-            href="/catalog"
-            className="rounded-full bg-espresso px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-espresso/90"
-          >{t("В лист")}</Link>
+          <button
+            type="button"
+            disabled={reorderingId === order.id}
+            onClick={() => void reorder(order.id)}
+            className="rounded-full bg-espresso px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-espresso/90 disabled:opacity-50"
+          >{reorderingId === order.id ? t("…") : t("В лист")}</button>
         </div>
       ))}
       <Link

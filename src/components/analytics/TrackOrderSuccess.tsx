@@ -6,11 +6,14 @@
 import { useEffect } from "react";
 import { trackEvent } from "@/src/lib/analytics";
 
-export function TrackOrderSuccess({ orderNumber }: { orderNumber: string }) {
+export function TrackOrderSuccess({ orderNumber, amount }: { orderNumber: string; amount?: number }) {
   useEffect(() => {
     // "DCB" — плейсхолдер, когда номера в URL нет: не засоряем конверсии.
     if (!orderNumber || orderNumber === "DCB") return;
-    trackEvent("purchase", { transaction_id: orderNumber });
-  }, [orderNumber]);
+    trackEvent("purchase", {
+      transaction_id: orderNumber,
+      ...(amount && amount > 0 ? { value: amount, currency: "KZT" } : {}),
+    });
+  }, [orderNumber, amount]);
   return null;
 }

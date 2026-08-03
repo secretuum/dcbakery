@@ -6,6 +6,7 @@ import { LocaleProvider } from "@/src/i18n/client";
 import { getLocale } from "@/src/i18n/server";
 import { SITE_URL } from "@/src/lib/site-url";
 import { Analytics } from "@/src/components/analytics/Analytics";
+import { RouteTracker } from "@/src/components/analytics/RouteTracker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -103,6 +104,7 @@ export default async function RootLayout({
     >
       <body className="flex min-h-full flex-col">
         <Analytics />
+        <RouteTracker />
         <LocaleProvider locale={locale}>
           <CartProvider>
             <ToastProvider>

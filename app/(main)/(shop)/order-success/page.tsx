@@ -8,6 +8,7 @@ type OrderSuccessPageProps = {
   searchParams: Promise<{
     id?: string | string[];
     n?: string | string[];
+    amount?: string | string[];
   }>;
 };
 
@@ -26,14 +27,16 @@ function getOrderNumber(value: string | string[] | undefined) {
 
 export default async function OrderSuccessPage({ searchParams }: OrderSuccessPageProps) {
   const t = await getT();
-  const { id, n } = await searchParams;
+  const { id, n, amount } = await searchParams;
   const orderNumber = getOrderNumber(n);
   const orderId = getOrderNumber(id);
   const hasOrderId = orderId !== "DCB";
+  const amountValue = Number(Array.isArray(amount) ? amount[0] : amount);
+  const purchaseAmount = Number.isFinite(amountValue) && amountValue > 0 ? amountValue : undefined;
 
   return (
     <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
-      <TrackOrderSuccess orderNumber={orderNumber} />
+      <TrackOrderSuccess orderNumber={orderNumber} amount={purchaseAmount} />
       <section className="mx-auto max-w-3xl rounded-card border border-black/10 bg-white p-8 text-center sm:p-10">
         <div className="mx-auto flex size-20 items-center justify-center rounded border border-black/10 bg-coral-light">
           <span className="block size-10 rounded bg-coral" />

@@ -297,11 +297,15 @@ export function CheckoutForm({
       const result = (await response.json()) as { orderId?: string; orderNumber?: string };
       const orderNumber = result.orderNumber ?? "DCB";
       const orderIdParam = result.orderId ? `&id=${encodeURIComponent(result.orderId)}` : "";
+      // Сумма для конверсии purchase (ROAS): товары + доставка. Считаем до clear().
+      const orderTotal = Math.round(totalAmount + deliveryFee(totalAmount));
 
       isNavigatingRef.current = true;
       clear();
       showToast("Заявка отправлена", "success");
-      router.push(`/order-success?n=${encodeURIComponent(orderNumber)}${orderIdParam}`);
+      router.push(
+        `/order-success?n=${encodeURIComponent(orderNumber)}${orderIdParam}&amount=${orderTotal}`,
+      );
     } catch {
       showToast("Ошибка отправки, попробуйте снова", "error");
     } finally {

@@ -1,9 +1,9 @@
 import "server-only";
-// Общий доступ к Supabase через service role (тот же паттерн, что payments-store.ts /
-// whatsapp-cart-store.ts) — намеренно НЕ добавляем эти запросы в src/lib/supabase/admin.ts
-// (запретная зона). Явный таймаут на каждый вызов.
+// Общий доступ к Supabase REST через service role (тот же паттерн, что payments-store).
+// Намеренно НЕ в src/lib/supabase/admin.ts (запретная зона). Явный таймаут на вызов.
+// Перенесено из бывшего модуля whatsapp/orders при удалении WhatsApp-заказов.
 
-import { TIMEOUTS } from "../config";
+const SUPABASE_TIMEOUT_MS = 10000;
 
 export type RepoConfig = { restUrl: string; storageUrl: string; serviceRoleKey: string };
 
@@ -30,7 +30,7 @@ export function repoHeaders(serviceRoleKey: string, prefer?: string): Record<str
 /** fetch с таймаутом и no-store (для REST/Storage Supabase). */
 export async function repoFetch(url: string, init: RequestInit): Promise<Response> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUTS.supabaseMs);
+  const timer = setTimeout(() => controller.abort(), SUPABASE_TIMEOUT_MS);
   try {
     return await fetch(url, { ...init, signal: controller.signal, cache: "no-store" });
   } finally {

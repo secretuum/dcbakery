@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
 const BUCKET = "product-images";
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 100 * 1024 * 1024;
 
 type ImageMime = "image/jpeg" | "image/png" | "image/webp";
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
   }
 
   if (file.size > MAX_BYTES) {
-    return NextResponse.json({ error: "File exceeds 5 MB limit" }, { status: 413 });
+    return NextResponse.json({ error: "File exceeds 100 MB limit" }, { status: 413 });
   }
 
   const buf = new Uint8Array(await file.arrayBuffer());

@@ -13,8 +13,9 @@ import {
   insertOrderWithItems,
   updateOrderTelegramMessageId,
   updateOrderWhatsAppMessageId,
-  upsertCatalogProductOverride,
 } from "@/src/lib/supabase/admin";
+import { decrementProductStock } from "@/src/lib/orders/stock";
+import { sendOrderConfirmationEmail } from "@/src/lib/orders/order-email";
 import { canPlaceOrder } from "@/src/lib/credit";
 import { reportError } from "@/src/lib/monitoring";
 import { sendTelegramNotification } from "@/src/lib/telegram";
@@ -287,20 +288,21 @@ export async function POST(request: Request) {
     );
   }
 
-  // Списываем остаток по каждой позиции (заказ уже создан → best-effort, не роняем его).
-  // Read-modify-write через override: приложение знает эффективный остаток (статика+override),
-  // чего не знает чистый SQL. Под экстремальной конкуренцией одного SKU возможна гонка —
-  // атомарный вариант потребует RPC-миграцию (follow-up). revalidateTag убирает 10-мин лаг кэша.
+  // Списываем остаток по каждой позиции АТОМАРНО через RPC decrement_product_stock
+  // (миграция 202608030001) — конец гонке/двойному списанию. fallback = эффективный
+  // остаток из приложения (для товара без оверрайд-строки). Best-effort: не роняем заказ.
   try {
     for (const item of orderItems) {
       const current = Number(productMap.get(item.product_id)?.stock_qty ?? 0);
-      const nextStock = Math.max(0, current - item.qty);
-      await upsertCatalogProductOverride(item.product_id, { stock_qty: nextStock });
+      await decrementProductStock(item.product_id, item.qty, current);
     }
     revalidateTag(CATALOG_CACHE_TAG, "max");
   } catch (error) {
     reportError(error, { where: "orders:stock-decrement", extra: { orderNumber } });
   }
+
+  // Письмо-подтверждение клиенту (best-effort; только при заданном RESEND_API_KEY и email).
+  await sendOrderConfirmationEmail(order, orderItems).catch(() => {});
 
   const customerChatId = getWhatsAppChatIdFromPhone(order.customer_phone);
 

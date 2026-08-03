@@ -2,9 +2,10 @@ import "server-only";
 // Одноразовая регистрационная ссылка. Криптостойкий токен, в БД — только его ХЭШ
 // (sha256). Погашение атомарно (UPDATE проходит только если used=false и не истёк).
 // Сессию по клику НЕ выдаём — ссылка лишь подтверждает номер и предзаполняет форму.
+// Перенесено из бывшего модуля whatsapp/orders при удалении WhatsApp-заказов.
 
 import { createHash, randomBytes } from "node:crypto";
-import { getRepoConfig, repoHeaders, repoFetch } from "../repo/client";
+import { getRepoConfig, repoHeaders, repoFetch } from "./repo-client";
 
 const TTL_MS = 30 * 60 * 1000; // 30 минут
 

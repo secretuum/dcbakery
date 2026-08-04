@@ -10,6 +10,7 @@ import type { NormalizedIncomingMessage, IncomingVoiceRef } from "../transport/t
 import type { DialogState } from "../state/machine";
 import { isBotSuppressed } from "../state/machine";
 import { detectEscalation } from "../policy/escalation";
+import { scanForInjection } from "../policy/injection";
 import { buildCatalogContext, catalogProductIds } from "../agent/catalog-context";
 import type { AgentResponse } from "../agent/schema";
 import type { CartView, CartItemQty, CartOp, CartAdjustment } from "../cart/cart-math";
@@ -77,7 +78,7 @@ export type OrchestratorDeps = {
   };
   transcribe(input: { bytes: Uint8Array; mimeType: string }): Promise<{ text: string; lang?: string }>;
   address: {
-    validate(text: string): Promise<{ status: "in_almaty" | "outside_almaty" | "uncertain"; normalized: string }>;
+    validate(text: string): Promise<{ status: "in_almaty" | "outside_almaty" | "uncertain"; normalized: string; reason?: string }>;
   };
   voice: {
     download(ref: IncomingVoiceRef): Promise<{ bytes: Uint8Array; mimeType: string | null } | null>;
@@ -382,6 +383,16 @@ export async function handleIncomingMessage(
       return;
     }
 
+    // Мониторинг prompt-injection / манипуляций ценой (журнал, без изменения поведения):
+    // цена и остаток ВСЕГДА серверные (из БД), id валидируются по каталогу, JSON-схема
+    // strict — заказ архитектурно защищён. Активно НЕ блокируем: паттерны дают ложные
+    // срабатывания («бесплатная доставка», ссылка-карта в адресе). gpt-4o + системный
+    // промпт держат текст ответа.
+    const scan = scanForInjection(text);
+    if (scan.labels.length > 0) {
+      console.info("[whatsapp:nl] suspicious input", { chat: msg.chatId.slice(0, 6), labels: scan.labels });
+    }
+
     // 3) Структурированная фаза оформления (адрес/интервал/подтверждение) — детерминированно.
     // ГИБКОСТЬ: в каждом шаге СНАЧАЛА пытаемся понять ответ на текущий вопрос, и только если
     // это НЕ ответ, а навигация (назад/добавить/меню/менеджер…) — выходим в диалог (escapeToChat).
@@ -622,13 +633,22 @@ export async function handleIncomingMessage(
         return;
       }
       if (res.status === "uncertain") {
-        // Не распознали адрес: если это навигация (назад/меню/добавить/менеджер…) — выходим в диалог.
+        // Навигация (назад/меню/добавить/менеджер…) — выходим в диалог.
         if (isCheckoutEscape(rawText)) {
           await escapeToChat(rawText);
           return;
         }
-        await persist("awaiting_address", context);
-        await reply(M.addressUncertain());
+        // Слишком короткое/мусор — переспрашиваем. Но нормальный адрес без явного
+        // «Алматы» (reason no_city_marker) ПРИНИМАЕМ как адрес по Алматы: доставка
+        // только по Алматы, клиенты пишут просто улицу; менеджер сверит на подтверждении.
+        if (res.reason === "too_short_or_empty") {
+          await persist("awaiting_address", context);
+          await reply(M.addressUncertain());
+          return;
+        }
+        const almatyAddr = addrText.trim();
+        await persist("awaiting_address_confirmation", { ...context, address: almatyAddr });
+        await reply(M.confirmAddress(almatyAddr));
         return;
       }
       await persist("awaiting_address_confirmation", { ...context, address: res.normalized });

@@ -78,7 +78,9 @@ export function applyOps(
     const current = map.get(op.productId) ?? 0;
     let desired: number;
     if (op.operation === "add") desired = current + op.qty;
-    else if (op.operation === "remove") desired = current - op.qty;
+    // remove с положительным qty — уменьшить на столько; с нулевым/непереданным —
+    // убрать позицию целиком (частая форма «убери котлеты» → remove без количества).
+    else if (op.operation === "remove") desired = op.qty > 0 ? current - op.qty : 0;
     else desired = op.qty; // set
     desired = Math.min(desired, LIMITS.maxItemQuantity);
 

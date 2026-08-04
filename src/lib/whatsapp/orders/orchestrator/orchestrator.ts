@@ -275,6 +275,9 @@ export async function handleIncomingMessage(
     state !== "idle" &&
     state !== "order_submitted";
   if (stale) {
+    // Корзину тоже очищаем: иначе после «сессия истекла» старые позиции остаются и
+    // клиент видит несуществующий заказ (рассинхрон TTL диалога и корзины).
+    await deps.cart.clear(msg.chatId).catch(() => {});
     await deps.dialog.save(msg.chatId, { state: "expired", context: {}, phone }, nowIso).catch(() => {});
     await deps.send(msg.chatId, M.MSG_EXPIRED);
     return;

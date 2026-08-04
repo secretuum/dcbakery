@@ -69,11 +69,13 @@ export async function setCartItems(
   products: Product[],
 ): Promise<{ view: CartView; adjustments: CartAdjustment[] }> {
   const productById = toProductMap(products);
+  const cart = await fetchWhatsAppCart(chatId);
   const { items: clamped, adjustments } = reconcileStock(items, productById);
   await saveWhatsAppCart({
     chatId,
-    customerPhone: meta.phone ?? null,
-    senderName: meta.senderName ?? null,
+    // Сохраняем существующие телефон/имя, а не затираем в null (как applyCartOps).
+    customerPhone: meta.phone ?? cart.customerPhone ?? null,
+    senderName: meta.senderName ?? cart.senderName ?? null,
     items: clamped,
   });
   return { view: computeCartView(clamped, productById), adjustments };

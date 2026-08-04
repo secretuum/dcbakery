@@ -426,6 +426,10 @@ export async function handleIncomingMessage(
         await goToAddress();
         return;
       }
+      // Корзина опустела (изменился остаток) — не роняем «да» в общий диалог.
+      await persist("building_cart", {});
+      await reply(M.MSG_EMPTY_AFTER_POLICY);
+      return;
     }
 
     // 4) Разговорная фаза — LLM-агент (диалог, вопросы по каталогу, сбор корзины, оформление).
@@ -564,8 +568,10 @@ export async function handleIncomingMessage(
       // Обычный диалог: ответ агента + (при изменении/показе) серверная корзина с реальной суммой.
       const nameById = new Map(view.lines.map((l) => [l.productId, l.name]));
       const showCart = (out.showCart || out.cartActions.length > 0) && view.lines.length > 0;
+      // Очистили корзину, но модель не дала текст — явно сообщим об очистке.
+      const clearedNote = out.clearCart && !out.reply ? "Очистил корзину." : null;
       const parts = [
-        out.reply || null,
+        out.reply || clearedNote,
         M.formatAdjustments(adjustments, nameById),
         showCart ? M.formatCart(view) : null,
       ].filter((p): p is string => Boolean(p));
@@ -622,6 +628,16 @@ export async function handleIncomingMessage(
 
       // Выбор сохранённого адреса номером (1..N), иначе — адрес из сообщения.
       const saved = context.savedAddresses ?? [];
+      // Чистая цифра при наличии сохранённых адресов — это выбор номера. Вне диапазона —
+      // подсказываем, а не трактуем «4» как текст адреса.
+      if (/^\d+$/.test(trimmed) && saved.length > 0) {
+        const n = Number(trimmed);
+        if (n < 1 || n > saved.length) {
+          await persist("awaiting_address", { ...context, savedAddresses: saved });
+          await reply(`Адреса №${n} нет. Выберите 1–${saved.length} или напишите адрес.`);
+          return;
+        }
+      }
       const pick = /^\d+$/.test(trimmed) ? Number(trimmed) : 0;
       const addrText = pick >= 1 && pick <= saved.length ? saved[pick - 1] : rawText;
 
@@ -646,7 +662,15 @@ export async function handleIncomingMessage(
           await reply(M.addressUncertain());
           return;
         }
+        // Принимаем как адрес по Алматы, только если это ПОХОЖЕ на адрес: есть цифра
+        // (номер дома) или несколько слов. Набор букв без структуры («абвгдежзи») —
+        // переспрашиваем, а не создаём заказ с мусорным адресом.
         const almatyAddr = addrText.trim();
+        if (!/\d/.test(almatyAddr) && !/\s/.test(almatyAddr)) {
+          await persist("awaiting_address", context);
+          await reply(M.addressUncertain());
+          return;
+        }
         await persist("awaiting_address_confirmation", { ...context, address: almatyAddr });
         await reply(M.confirmAddress(almatyAddr));
         return;
@@ -669,6 +693,11 @@ export async function handleIncomingMessage(
       }
       const products = await deps.catalog.getProducts();
       const { view } = await deps.cart.load(msg.chatId, products);
+      if (view.lines.length === 0) {
+        await persist("building_cart", {});
+        await reply(M.MSG_EMPTY_AFTER_POLICY);
+        return;
+      }
       await persist("awaiting_final_confirmation", { ...context, period });
       await reply(
         M.formatFinalSummary({
@@ -699,7 +728,7 @@ export async function handleIncomingMessage(
         M.formatAdjustments(adjustments, nameById),
         M.formatCart(view),
       ].filter((p): p is string => Boolean(p));
-      await persist("awaiting_cart_confirmation", {});
+      await persist("awaiting_cart_confirmation", context);
       await reply(parts.join("\n\n"));
     }
 
@@ -711,6 +740,14 @@ export async function handleIncomingMessage(
       if (view.lines.length === 0) {
         await persist("building_cart", {});
         await reply(M.MSG_EMPTY_AFTER_POLICY);
+        return;
+      }
+      // Без телефона заказ не создаём (иначе осиротевший заказ без client_id, невидимый
+      // кредит-системе) — передаём менеджеру.
+      if (!phone) {
+        await createLead("missing_phone", text);
+        await persist("human_handoff", context);
+        await reply(M.MSG_HANDOFF);
         return;
       }
       // Изменилось наличие перед созданием — показываем и просим подтвердить заново.
@@ -736,19 +773,30 @@ export async function handleIncomingMessage(
           .catch(() => {});
       }
 
-      const created = await deps.order.create({
-        chatId: msg.chatId,
-        phone: phone ?? "",
-        items,
-        companyName: profile?.companyName ?? "WhatsApp клиент",
-        customerName: profile?.customerName ?? senderName ?? "WhatsApp клиент",
-        customerBin: profile?.customerBin ?? null,
-        customerEmail: profile?.customerEmail ?? null,
-        deliveryAddress: context.address ?? "",
-        deliveryDate: tomorrowDate(nowMs),
-        deliveryTime: context.period ? M.periodLabel(context.period) : "Договориться с менеджером",
-        ofertaAcceptedAtIso: nowIso,
-      });
+      const created = await deps.order
+        .create({
+          chatId: msg.chatId,
+          phone,
+          items,
+          companyName: profile?.companyName ?? "WhatsApp клиент",
+          customerName: profile?.customerName ?? senderName ?? "WhatsApp клиент",
+          customerBin: profile?.customerBin ?? null,
+          customerEmail: profile?.customerEmail ?? null,
+          deliveryAddress: context.address ?? "",
+          deliveryDate: tomorrowDate(nowMs),
+          deliveryTime: context.period ? M.periodLabel(context.period) : "Договориться с менеджером",
+          ofertaAcceptedAtIso: nowIso,
+        })
+        .catch(() => null);
+
+      // Ошибка создания заказа: НЕ оставляем на awaiting_final_confirmation (повторное «да»
+      // создало бы ДУБЛЬ) и НЕ чистим корзину — передаём менеджеру.
+      if (!created) {
+        await createLead("order_create_failed", text);
+        await persist("human_handoff", context);
+        await reply(M.MSG_HANDOFF);
+        return;
+      }
 
       await deps.cart.clear(msg.chatId).catch(() => {});
       await persist("order_submitted", {});

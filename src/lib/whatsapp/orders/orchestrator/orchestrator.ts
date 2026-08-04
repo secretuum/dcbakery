@@ -501,6 +501,12 @@ export async function handleIncomingMessage(
       // Действия с корзиной — сервер валидирует id, клэмпит остаток, ставит цену.
       let view = beforeView;
       let adjustments: CartAdjustment[] = [];
+      // Детерминированная очистка: модель ставит clearCart, сервер реально опустошает
+      // корзину (надёжнее, чем remove по каждой позиции — LLM их путал/пропускал).
+      if (out.clearCart) {
+        await deps.cart.clear(msg.chatId).catch(() => {});
+        view = { lines: [], itemsTotal: 0, delivery: 0, grandTotal: 0 };
+      }
       if (out.cartActions.length > 0) {
         const ops: CartOp[] = out.cartActions.map((a) => ({
           productId: a.productId,

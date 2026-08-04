@@ -22,6 +22,9 @@ export type AgentOutput = {
   cartActions: AgentCartAction[];
   /** Показать актуальную корзину (сервер отрендерит с реальными ценами). */
   showCart: boolean;
+  /** Полностью очистить корзину — сервер опустошит её детерминированно (надёжнее,
+   * чем remove по каждой позиции). Для «очисти корзину»/«убери всё»/«начнём заново». */
+  clearCart: boolean;
   /** chat — обычный диалог; checkout — клиент готов оформлять; и т.д. */
   intent: AgentIntent;
 };
@@ -36,7 +39,7 @@ export type AgentResponse = AgentOutput & { degraded?: boolean };
 export const AGENT_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["reply", "cartActions", "showCart", "intent"],
+  required: ["reply", "cartActions", "showCart", "clearCart", "intent"],
   properties: {
     reply: { type: "string" },
     cartActions: {
@@ -53,6 +56,7 @@ export const AGENT_JSON_SCHEMA = {
       },
     },
     showCart: { type: "boolean" },
+    clearCart: { type: "boolean" },
     intent: { type: "string", enum: [...AGENT_INTENTS] },
   },
 } as const;
@@ -78,6 +82,7 @@ export function parseAgentOutput(raw: unknown, validProductIds: Set<string>): Ag
     : "chat";
 
   const showCart = raw.showCart === true;
+  const clearCart = raw.clearCart === true;
 
   const rawActions = Array.isArray(raw.cartActions) ? raw.cartActions : [];
   const cartActions: AgentCartAction[] = [];
@@ -97,5 +102,5 @@ export function parseAgentOutput(raw: unknown, validProductIds: Set<string>): Ag
     cartActions.push({ productId, quantity, operation });
   }
 
-  return { ok: true, output: { reply, cartActions, showCart, intent } };
+  return { ok: true, output: { reply, cartActions, showCart, clearCart, intent } };
 }

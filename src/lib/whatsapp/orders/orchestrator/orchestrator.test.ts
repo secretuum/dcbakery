@@ -26,7 +26,7 @@ const PRODUCTS: Product[] = [
 const OGG = Uint8Array.from([0x4f, 0x67, 0x67, 0x53, 1, 2, 3, 4]);
 
 function agentOut(p: Partial<AgentResponse>): AgentResponse {
-  return { reply: "", cartActions: [], showCart: false, intent: "chat", ...p };
+  return { reply: "", cartActions: [], showCart: false, clearCart: false, intent: "chat", ...p };
 }
 
 type AgentInput = Parameters<OrchestratorDeps["agent"]["respond"]>[0];

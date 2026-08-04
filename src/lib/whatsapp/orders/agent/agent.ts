@@ -19,6 +19,7 @@ const DEGRADED_FALLBACK: AgentResponse = {
   reply: "",
   cartActions: [],
   showCart: false,
+  clearCart: false,
   intent: "chat",
   degraded: true,
 };

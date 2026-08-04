@@ -1,5 +1,28 @@
 import type { NextConfig } from "next";
 
+type RemotePattern = NonNullable<NonNullable<NextConfig["images"]>["remotePatterns"]>[number];
+
+// Хост публичного хранилища Supabase (фото товаров + картинки конструктора главной).
+// Без этого next/image ОТКАЗЫВАЕТСЯ грузить удалённые URL — загруженные через админку
+// фото (https://<ref>.supabase.co/storage/...) не отображаются, показывается заглушка.
+const supabaseHost = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+      : null;
+  } catch {
+    return null;
+  }
+})();
+
+const remotePatterns: RemotePattern[] = [
+  { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
+];
+// На случай кастомного домена Supabase (не *.supabase.co) — добавляем точный хост из env.
+if (supabaseHost && !supabaseHost.endsWith(".supabase.co")) {
+  remotePatterns.push({ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" });
+}
+
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
@@ -21,6 +44,7 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    remotePatterns,
   },
   async headers() {
     return [

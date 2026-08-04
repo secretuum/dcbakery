@@ -107,6 +107,8 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
   const [otpCode, setOtpCode] = useState("");
   const [otpSeconds, setOtpSeconds] = useState(0);
   const [otpResending, setOtpResending] = useState(false);
+  // Режим формы регистрации: лёгкая (телефон+компания) по умолчанию или полная (email+пароль).
+  const [regMode, setRegMode] = useState<"lite" | "full">("lite");
 
   // Обратный отсчёт срока WhatsApp-кода на шаге ввода.
   useEffect(() => {
@@ -221,6 +223,56 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
     }
   }
 
+  // Беспарольный вход: код в WhatsApp на номер из поля логина → общий OTP-шаг.
+  async function handleLoginByCode() {
+    const value = clientLogin.trim();
+    if (!isValidKzMobile(value)) {
+      setClientError(t("Для входа по коду введите номер телефона в поле выше"));
+      return;
+    }
+
+    setClientError("");
+    setClientStep("signing_in");
+
+    try {
+      const response = await fetch("/api/profile/login-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: value }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        ok?: boolean;
+        needsOtp?: boolean;
+        notRegistered?: boolean;
+      };
+
+      if (response.ok && data.notRegistered) {
+        setClientNotice(t("Такой аккаунт не найден. Заполните регистрацию — и сразу попадёте в кабинет."));
+        openRegistration(value);
+        return;
+      }
+
+      if (!response.ok || !data.ok) {
+        setClientError(data.error ?? t("Не удалось отправить код"));
+        setClientStep("idle");
+        return;
+      }
+
+      if (data.needsOtp) {
+        setRegPhone(value); // OTP-экран показывает этот номер
+        setOtpCode("");
+        setOtpSeconds(120);
+        setClientError("");
+        setClientStep("otp");
+      }
+    } catch {
+      setClientError(t("Не удалось отправить код. Проверьте соединение"));
+      setClientStep("idle");
+    }
+  }
+
   async function handleClientRegister() {
     if (!regEmail.includes("@")) {
       setClientError(t("Введите корректный email"));
@@ -302,6 +354,59 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
         companyName: data.companyName ?? "",
         createdAt: "",
       });
+    } catch {
+      setClientError(t("Не удалось создать аккаунт. Проверьте соединение"));
+      setClientStep("register");
+    }
+  }
+
+  // Лёгкая регистрация по телефону: номер + компания → код в WhatsApp → общий OTP-шаг.
+  async function handleClientRegisterLite() {
+    if (!isValidKzMobile(regPhone)) {
+      setClientError(t("Введите корректный мобильный номер, например +7 705 123 45 67"));
+      return;
+    }
+
+    if (!regCompany.trim()) {
+      setClientError(t("Укажите название компании"));
+      return;
+    }
+
+    setClientError("");
+    setClientStep("registering");
+
+    try {
+      const response = await fetch("/api/profile/register-lite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: regPhone,
+          companyName: regCompany,
+          customerName: regName,
+        }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        ok?: boolean;
+        needsOtp?: boolean;
+      };
+
+      if (!response.ok || !data.ok) {
+        setClientError(data.error ?? t("Не удалось создать аккаунт"));
+        setClientStep("register");
+        return;
+      }
+
+      if (data.needsOtp) {
+        setOtpCode("");
+        setOtpSeconds(120);
+        setClientError("");
+        setClientStep("otp");
+        return;
+      }
+
+      setClientStep("idle");
     } catch {
       setClientError(t("Не удалось создать аккаунт. Проверьте соединение"));
       setClientStep("register");
@@ -581,18 +686,27 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
               </div>
             ) : null}
             <div className="mt-6 space-y-3">
-              <label className="block">
-                <span className="text-sm font-bold text-dark">Email</span>
-                <Input
-                  className="mt-2"
-                  inputMode="email"
-                  type="email"
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.currentTarget.value)}
-                  placeholder="company@example.com"
-                  autoFocus
-                />
-              </label>
+              {regMode === "lite" ? (
+                <div className="rounded-md border border-coral/20 bg-accent-50 px-4 py-3">
+                  <p className="text-sm font-semibold text-dark/80">
+                    {t("Быстрая регистрация — только номер и компания. Код придёт в WhatsApp. По каждому заказу — предоплата; отсрочку и повышенный лимит откроет менеджер после проверки.")}
+                  </p>
+                </div>
+              ) : null}
+              {regMode === "full" ? (
+                <label className="block">
+                  <span className="text-sm font-bold text-dark">Email</span>
+                  <Input
+                    className="mt-2"
+                    inputMode="email"
+                    type="email"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.currentTarget.value)}
+                    placeholder="company@example.com"
+                    autoFocus
+                  />
+                </label>
+              ) : null}
               <label className="block">
                 <span className="text-sm font-bold text-dark">{t("Телефон WhatsApp")}</span>
                 <Input
@@ -602,6 +716,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   value={regPhone}
                   onChange={(e) => setRegPhone(e.currentTarget.value)}
                   placeholder="+7 (747) 000-00-00"
+                  autoFocus={regMode === "lite"}
                 />
                 {regPhone.trim() && !isValidKzMobile(regPhone) ? (
                   <p className="mt-1 text-xs font-semibold text-raspberry">
@@ -609,16 +724,18 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   </p>
                 ) : null}
               </label>
-              <label className="block">
-                <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
-                <Input
-                  className="mt-2"
-                  type="password"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.currentTarget.value)}
-                  placeholder={t("Минимум 8 символов")}
-                />
-              </label>
+              {regMode === "full" ? (
+                <label className="block">
+                  <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
+                  <Input
+                    className="mt-2"
+                    type="password"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.currentTarget.value)}
+                    placeholder={t("Минимум 8 символов")}
+                  />
+                </label>
+              ) : null}
               <label className="block">
                 <span className="text-sm font-bold text-dark">{t("Компания / заведение")}</span>
                 <Input
@@ -628,21 +745,23 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   placeholder={t("Название компании")}
                 />
               </label>
-              <label className="block">
-                <span className="text-sm font-bold text-dark">{t("БИН / ИИН")}</span>
-                <Input
-                  className="mt-2"
-                  inputMode="numeric"
-                  value={regBin}
-                  onChange={(e) => setRegBin(e.currentTarget.value)}
-                  placeholder={t("12 цифр")}
-                />
-                {regBin.trim() && !isValidBin(regBin) ? (
-                  <p className="mt-1 text-xs font-semibold text-raspberry">
-                    {t("БИН/ИИН указан неверно — проверьте 12 цифр")}
-                  </p>
-                ) : null}
-              </label>
+              {regMode === "full" ? (
+                <label className="block">
+                  <span className="text-sm font-bold text-dark">{t("БИН / ИИН")}</span>
+                  <Input
+                    className="mt-2"
+                    inputMode="numeric"
+                    value={regBin}
+                    onChange={(e) => setRegBin(e.currentTarget.value)}
+                    placeholder={t("12 цифр")}
+                  />
+                  {regBin.trim() && !isValidBin(regBin) ? (
+                    <p className="mt-1 text-xs font-semibold text-raspberry">
+                      {t("БИН/ИИН указан неверно — проверьте 12 цифр")}
+                    </p>
+                  ) : null}
+                </label>
+              ) : null}
               <label className="block">
                 <span className="text-sm font-bold text-dark">{t("Контактное лицо")}</span>
                 <Input
@@ -652,7 +771,7 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      void handleClientRegister();
+                      void (regMode === "lite" ? handleClientRegisterLite() : handleClientRegister());
                     }
                   }}
                   placeholder={t("Имя и фамилия")}
@@ -667,9 +786,13 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                 type="button"
                 disabled={clientStep === "registering"}
                 className="flex-1"
-                onClick={() => void handleClientRegister()}
+                onClick={() => void (regMode === "lite" ? handleClientRegisterLite() : handleClientRegister())}
               >
-                {clientStep === "registering" ? t("Создаём аккаунт...") : t("Зарегистрироваться")}
+                {clientStep === "registering"
+                  ? t("Создаём аккаунт...")
+                  : regMode === "lite"
+                    ? t("Получить код в WhatsApp")
+                    : t("Зарегистрироваться")}
               </Button>
               <Button
                 type="button"
@@ -680,6 +803,20 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                   setClientNotice("");
                 }}
               >{t("Назад")}</Button>
+            </div>
+            <div className="mt-4 border-t border-black/10 pt-4 text-center">
+              <button
+                type="button"
+                className="text-sm font-semibold text-muted underline-offset-2 hover:text-dark hover:underline"
+                onClick={() => {
+                  setRegMode((m) => (m === "lite" ? "full" : "lite"));
+                  setClientError("");
+                }}
+              >
+                {regMode === "lite"
+                  ? t("Полная регистрация (email и пароль)")
+                  : t("Быстрая регистрация по номеру")}
+              </button>
             </div>
           </>
         ) : (
@@ -733,6 +870,17 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                 className="flex-1"
                 onClick={() => openRegistration()}
               >{t("Зарегистрироваться")}</Button>
+            </div>
+            <div className="mt-3">
+              <Button
+                type="button"
+                variant="ghost"
+                block
+                disabled={clientStep === "signing_in"}
+                onClick={() => void handleLoginByCode()}
+              >
+                {t("Войти по коду из WhatsApp")}
+              </Button>
             </div>
             <div className="mt-6 border-t border-black/10 pt-5 text-center">
               <button

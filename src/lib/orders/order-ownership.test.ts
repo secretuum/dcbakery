@@ -47,3 +47,23 @@ test("пустой email обеих сторон не даёт совпаден�
     false,
   );
 });
+
+test("OR-логика: совпадение только по email при разных телефонах → владелец", () => {
+  assert.equal(
+    orderMatchesSession(
+      { customer_phone: "77470000000", customer_email: "cafe@mail.kz" },
+      { phone: "77479999999", email: "Cafe@Mail.kz" },
+    ),
+    true,
+  );
+});
+
+test("OR-логика: совпадение только по телефону при разных email → владелец", () => {
+  assert.equal(
+    orderMatchesSession(
+      { customer_phone: "+7 747 123 45 67", customer_email: "a@a.kz" },
+      { phone: "77471234567", email: "z@z.kz" },
+    ),
+    true,
+  );
+});

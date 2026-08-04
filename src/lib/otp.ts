@@ -11,7 +11,7 @@ export const OTP_CHALLENGE_COOKIE = "dc_otp_challenge";
 export const OTP_TTL_MS = 2 * 60 * 1000; // код действителен 2 минуты
 export const OTP_COOKIE_MAX_AGE_S = 2 * 60 + 30; // кука чуть дольше — успеть проверить/переслать
 
-export type OtpPurpose = "register" | "verify_phone";
+export type OtpPurpose = "register" | "verify_phone" | "login";
 
 export type OtpChallenge = {
   purpose: OtpPurpose;

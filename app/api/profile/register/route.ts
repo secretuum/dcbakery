@@ -28,6 +28,7 @@ import {
   SESSION_MAX_AGE_S,
   type ClientSessionPayload,
 } from "@/src/lib/client-session";
+import { ensureClientRecord } from "@/src/lib/account/ensure-client";
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -172,6 +173,10 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+
+  // Гарантируем биллинг-строку clients (credit_limit=0 ⇒ предоплата), чтобы к
+  // клиенту применялись кредит-проверки заказа. Best-effort — не роняем регистрацию.
+  await ensureClientRecord({ phone, companyName, email }).catch(() => null);
 
   // Основной путь подтверждения — WhatsApp-код. Пробуем отправить: если получилось,
   // сессию НЕ выдаём, ждём ввода кода на /api/profile/otp/verify. Если WhatsApp

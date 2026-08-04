@@ -43,7 +43,12 @@ export async function POST(request: Request) {
     ? ((body as Record<string, unknown>).code as string).trim()
     : "";
 
-  const challenge = await readOtpChallenge((await cookies()).get(OTP_CHALLENGE_COOKIE)?.value, "register");
+  // Принимаем challenge и регистрации, и беспарольного входа — оба выдают сессию
+  // из личности внутри подписанной куки (не из ввода клиента).
+  const cookieValue = (await cookies()).get(OTP_CHALLENGE_COOKIE)?.value;
+  const challenge =
+    (await readOtpChallenge(cookieValue, "register")) ??
+    (await readOtpChallenge(cookieValue, "login"));
 
   if (!challenge) {
     return NextResponse.json(

@@ -114,3 +114,91 @@ test("resolveCartItems: смешанный список — валидные п�
   assert.deepEqual(resolvedItems, [{ product_id: "medovik", qty: 2 }]);
   assert.equal(errors.length, 2);
 });
+
+// ——— validateOrderFields: непокрытые ветви ———
+
+test("validateOrderFields: дата доставки отсутствует → required", () => {
+  const { errors } = validateOrderFields(body({ delivery_date: "" }), DELIVERY_DAYS, TOMORROW);
+  assert.ok(errors.includes("delivery_date is required"));
+  // Именно required, а не «раньше завтра» (ветви взаимоисключающие).
+  assert.ok(!errors.includes("delivery_date must be tomorrow or later"));
+});
+
+test("validateOrderFields: дата ровно на завтра (разрешённый день) — проходит", () => {
+  // TOMORROW=2026-08-04 — вторник (weekday 2), входит в [2,4,6].
+  const { errors } = validateOrderFields(body({ delivery_date: TOMORROW }), DELIVERY_DAYS, TOMORROW);
+  assert.ok(!errors.some((e) => e.startsWith("delivery_date")));
+});
+
+test("validateOrderFields: пустой список дней доставки → любой будущий день разрешён", () => {
+  // 2026-08-05 (среда) обычно вне [2,4,6], но при deliveryDays=[] проверка дня пропускается.
+  const { errors } = validateOrderFields(body({ delivery_date: "2026-08-05" }), [], TOMORROW);
+  assert.ok(!errors.some((e) => e.startsWith("delivery_date")));
+});
+
+test("validateOrderFields: способ оплаты отсутствует → invalid", () => {
+  const { errors } = validateOrderFields(body({ payment_method: undefined }), DELIVERY_DAYS, TOMORROW);
+  assert.ok(errors.includes("payment_method is invalid"));
+});
+
+test("validateOrderFields: полностью пустой заказ — все ошибки накапливаются", () => {
+  const { errors, totalAmount } = validateOrderFields(
+    {
+      company_name: "",
+      customer_name: "",
+      customer_phone: "",
+      delivery_date: "",
+      items: [],
+      payment_method: "",
+      oferta_accepted: false,
+    },
+    DELIVERY_DAYS,
+    TOMORROW,
+  );
+  assert.equal(totalAmount, 0);
+  assert.equal(errors.length, 8);
+  for (const expected of [
+    "company_name is required",
+    "customer_name is required",
+    "customer_phone is invalid",
+    "delivery_date is required",
+    "items are required",
+    "payment_method is invalid",
+    "order total must be greater than zero",
+    "oferta must be accepted",
+  ]) {
+    assert.ok(errors.includes(expected), `ожидалась ошибка: ${expected}`);
+  }
+});
+
+// ——— resolveCartItems: граничные значения ———
+
+test("resolveCartItems: qty ровно равно остатку — проходит", () => {
+  // napoleon: остаток 2
+  const { errors, resolvedItems } = resolveCartItems([{ product_id: "napoleon", qty: 2 }], PRODUCTS);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(resolvedItems, [{ product_id: "napoleon", qty: 2 }]);
+});
+
+test("resolveCartItems: qty ровно равно минимуму — проходит", () => {
+  // minfive: min_qty 5
+  const { errors, resolvedItems } = resolveCartItems([{ product_id: "minfive", qty: 5 }], PRODUCTS);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(resolvedItems, [{ product_id: "minfive", qty: 5 }]);
+});
+
+test("resolveCartItems: нулевое и отрицательное qty — отбрасываются (ниже минимума)", () => {
+  const zero = resolveCartItems([{ product_id: "medovik", qty: 0 }], PRODUCTS);
+  assert.deepEqual(zero.resolvedItems, []);
+  assert.match(zero.errors[0], /below minimum/);
+
+  const negative = resolveCartItems([{ product_id: "medovik", qty: -3 }], PRODUCTS);
+  assert.deepEqual(negative.resolvedItems, []);
+  assert.match(negative.errors[0], /below minimum/);
+});
+
+test("resolveCartItems: пустой список позиций → пусто, без ошибок", () => {
+  const { errors, resolvedItems } = resolveCartItems([], PRODUCTS);
+  assert.deepEqual(errors, []);
+  assert.deepEqual(resolvedItems, []);
+});

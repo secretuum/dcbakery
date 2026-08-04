@@ -548,6 +548,40 @@ export async function insertOrderWithItems(order: Order, items: OrderItem[]) {
     created_at: order.created_at,
   };
 
+  // Атомарная вставка (заказ + позиции в одной транзакции) через RPC
+  // create_order_with_items, если она есть в БД: при сбое позиций заказ НЕ остаётся без
+  // товаров. Если RPC нет/не сработала — молча падаем в прежний (не-атомарный) путь ниже,
+  // поэтому деплой кода ДО применения миграции ничего не ломает.
+  try {
+    const rpcUrl = getSupabaseRestUrl("rpc/create_order_with_items");
+    if (rpcUrl && serviceRoleKey) {
+      const rpcItems = items.map((item) => ({
+        id: item.id,
+        order_id: item.order_id,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        unit: item.unit,
+        qty: item.qty,
+        price: item.price,
+        total_amount: item.total_amount,
+      }));
+      const rpcRes = await fetch(rpcUrl, {
+        method: "POST",
+        headers: {
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ p_order: nextOrderPayload, p_items: rpcItems }),
+      });
+      if (rpcRes.ok) {
+        return { order, items };
+      }
+    }
+  } catch {
+    // RPC недоступна — идём прежним путём с откатом ниже.
+  }
+
   let insertedOrder: Order;
 
   try {

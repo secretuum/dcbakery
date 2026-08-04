@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/src/components/ui/Button";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { Input } from "@/src/components/ui/Input";
@@ -74,12 +74,6 @@ function formatMmss(totalSeconds: number) {
 
 function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void }) {
   const t = useT();
-  // Admin section state
-  const [adminEmail, setAdminEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [adminError, setAdminError] = useState("");
-  const [isAdminSubmitting, setIsAdminSubmitting] = useState(false);
-
   // Client login/registration state
   const [clientLogin, setClientLogin] = useState("");
   const [clientPassword, setClientPassword] = useState("");
@@ -117,46 +111,6 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
     return () => window.clearInterval(id);
   }, [clientStep]);
 
-  async function handleAdminSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setAdminError("");
-
-    const normalizedEmail = adminEmail.trim().toLowerCase();
-
-    if (!normalizedEmail || !password) {
-      setAdminError("Введите email и пароль");
-      return;
-    }
-
-    setIsAdminSubmitting(true);
-
-    try {
-      const response = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: normalizedEmail, password }),
-      });
-
-      if (response.ok) {
-        onLogin({ email: normalizedEmail, role: "admin" });
-        return;
-      }
-
-      if (response.status !== 401) {
-        setAdminError("Не удалось войти. Попробуйте еще раз");
-        return;
-      }
-
-      setAdminError(
-        "Неверный email или пароль. Проверьте пользователя в Supabase Authentication.",
-      );
-    } catch {
-      setAdminError("Не удалось войти. Проверьте соединение и попробуйте снова");
-    } finally {
-      setIsAdminSubmitting(false);
-    }
-  }
-
   function openRegistration(prefillLogin?: string) {
     if (prefillLogin) {
       if (prefillLogin.includes("@")) {
@@ -178,6 +132,27 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
 
     setClientError("");
     setClientStep("signing_in");
+
+    const login = clientLogin.trim();
+
+    // Единый вход: если это email — сначала пробуем админ-вход. Куки админа Supabase
+    // ставит ТОЛЬКО если почта в списке админов (иначе 403) — не админ проваливается в
+    // обычный клиентский вход ниже. Сам /api/admin/login не меняем.
+    if (login.includes("@")) {
+      try {
+        const adminResponse = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: login.toLowerCase(), password: clientPassword }),
+        });
+        if (adminResponse.ok) {
+          onLogin({ email: login.toLowerCase(), role: "admin" });
+          return;
+        }
+      } catch {
+        // сеть — попробуем клиентский вход
+      }
+    }
 
     try {
       const response = await fetch("/api/profile/login", {
@@ -898,42 +873,6 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
           </>
         )}
       </div>
-
-      {/* Admin form — compact auth card */}
-      <form onSubmit={(e) => void handleAdminSubmit(e)} className="mt-4 rounded-2xl bg-white p-6 shadow-md sm:p-8">
-        <div className="text-center">
-          <h2 className="font-display text-xl font-semibold tracking-tight text-dark">{t("Email и пароль")}</h2>
-        </div>
-        <div className="mt-6 space-y-3">
-          <label className="block">
-            <span className="text-sm font-bold text-dark">Email</span>
-            <Input
-              className="mt-1.5"
-              inputMode="email"
-              type="email"
-              value={adminEmail}
-              onChange={(e) => setAdminEmail(e.currentTarget.value)}
-              placeholder="admin@example.com"
-            />
-          </label>
-          <label className="block">
-            <span className="text-sm font-bold text-dark">{t("Пароль")}</span>
-            <Input
-              className="mt-1.5"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.currentTarget.value)}
-              placeholder="••••••••"
-            />
-          </label>
-        </div>
-        {adminError ? (
-          <p className="mt-3 text-sm font-bold text-burgundy">{adminError}</p>
-        ) : null}
-        <Button type="submit" disabled={isAdminSubmitting} variant="outline" block className="mt-5">
-          {isAdminSubmitting ? t("Проверяем...") : t("Войти как менеджер")}
-        </Button>
-      </form>
     </section>
   );
 }

@@ -11,6 +11,7 @@ const adminNavItems = [
   { href: "/admin/clients", label: "Наши клиенты" },
   { href: "/admin/products", label: "Товары" },
   { href: "/admin/stop-list", label: "Стоп-лист" },
+  { href: "/admin/comments", label: "Комментарии" },
   { href: "/admin/settings", label: "Настройки" },
 ];
 

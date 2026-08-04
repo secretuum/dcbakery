@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -31,9 +32,12 @@ const toneClasses: Record<ToastType, string> = {
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  // Монотонный id: Date.now() давал коллизии при тостах в одну миллисекунду
+  // (дубль-ключи React → тост мог не исчезать).
+  const nextId = useRef(0);
 
   const showToast = useCallback((message: string, type: ToastType = "info") => {
-    const id = Date.now();
+    const id = (nextId.current += 1);
 
     setToasts((currentToasts) => [...currentToasts, { id, message, type }]);
 

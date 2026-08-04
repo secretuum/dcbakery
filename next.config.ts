@@ -44,6 +44,9 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Долгий кэш оптимизированных дериватов — сервер не пережимает одну и ту же
+    // картинку повторно (меньше нагрузка/egress). 31 день.
+    minimumCacheTTL: 2678400,
     remotePatterns,
   },
   async headers() {

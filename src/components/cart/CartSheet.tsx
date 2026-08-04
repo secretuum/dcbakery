@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
+import { lockBodyScroll, unlockBodyScroll } from "@/src/lib/scroll-lock";
 import { useCart } from "@/src/contexts/CartContext";
 import { formatPrice } from "@/src/lib/format";
 import { FREE_DELIVERY_THRESHOLD } from "@/app/constants";
@@ -52,13 +54,24 @@ export default function CartSheet() {
       .catch(() => {});
   }, [isOpen]);
 
-  // Lock body scroll while sheet is open
+  // Блокируем прокрутку body, пока лист открыт — через общий реф-счётчик, чтобы не
+  // конфликтовать со шторкой товара (она тоже блокирует скролл).
   useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    if (!isOpen) return;
+    lockBodyScroll();
+    return () => unlockBodyScroll();
   }, [isOpen]);
+
+  // Закрываем корзину при смене маршрута. CartSheet смонтирован в layout и переживает
+  // клиентскую навигацию — иначе полноэкранный бэкдроп (fixed inset-0) остаётся поверх
+  // новой страницы и глотает все клики до перезагрузки. Сброс делаем ВО ВРЕМЯ РЕНДЕРА
+  // (паттерн React «reset state on value change»), а не в эффекте.
+  const pathname = usePathname();
+  const [lastPath, setLastPath] = useState(pathname);
+  if (pathname !== lastPath) {
+    setLastPath(pathname);
+    if (isOpen) setIsOpen(false);
+  }
 
   return (
     <>

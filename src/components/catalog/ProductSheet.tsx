@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
+import { lockBodyScroll, unlockBodyScroll } from "@/src/lib/scroll-lock";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatPrice, formatProductPrice } from "@/src/lib/format";
@@ -27,16 +28,19 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
   const cartQty = cartItem?.qty ?? 0;
   const step = product.step_qty;
 
+  // Блокировка прокрутки — через общий реф-счётчик (mount-only, сбалансировано),
+  // чтобы не конфликтовать с корзиной, которая тоже блокирует скролл body.
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
+    return () => unlockBodyScroll();
+  }, []);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKeyDown);
-    };
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
   function handleAdd() {

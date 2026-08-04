@@ -1,19 +1,21 @@
 "use client";
 // Кадрирование фото без внешних зависимостей: квадратная рамка, изображение под ней
 // можно двигать (drag) и зумить (слайдер). «Применить» рисует видимую область на canvas
-// и отдаёт БЕЗ СЖАТИЯ (PNG, lossless) в полном разрешении кропа. Потолок 4096px — только
-// защита от падения браузера на очень больших исходниках (для реальных фото не срабатывает).
+// и отдаёт ОПТИМИЗИРОВАННЫЙ под веб WebP (сторона до 1280px). Раньше отдавали lossless
+// PNG в полном разрешении (до 4096px) — фото весили десятки МБ и сажали сайт (сервер
+// пережимал гигантские исходники + egress). 1280px WebP q0.9 визуально не отличим на
+// карточке (с запасом на retina), но весит ~200–400 КБ.
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type Props = {
   file: File;
-  outputSize?: number; // потолок стороны результата, px (защита от лимитов canvas)
+  outputSize?: number; // потолок стороны результата, px
   onCancel: () => void;
   onCropped: (blob: Blob) => void;
 };
 
-export function ImageCropper({ file, outputSize = 4096, onCancel, onCropped }: Props) {
+export function ImageCropper({ file, outputSize = 1280, onCancel, onCropped }: Props) {
   const frameRef = useRef<HTMLDivElement>(null);
   const imgElRef = useRef<HTMLImageElement>(null);
   const dragRef = useRef<{ px: number; py: number; ox: number; oy: number } | null>(null);
@@ -109,11 +111,11 @@ export function ImageCropper({ file, outputSize = 4096, onCancel, onCropped }: P
       }
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(img, sx, sy, sSize, sSize, 0, 0, target, target);
-      // PNG — без потери качества (lossless).
+      // WebP q0.9 — оптимизированный под веб (лёгкий, визуально без потерь на карточке).
       canvas.toBlob((blob) => {
         setBusy(false);
         if (blob) onCropped(blob);
-      }, "image/png");
+      }, "image/webp", 0.9);
     } catch {
       setBusy(false);
     }

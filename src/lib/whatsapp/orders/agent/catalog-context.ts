@@ -22,7 +22,13 @@ export function buildCatalogContext(products: Product[]): string {
       const stock =
         Number(p.stock_qty) > 0 ? `в наличии ${Math.floor(Number(p.stock_qty))}` : "нет в наличии";
       const price = Number(p.price) > 0 ? `${Math.round(Number(p.price))} ₸/ед.` : "цена уточняется";
-      lines.push(`- id=${p.id} | ${p.name}${pack ? ` [${pack}]` : ""} | ${price} | ${stock}`);
+      // Казахское/английское название как синонимы — чтобы агент понимал заказ на
+      // казахском («тұшпара» → пельмени). Данные из переводов каталога (nameKk/nameEn).
+      const aliases = [p.nameKk, p.nameEn]
+        .map((n) => n?.trim())
+        .filter((n): n is string => Boolean(n) && n !== p.name);
+      const aliasPart = aliases.length > 0 ? ` (также: ${aliases.join(" / ")})` : "";
+      lines.push(`- id=${p.id} | ${p.name}${aliasPart}${pack ? ` [${pack}]` : ""} | ${price} | ${stock}`);
     }
   }
   return lines.join("\n");

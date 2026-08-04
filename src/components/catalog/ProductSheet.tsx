@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
+import { ProductComments } from "@/src/components/catalog/ProductComments";
 import { lockBodyScroll, unlockBodyScroll } from "@/src/lib/scroll-lock";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
@@ -270,6 +271,8 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
                 </div>
               </details>
             ) : null}
+
+            <ProductComments slug={product.slug} />
           </div>
 
           {/* Buy bar */}

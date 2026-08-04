@@ -156,7 +156,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="ml-auto flex shrink-0 items-center gap-1 rounded-full border border-black/10 p-0.5">
               <button
                 onClick={handleDecrease}
-                className="flex size-8 items-center justify-center rounded-full text-lg font-bold text-dark transition hover:bg-black/5"
+                className="flex size-8 items-center justify-center rounded-full text-lg font-bold text-dark transition hover:bg-black/5 active:scale-90"
                 aria-label={t("Уменьшить количество")}
               >
                 −
@@ -165,7 +165,7 @@ export function ProductCard({ product }: ProductCardProps) {
               <button
                 onClick={handleIncrease}
                 disabled={cartQty >= product.stock_qty}
-                className="flex size-8 items-center justify-center rounded-full bg-coral text-white transition hover:bg-coral-hover disabled:bg-black/10 disabled:text-muted"
+                className="flex size-8 items-center justify-center rounded-full bg-coral text-white transition hover:bg-coral-hover active:scale-90 disabled:bg-black/10 disabled:text-muted"
                 aria-label={t("Увеличить количество")}
               >
                 +
@@ -175,7 +175,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <button
               onClick={handleAddToCart}
               disabled={!isInStock}
-              className={`ml-auto flex size-9 shrink-0 items-center justify-center rounded-full text-xl font-bold transition ${
+              className={`ml-auto flex size-9 shrink-0 items-center justify-center rounded-full text-xl font-bold transition active:scale-90 ${
                 justAdded
                   ? "bg-success text-white"
                   : "bg-coral text-white hover:bg-coral-hover disabled:bg-black/10 disabled:text-muted"

@@ -17,6 +17,7 @@ import {
 import { decrementProductStock } from "@/src/lib/orders/stock";
 import { sendOrderConfirmationEmail } from "@/src/lib/orders/order-email";
 import { canPlaceOrder } from "@/src/lib/credit";
+import { getAccountTier, isOverLiteCap, LITE_ORDER_CAP } from "@/src/lib/account/tier";
 import { reportError } from "@/src/lib/monitoring";
 import { sendTelegramNotification } from "@/src/lib/telegram";
 import {
@@ -24,6 +25,7 @@ import {
   sendWhatsAppNotification,
 } from "@/src/lib/whatsapp";
 import {
+  fetchWhatsAppClientByChatId,
   mergeClientAddressList,
   saveWhatsAppClientProfile,
 } from "@/src/lib/whatsapp-client-store";
@@ -170,12 +172,11 @@ export async function POST(request: Request) {
   // Серверная проверка сессии: заказ может создать только авторизованный клиент.
   // Раньше требование аккаунта было только на фронте (CheckoutAuthGate) — прямой POST
   // его обходил. Килл-свитч ORDERS_REQUIRE_SESSION=false отключает enforce на случай сбоя.
-  if (process.env.ORDERS_REQUIRE_SESSION !== "false") {
-    const sessionCookie = (await cookies()).get(CLIENT_SESSION_COOKIE)?.value;
-    const session = sessionCookie ? await verifyClientSession(sessionCookie) : null;
-    if (!session) {
-      return NextResponse.json({ error: "Требуется вход в аккаунт" }, { status: 401 });
-    }
+  const requireSession = process.env.ORDERS_REQUIRE_SESSION !== "false";
+  const sessionCookie = (await cookies()).get(CLIENT_SESSION_COOKIE)?.value;
+  const session = sessionCookie ? await verifyClientSession(sessionCookie) : null;
+  if (requireSession && !session) {
+    return NextResponse.json({ error: "Требуется вход в аккаунт" }, { status: 401 });
   }
 
   let payload: unknown;
@@ -218,14 +219,52 @@ export async function POST(request: Request) {
   const normalizedPhone = body.customer_phone?.replace(/\D/g, "")
     ? `+${body.customer_phone.replace(/\D/g, "")}`
     : null;
-  const client = normalizedPhone
-    ? await fetchClientByPhone(normalizedPhone)
-    : body.customer_email
-      ? await fetchClientByEmail(body.customer_email)
+
+  // R1: личность для кредита/тира/потолка берём из СЕССИИ, не из тела запроса — иначе
+  // контроль обходится подстановкой чужого/пустого телефона. Тело не должно противоречить сессии.
+  const sessionPhone = session?.phone ? `+${session.phone.replace(/\D/g, "")}` : null;
+  const sessionEmail = session?.email?.trim().toLowerCase() || null;
+  if (session) {
+    const bodyEmail = body.customer_email?.trim().toLowerCase() || null;
+    if (
+      (normalizedPhone && sessionPhone && normalizedPhone !== sessionPhone) ||
+      (bodyEmail && sessionEmail && bodyEmail !== sessionEmail)
+    ) {
+      return NextResponse.json(
+        { error: "Данные заказа не совпадают с аккаунтом. Обновите страницу и войдите заново." },
+        { status: 403 },
+      );
+    }
+  }
+
+  const lookupPhone = sessionPhone ?? normalizedPhone;
+  const lookupEmail = sessionEmail ?? (body.customer_email?.trim().toLowerCase() || null);
+  const client = lookupPhone
+    ? await fetchClientByPhone(lookupPhone)
+    : lookupEmail
+      ? await fetchClientByEmail(lookupEmail)
       : null;
 
+  const orderSum = totalAmount + deliveryFee(totalAmount);
+
+  // Потолок суммы для облегчённого (lite) аккаунта. Тир — по профилю (БИН+адрес) и
+  // кредиту клиента; личность взята из сессии (см. выше).
+  const chatId = lookupPhone ? getWhatsAppChatIdFromPhone(lookupPhone) : null;
+  const profile = chatId ? await fetchWhatsAppClientByChatId(chatId).catch(() => null) : null;
+  const tier = getAccountTier({
+    customerBin: profile?.customerBin,
+    hasAddress: Boolean(profile?.deliveryAddress || (profile?.addresses?.length ?? 0) > 0),
+    creditLimit: client?.credit_limit ?? 0,
+  });
+  if (isOverLiteCap(tier, orderSum)) {
+    return NextResponse.json(
+      { errors: [`Для облегчённого аккаунта лимит заказа ${LITE_ORDER_CAP} ₸. Укажите БИН и адрес доставки, чтобы снять потолок.`] },
+      { status: 409 },
+    );
+  }
+
   if (client) {
-    const creditCheck = await canPlaceOrder(client, totalAmount + deliveryFee(totalAmount));
+    const creditCheck = await canPlaceOrder(client, orderSum);
     if (!creditCheck.allowed) {
       return NextResponse.json(
         { errors: [creditCheck.reason ?? "Заказ не может быть принят"] },

@@ -1514,6 +1514,25 @@ function DeliveryBox({ orders }: { orders: ClientOrderSummary[] }) {
   );
 }
 
+// Баннер апгрейда для облегчённого (lite) аккаунта: как открыть полный.
+function UpgradeBanner() {
+  const t = useT();
+  return (
+    <div className="rounded-2xl border border-coral/20 bg-accent-50 p-5 shadow-xs">
+      <p className="text-sm font-bold text-dark">{t("Облегчённый аккаунт")}</p>
+      <p className="mt-1.5 text-xs font-semibold leading-relaxed text-dark/70">
+        {t("Пока оплата по каждому заказу (предоплата) и есть потолок суммы. Укажите БИН и адрес доставки при оформлении заказа — аккаунт станет полным: снимем потолок и откроем полный кабинет. Отсрочку по счёту открывает менеджер.")}
+      </p>
+      <Link
+        href="/catalog"
+        className="mt-3 inline-flex rounded-full bg-coral px-4 py-2 text-xs font-bold text-white transition hover:bg-coral-hover"
+      >
+        {t("Оформить заказ")}
+      </Link>
+    </div>
+  );
+}
+
 function VerifyPhoneBanner({ phone, onVerified }: { phone: string; onVerified: () => void }) {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -1653,6 +1672,8 @@ function ClientDashboard({
   const [accountantPhone, setAccountantPhone] = useState(session.accountant_phone ?? "");
   const [companyName, setCompanyName] = useState(session.companyName);
   const [creditState, setCreditState] = useState<CreditState | null>(null);
+  // Тир аккаунта: null пока грузится, затем 'lite'|'full'. Управляет показом кредит-UI.
+  const [tier, setTier] = useState<"lite" | "full" | null>(null);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [orders, setOrders] = useState<ClientOrderSummary[]>([]);
   // Момент захода фиксируем один раз (граница недели акции) — без Date.now() в рендере.
@@ -1664,8 +1685,9 @@ function ClientDashboard({
   useEffect(() => {
     fetch("/api/profile/credit", { cache: "no-store" })
       .then((r) => r.json())
-      .then((data: { creditState?: CreditState | null }) => {
+      .then((data: { creditState?: CreditState | null; tier?: "lite" | "full" }) => {
         if (data.creditState) setCreditState(data.creditState);
+        if (data.tier) setTier(data.tier);
       })
       .catch(() => undefined);
   }, []);
@@ -1761,7 +1783,7 @@ function ClientDashboard({
               </div>
             </div>
 
-            {creditState ? (
+            {creditState && tier === "full" ? (
               <div className="mt-5 grid grid-cols-2 gap-2.5">
                 <div className="rounded-md bg-white/10 p-3">
                   <p className="text-[10px] font-semibold uppercase tracking-[.1em] text-white/60">{t("Доступно")}</p>
@@ -1789,7 +1811,8 @@ function ClientDashboard({
             />
           ) : null}
 
-          {creditState ? <ConditionsBox state={creditState} /> : null}
+          {tier === "lite" ? <UpgradeBanner /> : null}
+          {creditState && tier === "full" ? <ConditionsBox state={creditState} /> : null}
           <RecentOrdersBox orders={orders} />
           <DeliveryBox orders={orders} />
 
@@ -1839,8 +1862,8 @@ function ClientDashboard({
 
         {/* Right main column */}
         <div className="space-y-5">
-          {/* Credit block */}
-          {creditState ? (
+          {/* Credit block — только для полного аккаунта */}
+          {creditState && tier === "full" ? (
             <CreditBlock state={creditState} />
           ) : null}
 

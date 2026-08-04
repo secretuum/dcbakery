@@ -28,6 +28,7 @@ import {
 import { fetchWhatsAppClientByChatId } from "@/src/lib/whatsapp-client-store";
 import { canonicalOrderStatuses } from "@/src/lib/order-status";
 import { exportOrderWriteoffToIiko } from "@/src/lib/orders/iiko-export";
+import { shipmentBlockedForPrepay } from "@/src/lib/account/tier";
 
 // Единая логика действий над заказом (подтверждение / оплата / статусы / отмена).
 // Раньше жила по одной копии в каждом admin-роуте; теперь и админка, и Telegram-бот
@@ -321,6 +322,29 @@ export async function changeStatus(
     previousOrder.status !== "paid"
   ) {
     return { ok: false, status: 400, error: "Нельзя завершить неоплаченный заказ" };
+  }
+
+  // Жёсткий стоп предоплаты: клиент без открытого кредита (credit_limit=0 ⇒
+  // предоплатный, в т.ч. любой самозарегистрированный/лайт) не может получить
+  // отгрузку до оплаты. Блокируем перевод в in_progress/delivering/completed, пока
+  // заказ не оплачен. Клиентам с отсрочкой (credit_limit>0, задал менеджер) —
+  // не мешаем (легальная консигнация). Заказы без клиента (гость/легаси) не трогаем.
+  if (previousOrder.client_id) {
+    const client = await fetchClientById(previousOrder.client_id);
+    if (
+      shipmentBlockedForPrepay({
+        targetStatus: status,
+        paymentStatus: previousOrder.payment_status,
+        creditLimit: client?.credit_limit ?? 0,
+        hasClient: Boolean(client),
+      })
+    ) {
+      return {
+        ok: false,
+        status: 400,
+        error: "Клиент на предоплате — переведите в отгрузку после оплаты (кнопка «Оплачено»).",
+      };
+    }
   }
 
   const order = await updateAdminOrderStatus(id, status as OrderStatus);

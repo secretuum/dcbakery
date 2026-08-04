@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEv
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MIN_ORDER_AMOUNT, deliveryFee } from "@/app/constants";
+import { isOverLiteCap, LITE_ORDER_CAP } from "@/src/lib/account/tier";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
 import { useCart } from "@/src/contexts/CartContext";
@@ -222,6 +223,8 @@ export function CheckoutForm({
   const [errors, setErrors] = useState<CheckoutFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthGate, setShowAuthGate] = useState(false);
+  // Тир аккаунта: null пока грузится. Управляет нотисом предоплаты и клиентским потолком.
+  const [tier, setTier] = useState<"lite" | "full" | null>(null);
   const isNavigatingRef = useRef(false);
   const [form, setForm] = useState<CheckoutFormState>({
     company_name: "",
@@ -242,6 +245,16 @@ export function CheckoutForm({
       router.replace("/catalog");
     }
   }, [isReady, items.length, router]);
+
+  // Тир аккаунта — для нотиса предоплаты и клиентского потолка на лайте.
+  useEffect(() => {
+    fetch("/api/profile/client-session", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { tier?: "lite" | "full" }) => {
+        if (d.tier) setTier(d.tier);
+      })
+      .catch(() => undefined);
+  }, []);
 
   // Пока пользователь не выбрал дату сам — подставляется ближайшая доступная
   const selectedDeliveryDate = form.delivery_date || firstAvailableDate;
@@ -327,6 +340,16 @@ export function CheckoutForm({
 
     if (!canCheckout) {
       showToast("Минимальная сумма заказа пока не набрана", "error");
+      return;
+    }
+
+    // Потолок суммы для облегчённого аккаунта (клиентская подсказка; сервер тоже
+    // проверяет). Полный аккаунт (БИН+адрес или кредит) — без потолка.
+    if (tier === "lite" && isOverLiteCap("lite", totalAmount + deliveryFee(totalAmount))) {
+      showToast(
+        `Для облегчённого аккаунта лимит заказа ${formatPrice(LITE_ORDER_CAP)}. Укажите БИН и адрес доставки, чтобы снять потолок.`,
+        "error",
+      );
       return;
     }
 
@@ -614,6 +637,12 @@ export function CheckoutForm({
 
             {hasQuoteItems ? (
               <p className="mt-5 rounded-md bg-coral-light px-4 py-3 text-xs font-semibold leading-5 text-burgundy">{t("В заявке есть товары с ценой по запросу. Менеджер подтвердит их стоимость отдельно.")}</p>
+            ) : null}
+
+            {tier === "lite" ? (
+              <p className="mt-5 rounded-md border border-coral/20 bg-accent-50 px-4 py-3 text-xs font-semibold leading-5 text-dark/70">
+                {t("По этому заказу — предоплата: счёт придёт в WhatsApp, отгрузка после оплаты. Укажите БИН и адрес доставки — аккаунт станет полным, потолок суммы снимется.")}
+              </p>
             ) : null}
           </aside>
         </div>

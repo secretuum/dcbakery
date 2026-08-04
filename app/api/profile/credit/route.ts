@@ -7,6 +7,9 @@ import {
 } from "@/src/lib/supabase/admin";
 import { getCreditState } from "@/src/lib/credit";
 import { CLIENT_SESSION_COOKIE, verifyClientSession } from "@/src/lib/client-session";
+import { getAccountTier } from "@/src/lib/account/tier";
+import { getWhatsAppChatIdFromPhone } from "@/src/lib/whatsapp";
+import { fetchWhatsAppClientByChatId } from "@/src/lib/whatsapp-client-store";
 
 export async function GET() {
   const cookieStore = await cookies();
@@ -18,7 +21,7 @@ export async function GET() {
   }
 
   if (getSupabaseAdminConfigError()) {
-    return NextResponse.json({ creditState: null, client: null });
+    return NextResponse.json({ creditState: null, client: null, tier: "lite" });
   }
 
   try {
@@ -28,13 +31,23 @@ export async function GET() {
         ? await fetchClientByEmail(session.email)
         : null;
 
+    // Тир аккаунта: полный, если менеджер открыл кредит ИЛИ клиент дозаполнил профиль
+    // (БИН + адрес). Данные профиля берём из whatsapp_clients.
+    const chatId = session.phone ? getWhatsAppChatIdFromPhone(session.phone) : null;
+    const profile = chatId ? await fetchWhatsAppClientByChatId(chatId).catch(() => null) : null;
+    const tier = getAccountTier({
+      customerBin: profile?.customerBin,
+      hasAddress: Boolean(profile?.deliveryAddress || (profile?.addresses?.length ?? 0) > 0),
+      creditLimit: client?.credit_limit ?? 0,
+    });
+
     if (!client) {
-      return NextResponse.json({ creditState: null, client: null });
+      return NextResponse.json({ creditState: null, client: null, tier });
     }
 
     const creditState = await getCreditState(client);
-    return NextResponse.json({ creditState, client });
+    return NextResponse.json({ creditState, client, tier });
   } catch {
-    return NextResponse.json({ creditState: null, client: null });
+    return NextResponse.json({ creditState: null, client: null, tier: "lite" });
   }
 }

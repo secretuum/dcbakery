@@ -11,6 +11,8 @@ type SettingControl = {
   description: string;
   key: string;
   label: string;
+  // По умолчанию true (килсвитчи). Для флагов, выключенных по умолчанию, — false.
+  defaultEnabled?: boolean;
 };
 
 export const metadata: Metadata = {
@@ -18,6 +20,13 @@ export const metadata: Metadata = {
 };
 
 const settingControls: SettingControl[] = [
+  {
+    description:
+      "Умное AI-оформление заказа в личном чате клиента (диалог, распознавание опечаток/фасовок, голосовые). Включите, чтобы клиенты оформляли заказ через WhatsApp. Если выключено — работает базовый бот-меню.",
+    key: "whatsapp_nl_orders_enabled",
+    label: "AI-оформление заказов в WhatsApp",
+    defaultEnabled: false,
+  },
   {
     description: "Полностью выключает нашу обработку WhatsApp. Webhook продолжит отвечать и форвардить события второму боту.",
     key: "whatsapp_bot_enabled",
@@ -34,10 +43,6 @@ const settingControls: SettingControl[] = [
     label: "Команды менеджера в WhatsApp",
   },
 ];
-
-function isEnabled(value: string | null | undefined) {
-  return value !== "false";
-}
 
 export default async function AdminSettingsPage() {
   const [settings, siteContent, isSuperAdmin] = await Promise.all([
@@ -106,7 +111,9 @@ export default async function AdminSettingsPage() {
         </p>
         <div className="mt-4 grid gap-4">
           {settingControls.map((setting) => {
-            const enabled = isEnabled(values.get(setting.key));
+            const raw = values.get(setting.key);
+            const enabled =
+              raw == null || raw === "" ? setting.defaultEnabled ?? true : raw !== "false";
 
             return (
               <WhatsAppSettingControl

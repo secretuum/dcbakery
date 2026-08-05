@@ -105,6 +105,7 @@ export async function Footer() {
 
       <div className="border-t border-white/15 px-5 pb-[calc(1.5rem+68px)] pt-5 lg:pb-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2">
+          <Link href="/optom" className="text-sm text-white/70 transition hover:text-white">{t("Оптом")}</Link>
           <Link href="/oferta" className="text-sm text-white/70 transition hover:text-white">{t("Публичная оферта")}</Link>
           <Link href="/privacy" className="text-sm text-white/70 transition hover:text-white">{t("Политика конфиденциальности")}</Link>
           <Link href="/oplata-i-dostavka" className="text-sm text-white/70 transition hover:text-white">{t("Оплата и доставка")}</Link>

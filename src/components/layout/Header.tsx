@@ -11,6 +11,7 @@ import { useT } from "@/src/i18n/client";
 
 const navItems = [
   { label: "Каталог", href: "/catalog" },
+  { label: "Оптом", href: "/optom" },
   { label: "О нас", href: "/#about" },
   { label: "Доставка", href: "/#delivery" },
   { label: "Контакты", href: "/contacts" },

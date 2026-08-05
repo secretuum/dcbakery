@@ -178,21 +178,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Amount mismatch" }, { status: 400 });
   }
 
+  // Compare-and-swap: переводим оплату, только пока заказ ещё ждёт её. Если параллельный
+  // вебхук уже перевёл заказ, здесь вернётся null — не дублируем уведомления клиенту/менеджеру.
   const updatedOrder = await updateOrderPaymentStatus(
     order.id,
     paymentStatus,
     getOrderStatus(paymentStatus),
+    "confirmed_waiting_payment",
   );
+
+  if (!updatedOrder) {
+    return NextResponse.json({ error: "Payment already processed" }, { status: 409 });
+  }
+
   const [managerMessageId] = await Promise.all([
-    updatedOrder
-      ? replaceWhatsAppOrderMessage(updatedOrder, order.whatsapp_message_id).catch(() => null)
-      : null,
-    updatedOrder
-      ? sendCustomerPaymentStatusNotification(updatedOrder, paymentStatus).catch(() => null)
-      : null,
+    replaceWhatsAppOrderMessage(updatedOrder, order.whatsapp_message_id).catch(() => null),
+    sendCustomerPaymentStatusNotification(updatedOrder, paymentStatus).catch(() => null),
   ]);
 
-  if (updatedOrder && managerMessageId) {
+  if (managerMessageId) {
     await updateOrderWhatsAppMessageId(updatedOrder.id, managerMessageId).catch(() => undefined);
   }
 

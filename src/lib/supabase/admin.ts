@@ -1006,10 +1006,18 @@ export async function updateOrderPaymentStatus(
   orderId: string,
   paymentStatus: PaymentStatus,
   orderStatus?: OrderStatus,
+  expectStatus?: OrderStatus,
 ) {
   const params = new URLSearchParams({
     id: `eq.${orderId}`,
   });
+  // Compare-and-swap: применяем перевод, только если заказ ещё в ожидаемом статусе.
+  // Защита от гонки двух платёжных вебхуков — второй матчит 0 строк → вернём null,
+  // и вызывающий не продублирует уведомления/смену статуса. Прочие вызовы (без
+  // expectStatus) работают как раньше — безусловный PATCH.
+  if (expectStatus) {
+    params.set("status", `eq.${expectStatus}`);
+  }
   const patch: Record<string, string> = {
     payment_status: paymentStatus,
   };

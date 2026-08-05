@@ -37,6 +37,9 @@ yarn-error.log*
 # iiko data dumps (fetched by scripts/iiko-probe.mjs)
 /.iiko-cache/
 
+# выгрузка фото товаров (scripts/export-product-images.mjs) — крупные бинарники, не коммитим
+/product-images-export/
+
 # vercel
 .vercel
 

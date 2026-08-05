@@ -10,6 +10,7 @@ import { Input } from "@/src/components/ui/Input";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatPrice } from "@/src/lib/format";
+import { gaItem, trackEvent } from "@/src/lib/analytics";
 import { isValidKzMobile } from "@/src/lib/phone";
 import { useT } from "@/src/i18n/client";
 import { CheckoutAuthGate } from "@/src/components/checkout/CheckoutAuthGate";
@@ -199,6 +200,18 @@ export function CheckoutForm({
   const t = useT();
   const { clear, isReady, items, totalAmount, totalItems } = useCart();
   const { showToast } = useToast();
+
+  // Начало оформления — середина воронки. Один раз, когда корзина готова и не пуста.
+  const beganCheckout = useRef(false);
+  useEffect(() => {
+    if (beganCheckout.current || !isReady || totalItems <= 0) return;
+    beganCheckout.current = true;
+    trackEvent("begin_checkout", {
+      currency: "KZT",
+      value: totalAmount,
+      items: items.map((item) => gaItem(item.product, item.qty)),
+    });
+  }, [isReady, totalItems, totalAmount, items]);
   // Массив с сервера пересоздаётся на каждый рендер — мемоизируем по содержимому
   const deliveryDaysKey = deliveryDays.join(",");
   const schedule = useMemo<DeliverySchedule>(

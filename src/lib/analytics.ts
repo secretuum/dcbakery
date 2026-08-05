@@ -2,7 +2,14 @@
 // (reachGoal). ID берутся из env (NEXT_PUBLIC_*). Безопасно вызывать где угодно —
 // если счётчиков нет или это сервер, вызов просто ничего не делает.
 
+import type { Product } from "@/src/types";
+
 type EventParams = Record<string, unknown>;
+
+/** Позиция в формате GA4 ecommerce (item_id/item_name/price/quantity). */
+export function gaItem(product: Product, quantity: number) {
+  return { item_id: product.id, item_name: product.name, price: product.price, quantity };
+}
 
 declare global {
   interface Window {

@@ -36,6 +36,8 @@ export type CreateOrderInput = {
   deliveryTime: string;
   comment?: string | null;
   ofertaAcceptedAtIso?: string | null;
+  /** Ключ идемпотентности (обычно `wa:<messageId>`) — защита от дубля при ретрае вебхука. */
+  idempotencyKey?: string | null;
 };
 
 export type CreateOrderResult = { orderId: string; orderNumber: string; order: Order };
@@ -106,6 +108,7 @@ export async function createOrderFromWhatsApp(input: CreateOrderInput): Promise<
     delivery_amount: delivery,
     payment_status: "unpaid",
     client_id: client?.id ?? null,
+    idempotency_key: input.idempotencyKey ?? null,
     oferta_accepted_at: input.ofertaAcceptedAtIso ?? null,
     oferta_version: input.ofertaAcceptedAtIso ? CONSENT_VERSION : null,
     created_at: nowIso,

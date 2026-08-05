@@ -786,6 +786,7 @@ export async function handleIncomingMessage(
           deliveryDate: tomorrowDate(nowMs),
           deliveryTime: context.period ? M.periodLabel(context.period) : "Договориться с менеджером",
           ofertaAcceptedAtIso: nowIso,
+          idempotencyKey: `wa:${msg.messageId}`,
         })
         .catch(() => null);
 

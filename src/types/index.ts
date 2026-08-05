@@ -154,6 +154,9 @@ export type Order = {
   confirmed_at?: string | null;
   payment_link_sent_at?: string | null;
   client_id?: string | null;
+  /** Ключ идемпотентности: повторное создание с тем же ключом не создаёт дубль
+   *  (у WhatsApp-заказа = id подтверждающего сообщения). */
+  idempotency_key?: string | null;
   shipment_date?: string | null;
   due_date?: string | null;
   paid_at?: string | null;

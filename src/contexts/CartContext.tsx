@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import type { CartItem, Product } from "@/src/types";
+import { gaItem, trackEvent } from "@/src/lib/analytics";
 
 type CartContextValue = {
   items: CartItem[];
@@ -115,6 +116,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (nextQty <= 0) {
       return;
     }
+
+    trackEvent("add_to_cart", {
+      currency: "KZT",
+      value: product.price * nextQty,
+      items: [gaItem(product, nextQty)],
+    });
 
     setItems((currentItems) => {
       const existing = currentItems.find((item) => item.product.id === product.id);

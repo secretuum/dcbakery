@@ -7,6 +7,7 @@ import { ProductComments } from "@/src/components/catalog/ProductComments";
 import { lockBodyScroll, unlockBodyScroll } from "@/src/lib/scroll-lock";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
+import { gaItem, trackEvent } from "@/src/lib/analytics";
 import { formatPrice, formatProductPrice } from "@/src/lib/format";
 import { useLocale, useT } from "@/src/i18n/client";
 import { localizeMeasure, localizeProduct } from "@/src/i18n/product";
@@ -35,6 +36,15 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
     lockBodyScroll();
     return () => unlockBodyScroll();
   }, []);
+
+  // Просмотр карточки товара — верх воронки. Один раз на открытие шторки.
+  useEffect(() => {
+    trackEvent("view_item", {
+      currency: "KZT",
+      value: product.price,
+      items: [gaItem(product, 1)],
+    });
+  }, [product]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

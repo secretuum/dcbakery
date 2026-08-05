@@ -528,6 +528,7 @@ export async function insertOrderWithItems(order: Order, items: OrderItem[]) {
     paid_at: order.paid_at ?? null,
     canceled_at: order.canceled_at ?? null,
     created_at: order.created_at,
+    idempotency_key: order.idempotency_key ?? null,
   } satisfies SupabaseOrderPayload;
 
   const legacyOrderPayload = {

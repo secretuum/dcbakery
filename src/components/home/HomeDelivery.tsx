@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LocaleLink as Link } from "@/src/i18n/LocaleLink";
 import { useT } from "@/src/i18n/client";
 import { EditableText } from "@/src/components/home/SiteEditMode";
 

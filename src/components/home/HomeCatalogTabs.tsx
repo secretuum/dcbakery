@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/src/i18n/LocaleLink";
 import { ProductCard } from "@/src/components/catalog/ProductCard";
 import { useT } from "@/src/i18n/client";
 import { EditableText } from "@/src/components/home/SiteEditMode";

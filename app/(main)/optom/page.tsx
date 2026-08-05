@@ -2,14 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EditableText } from "@/src/components/home/SiteEditMode";
 import { JsonLd } from "@/src/components/seo/JsonLd";
-import { getT } from "@/src/i18n/server";
+import { getLocale, getT } from "@/src/i18n/server";
+import { withLocale, buildAlternates } from "@/src/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Оптовые поставки — DC Bakery",
-  description:
-    "DC Bakery — оптовый B2B-поставщик десертов, тортов, замороженных полуфабрикатов, мяса и банкетных десертов для кофеен, ресторанов, отелей и магазинов в Алматы и по Казахстану. Доставка, оплата по счёту, работа с юрлицами.",
-  alternates: { canonical: "/optom" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: "Оптовые поставки — DC Bakery",
+    description:
+      "DC Bakery — оптовый B2B-поставщик десертов, тортов, замороженных полуфабрикатов, мяса и банкетных десертов для кофеен, ресторанов, отелей и магазинов в Алматы и по Казахстану. Доставка, оплата по счёту, работа с юрлицами.",
+    alternates: buildAlternates("/optom", locale),
+  };
+}
 
 // Ответно-ориентированная страница «Оптом»: факты вынесены короткими блоками
 // с вопросными заголовками, чтобы AI-поисковики (AI Overviews, ассистенты)
@@ -51,7 +55,7 @@ const faq: { q: string; a: string }[] = [
 ];
 
 export default async function OptomPage() {
-  const t = await getT();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
 
   // FAQPage строится из того же массива, что и видимый блок ниже — совпадение гарантировано.
   const faqJsonLd: Record<string, unknown> = {
@@ -82,7 +86,7 @@ export default async function OptomPage() {
           </p>
           <p className="mt-4 text-sm text-muted">
             {t("Оптовые цены, живые остатки и история заказов — в личном кабинете.")}{" "}
-            <Link href="/profile" className="font-bold text-coral hover:underline">{t("Стать партнёром →")}</Link>
+            <Link href={withLocale("/profile", locale)} className="font-bold text-coral hover:underline">{t("Стать партнёром →")}</Link>
           </p>
         </div>
 
@@ -97,7 +101,7 @@ export default async function OptomPage() {
             />
           </p>
           <p className="mt-4 text-sm">
-            <Link href="/catalog" className="font-bold text-coral hover:underline">{t("Открыть каталог →")}</Link>
+            <Link href={withLocale("/catalog", locale)} className="font-bold text-coral hover:underline">{t("Открыть каталог →")}</Link>
           </p>
         </div>
 
@@ -138,7 +142,7 @@ export default async function OptomPage() {
             />
           </p>
           <p className="mt-3 text-sm">
-            <Link href="/oplata-i-dostavka" className="font-bold text-coral hover:underline">{t("Подробнее об оплате и доставке →")}</Link>
+            <Link href={withLocale("/oplata-i-dostavka", locale)} className="font-bold text-coral hover:underline">{t("Подробнее об оплате и доставке →")}</Link>
           </p>
         </div>
 
@@ -153,7 +157,7 @@ export default async function OptomPage() {
             />
           </p>
           <p className="mt-3 text-sm">
-            <Link href="/contacts" className="font-bold text-coral hover:underline">{t("Реквизиты →")}</Link>
+            <Link href={withLocale("/contacts", locale)} className="font-bold text-coral hover:underline">{t("Реквизиты →")}</Link>
           </p>
         </div>
 
@@ -169,7 +173,7 @@ export default async function OptomPage() {
           </p>
           <p className="mt-5 text-sm">
             <Link
-              href="/profile"
+              href={withLocale("/profile", locale)}
               className="inline-flex items-center rounded-full bg-espresso px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-espresso/90"
             >
               {t("Стать партнёром")}

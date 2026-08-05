@@ -2,7 +2,8 @@ import Link from "next/link";
 import { InstagramIcon, WhatsAppIcon } from "@/src/components/ui/BrandIcons";
 import { formatDeliveryDaysLabel, getSiteContent } from "@/src/lib/site-content";
 import { EditableText } from "@/src/components/home/SiteEditMode";
-import { getT } from "@/src/i18n/server";
+import { getLocale, getT } from "@/src/i18n/server";
+import { withLocale } from "@/src/i18n/routing";
 
 // Единый блок контактов сайта (дубль на главной удалён — контакты живут здесь).
 // Значения редактируются суперадмином: Настройки → «Контент сайта» или карандашиком на главной.
@@ -12,7 +13,7 @@ function digits(value: string) {
 }
 
 export async function Footer() {
-  const [content, t] = await Promise.all([getSiteContent(), getT()]);
+  const [content, t, locale] = await Promise.all([getSiteContent(), getT(), getLocale()]);
   const deliveryDaysLabel = formatDeliveryDaysLabel(content.deliveryDays)
     .split(" · ")
     .map((day) => t(day))
@@ -56,7 +57,7 @@ export async function Footer() {
     <footer className="print-hidden bg-espresso text-white">
       <div className="mx-auto grid max-w-7xl gap-8 px-5 pb-8 pt-14 lg:grid-cols-[1fr_1.4fr] lg:gap-16 lg:px-8">
         <div>
-          <Link href="/" className="inline-flex flex-col leading-none" aria-label="DC Bakery">
+          <Link href={withLocale("/", locale)} className="inline-flex flex-col leading-none" aria-label="DC Bakery">
             <span className="font-display text-xl font-extrabold uppercase tracking-[.13em] text-white">
               DC BAKERY
             </span>
@@ -105,11 +106,11 @@ export async function Footer() {
 
       <div className="border-t border-white/15 px-5 pb-[calc(1.5rem+68px)] pt-5 lg:pb-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-5 gap-y-2">
-          <Link href="/optom" className="text-sm text-white/70 transition hover:text-white">{t("Оптом")}</Link>
-          <Link href="/oferta" className="text-sm text-white/70 transition hover:text-white">{t("Публичная оферта")}</Link>
-          <Link href="/privacy" className="text-sm text-white/70 transition hover:text-white">{t("Политика конфиденциальности")}</Link>
-          <Link href="/oplata-i-dostavka" className="text-sm text-white/70 transition hover:text-white">{t("Оплата и доставка")}</Link>
-          <Link href="/contacts" className="text-sm text-white/70 transition hover:text-white">{t("Контакты и реквизиты")}</Link>
+          <Link href={withLocale("/optom", locale)} className="text-sm text-white/70 transition hover:text-white">{t("Оптом")}</Link>
+          <Link href={withLocale("/oferta", locale)} className="text-sm text-white/70 transition hover:text-white">{t("Публичная оферта")}</Link>
+          <Link href={withLocale("/privacy", locale)} className="text-sm text-white/70 transition hover:text-white">{t("Политика конфиденциальности")}</Link>
+          <Link href={withLocale("/oplata-i-dostavka", locale)} className="text-sm text-white/70 transition hover:text-white">{t("Оплата и доставка")}</Link>
+          <Link href={withLocale("/contacts", locale)} className="text-sm text-white/70 transition hover:text-white">{t("Контакты и реквизиты")}</Link>
           <p className="ml-auto text-sm text-white/45">© {new Date().getFullYear()} DC Bakery</p>
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LocaleLink as Link } from "@/src/i18n/LocaleLink";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
@@ -8,6 +8,7 @@ import { useCart } from "@/src/contexts/CartContext";
 import { LanguageSwitcher } from "@/src/components/layout/LanguageSwitcher";
 import { EditableText } from "@/src/components/home/SiteEditMode";
 import { useT } from "@/src/i18n/client";
+import { stripLocale } from "@/src/i18n/routing";
 
 const navItems = [
   { label: "Каталог", href: "/catalog" },
@@ -44,7 +45,7 @@ export function Header() {
   const { totalItems } = useCart();
   const badgeText = totalItems > 99 ? "99+" : totalItems.toString();
   const [scrolled, setScrolled] = useState(false);
-  const pathname = usePathname();
+  const pathname = stripLocale(usePathname()).path;
 
   useEffect(() => {
     let ticking = false;

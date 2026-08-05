@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/src/i18n/LocaleLink";
 import { useRouter } from "next/navigation";
 import { MIN_ORDER_AMOUNT, deliveryFee } from "@/app/constants";
 import { isOverLiteCap, LITE_ORDER_CAP } from "@/src/lib/account/tier";
@@ -12,7 +12,8 @@ import { useToast } from "@/src/contexts/ToastContext";
 import { formatPrice } from "@/src/lib/format";
 import { gaItem, trackEvent } from "@/src/lib/analytics";
 import { isValidKzMobile } from "@/src/lib/phone";
-import { useT } from "@/src/i18n/client";
+import { useLocale, useT } from "@/src/i18n/client";
+import { withLocale } from "@/src/i18n/routing";
 import { CheckoutAuthGate } from "@/src/components/checkout/CheckoutAuthGate";
 
 type CheckoutFormState = {
@@ -198,6 +199,7 @@ export function CheckoutForm({
 }: CheckoutFormProps) {
   const router = useRouter();
   const t = useT();
+  const locale = useLocale();
   const { clear, isReady, items, totalAmount, totalItems } = useCart();
   const { showToast } = useToast();
 
@@ -255,9 +257,9 @@ export function CheckoutForm({
 
   useEffect(() => {
     if (isReady && items.length === 0 && !isNavigatingRef.current) {
-      router.replace("/catalog");
+      router.replace(withLocale("/catalog", locale));
     }
-  }, [isReady, items.length, router]);
+  }, [isReady, items.length, router, locale]);
 
   // Тир аккаунта — для нотиса предоплаты и клиентского потолка на лайте.
   useEffect(() => {
@@ -330,7 +332,10 @@ export function CheckoutForm({
       clear();
       showToast("Заявка отправлена", "success");
       router.push(
-        `/order-success?n=${encodeURIComponent(orderNumber)}${orderIdParam}&amount=${orderTotal}`,
+        withLocale(
+          `/order-success?n=${encodeURIComponent(orderNumber)}${orderIdParam}&amount=${orderTotal}`,
+          locale,
+        ),
       );
     } catch {
       showToast("Ошибка отправки, попробуйте снова", "error");

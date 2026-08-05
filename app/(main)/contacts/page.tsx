@@ -2,18 +2,22 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { InstagramIcon, WhatsAppIcon } from "@/src/components/ui/BrandIcons";
 import { getSiteContent } from "@/src/lib/site-content";
-import { getT } from "@/src/i18n/server";
+import { getLocale, getT } from "@/src/i18n/server";
+import { withLocale, buildAlternates } from "@/src/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Контакты и реквизиты — DC Bakery",
-  description:
-    "Контактная информация и банковские реквизиты DC Bakery. ИП Кошкаров А.К., г. Алматы. Телефон, e-mail, WhatsApp.",
-  alternates: { canonical: "/contacts" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: "Контакты и реквизиты — DC Bakery",
+    description:
+      "Контактная информация и банковские реквизиты DC Bakery. ИП Кошкаров А.К., г. Алматы. Телефон, e-mail, WhatsApp.",
+    alternates: buildAlternates("/contacts", locale),
+  };
+}
 
 export default async function ContactsPage() {
   const content = await getSiteContent();
-  const t = await getT();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   const whatsappDigits = content.contactWhatsapp.replace(/\D/g, "");
   const phoneDigits = content.contactPhone.replace(/\D/g, "");
   return (
@@ -104,7 +108,7 @@ export default async function ContactsPage() {
           <h2 className="mt-3 font-display text-2xl font-semibold tracking-tight">{t("Банковские реквизиты")}</h2>
           <p className="mt-2 text-sm text-muted">
             Оплата производится на счёт, соответствующий категории Продукции.{" "}
-            <Link href="/oferta#section-5" className="font-bold text-coral hover:underline">{t("Подробнее в п. 5.3 Оферты")}</Link>
+            <Link href={withLocale("/oferta#section-5", locale)} className="font-bold text-coral hover:underline">{t("Подробнее в п. 5.3 Оферты")}</Link>
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">

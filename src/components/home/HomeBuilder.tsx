@@ -7,7 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
-import Link from "next/link";
+import { LocaleLink as Link } from "@/src/i18n/LocaleLink";
 import { useRouter } from "next/navigation";
 import { useSiteEditFlag } from "./SiteEditMode";
 import {

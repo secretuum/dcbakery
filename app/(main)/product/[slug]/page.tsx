@@ -7,6 +7,7 @@ import { ProductPurchase } from "@/src/components/product/ProductPurchase";
 import { fetchProductBySlug, fetchProductSlugs } from "@/src/lib/catalog";
 import { formatProductPrice } from "@/src/lib/format";
 import { getLocale, getT } from "@/src/i18n/server";
+import { withLocale, buildAlternates } from "@/src/i18n/routing";
 import { localizeProduct } from "@/src/i18n/product";
 import { JsonLd } from "@/src/components/seo/JsonLd";
 import { SITE_URL } from "@/src/lib/site-url";
@@ -33,13 +34,13 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
   const locale = await getLocale();
   const localized = localizeProduct(product, locale);
-  const url = `${SITE_URL}/product/${product.slug}`;
+  const url = `${SITE_URL}/${locale}/product/${product.slug}`;
   const image = product.images?.[0] ? `${SITE_URL}${product.images[0]}` : undefined;
 
   return {
     title: `${localized.name} | DC Bakery`,
     description: localized.description,
-    alternates: { canonical: url },
+    alternates: buildAlternates(`/product/${product.slug}`, locale),
     openGraph: {
       type: "website",
       title: localized.name,
@@ -61,7 +62,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const [locale, t] = await Promise.all([getLocale(), getT()]);
   const localized = localizeProduct(product, locale);
-  const categoryHref = product.category ? `/catalog/${product.category.slug}` : "/catalog";
+  const categoryHref = withLocale(
+    product.category ? `/catalog/${product.category.slug}` : "/catalog",
+    locale,
+  );
   const priceText =
     product.price > 0
       ? t("${price} за ${unit}", { price: formatProductPrice(product.price), unit: product.unit })
@@ -83,6 +87,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     "@type": "Product",
     name: localized.name,
     description: localized.description,
+    brand: { "@type": "Brand", name: "DC Bakery" },
     ...(product.images?.[0] ? { image: `${SITE_URL}${product.images[0]}` } : {}),
     ...(product.category?.name ? { category: product.category.name } : {}),
     ...(product.price > 0
@@ -95,7 +100,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
               product.stock_qty > 0
                 ? "https://schema.org/InStock"
                 : "https://schema.org/OutOfStock",
-            url: `${SITE_URL}/product/${product.slug}`,
+            itemCondition: "https://schema.org/NewCondition",
+            url: `${SITE_URL}/${locale}/product/${product.slug}`,
+            seller: { "@type": "Organization", name: "DC Bakery", url: SITE_URL },
           },
         }
       : {}),
@@ -106,21 +113,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: t("Главная"), item: `${SITE_URL}/` },
-      { "@type": "ListItem", position: 2, name: t("Каталог"), item: `${SITE_URL}/catalog` },
+      { "@type": "ListItem", position: 1, name: t("Главная"), item: `${SITE_URL}/${locale}/` },
+      { "@type": "ListItem", position: 2, name: t("Каталог"), item: `${SITE_URL}/${locale}/catalog` },
       ...(product.category
         ? [
             {
               "@type": "ListItem",
               position: 3,
               name: product.category.name,
-              item: `${SITE_URL}/catalog/${product.category.slug}`,
+              item: `${SITE_URL}/${locale}/catalog/${product.category.slug}`,
             },
             {
               "@type": "ListItem",
               position: 4,
               name: localized.name,
-              item: `${SITE_URL}/product/${product.slug}`,
+              item: `${SITE_URL}/${locale}/product/${product.slug}`,
             },
           ]
         : [
@@ -128,7 +135,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               "@type": "ListItem",
               position: 3,
               name: localized.name,
-              item: `${SITE_URL}/product/${product.slug}`,
+              item: `${SITE_URL}/${locale}/product/${product.slug}`,
             },
           ]),
     ],

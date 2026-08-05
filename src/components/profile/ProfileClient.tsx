@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LocaleLink as Link } from "@/src/i18n/LocaleLink";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/src/components/ui/Button";
@@ -13,7 +13,8 @@ import { HomeReward } from "@/src/components/home/HomeReward";
 import { weeklyPromoCollected } from "@/src/lib/promo";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
-import { useT } from "@/src/i18n/client";
+import { useLocale, useT } from "@/src/i18n/client";
+import { withLocale } from "@/src/i18n/routing";
 import type { ClientOrderSummary, CreditState, OrderItemSummary, Product } from "@/src/types";
 
 type AdminSession = {
@@ -1138,6 +1139,7 @@ const ORDER_CHIP: Partial<Record<string, string>> = {
 // корзину и ведём в /cart. Общий хук для карточки заказа и сайдбара «Быстрый повтор».
 function useReorder() {
   const t = useT();
+  const locale = useLocale();
   const { add } = useCart();
   const router = useRouter();
   const { showToast } = useToast();
@@ -1166,7 +1168,7 @@ function useReorder() {
         data.skipped ? t("Добавлено в корзину, часть позиций недоступна") : t("Добавлено в корзину"),
         "success",
       );
-      router.push("/cart");
+      router.push(withLocale("/cart", locale));
     } catch {
       showToast(t("Не удалось повторить заказ"), "error");
     } finally {

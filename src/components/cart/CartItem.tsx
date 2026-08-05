@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LocaleLink as Link } from "@/src/i18n/LocaleLink";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { QuantitySelector } from "@/src/components/product/QuantitySelector";
 import { useCart } from "@/src/contexts/CartContext";

@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_ACCESS_COOKIE, ADMIN_REFRESH_COOKIE } from "@/src/lib/supabase/auth";
 import { isAdminIdentity, type AdminIdentity } from "@/src/lib/admin-access";
+import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "@/src/i18n/config";
 
 type RefreshedAdminToken = {
   access_token: string;
@@ -108,16 +109,16 @@ async function refreshAdminToken(refreshToken: string): Promise<RefreshedAdminTo
   }
 }
 
-export async function proxy(request: NextRequest) {
+// Админ-авторизация: логика без изменений, вызывается только для /admin и /api/admin.
+async function adminProxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
   const isPublicAdminRoute =
     pathname === "/admin/login" ||
     pathname === "/api/admin/login" ||
     pathname === "/api/admin/logout";
 
-  if ((!isAdminPage && !isAdminApi) || isPublicAdminRoute) {
+  if (isPublicAdminRoute) {
     return NextResponse.next();
   }
 
@@ -184,6 +185,84 @@ export async function proxy(request: NextRequest) {
   return clearAdminCookies(NextResponse.redirect(loginUrl));
 }
 
+// Служебные/метаданные-роуты Next без расширения (matcher ловит только их, т.к.
+// файлы с точкой он уже исключает) — их НЕ локализуем.
+const RESERVED_FIRST_SEGMENT = [
+  "opengraph-image",
+  "twitter-image",
+  "icon",
+  "apple-icon",
+  "favicon",
+  "manifest",
+  "sitemap",
+  "robots",
+  "llms",
+];
+
+// Выбор языка для «голого» URL: cookie → Accept-Language → дефолт (ru).
+function pickLocale(request: NextRequest): Locale {
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
+  if (isLocale(cookieLocale)) {
+    return cookieLocale;
+  }
+
+  const acceptLanguage = request.headers.get("accept-language");
+  if (acceptLanguage) {
+    for (const part of acceptLanguage.split(",")) {
+      const primary = part.trim().split(";")[0].split("-")[0].toLowerCase();
+      if (isLocale(primary)) {
+        return primary;
+      }
+    }
+  }
+
+  return DEFAULT_LOCALE;
+}
+
+export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // 1) Админка — прежняя авторизация (без языковых префиксов).
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+    return adminProxy(request);
+  }
+
+  // 2) Не локализуем: прочие API, оплата, документы и служебные роуты Next.
+  const firstSegment = pathname.split("/")[1] ?? "";
+  if (
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/pay") ||
+    pathname.startsWith("/documents") ||
+    RESERVED_FIRST_SEGMENT.some((r) => firstSegment === r || firstSegment.startsWith(`${r}-`))
+  ) {
+    return NextResponse.next();
+  }
+
+  // 3) Путь уже с языковым префиксом → rewrite: снимаем префикс и кладём язык в
+  //    заголовок x-locale на ЗАПРОСЕ (только так его прочитает getLocale в RSC).
+  if (isLocale(firstSegment)) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.slice(firstSegment.length + 1) || "/";
+
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-locale", firstSegment);
+
+    const response = NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+    response.cookies.set(LOCALE_COOKIE, firstSegment, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: "lax",
+    });
+    return response;
+  }
+
+  // 4) Голый путь без языка → 308 на выбранную локаль (сигналы SEO сохраняются).
+  const locale = pickLocale(request);
+  const url = request.nextUrl.clone();
+  url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
+  return NextResponse.redirect(url, 308);
+}
+
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/((?!_next/|.*\\..*).*)"],
 };

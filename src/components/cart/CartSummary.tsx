@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/src/components/ui/Button";
 import { useCart } from "@/src/contexts/CartContext";
 import { formatPrice } from "@/src/lib/format";
-import { useT } from "@/src/i18n/client";
+import { useLocale, useT } from "@/src/i18n/client";
+import { withLocale } from "@/src/i18n/routing";
 
 export function CartSummary() {
   const t = useT();
+  const locale = useLocale();
   const { items, totalAmount, totalItems } = useCart();
   const router = useRouter();
   const delivery = deliveryFee(totalAmount);
@@ -74,7 +76,7 @@ export function CartSummary() {
         ) : null}
       </div>
 
-      <Button onClick={() => router.push("/checkout")} disabled={!canCheckout} block className="mt-5">
+      <Button onClick={() => router.push(withLocale("/checkout", locale))} disabled={!canCheckout} block className="mt-5">
         {t("Оформить заявку")}
       </Button>
     </aside>

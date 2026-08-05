@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { getT } from "@/src/i18n/server";
+import { getLocale, getT } from "@/src/i18n/server";
+import { withLocale } from "@/src/i18n/routing";
 
 export default async function NotFound() {
-  const t = await getT();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   return (
     <main className="min-h-screen bg-cream px-5 py-16 text-dark lg:px-8">
       <section className="mx-auto max-w-2xl rounded-card border border-black/10 bg-white p-8 text-center shadow-lg sm:p-10">
@@ -12,7 +13,7 @@ export default async function NotFound() {
           {t("Такой раздел или товар пока не добавлен в каталог DC Bakery.")}
         </p>
         <Link
-          href="/catalog"
+          href={withLocale("/catalog", locale)}
           className="mt-6 inline-flex min-h-12 items-center justify-center rounded-full bg-coral px-5 py-3 text-sm font-bold text-white transition hover:bg-coral-hover"
         >
           {t("Вернуться в каталог")}

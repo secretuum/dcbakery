@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { getSiteContent } from "@/src/lib/site-content";
-import { getT } from "@/src/i18n/server";
+import { getLocale, getT } from "@/src/i18n/server";
+import { withLocale, buildAlternates } from "@/src/i18n/routing";
 import { RETAIL_SITE_URL } from "@/app/constants";
 import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
 import { HomeCatBar } from "@/src/components/home/HomeCatBar";
@@ -12,12 +13,15 @@ import { HomeCategoryCards } from "@/src/components/home/HomeCategoryCards";
 import { HomeDelivery } from "@/src/components/home/HomeDelivery";
 import { EditableText, EditableImage } from "@/src/components/home/SiteEditMode";
 
-export const metadata: Metadata = {
-  title: "DC Bakery — B2B поставщик продуктов питания",
-  description:
-    "Поставки десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые B2B-цены, халал сертификаты, натуральные ингредиенты.",
-  alternates: { canonical: "/" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: "DC Bakery — B2B поставщик продуктов питания",
+    description:
+      "Поставки десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые B2B-цены, халал сертификаты, натуральные ингредиенты.",
+    alternates: buildAlternates("/", locale),
+  };
+}
 
 const stats = [
   { value: "50+", label: "кофеен и ресторанов\nработают с нами" },
@@ -27,11 +31,12 @@ const stats = [
 ];
 
 export default async function Home() {
-  const [categories, allProducts, content, t] = await Promise.all([
+  const [categories, allProducts, content, t, locale] = await Promise.all([
     fetchCategories(),
     fetchProducts(),
     getSiteContent(),
     getT(),
+    getLocale(),
   ]);
 
   const categoryCounts = allProducts.reduce<Record<string, number>>((acc, p) => {
@@ -78,12 +83,12 @@ export default async function Home() {
                   <EditableText field="heroSubtitle" fallback={t(content.heroSubtitle)} multiline />
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3">
-                  <Link href="/catalog"
+                  <Link href={withLocale("/catalog", locale)}
                     className="inline-flex min-h-14 items-center gap-2 rounded-full bg-coral px-[30px] text-[17px] font-semibold text-white shadow-accent transition hover:bg-coral-hover active:scale-[.98]">
                     <EditableText field="home.hero.ctaPrimary" fallback={t("Открыть каталог")} />
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
                   </Link>
-                  <Link href="/profile"
+                  <Link href={withLocale("/profile", locale)}
                     className="inline-flex min-h-14 items-center rounded-full border border-black/15 bg-white px-[30px] text-[17px] font-semibold text-dark transition hover:border-coral hover:text-coral">
                     <EditableText field="home.hero.ctaSecondary" fallback={t("Стать партнёром")} />
                   </Link>
@@ -98,36 +103,24 @@ export default async function Home() {
 
               {/* Сцена — слоёные фото продукции */}
               <div aria-hidden className="relative z-[1] mx-auto aspect-square w-full max-w-[520px] lg:aspect-[1/1.02] lg:max-w-none">
-                {/* тёплое свечение-подложка — связывает фото с фоном, продукт «всплывает» */}
+                {/* главный кадр — чистое фото без ореолов/тени/обводки */}
                 <div
-                  className="absolute rounded-full"
-                  style={{
-                    inset: "2% 2%",
-                    background:
-                      "radial-gradient(circle at 50% 45%, rgba(255,255,255,0.94) 0%, rgba(255,236,225,0.72) 33%, rgba(240,144,144,0.16) 60%, transparent 74%)",
-                  }}
-                />
-                {/* главный кадр — крупная чистая карточка с мягкой тенью (без «тающих» краёв) */}
-                <div
-                  className="absolute overflow-hidden rounded-[2.2rem] ring-1 ring-white/55"
-                  style={{
-                    inset: "3% 11% 7% 11%",
-                    boxShadow: "0 34px 62px -22px rgba(86,34,13,0.34), 0 8px 20px -10px rgba(86,34,13,0.16)",
-                  }}
+                  className="absolute overflow-hidden rounded-[2.2rem]"
+                  style={{ inset: "3% 11% 7% 11%" }}
                 >
                   <EditableImage field="home.hero.imgMain" fallbackSrc="/products/tort-medovik.webp" alt="" className="h-full w-full object-cover" />
                 </div>
-                {/* фото A — акцент справа сверху, лёгкий наклон, мягкая тень вместо белой рамки */}
+                {/* фото A — акцент справа сверху, лёгкий наклон */}
                 <div
                   className="absolute overflow-hidden rounded-[1.4rem]"
-                  style={{ width: "33%", aspectRatio: "3 / 4", right: "-2%", top: "7%", rotate: "4deg", boxShadow: "0 24px 42px -14px rgba(86,34,13,0.34)" }}
+                  style={{ width: "33%", aspectRatio: "3 / 4", right: "-2%", top: "7%", rotate: "4deg" }}
                 >
                   <EditableImage field="home.hero.imgA" fallbackSrc="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-cover" />
                 </div>
                 {/* фото B — акцент слева снизу */}
                 <div
                   className="absolute overflow-hidden rounded-[1.2rem]"
-                  style={{ width: "28%", aspectRatio: "1 / 1", left: "-3%", bottom: "11%", rotate: "-5deg", boxShadow: "0 20px 38px -14px rgba(86,34,13,0.32)" }}
+                  style={{ width: "28%", aspectRatio: "1 / 1", left: "-3%", bottom: "11%", rotate: "-5deg" }}
                 >
                   <EditableImage field="home.hero.imgB" fallbackSrc="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-cover" />
                 </div>
@@ -205,7 +198,7 @@ export default async function Home() {
                 ))}
               </div>
               <div className="mt-8">
-                <Link href="/profile"
+                <Link href={withLocale("/profile", locale)}
                   className="inline-flex min-h-12 items-center rounded-full bg-espresso px-6 text-[15px] font-semibold text-white transition hover:bg-espresso/90 active:scale-[.98]">
                   <EditableText field="home.about.cta" fallback={t("Стать партнёром")} />
                 </Link>
@@ -237,11 +230,11 @@ export default async function Home() {
               <EditableText field="home.cta.subtitle" fallback={t("Оптовые цены, живые остатки и доступный лимит — всё в одном кабинете.")} multiline />
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href="/catalog"
+              <Link href={withLocale("/catalog", locale)}
                 className="inline-flex min-h-12 items-center rounded-full bg-white px-6 text-[15px] font-semibold text-coral shadow-sm transition hover:bg-white/90 active:scale-[.98]">
                 <EditableText field="home.cta.primary" fallback={t("Открыть каталог")} />
               </Link>
-              <Link href="/profile"
+              <Link href={withLocale("/profile", locale)}
                 className="inline-flex min-h-12 items-center rounded-full border border-white/25 bg-white/10 px-6 text-[15px] font-semibold text-white transition hover:bg-white/20 active:scale-[.98]">
                 <EditableText field="home.cta.secondary" fallback={t("Стать партнёром")} />
               </Link>

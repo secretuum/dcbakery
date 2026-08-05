@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getT } from "@/src/i18n/server";
+import { getLocale, getT } from "@/src/i18n/server";
+import { withLocale, buildAlternates } from "@/src/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Политика конфиденциальности — DC Bakery",
-  description:
-    "Порядок обработки и защиты персональных данных пользователей сайта dc-bakery.kz. Редакция от 10 июля 2026 года.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: "Политика конфиденциальности — DC Bakery",
+    description:
+      "Порядок обработки и защиты персональных данных пользователей сайта dc-bakery.kz. Редакция от 10 июля 2026 года.",
+    alternates: buildAlternates("/privacy", locale),
+  };
+}
 
 export default async function PrivacyPage() {
-  const t = await getT();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
 
   return (
     <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
@@ -57,7 +62,7 @@ export default async function PrivacyPage() {
           <div className="mt-10 border-t border-black/10 pt-8">
             <h2 className="font-display text-lg font-semibold">{t("5. Правовое основание и согласие")}</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
-              <p>{t("5.1. Обработка осуществляется на основании согласия субъекта, а также в целях исполнения договора (")}<Link href="/oferta" className="font-bold text-coral hover:underline">{t("Публичной оферты")}</Link>{t(") и выполнения требований законодательства Республики Казахстан.")}</p>
+              <p>{t("5.1. Обработка осуществляется на основании согласия субъекта, а также в целях исполнения договора (")}<Link href={withLocale("/oferta", locale)} className="font-bold text-coral hover:underline">{t("Публичной оферты")}</Link>{t(") и выполнения требований законодательства Республики Казахстан.")}</p>
               <p>{t("5.2. Согласие предоставляется субъектом при регистрации и/или оформлении заказа и может быть отозвано в порядке раздела 10.")}</p>
             </div>
           </div>
@@ -128,7 +133,7 @@ export default async function PrivacyPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-6 text-center">
-            <Link href="/oferta" className="text-sm font-bold text-coral hover:underline">{t("← Публичная оферта")}</Link>
+            <Link href={withLocale("/oferta", locale)} className="text-sm font-bold text-coral hover:underline">{t("← Публичная оферта")}</Link>
           </div>
         </div>
       </article>

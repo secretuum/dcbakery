@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { LocaleLink as Link } from "@/src/i18n/LocaleLink";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/src/contexts/CartContext";
 import { useT } from "@/src/i18n/client";
+import { stripLocale } from "@/src/i18n/routing";
 
 type Item = { href: string; label: string; icon: React.ReactNode };
 
@@ -32,7 +33,7 @@ const ICONS = {
 
 export function BottomNav() {
   const t = useT();
-  const pathname = usePathname();
+  const pathname = stripLocale(usePathname()).path;
   const { totalItems } = useCart();
   const badgeText = totalItems > 99 ? "99+" : totalItems.toString();
 

@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getT } from "@/src/i18n/server";
+import { getLocale, getT } from "@/src/i18n/server";
+import { withLocale, buildAlternates } from "@/src/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Оплата и доставка — DC Bakery",
-  description:
-    "Способы оплаты, условия доставки и возврата для B2B-клиентов DC Bakery. Бесплатная доставка от 15 000 тенге.",
-  alternates: { canonical: "/oplata-i-dostavka" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: "Оплата и доставка — DC Bakery",
+    description:
+      "Способы оплаты, условия доставки и возврата для B2B-клиентов DC Bakery. Бесплатная доставка от 15 000 тенге.",
+    alternates: buildAlternates("/oplata-i-dostavka", locale),
+  };
+}
 
 export default async function OplataIDostavkaPage() {
-  const t = await getT();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
 
   return (
     <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
@@ -22,7 +26,7 @@ export default async function OplataIDostavkaPage() {
           <h1 className="mt-3 font-display text-3xl font-semibold tracking-tight sm:text-4xl">{t("Оплата и доставка")}</h1>
           <p className="mt-2 text-sm text-muted">
             Все расчёты в тенге (KZT). Подробные условия — в{" "}
-            <Link href="/oferta" className="font-bold text-coral hover:underline">{t("Публичной оферте")}</Link>
+            <Link href={withLocale("/oferta", locale)} className="font-bold text-coral hover:underline">{t("Публичной оферте")}</Link>
             .
           </p>
 
@@ -47,7 +51,7 @@ export default async function OplataIDostavkaPage() {
                   <p className="mt-1 text-sm leading-6 text-muted">
                     Для одобренных B2B-клиентов — на условиях консигнации 7 дней.
                     Оплата согласно выставленному счёту на банковский счёт Поставщика.{" "}
-                    <Link href="/contacts" className="font-bold text-coral hover:underline">{t("Реквизиты →")}</Link>
+                    <Link href={withLocale("/contacts", locale)} className="font-bold text-coral hover:underline">{t("Реквизиты →")}</Link>
                   </p>
                 </div>
               </div>
@@ -89,7 +93,7 @@ export default async function OplataIDostavkaPage() {
             <p>{t("Возврат средств по оплате картой — на ту же карту в срок до 10 рабочих дней с момента согласования возврата.")}</p>
             <p>
               Подробнее —{" "}
-              <Link href="/oferta" className="font-bold text-coral hover:underline">{t("разделы 8–9 Публичной оферты")}</Link>
+              <Link href={withLocale("/oferta", locale)} className="font-bold text-coral hover:underline">{t("разделы 8–9 Публичной оферты")}</Link>
               . По вопросам: e-mail{" "}
               <a href="mailto:info@dc-bakery.kz" className="font-bold text-coral hover:underline">
                 info@dc-bakery.kz

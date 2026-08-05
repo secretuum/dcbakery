@@ -3,12 +3,17 @@ import { CategoryNavBar } from "@/src/components/catalog/CategoryNavBar";
 import { CatalogFilters } from "@/src/components/catalog/CatalogFilters";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { fetchProductOrderCounts } from "@/src/lib/supabase/popularity";
+import { getLocale } from "@/src/i18n/server";
+import { buildAlternates } from "@/src/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Каталог | DC Bakery",
-  description: "B2B-каталог DC Bakery: десерты, полуфабрикаты и мясо.",
-  alternates: { canonical: "/catalog" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: "Каталог | DC Bakery",
+    description: "B2B-каталог DC Bakery: десерты, полуфабрикаты и мясо.",
+    alternates: buildAlternates("/catalog", locale),
+  };
+}
 
 export default async function CatalogPage() {
   const [categories, products, orderCounts] = await Promise.all([

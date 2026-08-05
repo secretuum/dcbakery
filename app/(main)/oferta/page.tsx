@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getT } from "@/src/i18n/server";
+import { getLocale, getT } from "@/src/i18n/server";
+import { withLocale, buildAlternates } from "@/src/i18n/routing";
 
-export const metadata: Metadata = {
-  title: "Публичная оферта — DC Bakery",
-  description:
-    "Договор поставки продукции DC Bakery для B2B-клиентов. Условия заказа, оплаты, поставки, возврата и товарного кредита. Редакция от 14 июля 2026 года.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: "Публичная оферта — DC Bakery",
+    description:
+      "Договор поставки продукции DC Bakery для B2B-клиентов. Условия заказа, оплаты, поставки, возврата и товарного кредита. Редакция от 14 июля 2026 года.",
+    alternates: buildAlternates("/oferta", locale),
+  };
+}
 
 export default async function OfertaPage() {
-  const t = await getT();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
 
   return (
     <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
@@ -146,7 +151,7 @@ export default async function OfertaPage() {
             <h2 className="font-display text-lg font-semibold">{t("13. Персональные данные и конфиденциальность")}</h2>
             <div className="mt-4 space-y-3 text-sm leading-7 text-dark/80">
               <p>{t("13.1. Акцептуя Оферту, Покупатель (его представитель) даёт согласие на сбор и обработку персональных данных в целях исполнения договора в соответствии с законодательством Республики Казахстан о персональных данных и их защите.")}</p>
-              <p>{t("13.2. Порядок обработки и защиты персональных данных определяется")}<Link href="/privacy" className="font-bold text-coral hover:underline">{t("Политикой конфиденциальности")}</Link>{t(", размещённой на Сайте.")}</p>
+              <p>{t("13.2. Порядок обработки и защиты персональных данных определяется")}<Link href={withLocale("/privacy", locale)} className="font-bold text-coral hover:underline">{t("Политикой конфиденциальности")}</Link>{t(", размещённой на Сайте.")}</p>
               <p>{t("13.3. Данные банковских карт Поставщиком не собираются и не хранятся; оплата картой проводится на стороне банка-эквайера (платёжного провайдера).")}</p>
             </div>
           </div>
@@ -301,7 +306,7 @@ export default async function OfertaPage() {
           </div>
 
           <div className="mt-10 border-t border-black/10 pt-6 text-center">
-            <Link href="/contacts" className="text-sm font-bold text-coral hover:underline">{t("Контакты и реквизиты →")}</Link>
+            <Link href={withLocale("/contacts", locale)} className="text-sm font-bold text-coral hover:underline">{t("Контакты и реквизиты →")}</Link>
           </div>
         </div>
       </article>

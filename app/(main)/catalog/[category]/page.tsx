@@ -8,7 +8,8 @@ import {
   fetchCategorySlugs,
   fetchProductsByCategory,
 } from "@/src/lib/catalog";
-import { getT } from "@/src/i18n/server";
+import { getLocale, getT } from "@/src/i18n/server";
+import { withLocale, buildAlternates } from "@/src/i18n/routing";
 import { JsonLd } from "@/src/components/seo/JsonLd";
 import { SITE_URL } from "@/src/lib/site-url";
 
@@ -32,12 +33,14 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     };
   }
 
+  const locale = await getLocale();
+
   return {
     title: `${currentCategory.name} | Каталог DC Bakery`,
     description:
       currentCategory.description ??
       `B2B-каталог DC Bakery: раздел ${currentCategory.name.toLowerCase()}.`,
-    alternates: { canonical: `/catalog/${category}` },
+    alternates: buildAlternates(`/catalog/${category}`, locale),
   };
 }
 
@@ -49,10 +52,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     notFound();
   }
 
-  const [categories, products, t] = await Promise.all([
+  const [categories, products, t, locale] = await Promise.all([
     fetchCategories(),
     fetchProductsByCategory(category),
     getT(),
+    getLocale(),
   ]);
 
   // «Хлебные крошки» для поиска: Главная → Каталог → Категория.
@@ -60,13 +64,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: t("Главная"), item: `${SITE_URL}/` },
-      { "@type": "ListItem", position: 2, name: t("Каталог"), item: `${SITE_URL}/catalog` },
+      { "@type": "ListItem", position: 1, name: t("Главная"), item: `${SITE_URL}/${locale}/` },
+      { "@type": "ListItem", position: 2, name: t("Каталог"), item: `${SITE_URL}/${locale}/catalog` },
       {
         "@type": "ListItem",
         position: 3,
         name: currentCategory.name,
-        item: `${SITE_URL}/catalog/${currentCategory.slug}`,
+        item: `${SITE_URL}/${locale}/catalog/${currentCategory.slug}`,
       },
     ],
   };
@@ -95,7 +99,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
         <nav className="mt-8 flex gap-2 overflow-x-auto pb-2" aria-label={t("Категории каталога")}>
           <Link
-            href="/catalog"
+            href={withLocale("/catalog", locale)}
             className="shrink-0 rounded-btn bg-white px-4 py-2 text-sm font-bold text-muted shadow-sm transition hover:bg-coral-light hover:text-dark"
           >
             {t("Все разделы")}
@@ -106,7 +110,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             return (
               <Link
                 key={item.id}
-                href={`/catalog/${item.slug}`}
+                href={withLocale(`/catalog/${item.slug}`, locale)}
                 className={`shrink-0 rounded-btn px-4 py-2 text-sm font-bold shadow-sm transition ${
                   isActive
                     ? "bg-dark text-white"

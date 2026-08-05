@@ -1,8 +1,9 @@
 // Массовая ЗАГРУЗКА улучшенных фото товаров обратно на сайт. Зеркало export-product-images:
 // берёт папку с файлами, имя которых = наименование товара, сопоставляет с каталогом,
-// пережимает в WebP ≤1280px (как админский кадратор — бережём egress), заливает в Supabase
-// Storage (bucket product-images/products/<slug>.webp) и прописывает URL в
-// catalog_product_overrides.image. По умолчанию — DRY-RUN (только план, без записи).
+// заливает КАК ЕСТЬ в Supabase Storage (bucket product-images/products/<slug>.<ext>) и
+// прописывает URL в catalog_product_overrides.image. Пережатия НЕТ — предполагается, что
+// изображения уже адаптированы (оптимизированы/сжаты) на стороне подготовки.
+// По умолчанию — DRY-RUN (только план, без записи).
 //
 // Запуск из корня проекта (ключи из .env.local, скрипт их не хранит):
 //   node --env-file=.env.local scripts/import-product-images.mjs [папка]           # DRY-RUN
@@ -14,14 +15,12 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import sharp from "sharp";
 
 const ROOT = process.cwd();
 const IN_DIR = path.resolve(ROOT, process.argv.find((a) => !a.startsWith("--") && a !== process.argv[0] && a !== process.argv[1]) ?? "product-images-improved");
 const APPLY = process.argv.includes("--apply");
 const DATA_FILE = path.join(ROOT, "src", "data", "products.ts");
 const BUCKET = "product-images";
-const MAX_DIM = 1280;
 
 const SUPABASE_URL = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/$/, "");
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
@@ -54,8 +53,16 @@ function sanitizeName(name) {
 function matchKey(name) {
   return sanitizeName(name).toLowerCase();
 }
-function slugFile(slug) {
-  return `${String(slug).toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "")}.webp`;
+function fileExt(f) {
+  const e = path.extname(f).toLowerCase();
+  return /^\.(webp|png|jpe?g|avif)$/.test(e) ? e : ".webp";
+}
+function contentType(ext) {
+  return { ".webp": "image/webp", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".avif": "image/avif" }[ext] ?? "application/octet-stream";
+}
+function slugPath(slug, ext) {
+  const s = String(slug).toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "");
+  return `products/${s}${ext}`;
 }
 
 async function loadMergedCatalog() {
@@ -89,10 +96,10 @@ async function loadMergedCatalog() {
   return merged;
 }
 
-async function uploadWebp(buf, storagePath) {
+async function uploadImage(buf, storagePath, ctype) {
   const res = await fetch(`${SUPABASE_URL}/storage/v1/object/${BUCKET}/${storagePath}`, {
     method: "POST",
-    headers: { ...H, "Content-Type": "image/webp", "x-upsert": "true" },
+    headers: { ...H, "Content-Type": ctype, "x-upsert": "true" },
     body: buf,
   });
   if (!res.ok) throw new Error(`upload ${storagePath}: ${res.status} ${await res.text()}`);
@@ -131,7 +138,6 @@ async function main() {
   }
 
   const merged = await loadMergedCatalog();
-  // Карта соответствия: нормализованное имя → товар. Коллизии имён — предупреждаем.
   const byName = new Map();
   const collisions = [];
   for (const p of merged) {
@@ -141,7 +147,14 @@ async function main() {
   }
   if (collisions.length) console.log(`⚠ одинаковые имена (сопоставление может быть неоднозначным): ${collisions.join(", ")}\n`);
 
-  const files = fs.readdirSync(IN_DIR).filter((f) => /\.(webp|png|jpe?g|avif)$/i.test(f) && !f.startsWith("_"));
+  // Рекурсивно: файлы могут лежать в подпапках (напр. manual-review/…). Исключаем
+  // contact-sheets (before/after QA-листы — это НЕ фото товаров) и служебные `_*`.
+  const files = fs
+    .readdirSync(IN_DIR, { recursive: true })
+    .map(String)
+    .filter((f) => /\.(webp|png|jpe?g|avif)$/i.test(f))
+    .filter((f) => !path.basename(f).startsWith("_"))
+    .filter((f) => !f.replace(/\\/g, "/").toLowerCase().includes("contact-sheet"));
   console.log(`${APPLY ? "ЗАЛИВКА" : "DRY-RUN (без записи)"} — папка: ${IN_DIR}\nфайлов: ${files.length}, товаров в каталоге: ${merged.length}\n`);
 
   const matched = [];
@@ -157,24 +170,22 @@ async function main() {
 
   let ok = 0, err = 0;
   for (const { f, product } of matched) {
-    const storagePath = `products/${slugFile(product.slug)}`;
-    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${storagePath}`;
+    const ext = fileExt(f);
+    const storagePath = slugPath(product.slug, ext);
     if (!APPLY) {
       console.log(`✓ ${f}  →  ${product.name} [${product.slug}]  →  ${storagePath}`);
       continue;
     }
     try {
-      const src = fs.readFileSync(path.join(IN_DIR, f));
-      const webp = await sharp(src).rotate().resize({ width: MAX_DIM, height: MAX_DIM, fit: "inside", withoutEnlargement: true }).webp({ quality: 82 }).toBuffer();
-      const url = await uploadWebp(webp, storagePath);
+      const buf = fs.readFileSync(path.join(IN_DIR, f));
+      const url = await uploadImage(buf, storagePath, contentType(ext));
       await setOverrideImage(product, url);
       ok++;
-      console.log(`✓ ${f}  →  ${product.name}  (${Math.round(src.length / 1024)}КБ → ${Math.round(webp.length / 1024)}КБ)`);
+      console.log(`✓ ${f}  →  ${product.name}  (${Math.round(buf.length / 1024)}КБ)`);
     } catch (e) {
       err++;
       console.log(`✗ ${f} (${product.name}): ${e.message ?? e}`);
     }
-    void publicUrl;
   }
 
   console.log(`\n── ИТОГ ──`);

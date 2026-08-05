@@ -8,7 +8,7 @@ import {
   fetchClientById,
   insertPaymentEvent,
   markOrderPaid,
-  updateAdminOrderStatus,
+  updateAdminOrderStatusIfCurrent,
   updateOrderWhatsAppMessageId,
 } from "@/src/lib/supabase/admin";
 import { unmarkOrderPaid } from "@/src/lib/supabase/payment-audit";
@@ -307,6 +307,18 @@ export async function changeStatus(
     return { ok: false, status: 404, error: "Order not found" };
   }
 
+  // Терминальный заказ не двигаем: отменённый/завершённый нельзя перевести в
+  // «Доставляется»/«В работу» — иначе фантомное списание в iiko + ложное
+  // уведомление «Отгружен» клиенту. Легаси status='paid' терминальным НЕ считаем —
+  // такой заказ ещё можно завершить (см. гвард завершения ниже).
+  if (
+    previousOrder.status === "canceled" ||
+    previousOrder.status === "cancelled" ||
+    previousOrder.status === "completed"
+  ) {
+    return { ok: false, status: 400, error: "Заказ завершён или отменён — статус менять нельзя" };
+  }
+
   // Оплата — отдельная ось (payment_status), а не статус заказа. Ставить статус
   // «paid» напрямую нельзя — иначе заказ рассинхронизируется (status=paid при
   // payment_status=unpaid). Оплату отмечают только через markPaid.
@@ -347,21 +359,38 @@ export async function changeStatus(
     }
   }
 
-  const order = await updateAdminOrderStatus(id, status as OrderStatus);
-  const managerMessageId = order
-    ? await refreshManagerMessage(order, previousOrder.whatsapp_message_id)
-    : null;
+  // Повторный клик в тот же статус — идемпотентный no-op: не гоняем CAS (иначе
+  // 0 строк на совпадающем status и мы бы приняли это за проигрыш гонки).
+  if (status === previousOrder.status) {
+    return { ok: true, order: previousOrder, managerMessageId: null };
+  }
+
+  // Compare-and-swap: переводим статус, только если заказ ещё в previousOrder.status.
+  // Гонка двух запросов «Доставляется» — переход выиграет ровно один; проигравший
+  // получит null (0 строк) и выйдет БЕЗ списания в iiko и уведомлений (иначе двойное
+  // списание остатков + дубль уведомления клиенту).
+  const order = await updateAdminOrderStatusIfCurrent(
+    id,
+    status as OrderStatus,
+    previousOrder.status,
+  );
+  if (!order) {
+    // Переход уже выполнил параллельный запрос — тихо выходим (не дублируем эффекты).
+    return { ok: true, order: null, managerMessageId: null };
+  }
+
+  const managerMessageId = await refreshManagerMessage(order, previousOrder.whatsapp_message_id);
 
   // Клиенту: уведомление о смене статуса (в работе / доставка / выполнен). Раньше клиент
-  // видел статус только на сайте. Только при РЕАЛЬНОМ переходе (не дубль на повторный клик).
+  // видел статус только на сайте. Сюда попадаем лишь при РЕАЛЬНОМ переходе (CAS выиграл).
   // Best-effort, за флагом клиентских уведомлений.
-  if (order && status !== previousOrder.status && whatsappClientNotifyEnabled()) {
+  if (whatsappClientNotifyEnabled()) {
     await sendCustomerOrderStatusNotification(order).catch(() => null);
   }
 
   // Списание в iiko — при ПЕРЕХОДЕ в «Доставляется» (best-effort: не роняет смену
-  // статуса; идемпотентность = срабатывает только на переходе, не на повторной установке).
-  if (order && status === "delivering" && previousOrder.status !== "delivering") {
+  // статуса; переход выигран этим запросом ⇒ списание сработает ровно один раз).
+  if (status === "delivering") {
     const items = await fetchAdminOrderItems(id).catch(() => []);
     const iikoResult = await exportOrderWriteoffToIiko(order, items).catch(() => null);
     if (iikoResult && !iikoResult.ok && !iikoResult.skipped) {

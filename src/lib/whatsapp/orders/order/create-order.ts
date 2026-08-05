@@ -6,8 +6,11 @@ import "server-only";
 // createWhatsAppOrder: вход СТРУКТУРИРОВАННЫЙ (адрес/дата/интервал уже разобраны) и
 // сумма включает delivery_amount = deliveryFee(позиции).
 
+import { revalidateTag } from "next/cache";
 import type { Order, OrderItem, Product } from "@/src/types";
 import { deliveryFee, normalizeB2BPaymentMethod } from "@/app/constants";
+import { CATALOG_CACHE_TAG } from "@/src/lib/catalog";
+import { decrementProductStock } from "@/src/lib/orders/stock";
 import {
   insertOrderWithItems,
   updateOrderTelegramMessageId,
@@ -115,6 +118,18 @@ export async function createOrderFromWhatsApp(input: CreateOrderInput): Promise<
   };
 
   await insertOrderWithItems(order, orderItems);
+
+  // Списываем остаток по каждой позиции — как на сайте (app/api/orders/route.ts),
+  // иначе WhatsApp-заказы не уменьшают общий каталог ⇒ пересортовка/устаревшая
+  // доступность. Best-effort: сбой списания НЕ откатывает уже сохранённый заказ.
+  try {
+    for (const { product, qty } of input.items) {
+      await decrementProductStock(product.id, qty, Number(product.stock_qty ?? 0));
+    }
+    revalidateTag(CATALOG_CACHE_TAG, "max");
+  } catch {
+    // игнорируем — заказ уже создан, остаток подтянется при следующем пересчёте
+  }
 
   const [whatsappMessageId, telegramMessageId] = await Promise.all([
     sendWhatsAppNotification(order, orderItems).catch(() => null),

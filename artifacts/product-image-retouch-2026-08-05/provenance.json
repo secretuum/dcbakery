@@ -1,0 +1,239 @@
+{
+  "created_at": "2026-08-05T07:36:39.762918+00:00",
+  "scope": "Five dessert catalog images only",
+  "external_services_used": false,
+  "generative_redraw_used": false,
+  "filenames_changed": false,
+  "assets": [
+    {
+      "slug": "napoleon",
+      "filename": "napoleon.webp",
+      "source_review": "C:\\Users\\delca\\.codex\\visualizations\\2026\\08\\05\\019fd074-ad5b-7740-8b5b-fc604d71db02\\retouched-five-v3\\napoleon.webp",
+      "targets": [
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\public\\products\\napoleon.webp",
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\redesign-prototype\\assets\\products\\napoleon.webp"
+      ],
+      "backups": [
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\artifacts\\product-image-retouch-2026-08-05\\originals\\public-products\\napoleon.webp",
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\artifacts\\product-image-retouch-2026-08-05\\originals\\prototype-products\\napoleon.webp"
+      ],
+      "before_public": {
+        "format": "WEBP",
+        "size": [
+          385,
+          576
+        ],
+        "mode": "RGB",
+        "has_icc": false,
+        "bytes": 13440,
+        "sha256": "f74df869a3f14fc7de31abb4c9df773093ab4fe0412d6da7595dde08d4f90d36"
+      },
+      "before_prototype": {
+        "format": "WEBP",
+        "size": [
+          385,
+          576
+        ],
+        "mode": "RGB",
+        "has_icc": false,
+        "bytes": 13440,
+        "sha256": "f74df869a3f14fc7de31abb4c9df773093ab4fe0412d6da7595dde08d4f90d36"
+      },
+      "after": {
+        "format": "WEBP",
+        "size": [
+          2000,
+          2000
+        ],
+        "mode": "RGB",
+        "has_icc": true,
+        "bytes": 200866,
+        "sha256": "71b8d0b99e2db87ca4909bc8bc18fe76891a12e75c036466fa740df25e6ef003"
+      }
+    },
+    {
+      "slug": "maffin-shokoladnyy",
+      "filename": "maffin-shokoladnyy.webp",
+      "source_review": "C:\\Users\\delca\\.codex\\visualizations\\2026\\08\\05\\019fd074-ad5b-7740-8b5b-fc604d71db02\\retouched-five-v3\\maffin-shokoladnyy.webp",
+      "targets": [
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\public\\products\\maffin-shokoladnyy.webp",
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\redesign-prototype\\assets\\products\\maffin-shokoladnyy.webp"
+      ],
+      "backups": [
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\artifacts\\product-image-retouch-2026-08-05\\originals\\public-products\\maffin-shokoladnyy.webp",
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\artifacts\\product-image-retouch-2026-08-05\\originals\\prototype-products\\maffin-shokoladnyy.webp"
+      ],
+      "before_public": {
+        "format": "WEBP",
+        "size": [
+          449,
+          672
+        ],
+        "mode": "RGB",
+        "has_icc": false,
+        "bytes": 14094,
+        "sha256": "7c9922c00c94a9d453eae39ec7e93466396b348d7e2d69317df35b2a8c9bf74b"
+      },
+      "before_prototype": {
+        "format": "WEBP",
+        "size": [
+          449,
+          672
+        ],
+        "mode": "RGB",
+        "has_icc": false,
+        "bytes": 14094,
+        "sha256": "7c9922c00c94a9d453eae39ec7e93466396b348d7e2d69317df35b2a8c9bf74b"
+      },
+      "after": {
+        "format": "WEBP",
+        "size": [
+          2000,
+          2000
+        ],
+        "mode": "RGB",
+        "has_icc": true,
+        "bytes": 305968,
+        "sha256": "1911706be85c4c0bbcef25561fbcbb7e1835ba0b4be6f19b2f8345716eedd8e2"
+      }
+    },
+    {
+      "slug": "ispanskiy-chizkeyk",
+      "filename": "ispanskiy-chizkeyk.webp",
+      "source_review": "C:\\Users\\delca\\.codex\\visualizations\\2026\\08\\05\\019fd074-ad5b-7740-8b5b-fc604d71db02\\retouched-five-v3\\ispanskiy-chizkeyk.webp",
+      "targets": [
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\public\\products\\ispanskiy-chizkeyk.webp",
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\redesign-prototype\\assets\\products\\ispanskiy-chizkeyk.webp"
+      ],
+      "backups": [
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\artifacts\\product-image-retouch-2026-08-05\\originals\\public-products\\ispanskiy-chizkeyk.webp",
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\artifacts\\product-image-retouch-2026-08-05\\originals\\prototype-products\\ispanskiy-chizkeyk.webp"
+      ],
+      "before_public": {
+        "format": "WEBP",
+        "size": [
+          411,
+          615
+        ],
+        "mode": "RGB",
+        "has_icc": false,
+        "bytes": 19578,
+        "sha256": "41b898eda5707c2c80986fab20eb4fcc34555d07b051637b306a1e2e0995975f"
+      },
+      "before_prototype": {
+        "format": "WEBP",
+        "size": [
+          411,
+          615
+        ],
+        "mode": "RGB",
+        "has_icc": false,
+        "bytes": 19578,
+        "sha256": "41b898eda5707c2c80986fab20eb4fcc34555d07b051637b306a1e2e0995975f"
+      },
+      "after": {
+        "format": "WEBP",
+        "size": [
+          2000,
+          2000
+        ],
+        "mode": "RGB",
+        "has_icc": true,
+        "bytes": 199096,
+        "sha256": "e136cdcbfe603bb6424c65575892a98906f0368844fcdd4e7e6e9c240e243233"
+      }
+    },
+    {
+      "slug": "tary-chizkeyk",
+      "filename": "tary-chizkeyk.webp",
+      "source_review": "C:\\Users\\delca\\.codex\\visualizations\\2026\\08\\05\\019fd074-ad5b-7740-8b5b-fc604d71db02\\retouched-five-v3\\tary-chizkeyk.webp",
+      "targets": [
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\public\\products\\tary-chizkeyk.webp",
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\redesign-prototype\\assets\\products\\tary-chizkeyk.webp"
+      ],
+      "backups": [
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\artifacts\\product-image-retouch-2026-08-05\\originals\\public-products\\tary-chizkeyk.webp",
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\artifacts\\product-image-retouch-2026-08-05\\originals\\prototype-products\\tary-chizkeyk.webp"
+      ],
+      "before_public": {
+        "format": "WEBP",
+        "size": [
+          411,
+          615
+        ],
+        "mode": "RGB",
+        "has_icc": false,
+        "bytes": 13878,
+        "sha256": "6c0574972c93f500fbc27ba41179409ea27df6509ceb8599b7c9d4426b7a3e43"
+      },
+      "before_prototype": {
+        "format": "WEBP",
+        "size": [
+          411,
+          615
+        ],
+        "mode": "RGB",
+        "has_icc": false,
+        "bytes": 13878,
+        "sha256": "6c0574972c93f500fbc27ba41179409ea27df6509ceb8599b7c9d4426b7a3e43"
+      },
+      "after": {
+        "format": "WEBP",
+        "size": [
+          2000,
+          2000
+        ],
+        "mode": "RGB",
+        "has_icc": true,
+        "bytes": 134456,
+        "sha256": "4be8a4bc71c512bd8f400bc08e38319ff0d8f63e52424d3d0aaf51a4b2effd88"
+      }
+    },
+    {
+      "slug": "merengovyy-rulet",
+      "filename": "merengovyy-rulet.webp",
+      "source_review": "C:\\Users\\delca\\.codex\\visualizations\\2026\\08\\05\\019fd074-ad5b-7740-8b5b-fc604d71db02\\retouched-five-v3\\merengovyy-rulet.webp",
+      "targets": [
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\public\\products\\merengovyy-rulet.webp",
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\redesign-prototype\\assets\\products\\merengovyy-rulet.webp"
+      ],
+      "backups": [
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\artifacts\\product-image-retouch-2026-08-05\\originals\\public-products\\merengovyy-rulet.webp",
+        "C:\\Users\\delca\\Desktop\\yCdcPP\\site\\artifacts\\product-image-retouch-2026-08-05\\originals\\prototype-products\\merengovyy-rulet.webp"
+      ],
+      "before_public": {
+        "format": "WEBP",
+        "size": [
+          746,
+          497
+        ],
+        "mode": "RGB",
+        "has_icc": false,
+        "bytes": 20928,
+        "sha256": "c5ab5ea883b8175343e1cdd7ee74887b2853468444701ac9073502fde6165beb"
+      },
+      "before_prototype": {
+        "format": "WEBP",
+        "size": [
+          746,
+          497
+        ],
+        "mode": "RGB",
+        "has_icc": false,
+        "bytes": 20928,
+        "sha256": "c5ab5ea883b8175343e1cdd7ee74887b2853468444701ac9073502fde6165beb"
+      },
+      "after": {
+        "format": "WEBP",
+        "size": [
+          2000,
+          2000
+        ],
+        "mode": "RGB",
+        "has_icc": true,
+        "bytes": 139270,
+        "sha256": "76b1617a849cba45c8fbb71585d10689459c48a1f0fbb2ce4ef423a9941aa0ac"
+      }
+    }
+  ]
+}

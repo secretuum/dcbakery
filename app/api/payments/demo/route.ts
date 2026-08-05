@@ -93,21 +93,25 @@ export async function POST(request: Request) {
     status: outcome,
   });
 
+  // Compare-and-swap: переводим оплату, только пока заказ ещё ждёт её. Если параллельный
+  // demo-запрос уже перевёл заказ, здесь вернётся null — не дублируем уведомления.
   const updatedOrder = await updateOrderPaymentStatus(
     order.id,
     outcome,
     outcome === "paid" ? "paid" : undefined,
+    "confirmed_waiting_payment",
   );
+
+  if (!updatedOrder) {
+    return NextResponse.json({ error: "Payment already processed" }, { status: 409 });
+  }
+
   const [managerMessageId] = await Promise.all([
-    updatedOrder
-      ? replaceWhatsAppOrderMessage(updatedOrder, order.whatsapp_message_id).catch(() => null)
-      : null,
-    updatedOrder
-      ? sendCustomerPaymentStatusNotification(updatedOrder, outcome).catch(() => null)
-      : null,
+    replaceWhatsAppOrderMessage(updatedOrder, order.whatsapp_message_id).catch(() => null),
+    sendCustomerPaymentStatusNotification(updatedOrder, outcome).catch(() => null),
   ]);
 
-  if (updatedOrder && managerMessageId) {
+  if (managerMessageId) {
     await updateOrderWhatsAppMessageId(updatedOrder.id, managerMessageId).catch(() => undefined);
   }
 

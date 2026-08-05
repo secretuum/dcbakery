@@ -24,7 +24,8 @@ export function ProductCard({ product }: ProductCardProps) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const imageSrc = product.images[0] ?? "/product-placeholder.png";
-  const isInStock = isReady && product.stock_qty > 0;
+  // Товар заказуем, только если остатка хватает на его минимальный заказ (мин. 1 шт).
+  const isInStock = isReady && product.stock_qty >= Math.max(product.min_qty, 1);
   const priceText = formatProductPrice(product.price);
   const cartItem = items.find((item) => item.product.id === product.id);
   const cartQty = cartItem?.qty ?? 0;

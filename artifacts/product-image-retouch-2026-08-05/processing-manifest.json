@@ -1,0 +1,167 @@
+[
+  {
+    "slug": "napoleon",
+    "source": "C:\\Users\\delca\\Desktop\\дизайны\\фото\\фото десерты\\наполеон(1).jpg",
+    "source_size": [
+      2667,
+      4000
+    ],
+    "flip_horizontal": false,
+    "crop": null,
+    "layout": "visual",
+    "alpha_cutout": true,
+    "target_long": 1510,
+    "placement": {
+      "source_foreground_bbox": [
+        0,
+        1078,
+        2611,
+        3121
+      ],
+      "placed_bbox": [
+        310,
+        393,
+        1820,
+        1575
+      ],
+      "uniform_scale": 0.5783224818077365,
+      "target_long_edge": 1510
+    },
+    "output": "C:\\Users\\delca\\.codex\\visualizations\\2026\\08\\05\\019fd074-ad5b-7740-8b5b-fc604d71db02\\retouched-five-v3\\napoleon.webp",
+    "output_bytes": 200866,
+    "profile_conversion": "ICC to sRGB"
+  },
+  {
+    "slug": "maffin-shokoladnyy",
+    "source": "C:\\Users\\delca\\Desktop\\Фуд сьемка\\изо сайт\\muffin (3).jpg",
+    "source_size": [
+      2667,
+      4000
+    ],
+    "flip_horizontal": false,
+    "crop": null,
+    "layout": "visual",
+    "alpha_cutout": true,
+    "target_long": 1510,
+    "placement": {
+      "source_foreground_bbox": [
+        0,
+        842,
+        2494,
+        2815
+      ],
+      "placed_bbox": [
+        309,
+        353,
+        1819,
+        1548
+      ],
+      "uniform_scale": 0.6054530874097834,
+      "target_long_edge": 1510
+    },
+    "output": "C:\\Users\\delca\\.codex\\visualizations\\2026\\08\\05\\019fd074-ad5b-7740-8b5b-fc604d71db02\\retouched-five-v3\\maffin-shokoladnyy.webp",
+    "output_bytes": 305968,
+    "profile_conversion": "ICC to sRGB"
+  },
+  {
+    "slug": "ispanskiy-chizkeyk",
+    "source": "C:\\Users\\delca\\Desktop\\дизайны\\фото\\фото десерты\\испанский чизкейк.jpg",
+    "source_size": [
+      2667,
+      4000
+    ],
+    "flip_horizontal": true,
+    "crop": null,
+    "layout": "subject",
+    "alpha_cutout": true,
+    "target_long": 1510,
+    "placement": {
+      "source_foreground_bbox": [
+        161,
+        1421,
+        2504,
+        2965
+      ],
+      "placed_bbox": [
+        238,
+        424,
+        1748,
+        1419
+      ],
+      "uniform_scale": 0.6444728979940247,
+      "target_long_edge": 1510
+    },
+    "output": "C:\\Users\\delca\\.codex\\visualizations\\2026\\08\\05\\019fd074-ad5b-7740-8b5b-fc604d71db02\\retouched-five-v3\\ispanskiy-chizkeyk.webp",
+    "output_bytes": 199096,
+    "profile_conversion": "ICC to sRGB"
+  },
+  {
+    "slug": "tary-chizkeyk",
+    "source": "C:\\Users\\delca\\Desktop\\дизайны\\фото\\фото десерты\\Чизкейк с тары.jpg",
+    "source_size": [
+      2667,
+      4000
+    ],
+    "flip_horizontal": true,
+    "crop": null,
+    "layout": "visual",
+    "alpha_cutout": true,
+    "target_long": 1510,
+    "placement": {
+      "source_foreground_bbox": [
+        0,
+        1205,
+        2667,
+        4000
+      ],
+      "placed_bbox": [
+        200,
+        221,
+        1641,
+        1731
+      ],
+      "uniform_scale": 0.5402504472271914,
+      "target_long_edge": 1510
+    },
+    "output": "C:\\Users\\delca\\.codex\\visualizations\\2026\\08\\05\\019fd074-ad5b-7740-8b5b-fc604d71db02\\retouched-five-v3\\tary-chizkeyk.webp",
+    "output_bytes": 134456,
+    "profile_conversion": "ICC to sRGB"
+  },
+  {
+    "slug": "merengovyy-rulet",
+    "source": "C:\\Users\\delca\\Desktop\\дизайны\\фото\\фото десерты\\меренговый рулет.jpg",
+    "source_size": [
+      940,
+      980
+    ],
+    "flip_horizontal": false,
+    "crop": [
+      1080,
+      330,
+      2020,
+      1310
+    ],
+    "layout": "subject",
+    "alpha_cutout": true,
+    "target_long": 1120,
+    "placement": {
+      "source_foreground_bbox": [
+        20,
+        222,
+        801,
+        917
+      ],
+      "placed_bbox": [
+        433,
+        480,
+        1553,
+        1477
+      ],
+      "uniform_scale": 1.4340588988476313,
+      "target_long_edge": 1120
+    },
+    "output": "C:\\Users\\delca\\.codex\\visualizations\\2026\\08\\05\\019fd074-ad5b-7740-8b5b-fc604d71db02\\retouched-five-v3\\merengovyy-rulet.webp",
+    "output_bytes": 139270,
+    "profile_conversion": "ICC to sRGB"
+  }
+]

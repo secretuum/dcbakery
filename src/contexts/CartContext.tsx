@@ -38,7 +38,15 @@ function normalizeQty(product: Product, qty: number) {
     return 0;
   }
 
-  const minQty = Math.min(Math.max(product.min_qty, 1), stockQty);
+  // Минимум партии (но не меньше 1 штуки).
+  const minQty = Math.max(product.min_qty, 1);
+
+  // Остатка не хватает даже на минимальный заказ — товар нельзя заказать,
+  // не пускаем в корзину строку ниже минимума (сервер её всё равно отклонит).
+  if (stockQty < minQty) {
+    return 0;
+  }
+
   const stepQty = Math.max(product.step_qty, 1);
 
   if (qty <= minQty) {

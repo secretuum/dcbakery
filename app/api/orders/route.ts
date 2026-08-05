@@ -226,8 +226,11 @@ export async function POST(request: Request) {
   const sessionEmail = session?.email?.trim().toLowerCase() || null;
   if (session) {
     const bodyEmail = body.customer_email?.trim().toLowerCase() || null;
+    // Тело с телефоном допустимо ТОЛЬКО если он совпадает с телефоном сессии.
+    // Иначе (в т.ч. когда у сессии телефона нет — вход по email) тело-телефон
+    // мог бы подставить чужого клиента → отвергаем, чтобы личность решала только сессия.
     if (
-      (normalizedPhone && sessionPhone && normalizedPhone !== sessionPhone) ||
+      (normalizedPhone && normalizedPhone !== sessionPhone) ||
       (bodyEmail && sessionEmail && bodyEmail !== sessionEmail)
     ) {
       return NextResponse.json(
@@ -237,7 +240,9 @@ export async function POST(request: Request) {
     }
   }
 
-  const lookupPhone = sessionPhone ?? normalizedPhone;
+  // При наличии сессии телефон для поиска клиента — СТРОГО из сессии (без отката на
+  // тело). Нет телефона в сессии (вход по email) → клиент ищется только по email ниже.
+  const lookupPhone = session ? sessionPhone : normalizedPhone;
   const lookupEmail = sessionEmail ?? (body.customer_email?.trim().toLowerCase() || null);
   const client = lookupPhone
     ? await fetchClientByPhone(lookupPhone)

@@ -203,7 +203,13 @@ export async function checkHalykStatus(invoiceId: string | number): Promise<Haly
   };
 }
 
-/** Статусы Halyk, означающие успешное списание/холд. */
+/**
+ * Статус Halyk, означающий фактическое списание средств.
+ * Только CHARGE = деньги реально захвачены (settled/captured).
+ * AUTH — это лишь двухстадийный холд: средства заморожены, но НЕ списаны,
+ * а шага capture/charge в коде нет, поэтому холд просто истечёт. Поэтому
+ * AUTH считаем НЕоплаченным (reconcile продолжит опрос до CHARGE или истечения).
+ */
 export function isHalykPaidStatus(statusName: string) {
-  return statusName === "CHARGE" || statusName === "AUTH";
+  return statusName === "CHARGE";
 }

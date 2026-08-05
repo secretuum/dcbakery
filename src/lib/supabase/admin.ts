@@ -9,6 +9,7 @@ import type {
   PaymentStatus,
   ProductStopEvent,
 } from "@/src/types";
+import { reportError } from "@/src/lib/monitoring";
 
 type SupabaseOrderPayload = Omit<Order, "updated_at"> & {
   telegram_message_id?: string | null;
@@ -277,13 +278,24 @@ async function deleteSupabaseOrder(orderId: string) {
     return;
   }
 
-  await fetch(`${url}?id=eq.${encodeURIComponent(orderId)}`, {
+  const res = await fetch(`${url}?id=eq.${encodeURIComponent(orderId)}`, {
     method: "DELETE",
     headers: {
       apikey: serviceRoleKey,
       Authorization: `Bearer ${serviceRoleKey}`,
     },
   });
+
+  // Не проглатываем провал отката: иначе останется «заказ-сирота» без позиций.
+  // Логируем в Sentry (reportError не бросает), затем бросаем — чтобы вызывающий
+  // тоже узнал об осиротевшем заказе.
+  if (!res.ok) {
+    reportError("deleteSupabaseOrder: откат заказа не удался — возможен заказ без позиций", {
+      where: "supabase/admin.deleteSupabaseOrder",
+      extra: { orderId, status: res.status },
+    });
+    throw new Error(`Failed to roll back order ${orderId}: ${res.status}`);
+  }
 }
 
 export async function updateOrderTelegramMessageId(orderId: string, telegramMessageId: string) {
@@ -634,7 +646,16 @@ export async function insertOrderWithItems(order: Order, items: OrderItem[]) {
       items: insertedItems,
     };
   } catch (error) {
-    await deleteSupabaseOrder(order.id);
+    // Откатываем вставленный заказ. Провал отката логируем как «сироту», но
+    // всегда пробрасываем ИСХОДНУЮ ошибку order_items — она первопричина.
+    try {
+      await deleteSupabaseOrder(order.id);
+    } catch (rollbackError) {
+      reportError(rollbackError, {
+        where: "supabase/admin.insertOrderWithItems.rollback",
+        extra: { orderId: order.id },
+      });
+    }
     throw error;
   }
 }
@@ -856,6 +877,25 @@ export async function fetchAdminOrderItems(orderId: string) {
 export async function updateAdminOrderStatus(orderId: string, status: OrderStatus) {
   const params = new URLSearchParams({
     id: `eq.${orderId}`,
+  });
+  const [order] = await supabasePatch<Order[]>("orders", params.toString(), { status });
+
+  return order ?? null;
+}
+
+// Compare-and-swap для смены статуса: PATCH применяется, только если заказ ещё в
+// ожидаемом статусе (expectCurrentStatus). Защита от гонки двух запросов
+// «Доставляется» — второй матчит 0 строк → вернём null, и вызывающий не
+// продублирует списание в iiko/уведомления. Зеркалит фильтр expectStatus из
+// updateOrderPaymentStatus.
+export async function updateAdminOrderStatusIfCurrent(
+  orderId: string,
+  status: OrderStatus,
+  expectCurrentStatus: OrderStatus,
+) {
+  const params = new URLSearchParams({
+    id: `eq.${orderId}`,
+    status: `eq.${expectCurrentStatus}`,
   });
   const [order] = await supabasePatch<Order[]>("orders", params.toString(), { status });
 

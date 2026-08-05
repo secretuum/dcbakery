@@ -336,11 +336,23 @@ export async function POST(request: Request) {
   // (миграция 202608030001) — конец гонке/двойному списанию. fallback = эффективный
   // остаток из приложения (для товара без оверрайд-строки). Best-effort: не роняем заказ.
   try {
+    let oversold = false;
     for (const item of orderItems) {
       const current = Number(productMap.get(item.product_id)?.stock_qty ?? 0);
-      await decrementProductStock(item.product_id, item.qty, current);
+      const applied = await decrementProductStock(item.product_id, item.qty, current);
+      if (!applied) oversold = true;
     }
     revalidateTag(CATALOG_CACHE_TAG, "max");
+    if (oversold) {
+      // Условный RPC не списал хотя бы по одной позиции ⇒ остатка не хватило: заказ
+      // прошёл валидацию по устаревшему кэш-остатку, а фактически товар уже разобран
+      // (гонка одновременных заказов). Заказ создан (его подтверждает менеджер) — не
+      // рушим, но АЛЕРТИМ, чтобы поймать пересорт вручную.
+      reportError(new Error(`stock oversell race on order ${orderNumber}`), {
+        where: "orders:stock-oversell",
+        extra: { orderNumber },
+      });
+    }
   } catch (error) {
     reportError(error, { where: "orders:stock-decrement", extra: { orderNumber } });
   }

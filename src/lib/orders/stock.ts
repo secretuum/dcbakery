@@ -13,11 +13,18 @@ function serviceConfig() {
   return { restUrl: `${url.replace(/\/$/, "")}/rest/v1`, key };
 }
 
+/**
+ * Списывает остаток атомарно. Возвращает true, если списание применилось; false —
+ * если остатка не хватило (условный RPC вернул NULL ⇒ гонка/oversell: заказ прошёл
+ * валидацию по устаревшему кэш-остатку, а в БД товара уже нет). До применения
+ * условной миграции RPC всегда возвращает число ⇒ функция вернёт true (ложных
+ * срабатываний нет, поведение как раньше). Бросает только на транспортной ошибке.
+ */
 export async function decrementProductStock(
   productId: string,
   qty: number,
   fallbackStock: number,
-): Promise<void> {
+): Promise<boolean> {
   const { restUrl, key } = serviceConfig();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), SUPABASE_TIMEOUT_MS);
@@ -36,6 +43,9 @@ export async function decrementProductStock(
     if (!res.ok) {
       throw new Error(`decrement_product_stock failed: ${res.status}`);
     }
+    // RPC возвращает новый остаток (число) при успехе или NULL при нехватке.
+    const value = (await res.json()) as number | null;
+    return value !== null;
   } finally {
     clearTimeout(timer);
   }

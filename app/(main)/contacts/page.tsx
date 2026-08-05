@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Контакты и реквизиты — DC Bakery",
   description:
     "Контактная информация и банковские реквизиты DC Bakery. ИП Кошкаров А.К., г. Алматы. Телефон, e-mail, WhatsApp.",
+  alternates: { canonical: "/contacts" },
 };
 
 export default async function ContactsPage() {

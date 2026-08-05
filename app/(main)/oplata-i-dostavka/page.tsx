@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Оплата и доставка — DC Bakery",
   description:
     "Способы оплаты, условия доставки и возврата для B2B-клиентов DC Bakery. Бесплатная доставка от 15 000 тенге.",
+  alternates: { canonical: "/oplata-i-dostavka" },
 };
 
 export default async function OplataIDostavkaPage() {

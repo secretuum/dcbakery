@@ -9,6 +9,8 @@ import {
   fetchProductsByCategory,
 } from "@/src/lib/catalog";
 import { getT } from "@/src/i18n/server";
+import { JsonLd } from "@/src/components/seo/JsonLd";
+import { SITE_URL } from "@/src/lib/site-url";
 
 type CategoryPageProps = {
   params: Promise<{
@@ -53,8 +55,25 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     getT(),
   ]);
 
+  // «Хлебные крошки» для поиска: Главная → Каталог → Категория.
+  const breadcrumbJsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: t("Главная"), item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: t("Каталог"), item: `${SITE_URL}/catalog` },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: currentCategory.name,
+        item: `${SITE_URL}/catalog/${currentCategory.slug}`,
+      },
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-cream text-dark">
+      <JsonLd data={breadcrumbJsonLd} />
       <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>

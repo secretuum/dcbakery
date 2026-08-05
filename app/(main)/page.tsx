@@ -56,7 +56,7 @@ export default async function Home() {
           {/* грейн */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 opacity-50"
+            className="pointer-events-none absolute inset-0 opacity-40"
             style={{
               backgroundImage: "radial-gradient(circle at 1px 1px, rgba(86,34,13,0.09) 1px, transparent 0)",
               backgroundSize: "22px 22px",
@@ -98,25 +98,37 @@ export default async function Home() {
 
               {/* Сцена — слоёные фото продукции */}
               <div aria-hidden className="relative z-[1] mx-auto aspect-square w-full max-w-[520px] lg:aspect-[1/1.02] lg:max-w-none">
-                <div className="absolute rounded-full" style={{ inset: "8% 6%", background: "radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 66%)" }} />
-                {/* главный кадр — тает краями в фон */}
+                {/* тёплое свечение-подложка — связывает фото с фоном, продукт «всплывает» */}
                 <div
-                  className="absolute overflow-hidden"
+                  className="absolute rounded-full"
                   style={{
-                    inset: "2% 12% 6% 12%",
-                    WebkitMaskImage: "radial-gradient(72% 62% at 50% 48%, #000 58%, transparent 100%)",
-                    maskImage: "radial-gradient(72% 62% at 50% 48%, #000 58%, transparent 100%)",
-                    filter: "drop-shadow(0 30px 42px rgba(86,34,13,0.18))",
+                    inset: "2% 2%",
+                    background:
+                      "radial-gradient(circle at 50% 45%, rgba(255,255,255,0.94) 0%, rgba(255,236,225,0.72) 33%, rgba(240,144,144,0.16) 60%, transparent 74%)",
+                  }}
+                />
+                {/* главный кадр — крупная чистая карточка с мягкой тенью (без «тающих» краёв) */}
+                <div
+                  className="absolute overflow-hidden rounded-[2.2rem] ring-1 ring-white/55"
+                  style={{
+                    inset: "3% 11% 7% 11%",
+                    boxShadow: "0 34px 62px -22px rgba(86,34,13,0.34), 0 8px 20px -10px rgba(86,34,13,0.16)",
                   }}
                 >
                   <EditableImage field="home.hero.imgMain" fallbackSrc="/products/tort-medovik.webp" alt="" className="h-full w-full object-cover" />
                 </div>
-                {/* фото A — повёрнуто +4° */}
-                <div className="absolute overflow-hidden rounded-2xl border-[5px] border-white shadow-lg" style={{ width: "34%", aspectRatio: "3 / 4", right: "-2%", top: "6%", rotate: "4deg" }}>
+                {/* фото A — акцент справа сверху, лёгкий наклон, мягкая тень вместо белой рамки */}
+                <div
+                  className="absolute overflow-hidden rounded-[1.4rem]"
+                  style={{ width: "33%", aspectRatio: "3 / 4", right: "-2%", top: "7%", rotate: "4deg", boxShadow: "0 24px 42px -14px rgba(86,34,13,0.34)" }}
+                >
                   <EditableImage field="home.hero.imgA" fallbackSrc="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-cover" />
                 </div>
-                {/* фото B — повёрнуто −6° */}
-                <div className="absolute overflow-hidden rounded-xl border-[5px] border-white shadow-lg" style={{ width: "29%", aspectRatio: "1 / 1", left: "-3%", bottom: "10%", rotate: "-6deg" }}>
+                {/* фото B — акцент слева снизу */}
+                <div
+                  className="absolute overflow-hidden rounded-[1.2rem]"
+                  style={{ width: "28%", aspectRatio: "1 / 1", left: "-3%", bottom: "11%", rotate: "-5deg", boxShadow: "0 20px 38px -14px rgba(86,34,13,0.32)" }}
+                >
                   <EditableImage field="home.hero.imgB" fallbackSrc="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-cover" />
                 </div>
                 {/* плавающий тег */}

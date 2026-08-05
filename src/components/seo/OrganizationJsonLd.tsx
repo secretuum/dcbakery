@@ -2,6 +2,7 @@
 // рекламы: NAP (имя/адрес/телефон), часы работы, соцсети. Значения — из редактируемого
 // контента сайта (getSiteContent), чтобы карточка в поиске совпадала с сайтом.
 
+import { fetchCategories } from "@/src/lib/catalog";
 import { getSiteContent } from "@/src/lib/site-content";
 import { SITE_URL } from "@/src/lib/site-url";
 import { JsonLd } from "./JsonLd";
@@ -24,13 +25,23 @@ export async function OrganizationJsonLd() {
   const street = content.address.replace(/^\s*г\.?\s*алматы\s*,?\s*/i, "").trim();
   const openingHours = parseOpeningHours(content.workHours);
 
+  // Реальные активные линейки товара (env-гейтед категории сюда не попадут) —
+  // используем и в hasOfferCatalog, и в knowsAbout, чтобы не расходились с витриной.
+  const categories = await fetchCategories();
+  const productLines = categories.map((category) => category.name);
+
   const data: Record<string, unknown> = {
     "@context": "https://schema.org",
-    "@type": "LocalBusiness",
+    // Уточняем тип: пекарня + оптовый продуктовый поставщик. @type-массив, чтобы
+    // сохранить сигналы LocalBusiness/FoodEstablishment и добавить Bakery.
+    "@type": ["LocalBusiness", "Bakery", "FoodEstablishment"],
+    additionalType: "https://schema.org/FoodEstablishment",
     "@id": `${SITE_URL}/#business`,
     name: "DC Bakery",
     legalName: "ИП Кошкаров Асылбек Касымбекович",
     url: SITE_URL,
+    // TODO(владелец): image/logo сейчас указывают на общий OG-баннер. Нужен реальный
+    // логотип-ассет (квадратный PNG/SVG на прозрачном фоне) — заменить оба URL.
     image: `${SITE_URL}/opengraph-image`,
     logo: `${SITE_URL}/opengraph-image`,
     description:
@@ -46,12 +57,25 @@ export async function OrganizationJsonLd() {
       addressLocality: "Алматы",
       addressRegion: "Алматы",
       addressCountry: "KZ",
+      // TODO(владелец): geo-координаты (широта/долгота) НЕ добавлены намеренно —
+      // решение по точным координатам склада/производства пока не принято.
     },
     sameAs: [
       "https://www.instagram.com/bakery.dc",
       ...(whatsapp ? [`https://wa.me/${whatsapp}`] : []),
     ],
     ...(openingHours ? { openingHours } : {}),
+    // Каталог предложений по активным линейкам — сигнал ассортимента для поиска/ИИ.
+    hasOfferCatalog: {
+      "@type": "OfferCatalog",
+      name: "Оптовый каталог DC Bakery",
+      itemListElement: productLines.map((line) => ({
+        "@type": "OfferCatalog",
+        name: line,
+      })),
+    },
+    // Тематические сущности: линейки товара + оптовый B2B и HoReCa.
+    knowsAbout: [...productLines, "оптовые поставки B2B", "HoReCa"],
   };
 
   return <JsonLd data={data} />;

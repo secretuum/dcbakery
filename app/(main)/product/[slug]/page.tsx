@@ -101,9 +101,43 @@ export default async function ProductPage({ params }: ProductPageProps) {
       : {}),
   };
 
+  // «Хлебные крошки» для поиска: Главная → Каталог → Категория → Товар.
+  const breadcrumbJsonLd: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: t("Главная"), item: `${SITE_URL}/` },
+      { "@type": "ListItem", position: 2, name: t("Каталог"), item: `${SITE_URL}/catalog` },
+      ...(product.category
+        ? [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: product.category.name,
+              item: `${SITE_URL}/catalog/${product.category.slug}`,
+            },
+            {
+              "@type": "ListItem",
+              position: 4,
+              name: localized.name,
+              item: `${SITE_URL}/product/${product.slug}`,
+            },
+          ]
+        : [
+            {
+              "@type": "ListItem",
+              position: 3,
+              name: localized.name,
+              item: `${SITE_URL}/product/${product.slug}`,
+            },
+          ]),
+    ],
+  };
+
   return (
     <main className="min-h-screen bg-cream text-dark pb-24">
       <JsonLd data={productJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
       <section className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
         <ProductGallery images={product.images} alt={product.name} />
 

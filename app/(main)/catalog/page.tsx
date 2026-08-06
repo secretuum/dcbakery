@@ -3,14 +3,16 @@ import { CategoryNavBar } from "@/src/components/catalog/CategoryNavBar";
 import { CatalogFilters } from "@/src/components/catalog/CatalogFilters";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { fetchProductOrderCounts } from "@/src/lib/supabase/popularity";
-import { getLocale } from "@/src/i18n/server";
+import { getLocale, getT } from "@/src/i18n/server";
 import { buildAlternates } from "@/src/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
+  const t = await getT();
   return {
-    title: "Каталог | DC Bakery",
-    description: "B2B-каталог DC Bakery: десерты, полуфабрикаты и мясо.",
+    // Разделитель «| DC Bakery» держим в коде, а не в ключе словаря
+    title: `${t("Каталог")} | DC Bakery`,
+    description: t("B2B-каталог DC Bakery: десерты, полуфабрикаты и мясо."),
     alternates: buildAlternates("/catalog", locale),
   };
 }

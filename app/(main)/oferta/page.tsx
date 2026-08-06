@@ -4,11 +4,12 @@ import { getLocale, getT } from "@/src/i18n/server";
 import { withLocale, buildAlternates } from "@/src/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   return {
-    title: "Публичная оферта — DC Bakery",
-    description:
+    title: t("Публичная оферта — DC Bakery"),
+    description: t(
       "Договор поставки продукции DC Bakery для B2B-клиентов. Условия заказа, оплаты, поставки, возврата и товарного кредита. Редакция от 14 июля 2026 года.",
+    ),
     alternates: buildAlternates("/oferta", locale),
   };
 }

@@ -8,7 +8,7 @@ import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatProductPrice } from "@/src/lib/format";
 import { useLocale, useT } from "@/src/i18n/client";
-import { localizeProduct } from "@/src/i18n/product";
+import { localizeMeasure, localizeProduct } from "@/src/i18n/product";
 import type { Product } from "@/src/types";
 
 type ProductCardProps = {
@@ -114,7 +114,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
           {product.weightLabel ? (
             <>
-              <span>{product.weightLabel}</span>
+              <span>{localizeMeasure(product.weightLabel, locale)}</span>
               <span aria-hidden="true">·</span>
             </>
           ) : null}

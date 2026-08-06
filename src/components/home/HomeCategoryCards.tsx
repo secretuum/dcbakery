@@ -83,7 +83,7 @@ export function HomeCategoryCards({ categories, counts }: HomeCategoryCardsProps
 
                 <span className="relative z-[1] block">
                   <span className="block font-display text-[17px] font-bold leading-tight tracking-[-0.02em] text-dark">
-                    {category.name}
+                    {t(category.name)}
                   </span>
                 </span>
 

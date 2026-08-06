@@ -8,7 +8,7 @@ import { fetchProductBySlug, fetchProductSlugs } from "@/src/lib/catalog";
 import { formatProductPrice } from "@/src/lib/format";
 import { getLocale, getT } from "@/src/i18n/server";
 import { withLocale, buildAlternates } from "@/src/i18n/routing";
-import { localizeProduct } from "@/src/i18n/product";
+import { localizeMeasure, localizeProduct } from "@/src/i18n/product";
 import { JsonLd } from "@/src/components/seo/JsonLd";
 import { SITE_URL } from "@/src/lib/site-url";
 
@@ -25,10 +25,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
   const product = await fetchProductBySlug(slug);
+  const t = await getT();
 
   if (!product) {
     return {
-      title: "Товар не найден | DC Bakery",
+      title: t("Товар не найден | DC Bakery"),
     };
   }
 
@@ -66,20 +67,23 @@ export default async function ProductPage({ params }: ProductPageProps) {
     product.category ? `/catalog/${product.category.slug}` : "/catalog",
     locale,
   );
+  // Название категории приходит русским из каталога — переводим по словарю, как в фильтрах.
+  const categoryName = product.category?.name ? t(product.category.name) : t("Каталог");
+  const unitLabel = t(product.unit);
   const priceText =
     product.price > 0
-      ? t("${price} за ${unit}", { price: formatProductPrice(product.price), unit: product.unit })
+      ? t("${price} за ${unit}", { price: formatProductPrice(product.price), unit: unitLabel })
       : t("Цена уточняется");
   const details = [
-    ["Категория", product.category?.name ?? t("Каталог")],
+    ["Категория", categoryName],
     ["Цена", priceText],
-    ["Подкатегория", product.subcategory ?? t("уточняется")],
-    ["Минимум", `${product.min_qty} ${product.unit}`],
-    ["Остаток", `${product.stock_qty} ${product.unit}`],
-    ["Вес / фасовка", product.weightLabel ?? t("уточняется")],
-    ["Срок годности", product.shelfLife ?? t("уточняется")],
-    ["Хранение", product.storage ?? t("уточняется")],
-    ["Упаковка", product.packageType ?? t("уточняется")],
+    ["Подкатегория", product.subcategory ? t(product.subcategory) : t("уточняется")],
+    ["Минимум", `${product.min_qty} ${unitLabel}`],
+    ["Остаток", `${product.stock_qty} ${unitLabel}`],
+    ["Вес / фасовка", localizeMeasure(product.weightLabel, locale) || t("уточняется")],
+    ["Срок годности", localizeMeasure(product.shelfLife, locale) || t("уточняется")],
+    ["Хранение", localizeMeasure(product.storage, locale) || t("уточняется")],
+    ["Упаковка", product.packageType ? t(product.packageType) : t("уточняется")],
   ];
 
   const productJsonLd: Record<string, unknown> = {
@@ -89,7 +93,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     description: localized.description,
     brand: { "@type": "Brand", name: "DC Bakery" },
     ...(product.images?.[0] ? { image: `${SITE_URL}${product.images[0]}` } : {}),
-    ...(product.category?.name ? { category: product.category.name } : {}),
+    ...(product.category?.name ? { category: categoryName } : {}),
     ...(product.price > 0
       ? {
           offers: {
@@ -120,7 +124,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
             {
               "@type": "ListItem",
               position: 3,
-              name: product.category.name,
+              name: categoryName,
               item: `${SITE_URL}/${locale}/catalog/${product.category.slug}`,
             },
             {
@@ -146,7 +150,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <JsonLd data={productJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
       <section className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[0.95fr_1.05fr] lg:px-8 lg:py-14">
-        <ProductGallery images={product.images} alt={product.name} />
+        <ProductGallery images={product.images} alt={localized.name} />
 
         <div>
           <div className="flex flex-wrap items-center gap-3">
@@ -154,7 +158,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               href={categoryHref}
               className="rounded-badge border border-black/10 bg-white px-3 py-1 text-xs font-semibold text-muted transition hover:bg-black/5 hover:text-dark"
             >
-              {product.category?.name ?? t("Каталог")}
+              {categoryName}
             </Link>
             <Badge variant="burgundy">B2B</Badge>
           </div>

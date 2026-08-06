@@ -4,11 +4,17 @@ import { SITE_CONTENT_KEY, SITE_CONTENT_CACHE_TAG } from "@/src/lib/site-content
 import { HOME_LAYOUT_KEY } from "@/src/lib/home-layout";
 import { getIsSuperAdmin } from "@/src/lib/superadmin";
 import { upsertAppSetting } from "@/src/lib/supabase/admin";
+import { WHATSAPP_NL_ORDERS_FLAG } from "@/src/lib/whatsapp/orders/config";
 
 const allowedSettingKeys = new Set([
   "whatsapp_bot_enabled",
   "whatsapp_customer_bot_enabled",
   "whatsapp_manager_commands_enabled",
+  // Тумблер «AI-оформление заказов в WhatsApp» есть в Админка → Настройки, но ключа
+  // здесь не было — сохранение всегда падало с «Invalid setting», и флаг можно было
+  // переключить только SQL-запросом. Константа берётся из модуля бота, чтобы имя
+  // ключа не разъезжалось между местом чтения и местом записи.
+  WHATSAPP_NL_ORDERS_FLAG,
 ]);
 
 const MAX_SITE_CONTENT_LENGTH = 20_000;

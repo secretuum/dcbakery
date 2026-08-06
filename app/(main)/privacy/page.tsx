@@ -4,11 +4,12 @@ import { getLocale, getT } from "@/src/i18n/server";
 import { withLocale, buildAlternates } from "@/src/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   return {
-    title: "Политика конфиденциальности — DC Bakery",
-    description:
+    title: t("Политика конфиденциальности — DC Bakery"),
+    description: t(
       "Порядок обработки и защиты персональных данных пользователей сайта dc-bakery.kz. Редакция от 10 июля 2026 года.",
+    ),
     alternates: buildAlternates("/privacy", locale),
   };
 }
@@ -117,11 +118,11 @@ export default async function PrivacyPage() {
               <p>{t("ИП Кошкаров Асылбек Касымбекович, ИИН/БИН 810127300096.")}</p>
               <p>{t("Адрес: г. Алматы, ул. Жамбыла 154.")}</p>
               <p>
-                E-mail:{" "}
+                {t("E-mail:")}{" "}
                 <a href="mailto:info@dc-bakery.kz" className="font-bold text-coral hover:underline">
                   info@dc-bakery.kz
                 </a>
-                ; тел.:{" "}
+                {t("; тел.:")}{" "}
                 <a href="tel:+77477272650" className="font-bold text-coral hover:underline">
                   +7 747 727 2650
                 </a>

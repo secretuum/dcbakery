@@ -6,7 +6,7 @@ import { QuantitySelector } from "@/src/components/product/QuantitySelector";
 import { useCart } from "@/src/contexts/CartContext";
 import { formatPrice, formatProductPrice } from "@/src/lib/format";
 import { useLocale, useT } from "@/src/i18n/client";
-import { localizeProduct } from "@/src/i18n/product";
+import { localizeMeasure, localizeProduct } from "@/src/i18n/product";
 import type { CartItem as CartItemType } from "@/src/types";
 
 type CartItemProps = {
@@ -40,7 +40,7 @@ export function CartItem({ item }: CartItemProps) {
       <div className="flex min-w-0 flex-col gap-2">
         {product.category?.name ? (
           <p className="text-[11px] font-semibold uppercase tracking-[.12em] text-muted">
-            {product.category.name}
+            {t(product.category.name)}
           </p>
         ) : null}
 
@@ -51,7 +51,7 @@ export function CartItem({ item }: CartItemProps) {
         </Link>
 
         <p className="text-xs text-muted">
-          {t("Фасовка")}: {product.weightLabel ?? t("уточняется")}
+          {t("Фасовка")}: {product.weightLabel ? localizeMeasure(product.weightLabel, locale) : t("уточняется")}
         </p>
 
         <p className="font-data text-xs text-muted">

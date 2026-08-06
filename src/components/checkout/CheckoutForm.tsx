@@ -13,6 +13,8 @@ import { formatPrice } from "@/src/lib/format";
 import { gaItem, trackEvent } from "@/src/lib/analytics";
 import { isValidKzMobile } from "@/src/lib/phone";
 import { useLocale, useT } from "@/src/i18n/client";
+import type { Locale } from "@/src/i18n/config";
+import type { TranslateVars, Translator } from "@/src/i18n/translate";
 import { withLocale } from "@/src/i18n/routing";
 import { CheckoutAuthGate } from "@/src/components/checkout/CheckoutAuthGate";
 
@@ -61,22 +63,36 @@ type DeliveryDateOption = {
   dayLabel: string;
 };
 
-const weekdayFormat = new Intl.DateTimeFormat("ru-RU", { weekday: "short" });
-const dayFormat = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short" });
+// Формат дат календаря зависит от языка интерфейса, а не от исходного русского
+const INTL_LOCALES: Record<Locale, string> = {
+  kk: "kk-KZ",
+  ru: "ru-RU",
+  en: "en-US",
+};
+
+// Ключи словаря — русские сокращения; без переводчика отдаём оригинал
 const shortDayLabels = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
 
-export function formatShortDeliveryDays(days: number[]) {
+export function formatShortDeliveryDays(days: number[], t?: Translator) {
   return days
     .slice()
     .sort((a, b) => (a === 0 ? 7 : a) - (b === 0 ? 7 : b))
-    .map((d) => shortDayLabels[d] ?? "")
+    .map((d) => {
+      const label = shortDayLabels[d] ?? "";
+      return label && t ? t(label) : label;
+    })
     .filter(Boolean)
     .join(" · ");
 }
 
 // Доставка в день X возможна, если заявка успевает до отсечки накануне:
 // сегодня минимум за 2 дня до X, либо ровно накануне и сейчас раньше cutoffHour.
-function getDeliveryDateOptions(schedule: DeliverySchedule): DeliveryDateOption[] {
+function getDeliveryDateOptions(
+  schedule: DeliverySchedule,
+  intlLocale: string = INTL_LOCALES.ru,
+): DeliveryDateOption[] {
+  const weekdayFormat = new Intl.DateTimeFormat(intlLocale, { weekday: "short" });
+  const dayFormat = new Intl.DateTimeFormat(intlLocale, { day: "numeric", month: "short" });
   const now = new Date();
   const start = new Date(now);
   start.setDate(start.getDate() + 1);
@@ -90,10 +106,11 @@ function getDeliveryDateOptions(schedule: DeliverySchedule): DeliveryDateOption[
     return {
       value: toDateString(date),
       disabled: !isDeliveryDay || !beforeCutoff,
+      // Ключи словаря (подстановка ${schedule.cutoffHour} — при выводе через t)
       reason: !isDeliveryDay
         ? "В этот день доставки нет"
         : !beforeCutoff
-          ? `Приём заявок на эту дату закрыт в ${schedule.cutoffHour}:00`
+          ? "Приём заявок на эту дату закрыт в ${schedule.cutoffHour}:00"
           : undefined,
       weekdayLabel: weekdayFormat.format(date),
       dayLabel: dayFormat.format(date).replace(".", ""),
@@ -166,7 +183,8 @@ function validateForm(form: CheckoutFormState, schedule: DeliverySchedule) {
   if (!form.delivery_date) {
     errors.delivery_date = "Выберите дату доставки";
   } else if (!isDeliveryDayDate(form.delivery_date, schedule)) {
-    errors.delivery_date = `Доставка по этим дням: ${formatShortDeliveryDays(schedule.deliveryDays)}`;
+    // Ключ словаря: список дней подставляется при выводе (см. FieldError vars)
+    errors.delivery_date = "Доставка по этим дням: ${formatShortDeliveryDays(schedule.deliveryDays)}";
   } else if (!minDeliveryDate || form.delivery_date < minDeliveryDate) {
     errors.delivery_date = "Эта дата уже недоступна, выберите более позднюю";
   }
@@ -178,14 +196,14 @@ function validateForm(form: CheckoutFormState, schedule: DeliverySchedule) {
   return errors;
 }
 
-function FieldError({ children }: { children?: string }) {
+function FieldError({ children, vars }: { children?: string; vars?: TranslateVars }) {
   const t = useT();
 
   if (!children) {
     return null;
   }
 
-  return <p className="mt-2 text-xs font-bold text-burgundy">{t(children)}</p>;
+  return <p className="mt-2 text-xs font-bold text-burgundy">{t(children, vars)}</p>;
 }
 
 type CheckoutFormProps = {
@@ -228,9 +246,10 @@ export function CheckoutForm({
   // Даты считаем только на клиенте: страница пререндерится статически, и дата из билда
   // не совпала бы с датой клиента при гидрации
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const intlLocale = INTL_LOCALES[locale] ?? INTL_LOCALES.ru;
   const deliveryOptions = useMemo(
-    () => (isMounted ? getDeliveryDateOptions(schedule) : null),
-    [isMounted, schedule],
+    () => (isMounted ? getDeliveryDateOptions(schedule, intlLocale) : null),
+    [isMounted, schedule, intlLocale],
   );
   const firstAvailableDate = deliveryOptions?.find((option) => !option.disabled)?.value ?? "";
   const hasQuoteItems = items.some((item) => item.product.price <= 0);
@@ -318,7 +337,7 @@ export function CheckoutForm({
       });
 
       if (!response.ok) {
-        showToast("Не удалось отправить заявку, проверьте данные", "error");
+        showToast(t("Не удалось отправить заявку, проверьте данные"), "error");
         return;
       }
 
@@ -330,7 +349,7 @@ export function CheckoutForm({
 
       isNavigatingRef.current = true;
       clear();
-      showToast("Заявка отправлена", "success");
+      showToast(t("Заявка отправлена"), "success");
       router.push(
         withLocale(
           `/order-success?n=${encodeURIComponent(orderNumber)}${orderIdParam}&amount=${orderTotal}`,
@@ -338,7 +357,7 @@ export function CheckoutForm({
         ),
       );
     } catch {
-      showToast("Ошибка отправки, попробуйте снова", "error");
+      showToast(t("Ошибка отправки, попробуйте снова"), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -352,12 +371,12 @@ export function CheckoutForm({
 
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors);
-      showToast("Проверьте обязательные поля", "error");
+      showToast(t("Проверьте обязательные поля"), "error");
       return;
     }
 
     if (!canCheckout) {
-      showToast("Минимальная сумма заказа пока не набрана", "error");
+      showToast(t("Минимальная сумма заказа пока не набрана"), "error");
       return;
     }
 
@@ -365,7 +384,9 @@ export function CheckoutForm({
     // проверяет). Полный аккаунт (БИН+адрес или кредит) — без потолка.
     if (tier === "lite" && isOverLiteCap("lite", totalAmount + deliveryFee(totalAmount))) {
       showToast(
-        `Для облегчённого аккаунта лимит заказа ${formatPrice(LITE_ORDER_CAP)}. Укажите БИН и адрес доставки, чтобы снять потолок.`,
+        t("Для облегчённого аккаунта лимит заказа ${cap}. Укажите БИН и адрес доставки, чтобы снять потолок.", {
+          cap: formatPrice(LITE_ORDER_CAP),
+        }),
         "error",
       );
       return;
@@ -399,7 +420,9 @@ export function CheckoutForm({
           <p className="text-[11px] font-bold uppercase tracking-[.12em] text-coral">{t("Минимальный заказ")}</p>
           <h1 className="mt-3 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">{t("Нужно добрать корзину")}</h1>
           <p className="mt-4 text-[15px] leading-7 text-muted">
-            Для B2B-заявки минимальная сумма составляет {formatPrice(MIN_ORDER_AMOUNT)}.
+            {t("Для B2B-заявки минимальная сумма составляет ${amount}.", {
+              amount: formatPrice(MIN_ORDER_AMOUNT),
+            })}
           </p>
           <Link
             href="/cart"
@@ -518,7 +541,11 @@ export function CheckoutForm({
                             disabled={option.disabled}
                             onClick={() => updateField("delivery_date", option.value)}
                             aria-pressed={isSelected}
-                            title={option.reason}
+                            title={
+                              option.reason
+                                ? t(option.reason, { "schedule.cutoffHour": schedule.cutoffHour })
+                                : undefined
+                            }
                             className={`flex min-w-[76px] shrink-0 flex-col items-center rounded-md border-[1.5px] px-2.5 py-2.5 text-center transition ${
                               isSelected
                                 ? "border-coral bg-coral text-white"
@@ -545,10 +572,21 @@ export function CheckoutForm({
                     <div className="h-[3.75rem] rounded-md border-[1.5px] border-black/10 bg-black/5" />
                   )}
                   <p className="mt-2 text-xs leading-5 text-muted">
-                    Доставка: {formatShortDeliveryDays(schedule.deliveryDays)}. Приём заявок до{" "}
-                    {schedule.cutoffHour}:00 накануне дня доставки.
+                    {t("Доставка: ${days}. Приём заявок до ${hour}:00 накануне дня доставки.", {
+                      days: formatShortDeliveryDays(schedule.deliveryDays, t),
+                      hour: schedule.cutoffHour,
+                    })}
                   </p>
-                  <FieldError>{errors.delivery_date}</FieldError>
+                  <FieldError
+                    vars={{
+                      "formatShortDeliveryDays(schedule.deliveryDays)": formatShortDeliveryDays(
+                        schedule.deliveryDays,
+                        t,
+                      ),
+                    }}
+                  >
+                    {errors.delivery_date}
+                  </FieldError>
                 </div>
 
                 <label className="block">
@@ -558,9 +596,10 @@ export function CheckoutForm({
                     value={form.delivery_time}
                     onChange={(event) => updateField("delivery_time", event.currentTarget.value)}
                   >
-                    <option>{t("Утро 8-12")}</option>
-                    <option>{t("День 12-18")}</option>
-                    <option>{t("Договориться с менеджером")}</option>
+                    {/* value — исходные русские значения: они уходят в заявку, переводится только подпись */}
+                    <option value="Утро 8-12">{t("Утро 8-12")}</option>
+                    <option value="День 12-18">{t("День 12-18")}</option>
+                    <option value="Договориться с менеджером">{t("Договориться с менеджером")}</option>
                   </select>
                 </label>
               </div>
@@ -572,9 +611,9 @@ export function CheckoutForm({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {/* Оплата всегда по счёту — выбор не показываем, значение уходит в заявку по умолчанию */}
                 <p className="rounded-md bg-cream px-4 py-3.5 text-[15px] font-semibold text-dark sm:col-span-2">
-                  Оплата — по счёту на оплату.
+                  {t("Оплата — по счёту на оплату.")}
                   <span className="mt-1 block text-xs font-semibold leading-5 text-muted">
-                    После подтверждения заявки менеджер выставит счёт с реквизитами.
+                    {t("После подтверждения заявки менеджер выставит счёт с реквизитами.")}
                   </span>
                 </p>
 
@@ -600,7 +639,7 @@ export function CheckoutForm({
                   onChange={(event) => updateField("oferta_accepted", event.currentTarget.checked)}
                 />
                 <span className="text-[13.5px] font-semibold leading-6 text-dark">
-                  Я ознакомлен(а) и принимаю условия{" "}
+                  {t("Я ознакомлен(а) и принимаю условия")}{" "}
                   <a
                     href="/oferta"
                     target="_blank"
@@ -608,7 +647,7 @@ export function CheckoutForm({
                     className="font-bold text-coral hover:underline"
                     onClick={(e) => e.stopPropagation()}
                   >{t("Публичной оферты")}</a>{" "}
-                  и{" "}
+                  {t("и")}{" "}
                   <a
                     href="/privacy"
                     target="_blank"
@@ -624,7 +663,7 @@ export function CheckoutForm({
             <div className="flex flex-col gap-3 border-t border-black/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <Link href="/cart" className="inline-flex min-h-11 items-center text-[13.5px] font-semibold text-muted transition hover:text-dark">{t("Вернуться в корзину")}</Link>
               <Button type="submit" disabled={isSubmitting} className="min-h-12 px-6">
-                {isSubmitting ? "Отправляем..." : "Отправить заявку"}
+                {isSubmitting ? t("Отправляем...") : t("Отправить заявку")}
               </Button>
             </div>
           </form>

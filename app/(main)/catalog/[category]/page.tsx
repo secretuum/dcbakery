@@ -26,20 +26,25 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params;
   const currentCategory = await fetchCategoryBySlug(category);
+  const t = await getT();
 
   if (!currentCategory) {
     return {
-      title: "Категория не найдена | DC Bakery",
+      // Разделитель «| DC Bakery» держим в коде, а не в ключе словаря
+      title: `${t("Категория не найдена")} | DC Bakery`,
     };
   }
 
   const locale = await getLocale();
+  const categoryName = t(currentCategory.name);
 
   return {
-    title: `${currentCategory.name} | Каталог DC Bakery`,
-    description:
-      currentCategory.description ??
-      `B2B-каталог DC Bakery: раздел ${currentCategory.name.toLowerCase()}.`,
+    title: `${categoryName} | ${t("Каталог DC Bakery")}`,
+    description: currentCategory.description
+      ? t(currentCategory.description)
+      : t("B2B-каталог DC Bakery: раздел ${category}.", {
+          category: categoryName.toLowerCase(),
+        }),
     alternates: buildAlternates(`/catalog/${category}`, locale),
   };
 }
@@ -69,7 +74,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       {
         "@type": "ListItem",
         position: 3,
-        name: currentCategory.name,
+        // Имя в крошках должно совпадать с видимым H1 — переводим так же
+        name: t(currentCategory.name),
         item: `${SITE_URL}/${locale}/catalog/${currentCategory.slug}`,
       },
     ],
@@ -83,11 +89,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           <div>
             <p className="text-sm font-bold uppercase text-raspberry">{t("Каталог")}</p>
             <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-              {currentCategory.name}
+              {t(currentCategory.name)}
             </h1>
             {currentCategory.description ? (
               <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-muted">
-                {currentCategory.description}
+                {t(currentCategory.description)}
               </p>
             ) : null}
           </div>
@@ -117,7 +123,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
                     : "bg-white text-muted hover:bg-coral-light hover:text-dark"
                 }`}
               >
-                {item.name}
+                {t(item.name)}
               </Link>
             );
           })}

@@ -11,6 +11,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
+import { useLocale } from "@/src/i18n/client";
 // ПРИМЕЧАНИЕ: site-content.ts помечен "server-only" (тянет admin.ts). Из него в этот
 // КЛИЕНТСКИЙ модуль нельзя импортировать ЗНАЧЕНИЯ — ломает сборку. Поэтому siteText
 // продублирован локально ниже, а контент передаётся пропом из серверного layout.
@@ -63,12 +64,15 @@ export function useSiteEditFlag() {
 // «любая деталь» сайта: обернул текст в <EditableText field="уникальный.id" ...>.
 type EditableField = string;
 
+/** refresh: перерисовать серверную разметку после сохранения (по умолчанию да). */
+type SaveOptions = { refresh?: boolean };
+
 type SiteEditContextValue = {
   content: Record<string, unknown>;
   editMode: boolean;
-  save: (field: EditableField, value: string) => Promise<boolean>;
+  save: (field: EditableField, value: string, options?: SaveOptions) => Promise<boolean>;
   /** Сброс детали к первоначальному виду (убирает override). */
-  reset: (field: EditableField) => Promise<boolean>;
+  reset: (field: EditableField, options?: SaveOptions) => Promise<boolean>;
 };
 
 const SiteEditContext = createContext<SiteEditContextValue | null>(null);
@@ -82,12 +86,37 @@ type ProviderProps = {
   children: ReactNode;
 };
 
+/** Локальные, ещё не подтверждённые сервером правки: значение или null = «удалить». */
+type ContentOverlay = Record<string, string | null>;
+
+function applyOverlay(base: Record<string, unknown>, overlay: ContentOverlay) {
+  const merged: Record<string, unknown> = { ...base };
+  for (const [key, value] of Object.entries(overlay)) {
+    if (value === null) delete merged[key];
+    else merged[key] = value;
+  }
+  return merged;
+}
+
 export function SiteEditProvider({ isSuperAdmin, content: initialContent, children }: ProviderProps) {
   const router = useRouter();
   // Режим включается в Админке → Настройки; здесь только читаем флаг из localStorage
   const editMode = useSiteEditFlag() && isSuperAdmin;
-  const [content, setContent] = useState<Record<string, unknown>>(initialContent);
   const [error, setError] = useState<string | null>(null);
+
+  // Храним не копию контента, а ТОЛЬКО свои правки поверх серверного значения. Так
+  // свежие данные с сервера (после router.refresh) подхватываются сами, без
+  // синхронизации состояния, и не могут «залипнуть» устаревшим снимком.
+  const [overlay, setOverlay] = useState<ContentOverlay>({});
+  // Тот же overlay вне цикла рендера: сохранение шлёт site_content ЦЕЛИКОМ (сервер
+  // перезаписывает строку без мержа), поэтому два сохранения подряд (автосейв
+  // положения фото + замена файла) обязаны складываться, а не затирать друг друга.
+  const overlayRef = useRef<ContentOverlay>({});
+  // Очередь: один запрос в полёте, остальные ждут — иначе ответы могут прийти не в том
+  // порядке и более старое значение перезапишет более свежее.
+  const queueRef = useRef<Promise<unknown>>(Promise.resolve());
+
+  const content = applyOverlay(initialContent, overlay);
 
   if (!isSuperAdmin) {
     // Гости и обычные посетители: read-only контекст, чтобы на реальной странице
@@ -102,40 +131,62 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
     );
   }
 
-  async function persist(next: Record<string, unknown>) {
-    setError(null);
+  /**
+   * Применить правку и сохранить site_content. Правка накладывается ВНУТРИ очереди на
+   * актуальный overlay, поэтому параллельные сохранения складываются, а не затирают
+   * друг друга. При ошибке правка откатывается.
+   */
+  function applyChange(patch: ContentOverlay, options?: SaveOptions): Promise<boolean> {
+    const run = queueRef.current.then(async () => {
+      const previous = overlayRef.current;
+      const nextOverlay = { ...previous, ...patch };
+      const nextContent = applyOverlay(initialContent, nextOverlay);
 
-    try {
-      const response = await fetch("/api/admin/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: "site_content", value: JSON.stringify(next) }),
-      });
+      setError(null);
+      overlayRef.current = nextOverlay;
+      setOverlay(nextOverlay);
 
-      if (!response.ok) {
-        const body = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error || "Не удалось сохранить");
+      try {
+        const response = await fetch("/api/admin/settings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ key: "site_content", value: JSON.stringify(nextContent) }),
+        });
+
+        if (!response.ok) {
+          const body = (await response.json().catch(() => ({}))) as { error?: string };
+          throw new Error(body.error || "Не удалось сохранить");
+        }
+
+        // Перерисовка серверной разметки нужна для текста (он приходит из RSC).
+        // Для положения/масштаба фото — нет: картинка рисуется из локального
+        // состояния, а refresh дёргал бы кэш всего сайта на каждый штрих.
+        if (options?.refresh !== false) {
+          router.refresh();
+        }
+        return true;
+      } catch (saveError) {
+        // Откат: иначе следующее сохранение отправит непринятое сервером значение.
+        overlayRef.current = previous;
+        setOverlay(previous);
+        setError(saveError instanceof Error ? saveError.message : "Не удалось сохранить");
+        return false;
       }
+    });
 
-      setContent(next);
-      router.refresh();
-      return true;
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "Не удалось сохранить");
-      return false;
-    }
+    // Очередь не должна вставать из-за ошибки одного сохранения.
+    queueRef.current = run.catch(() => undefined);
+    return run;
   }
 
-  async function save(field: EditableField, value: string) {
-    return persist({ ...content, [field]: value });
+  async function save(field: EditableField, value: string, options?: SaveOptions) {
+    return applyChange({ [field]: value }, options);
   }
 
   // Сброс к первоначальному виду: убираем override-ключ → значение возвращается
   // к дефолту (defaultSiteContent) или к fallback-пропу компонента.
-  async function reset(field: EditableField) {
-    const next = { ...content };
-    delete next[field];
-    return persist(next);
+  async function reset(field: EditableField, options?: SaveOptions) {
+    return applyChange({ [field]: null }, options);
   }
 
   return (
@@ -174,13 +225,19 @@ type EditableTextProps = {
 
 export function EditableText({ field, fallback, multiline = false, className }: EditableTextProps) {
   const ctx = useContext(SiteEditContext);
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const value = ctx ? siteText(ctx.content, field, fallback) : fallback;
+  // Текст хранится ОТДЕЛЬНО ДЛЯ КАЖДОГО ЯЗЫКА: ключ `<id>@<локаль>`. Иначе правка,
+  // сделанная на русской версии, показывалась бы и на казахской (а казахский —
+  // главный язык сайта), затирая перевод. Пока правки для текущего языка нет,
+  // работает fallback — это уже переведённое через t() значение.
+  const storageKey = `${field}@${locale}`;
+  const value = ctx ? siteText(ctx.content, storageKey, fallback) : fallback;
   const hasStored =
-    !!ctx && typeof ctx.content[field] === "string" && (ctx.content[field] as string).trim().length > 0;
+    !!ctx && typeof ctx.content[storageKey] === "string" && (ctx.content[storageKey] as string).trim().length > 0;
 
   if (!ctx || !ctx.editMode) {
     return <span className={className} style={{ whiteSpace: "pre-line" }}>{value}</span>;
@@ -189,7 +246,7 @@ export function EditableText({ field, fallback, multiline = false, className }: 
   async function handleSave() {
     if (!ctx) return;
     setSaving(true);
-    const ok = await ctx.save(field, draft.trim() || value);
+    const ok = await ctx.save(storageKey, draft.trim() || value);
     setSaving(false);
     if (ok) {
       setOpen(false);
@@ -199,7 +256,7 @@ export function EditableText({ field, fallback, multiline = false, className }: 
   async function handleReset() {
     if (!ctx) return;
     setSaving(true);
-    const ok = await ctx.reset(field);
+    const ok = await ctx.reset(storageKey);
     setSaving(false);
     if (ok) {
       setOpen(false);
@@ -376,21 +433,61 @@ export function EditableImage({ field, fallbackSrc, alt = "", className, sizesHi
   const savedTransformKey = useRef<string>(
     storedTransform && !isIdentityTransform(storedTransform) ? JSON.stringify(storedTransform) : "",
   );
+  /** Незавершённое сохранение трансформа (ждёт паузы дебаунса). */
+  const pendingFlushRef = useRef<null | (() => Promise<void>)>(null);
 
-  // Debounce-сохранение трансформа: через 400 мс после последнего изменения. Так серия
-  // движений/прокруток/тиков ползунка складывается в ОДНО сохранение (один POST +
-  // revalidate). Трансформ по умолчанию не храним — просто убираем override-ключ.
+  // Debounce-сохранение трансформа: через 1.2 с после последнего изменения. Серия
+  // движений/прокруток/кликов по кнопкам складывается в ОДНО сохранение. Пауза длинная
+  // намеренно: каждое сохранение сбрасывает кэш контента всего сайта (revalidateTag),
+  // а это тот самый механизм, из-за которого раньше вылезал перерасход egress Supabase.
+  // Трансформ по умолчанию не храним — просто убираем override-ключ.
   useEffect(() => {
     if (!editing || !ctx) return;
     const key = isIdentityTransform(transform) ? "" : JSON.stringify(transform);
     if (key === savedTransformKey.current) return;
+
+    const commit = async () => {
+      const target = transformKeyFor(field);
+      // refresh: false — картинка в режиме редактирования рисуется из локального
+      // состояния, перерисовывать серверную разметку на каждый штрих незачем.
+      const ok = key === ""
+        ? await ctx.reset(target, { refresh: false })
+        : await ctx.save(target, key, { refresh: false });
+      // Помечаем сохранённым ТОЛЬКО после успеха: иначе при упавшем запросе
+      // (протухшая сессия, 500) повтор был бы навсегда заблокирован, а на экране
+      // всё выглядело бы сохранённым.
+      if (ok) savedTransformKey.current = key;
+    };
+
+    // Держим «несохранённое» под рукой, чтобы досохранить при уходе со страницы.
+    pendingFlushRef.current = commit;
     const timer = setTimeout(() => {
-      savedTransformKey.current = key;
-      if (key === "") void ctx.reset(transformKeyFor(field));
-      else void ctx.save(transformKeyFor(field), key);
-    }, 400);
+      pendingFlushRef.current = null;
+      void commit();
+    }, 1200);
+    // ВАЖНО: в cleanup только снимаем таймер. Сохранять здесь нельзя — cleanup
+    // срабатывает на КАЖДОЕ изменение transform, и дебаунс перестал бы работать.
     return () => clearTimeout(timer);
   }, [transform, editing, ctx, field]);
+
+  // Досохранение несохранённого: при размонтировании (уход по ссылке шапки/нижней
+  // навигации) и при скрытии вкладки. Иначе последняя правка положения фото,
+  // не дождавшаяся паузы дебаунса, молча пропадает.
+  useEffect(() => {
+    const flush = () => {
+      const commit = pendingFlushRef.current;
+      pendingFlushRef.current = null;
+      if (commit) void commit();
+    };
+    const onHidden = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    document.addEventListener("visibilitychange", onHidden);
+    return () => {
+      document.removeEventListener("visibilitychange", onHidden);
+      flush();
+    };
+  }, []);
 
   // Колесо мыши = масштаб. Слушатель вешаем вручную с { passive: false }, чтобы
   // preventDefault реально блокировал прокрутку страницы. setTransform стабилен, а
@@ -501,8 +598,11 @@ export function EditableImage({ field, fallbackSrc, alt = "", className, sizesHi
       <span className="w-[74px] shrink-0">{label}</span>
       <input
         type="range" min={min} max={max} value={value}
+        // Во время загрузки файла ползунки заблокированы: сохранение нового URL и
+        // сохранение положения иначе состязались бы за один и тот же site_content.
+        disabled={uploading}
         onChange={(e) => onChange(Number(e.currentTarget.value))}
-        className="flex-1 accent-coral"
+        className="flex-1 accent-coral disabled:opacity-50"
       />
       <span className="w-9 text-right tabular-nums text-dark">{value}</span>
     </label>
@@ -579,8 +679,10 @@ export function EditableImage({ field, fallbackSrc, alt = "", className, sizesHi
                 {/* точная настройка положения */}
                 <div className="mt-3 space-y-2">
                   {slider("Масштаб", Math.round(transform.scale * 100), 20, 400, (v) => patchTransform({ scale: v / 100 }))}
-                  {slider("Сдвиг ←→", Math.round(transform.x), -100, 100, (v) => patchTransform({ x: v }))}
-                  {slider("Сдвиг ↑↓", Math.round(transform.y), -100, 100, (v) => patchTransform({ y: v }))}
+                  {/* Пределы те же, что у перетаскивания мышью (±150), иначе ползунок
+                      «не догонял» бы уже сдвинутое фото и дёргал его назад. */}
+                  {slider("Сдвиг ←→", Math.round(transform.x), -150, 150, (v) => patchTransform({ x: v }))}
+                  {slider("Сдвиг ↑↓", Math.round(transform.y), -150, 150, (v) => patchTransform({ y: v }))}
                   {slider("Поворот", Math.round(transform.rotate), -180, 180, (v) => patchTransform({ rotate: v }))}
                 </div>
 

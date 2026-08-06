@@ -6,11 +6,12 @@ import { getLocale, getT } from "@/src/i18n/server";
 import { withLocale, buildAlternates } from "@/src/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   return {
-    title: "Контакты и реквизиты — DC Bakery",
-    description:
+    title: t("Контакты и реквизиты — DC Bakery"),
+    description: t(
       "Контактная информация и банковские реквизиты DC Bakery. ИП Кошкаров А.К., г. Алматы. Телефон, e-mail, WhatsApp.",
+    ),
     alternates: buildAlternates("/contacts", locale),
   };
 }
@@ -107,7 +108,7 @@ export default async function ContactsPage() {
           <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">{t("Оплата по счёту")}</p>
           <h2 className="mt-3 font-display text-2xl font-semibold tracking-tight">{t("Банковские реквизиты")}</h2>
           <p className="mt-2 text-sm text-muted">
-            Оплата производится на счёт, соответствующий категории Продукции.{" "}
+            {t("Оплата производится на счёт, соответствующий категории Продукции.")}{" "}
             <Link href={withLocale("/oferta#section-5", locale)} className="font-bold text-coral hover:underline">{t("Подробнее в п. 5.3 Оферты")}</Link>
           </p>
 

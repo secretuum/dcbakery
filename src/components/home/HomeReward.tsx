@@ -2,16 +2,9 @@
 
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { EditableText } from "@/src/components/home/SiteEditMode";
-import { useT } from "@/src/i18n/client";
-
-type Product = {
-  id: string;
-  slug: string;
-  name: string;
-  images: string[];
-  category_id: string;
-  category?: { slug: string; name: string };
-};
+import { useLocale, useT } from "@/src/i18n/client";
+import { localizeProduct } from "@/src/i18n/product";
+import type { Product } from "@/src/types";
 
 type HomeRewardProps = {
   giftProducts?: Product[];
@@ -44,6 +37,7 @@ const TERMS = [
 
 export function HomeReward({ giftProducts, collected: collectedProp }: HomeRewardProps) {
   const t = useT();
+  const locale = useLocale();
 
   // Прогресс считается по реальным заказам клиента (0, пока заказов нет).
   const collected = Math.max(0, Math.round(collectedProp ?? 0));
@@ -184,24 +178,28 @@ export function HomeReward({ giftProducts, collected: collectedProp }: HomeRewar
               <h4 className="text-[13.5px] font-bold text-dark"><EditableText field="home.reward.giftsTitle" fallback={t("Десерты на выбор")} /></h4>
               <div className="mt-4 grid grid-cols-5 gap-2">
                 {useThumbs
-                  ? gifts.map((p) => (
-                      <div key={p.id} className="min-w-0 text-center">
-                        <div className="relative aspect-square overflow-hidden rounded-xl bg-white shadow-sm">
-                          <FallbackImage
-                            src={p.images?.[0]}
-                            alt={p.name}
-                            fill
-                            sizes="64px"
-                            className="object-cover"
-                            categoryId={p.category_id}
-                            categorySlug={p.category?.slug}
-                          />
+                  ? gifts.map((p) => {
+                      // Название десерта — из перевода каталога (name_kk/name_en).
+                      const giftName = localizeProduct(p, locale).name;
+                      return (
+                        <div key={p.id} className="min-w-0 text-center">
+                          <div className="relative aspect-square overflow-hidden rounded-xl bg-white shadow-sm">
+                            <FallbackImage
+                              src={p.images?.[0]}
+                              alt={giftName}
+                              fill
+                              sizes="64px"
+                              className="object-cover"
+                              categoryId={p.category_id}
+                              categorySlug={p.category?.slug}
+                            />
+                          </div>
+                          <span className="mt-1.5 line-clamp-2 block text-[9.5px] font-medium leading-tight text-ink-soft">
+                            {giftName}
+                          </span>
                         </div>
-                        <span className="mt-1.5 line-clamp-2 block text-[9.5px] font-medium leading-tight text-ink-soft">
-                          {p.name}
-                        </span>
-                      </div>
-                    ))
+                      );
+                    })
                   : GIFT_NAMES.map((name, i) => (
                       <div key={name} className="min-w-0 text-center">
                         <div className="grid aspect-square place-items-center overflow-hidden rounded-xl bg-white text-coral shadow-sm">

@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { LOCALE_COOKIE, LOCALES, localeLabels, type Locale } from "@/src/i18n/config";
 import { useLocale, useT } from "@/src/i18n/client";
@@ -11,6 +11,7 @@ function writeLocaleCookie(next: string) {
 }
 
 export function LanguageSwitcher() {
+  const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
   const t = useT();
@@ -21,10 +22,24 @@ export function LanguageSwitcher() {
     if (next === locale || switching) return;
     // Cookie — для персистентности выбора при заходе на «голый» URL.
     writeLocaleCookie(next);
-    setTarget(next);
 
     const { path } = stripLocale(pathname);
+    // usePathname() отдаёт путь БЕЗ ?query и #hash — дописываем их вручную, иначе
+    // смена языка теряет параметры. Это не косметика: на /register?rt=<токен> (ссылка
+    // из WhatsApp) потеря query убивает одноразовый токен, и клиент видит «ссылка
+    // недействительна»; на /order-success теряются номер и сумма заказа.
+    // withLocale сам отделит путь от суффикса.
+    const target = withLocale(path + window.location.search + window.location.hash, next);
 
+    // Нелокализуемые разделы (/admin, /api, /pay, /documents): withLocale вернёт тот же
+    // путь. Перезагружать страницу там незачем (в админке это ещё и потеряет
+    // заполненную форму) — достаточно записать cookie и обновить серверную разметку.
+    if (target === window.location.pathname + window.location.search + window.location.hash) {
+      router.refresh();
+      return;
+    }
+
+    setTarget(next);
     // ВАЖНО: полная навигация (window.location), а НЕ router.push. Язык у нас живёт
     // только в префиксе URL, который middleware (proxy.ts) переписывает в заголовок
     // x-locale — отдельного сегмента [locale] в дереве маршрутов НЕТ. При client-side
@@ -33,7 +48,7 @@ export function LanguageSwitcher() {
     // LocaleProvider и <html lang>) и НЕ перерисовывает их под новый язык — из-за
     // этого переключатель «не срабатывал». Жёсткая перезагрузка гарантирует, что
     // сервер отрендерит всю страницу на выбранном языке.
-    window.location.assign(withLocale(path, next));
+    window.location.assign(target);
   }
 
   return (

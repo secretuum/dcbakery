@@ -14,11 +14,12 @@ import { HomeDelivery } from "@/src/components/home/HomeDelivery";
 import { EditableText, EditableImage } from "@/src/components/home/SiteEditMode";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
+  const [t, locale] = await Promise.all([getT(), getLocale()]);
   return {
-    title: "DC Bakery — B2B поставщик продуктов питания",
-    description:
+    title: t("DC Bakery — B2B поставщик продуктов питания"),
+    description: t(
       "Поставки десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые B2B-цены, халал сертификаты, натуральные ингредиенты.",
+    ),
     alternates: buildAlternates("/", locale),
   };
 }

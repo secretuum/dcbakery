@@ -5,10 +5,11 @@ export const LOCALES = ["kk", "ru", "en"] as const;
 
 export type Locale = (typeof LOCALES)[number];
 
-// Язык по умолчанию/фолбэк — русский (язык закупочных запросов; большинство в КЗ
-// читает по-русски). Служит и x-default для hreflang, и выбором для «голых» URL
-// без cookie/Accept-Language. Выбор пользователя далее хранится в cookie/URL.
-export const DEFAULT_LOCALE: Locale = "ru";
+// Язык по умолчанию/фолбэк — казахский (главный язык бренда). Служит x-default для
+// hreflang и выбором для «голых» URL без cookie/Accept-Language. Обе языковые версии
+// (kk и ru) всё равно индексируются раздельно через sitemap + hreflang, так что
+// дефолт не мешает русской выдаче. Выбор пользователя хранится в cookie/URL.
+export const DEFAULT_LOCALE: Locale = "kk";
 
 export const LOCALE_COOKIE = "NEXT_LOCALE";
 

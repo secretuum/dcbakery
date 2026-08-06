@@ -39,11 +39,12 @@ const SITE_TITLE = "DC Bakery — B2B кондитерская и полуфаб
 const SITE_DESCRIPTION =
   "B2B-каталог десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей.";
 
-// Верификация вебмастеров (Google Search Console / Яндекс.Вебмастер) — через env,
-// чтобы подключить аналитику и рекламу без правки кода.
+// Верификация вебмастеров (Google Search Console / Яндекс.Вебмастер / Bing) — через
+// env, чтобы подключить без правки кода. Bing — через other.msvalidate.01.
 const verification: NonNullable<Metadata["verification"]> = {};
 if (process.env.GOOGLE_SITE_VERIFICATION) verification.google = process.env.GOOGLE_SITE_VERIFICATION;
 if (process.env.YANDEX_VERIFICATION) verification.yandex = process.env.YANDEX_VERIFICATION;
+if (process.env.BING_VERIFICATION) verification.other = { "msvalidate.01": process.env.BING_VERIFICATION };
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

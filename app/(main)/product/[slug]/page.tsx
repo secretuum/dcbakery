@@ -7,6 +7,7 @@ import { ProductPurchase } from "@/src/components/product/ProductPurchase";
 import { fetchProductBySlug, fetchProductSlugs } from "@/src/lib/catalog";
 import { formatProductPrice } from "@/src/lib/format";
 import { getLocale, getT } from "@/src/i18n/server";
+import { OG_LOCALE } from "@/src/i18n/config";
 import { withLocale, buildAlternates } from "@/src/i18n/routing";
 import { localizeMeasure, localizeProduct } from "@/src/i18n/product";
 import { JsonLd } from "@/src/components/seo/JsonLd";
@@ -48,6 +49,10 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
       description: localized.description,
       url,
       siteName: "DC Bakery",
+      // Метаданные в Next мержатся ПОВЕРХНОСТНО: свой openGraph заменяет
+      // родительский целиком, поэтому locale приходится указывать здесь заново —
+      // иначе на карточке товара og:locale пропадал вовсе.
+      locale: OG_LOCALE[locale],
       ...(image ? { images: [{ url: image }] } : {}),
     },
   };

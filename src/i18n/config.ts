@@ -26,6 +26,16 @@ export const HREFLANG: Record<Locale, string> = {
   en: "en",
 };
 
+// Open Graph требует свой формат локали — language_TERRITORY с подчёркиванием
+// (kk_KZ), а не BCP-47 с дефисом (kk-KZ) из HREFLANG. Отдельная карта, чтобы
+// og:locale не разъезжался с hreflang и не приходилось чинить его строковой
+// заменой дефиса: для en регион в hreflang не указан, а Open Graph его требует.
+export const OG_LOCALE: Record<Locale, string> = {
+  ru: "ru_RU",
+  kk: "kk_KZ",
+  en: "en_US",
+};
+
 export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && (LOCALES as readonly string[]).includes(value);
 }

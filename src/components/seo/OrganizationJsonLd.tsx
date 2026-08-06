@@ -3,6 +3,8 @@
 // контента сайта (getSiteContent), чтобы карточка в поиске совпадала с сайтом.
 
 import { fetchCategories } from "@/src/lib/catalog";
+import { LOCALES } from "@/src/i18n/config";
+import { getT } from "@/src/i18n/server";
 import { getSiteContent } from "@/src/lib/site-content";
 import { SITE_URL } from "@/src/lib/site-url";
 import { JsonLd } from "./JsonLd";
@@ -19,16 +21,23 @@ function parseOpeningHours(workHours: string): string | null {
 }
 
 export async function OrganizationJsonLd() {
-  const content = await getSiteContent();
+  const [content, t] = await Promise.all([getSiteContent(), getT()]);
   const telephone = (content.contactPhone || content.contactWhatsapp || "").replace(/\D/g, "");
   const whatsapp = (content.contactWhatsapp || "").replace(/\D/g, "");
+  // Адрес и часы работы приходят из site_content и всегда РУССКИЕ (админка одна),
+  // parseOpeningHours ниже разбирает именно русские сокращения дней. Ни адрес, ни
+  // город тут НЕ переводим намеренно: карточка в поиске должна совпадать с Google
+  // Business Profile и 2GIS символ-в-символ — это и есть «единый NAP». Переводим
+  // только прозу (описание, каталог, темы), она на совпадение NAP не влияет.
   const street = content.address.replace(/^\s*г\.?\s*алматы\s*,?\s*/i, "").trim();
   const openingHours = parseOpeningHours(content.workHours);
 
   // Реальные активные линейки товара (env-гейтед категории сюда не попадут) —
   // используем и в hasOfferCatalog, и в knowsAbout, чтобы не расходились с витриной.
+  // Названия категорий каталог отдаёт русскими — переводим по словарю, ровно как
+  // это делают фильтры каталога и плитки на главной.
   const categories = await fetchCategories();
-  const productLines = categories.map((category) => category.name);
+  const productLines = categories.map((category) => t(category.name));
 
   const data: Record<string, unknown> = {
     "@context": "https://schema.org",
@@ -44,9 +53,13 @@ export async function OrganizationJsonLd() {
     // логотип-ассет (квадратный PNG/SVG на прозрачном фоне) — заменить оба URL.
     image: `${SITE_URL}/opengraph-image`,
     logo: `${SITE_URL}/opengraph-image`,
-    description:
+    description: t(
       "B2B-поставщик десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые цены, доставка по Алматы.",
+    ),
     email: "info@dc-bakery.kz",
+    // Языки обслуживания — сигнал для поиска и ИИ-ассистентов, что с поставщиком
+    // можно вести переписку и заказ на любом из этих языков.
+    knowsLanguage: [...LOCALES],
     ...(telephone ? { telephone: `+${telephone}` } : {}),
     priceRange: "₸₸",
     currenciesAccepted: "KZT",
@@ -68,14 +81,15 @@ export async function OrganizationJsonLd() {
     // Каталог предложений по активным линейкам — сигнал ассортимента для поиска/ИИ.
     hasOfferCatalog: {
       "@type": "OfferCatalog",
-      name: "Оптовый каталог DC Bakery",
+      name: t("Оптовый каталог DC Bakery"),
       itemListElement: productLines.map((line) => ({
         "@type": "OfferCatalog",
         name: line,
       })),
     },
     // Тематические сущности: линейки товара + оптовый B2B и HoReCa.
-    knowsAbout: [...productLines, "оптовые поставки B2B", "HoReCa"],
+    // «HoReCa» — международный термин, в казахском и английском тот же, не переводим.
+    knowsAbout: [...productLines, t("оптовые поставки B2B"), "HoReCa"],
   };
 
   return <JsonLd data={data} />;

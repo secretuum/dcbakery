@@ -3,7 +3,8 @@ import { Geist, Montserrat, IBM_Plex_Mono } from "next/font/google";
 import { CartProvider } from "@/src/contexts/CartContext";
 import { ToastProvider } from "@/src/contexts/ToastContext";
 import { LocaleProvider } from "@/src/i18n/client";
-import { getLocale } from "@/src/i18n/server";
+import { LOCALES, OG_LOCALE } from "@/src/i18n/config";
+import { getLocale, getT } from "@/src/i18n/server";
 import { SITE_URL } from "@/src/lib/site-url";
 import { Analytics } from "@/src/components/analytics/Analytics";
 import { RouteTracker } from "@/src/components/analytics/RouteTracker";
@@ -46,50 +47,61 @@ if (process.env.GOOGLE_SITE_VERIFICATION) verification.google = process.env.GOOG
 if (process.env.YANDEX_VERIFICATION) verification.yandex = process.env.YANDEX_VERIFICATION;
 if (process.env.BING_VERIFICATION) verification.other = { "msvalidate.01": process.env.BING_VERIFICATION };
 
-export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: SITE_TITLE,
-  description: SITE_DESCRIPTION,
-  applicationName: "DC Bakery",
-  keywords: [
-    "DC Bakery",
-    "десерты оптом Алматы",
-    "полуфабрикаты оптом",
-    "мясо оптом Алматы",
-    "B2B поставки продуктов",
-    "оптовая кондитерская Алматы",
-    "поставки для кафе и ресторанов",
-    "халал мясо оптом",
-    "торты оптом",
-    "выпечка оптом",
-  ],
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+// Метаданные СЧИТАЮТСЯ НА ЗАПРОС, а не статически: заголовок, описание и og:locale
+// обязаны совпадать с языком страницы. Раньше здесь был `export const metadata` с
+// русскими строками и жёстким og:locale="kk_KZ" — то есть на /kk и /en в выдачу
+// уходил русский заголовок, а на /ru Open Graph объявлял себя казахским.
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  const t = await getT();
+  const title = t(SITE_TITLE);
+  const description = t(SITE_DESCRIPTION);
+
+  return {
+    metadataBase: new URL(SITE_URL),
+    title,
+    description,
+    applicationName: "DC Bakery",
+    keywords: [
+      "DC Bakery",
+      "десерты оптом Алматы",
+      "полуфабрикаты оптом",
+      "мясо оптом Алматы",
+      "B2B поставки продуктов",
+      "оптовая кондитерская Алматы",
+      "поставки для кафе и ресторанов",
+      "халал мясо оптом",
+      "торты оптом",
+      "выпечка оптом",
+    ],
+    robots: {
       index: true,
       follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+        "max-video-preview": -1,
+      },
     },
-  },
-  verification,
-  openGraph: {
-    type: "website",
-    siteName: "DC Bakery",
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-    url: SITE_URL,
-    locale: "kk_KZ",
-    alternateLocale: ["ru_RU", "en_US"],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-  },
-};
+    verification,
+    openGraph: {
+      type: "website",
+      siteName: "DC Bakery",
+      title,
+      description,
+      url: `${SITE_URL}/${locale}`,
+      locale: OG_LOCALE[locale],
+      alternateLocale: LOCALES.filter((l) => l !== locale).map((l) => OG_LOCALE[l]),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 
 export default async function RootLayout({
   children,

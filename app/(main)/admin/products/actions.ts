@@ -2,8 +2,10 @@
 
 import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { upsertCatalogProductOverride } from "@/src/lib/supabase/admin";
 import { CATALOG_CACHE_TAG } from "@/src/lib/catalog";
+import { pingIndexNow } from "@/src/lib/indexnow";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -69,6 +71,25 @@ function slugify(value: string) {
     .replace(/-{2,}/g, "-");
 }
 
+/**
+ * Страницы, содержимое которых меняется вместе с товаром: сама карточка, список
+ * каталога, раздел категории и главная (там витрина популярного). Пути — без
+ * языкового префикса, pingIndexNow сам развернёт их по всем локалям.
+ */
+function affectedPaths(patch: { slug?: string; category_slug?: string }): string[] {
+  const paths = ["/", "/catalog"];
+
+  if (patch.slug) {
+    paths.push(`/product/${patch.slug}`);
+  }
+
+  if (patch.category_slug) {
+    paths.push(`/catalog/${patch.category_slug}`);
+  }
+
+  return paths;
+}
+
 function getCatalogProductPatch(formData: FormData) {
   return {
     category_slug: getString(formData, "category_slug"),
@@ -107,15 +128,20 @@ export async function updateCatalogProductAction(formData: FormData) {
   }
 
   const isArchived = action === "archive" ? true : action === "restore" ? false : getBoolean(formData, "is_archived");
+  const patch = getCatalogProductPatch(formData);
 
   await upsertCatalogProductOverride(productId, {
-    ...getCatalogProductPatch(formData),
+    ...patch,
     is_archived: isArchived,
   });
 
   revalidateTag(CATALOG_CACHE_TAG, "max");
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
+  // after() — уведомление поисковиков уходит ПОСЛЕ ответа админке: менеджер не ждёт
+  // сеть, но промис при этом не теряется (обычный fire-and-forget мог быть убит
+  // вместе с завершением запроса).
+  after(() => pingIndexNow(affectedPaths(patch)));
 }
 
 export async function createCatalogProductAction(formData: FormData) {
@@ -134,6 +160,8 @@ export async function createCatalogProductAction(formData: FormData) {
   revalidateTag(CATALOG_CACHE_TAG, "max");
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
+  // ВАЖНО: до redirect() — он бросает исключение, код после него не выполняется.
+  after(() => pingIndexNow(affectedPaths(patch)));
   redirect("/admin/products?created=1");
 }
 
@@ -189,4 +217,7 @@ export async function bulkUpdateCatalogProductsAction(formData: FormData) {
   revalidateTag(CATALOG_CACHE_TAG, "max");
   revalidatePath("/", "layout");
   revalidatePath("/admin/products");
+  // Массовое действие приходит со списком id, но БЕЗ slug'ов — точные карточки
+  // назвать нечем, уведомляем только каталог и главную.
+  after(() => pingIndexNow(["/", "/catalog"]));
 }

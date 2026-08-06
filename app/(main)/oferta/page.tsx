@@ -269,19 +269,19 @@ export default async function OfertaPage() {
             <h3 className="mt-6 font-display text-base font-semibold">{t("6.1. Определения")}</h3>
             <dl className="mt-3 space-y-3 text-sm leading-7 text-dark/80">
               <div>
-                <dt className="inline font-semibold">{t("Товарный кредит (Кредит)")}</dt>
+                <dt className="inline font-semibold">{t("Товарный кредит (Кредит)")}</dt>{" "}
                 <dd className="inline">{t("— право Покупателя получить Продукцию с отсрочкой платежа в пределах установленного лимита.")}</dd>
               </div>
               <div>
-                <dt className="inline font-semibold">{t("Кредитный лимит")}</dt>
+                <dt className="inline font-semibold">{t("Кредитный лимит")}</dt>{" "}
                 <dd className="inline">{t("— максимальная сумма неоплаченных отгрузок, которую Поставщик предоставляет Покупателю одновременно.")}</dd>
               </div>
               <div>
-                <dt className="inline font-semibold">{t("Срок оплаты")}</dt>
+                <dt className="inline font-semibold">{t("Срок оплаты")}</dt>{" "}
                 <dd className="inline">{t("— 7 (семь) календарных дней с даты отгрузки, если иное не согласовано дополнительным соглашением.")}</dd>
               </div>
               <div>
-                <dt className="inline font-semibold">{t("Льготный период")}</dt>
+                <dt className="inline font-semibold">{t("Льготный период")}</dt>{" "}
                 <dd className="inline">{t("— 3 (три) календарных дня сверх Срока оплаты, в течение которых отгрузки по новым заказам допускаются только на условиях предоплаты.")}</dd>
               </div>
               <div>

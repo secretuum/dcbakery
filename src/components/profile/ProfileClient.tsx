@@ -1232,13 +1232,13 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
       {/* Meta row */}
       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 border-t border-black/5 pt-3 text-xs text-muted">
         {order.delivery_date ? (
-          <span>{t("Отгрузка")}<b className="font-data font-medium text-dark">{formatDate(order.delivery_date)}</b></span>
+          <span>{t("Отгрузка")}{" "}<b className="font-data font-medium text-dark">{formatDate(order.delivery_date)}</b></span>
         ) : null}
         {order.order_items?.length ? (
-          <span>{t("Позиций")}<b className="font-data font-medium text-dark">{order.order_items.length}</b></span>
+          <span>{t("Позиций")}{" "}<b className="font-data font-medium text-dark">{order.order_items.length}</b></span>
         ) : null}
         {order.due_date ? (
-          <span className={isOverdue ? "font-semibold text-danger" : ""}>{t("Оплата до")}<b className="font-data font-medium">{formatDate(order.due_date)}</b>
+          <span className={isOverdue ? "font-semibold text-danger" : ""}>{t("Оплата до")}{" "}<b className="font-data font-medium">{formatDate(order.due_date)}</b>
             {isOverdue ? ` · просрочка ${overdueDays} дн.` : ""}
           </span>
         ) : null}

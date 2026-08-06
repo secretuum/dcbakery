@@ -89,6 +89,9 @@ type ProviderProps = {
 /** Локальные, ещё не подтверждённые сервером правки: значение или null = «удалить». */
 type ContentOverlay = Record<string, string | null>;
 
+/** Состояние индикатора автосохранения для суперадмина. */
+type SaveState = "idle" | "saving" | "saved";
+
 function applyOverlay(base: Record<string, unknown>, overlay: ContentOverlay) {
   const merged: Record<string, unknown> = { ...base };
   for (const [key, value] of Object.entries(overlay)) {
@@ -116,6 +119,24 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
   // порядке и более старое значение перезапишет более свежее.
   const queueRef = useRef<Promise<unknown>>(Promise.resolve());
 
+  // Индикатор автосохранения: без него суперадмин не понимает, улетела правка или нет
+  // (перетаскивание фото и правка текста сохраняются молча).
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  // СЧЁТЧИК незавершённых правок, а не флаг: правки копятся в очереди, и булев флаг
+  // погас бы на первом же ответе, пока следующее сохранение ещё летит.
+  const pendingRef = useRef(0);
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+  // Хуки ОБЯЗАНЫ стоять выше раннего return для не-суперадминов (правило хуков):
+  // иначе при смене роли порядок хуков разъедется и React упадёт.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
+
   const content = applyOverlay(initialContent, overlay);
 
   if (!isSuperAdmin) {
@@ -131,12 +152,42 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
     );
   }
 
+  /** Правка встала в очередь: гасим таймер прошлого «Сохранено», иначе он погасил бы свежее «Сохраняю…». */
+  function beginSave() {
+    if (savedTimerRef.current) {
+      clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = null;
+    }
+    pendingRef.current += 1;
+    if (mountedRef.current) setSaveState("saving");
+  }
+
+  /** Правка завершилась: «Сохранено» показываем, только когда очередь опустела. */
+  function finishSave(ok: boolean) {
+    pendingRef.current = Math.max(0, pendingRef.current - 1);
+    if (pendingRef.current > 0 || !mountedRef.current) return;
+    if (!ok) {
+      // Про неудачу говорит плашка error — «Сохранено» после неё было бы враньём.
+      setSaveState("idle");
+      return;
+    }
+    setSaveState("saved");
+    savedTimerRef.current = setTimeout(() => {
+      savedTimerRef.current = null;
+      if (mountedRef.current) setSaveState("idle");
+    }, 2000);
+  }
+
   /**
    * Применить правку и сохранить site_content. Правка накладывается ВНУТРИ очереди на
    * актуальный overlay, поэтому параллельные сохранения складываются, а не затирают
    * друг друга. При ошибке правка откатывается.
    */
   function applyChange(patch: ContentOverlay, options?: SaveOptions): Promise<boolean> {
+    // Считаем правку незавершённой уже здесь, а не в теле очереди: ожидающие своей
+    // очереди сохранения — это тоже «ещё не сохранено».
+    beginSave();
+
     const run = queueRef.current.then(async () => {
       const previous = overlayRef.current;
       const nextOverlay = { ...previous, ...patch };
@@ -146,6 +197,7 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
       overlayRef.current = nextOverlay;
       setOverlay(nextOverlay);
 
+      let ok = false;
       try {
         const response = await fetch("/api/admin/settings", {
           method: "POST",
@@ -164,6 +216,7 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
         if (options?.refresh !== false) {
           router.refresh();
         }
+        ok = true;
         return true;
       } catch (saveError) {
         // Откат: иначе следующее сохранение отправит непринятое сервером значение.
@@ -171,6 +224,9 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
         setOverlay(previous);
         setError(saveError instanceof Error ? saveError.message : "Не удалось сохранить");
         return false;
+      } finally {
+        // В finally, а не по веткам: счётчик не должен «залипнуть» ни при каком исходе.
+        finishSave(ok);
       }
     });
 
@@ -198,6 +254,17 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
           {error ? (
             <p className="max-w-60 border border-burgundy bg-white px-3 py-2 text-xs font-semibold text-burgundy shadow-lg">
               {error}
+            </p>
+          ) : null}
+          {/* Ошибка важнее: при ней показываем её, а не «Сохранено». */}
+          {!error && saveState !== "idle" ? (
+            <p
+              aria-live="polite"
+              className={`border bg-white px-3 py-2 text-xs font-semibold shadow-lg ${
+                saveState === "saved" ? "border-coral text-coral" : "border-black/15 text-muted"
+              }`}
+            >
+              {saveState === "saving" ? "Сохраняю…" : "Сохранено"}
             </p>
           ) : null}
           <button

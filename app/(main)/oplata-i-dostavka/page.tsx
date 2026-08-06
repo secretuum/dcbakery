@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getSiteContent } from "@/src/lib/site-content";
 import { getLocale, getT } from "@/src/i18n/server";
 import { withLocale, buildAlternates } from "@/src/i18n/routing";
 
@@ -15,7 +16,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function OplataIDostavkaPage() {
+  const content = await getSiteContent();
   const [t, locale] = await Promise.all([getT(), getLocale()]);
+  const whatsappDigits = content.contactWhatsapp.replace(/\D/g, "");
+  const phoneDigits = content.contactPhone.replace(/\D/g, "");
 
   return (
     <main className="min-h-screen bg-cream px-5 py-12 text-dark lg:px-8 lg:py-16">
@@ -99,12 +103,12 @@ export default async function OplataIDostavkaPage() {
                 info@dc-bakery.kz
               </a>
               , {t("тел.")}{" "}
-              <a href="tel:+77477272650" className="font-bold text-coral hover:underline">
-                +7 747 727 2650
+              <a href={`tel:+${whatsappDigits}`} className="font-bold text-coral hover:underline">
+                {content.contactWhatsapp}
               </a>
               {" "}{t("или")}{" "}
-              <a href="tel:+77476940766" className="font-bold text-coral hover:underline">
-                +7 747 694 0766
+              <a href={`tel:+${phoneDigits}`} className="font-bold text-coral hover:underline">
+                {content.contactPhone}
               </a>
               .
             </p>

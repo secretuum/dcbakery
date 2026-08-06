@@ -184,7 +184,7 @@ function validateForm(form: CheckoutFormState, schedule: DeliverySchedule) {
     errors.delivery_date = "Выберите дату доставки";
   } else if (!isDeliveryDayDate(form.delivery_date, schedule)) {
     // Ключ словаря: список дней подставляется при выводе (см. FieldError vars)
-    errors.delivery_date = "Доставка по этим дням: ${formatShortDeliveryDays(schedule.deliveryDays)}";
+    errors.delivery_date = "Доставка по этим дням: ${days}";
   } else if (!minDeliveryDate || form.delivery_date < minDeliveryDate) {
     errors.delivery_date = "Эта дата уже недоступна, выберите более позднюю";
   }
@@ -577,14 +577,7 @@ export function CheckoutForm({
                       hour: schedule.cutoffHour,
                     })}
                   </p>
-                  <FieldError
-                    vars={{
-                      "formatShortDeliveryDays(schedule.deliveryDays)": formatShortDeliveryDays(
-                        schedule.deliveryDays,
-                        t,
-                      ),
-                    }}
-                  >
+                  <FieldError vars={{ days: formatShortDeliveryDays(schedule.deliveryDays, t) }}>
                     {errors.delivery_date}
                   </FieldError>
                 </div>

@@ -200,7 +200,7 @@
  "Укажите контактное лицо": "Indicate your contact person",
  "Укажите полный номер телефона": "Enter your full phone number",
  "Выберите дату доставки": "Select delivery date",
- "Доставка по этим дням: ${formatShortDeliveryDays(schedule.deliveryDays)}": "Delivery on these days: ${formatShortDeliveryDays(schedule.deliveryDays)}",
+ "Доставка по этим дням: ${days}": "Delivery on these days: ${days}",
  "Эта дата уже недоступна, выберите более позднюю": "This date is no longer available, please select a later one",
  "Необходимо принять условия оферты": "You must accept the terms of the offer",
  "День 12-18": "Day 12-18",

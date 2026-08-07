@@ -13,6 +13,8 @@ import { fetchProducts } from "@/src/lib/catalog";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
 import { orderTotalWithDelivery } from "@/app/constants";
+import { signDocumentToken } from "@/src/lib/document-token";
+import { withDocToken } from "@/src/lib/documents/access";
 
 type AdminOrderPageProps = {
   params: Promise<{
@@ -56,6 +58,7 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
     notFound();
   }
 
+  const docToken = await signDocumentToken(order.id);
   const isLocked =
     order.payment_status === "paid" ||
     order.status === "paid" ||
@@ -200,13 +203,13 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
             ) ? (
               <>
                 <Link
-                  href={`/documents/invoice/${order.id}`}
+                  href={withDocToken(`/documents/invoice/${order.id}`, docToken)}
                   className="block rounded-btn border border-black/5 bg-cream px-4 py-3 text-sm font-semibold text-dark transition hover:bg-coral-light"
                 >
                   Счет на оплату →
                 </Link>
                 <Link
-                  href={`/documents/nakl/${order.id}`}
+                  href={withDocToken(`/documents/nakl/${order.id}`, docToken)}
                   className="block rounded-btn border border-black/5 bg-cream px-4 py-3 text-sm font-semibold text-dark transition hover:bg-coral-light"
                 >
                   Накладная →

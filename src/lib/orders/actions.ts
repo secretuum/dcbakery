@@ -30,6 +30,8 @@ import { canonicalOrderStatuses } from "@/src/lib/order-status";
 import { exportOrderWriteoffToIiko } from "@/src/lib/orders/iiko-export";
 import { shipmentBlockedForPrepay } from "@/src/lib/account/tier";
 import { consignmentDueDate } from "@/src/lib/credit";
+import { signDocumentToken } from "@/src/lib/document-token";
+import { withDocToken } from "@/src/lib/documents/access";
 
 // Единая логика действий над заказом (подтверждение / оплата / статусы / отмена).
 // Раньше жила по одной копии в каждом admin-роуте; теперь и админка, и Telegram-бот
@@ -143,9 +145,13 @@ export async function confirmOrder(
       if (clientProfile?.accountantPhone) {
         const accountantChatId = getWhatsAppChatIdFromPhone(clientProfile.accountantPhone);
         if (accountantChatId) {
+          const invoiceUrl = withDocToken(
+            `${origin}/documents/invoice/${order.id}`,
+            await signDocumentToken(order.id),
+          );
           await sendGreenApiTextMessage(
             accountantChatId,
-            `Счёт на оплату №${order.order_number} на сумму ${order.total_amount} ₸\n${origin}/documents/invoice/${order.id}`,
+            `Счёт на оплату №${order.order_number} на сумму ${order.total_amount} ₸\n${invoiceUrl}`,
           ).catch(() => null);
         }
       }

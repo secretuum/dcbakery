@@ -6,6 +6,8 @@ import { getCompanyDetails } from "@/src/lib/company-details";
 import { idsForRole } from "@/src/lib/telegram/roles";
 import { sendMessage } from "@/src/lib/telegram/api";
 import type { AwaitingPaymentRow } from "@/src/lib/orders/awaiting-payment";
+import { signDocumentToken } from "@/src/lib/document-token";
+import { withDocToken } from "@/src/lib/documents/access";
 
 type CardMessage = {
   text: string;
@@ -79,13 +81,16 @@ export function buildAccountantPaidCard(order: Order): CardMessage {
  * Состав/статус/контакты убраны — их видно в карточке заказа у менеджера.
  * Оплаченный заказ показываем как «№ + ✓» (кнопки нет).
  */
-export function buildAccountantDetail(order: Order, origin: string): CardMessage {
+export async function buildAccountantDetail(order: Order, origin: string): Promise<CardMessage> {
   const isPaid = order.status === "paid" || order.payment_status === "paid";
   if (isPaid) {
     return buildAccountantPaidCard(order);
   }
 
-  const invoiceUrl = `${origin.replace(/\/$/, "")}/documents/invoice/${order.id}`;
+  const invoiceUrl = withDocToken(
+    `${origin.replace(/\/$/, "")}/documents/invoice/${order.id}`,
+    await signDocumentToken(order.id),
+  );
   const text = [
     `🧾 Счёт №${order.order_number} · ${formatPrice(orderTotalWithDelivery(order))}`,
     order.company_name || null,
@@ -144,7 +149,7 @@ export async function notifyAccountantsAwaitingPayment(order: Order, origin: str
   const ids = idsForRole("accountant");
   if (ids.length === 0) return;
 
-  const { text, replyMarkup } = buildAccountantDetail(order, origin);
+  const { text, replyMarkup } = await buildAccountantDetail(order, origin);
 
   await Promise.all(
     ids.map((id) =>

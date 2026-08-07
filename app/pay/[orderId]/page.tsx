@@ -18,6 +18,8 @@ import {
 import { isHalykConfigured } from "@/src/lib/providers/halyk";
 import { getT } from "@/src/i18n/server";
 import { LOCALES, isLocale, localeLabels, type Locale } from "@/src/i18n/config";
+import { signDocumentToken } from "@/src/lib/document-token";
+import { withDocToken } from "@/src/lib/documents/access";
 
 // Страницу счёта открывают по ссылке из WhatsApp. Язык по умолчанию — русский
 // (не зависит от старой cookie NEXT_LOCALE в браузере), но клиент может выбрать
@@ -125,6 +127,8 @@ export default async function PayPage({ params, searchParams }: PayPageProps) {
       order.status,
     );
   const naklAvailable = invoiceAvailable;
+  // Страницу оплаты открывают по ссылке без сессии — подписываем токен для ссылок на документы.
+  const docToken = await signDocumentToken(order.id);
   const isExternalPaymentUrl =
     Boolean(order.payment_url) && !order.payment_url?.includes(`/pay/${order.id}`);
   // Оплата картой доступна, когда Halyk настроен и заказ подтверждён, но не оплачен
@@ -226,7 +230,7 @@ export default async function PayPage({ params, searchParams }: PayPageProps) {
               {invoiceAvailable ? (
                 <Link
                   className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn border border-coral bg-coral px-4 py-2 text-sm font-bold text-white transition hover:bg-coral-hover"
-                  href={`/documents/invoice/${order.id}`}
+                  href={withDocToken(`/documents/invoice/${order.id}`, docToken)}
                 >{t("Открыть счет")}</Link>
               ) : (
                 <p className="mt-4 text-sm font-semibold text-burgundy">
@@ -241,7 +245,7 @@ export default async function PayPage({ params, searchParams }: PayPageProps) {
               {naklAvailable ? (
                 <Link
                   className="mt-4 inline-flex min-h-11 items-center justify-center rounded-btn border border-dark bg-dark px-4 py-2 text-sm font-bold text-white transition hover:bg-dark/80"
-                  href={`/documents/nakl/${order.id}`}
+                  href={withDocToken(`/documents/nakl/${order.id}`, docToken)}
                 >{t("Открыть накладную")}</Link>
               ) : (
                 <p className="mt-4 text-sm font-semibold text-burgundy">

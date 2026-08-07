@@ -16,9 +16,11 @@ import { fetchAdminProducts } from "@/src/lib/catalog";
 import { formatPrice } from "@/src/lib/format";
 import { pluralRu, quantityInWords, tengeInWords } from "@/src/lib/number-to-words";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
+import { canAccessOrderDocument, withDocToken } from "@/src/lib/documents/access";
 
 type InvoicePageProps = {
   params: Promise<{ orderId: string }>;
+  searchParams: Promise<{ t?: string }>;
 };
 
 export const metadata: Metadata = {
@@ -35,8 +37,9 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("ru-RU", { dateStyle: "long" }).format(new Date(value));
 }
 
-export default async function InvoicePage({ params }: InvoicePageProps) {
+export default async function InvoicePage({ params, searchParams }: InvoicePageProps) {
   const { orderId } = await params;
+  const { t: docToken } = await searchParams;
 
   if (!isUuid(orderId)) {
     notFound();
@@ -49,6 +52,11 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
   ]);
 
   if (!order) {
+    notFound();
+  }
+
+  // Авторизация: валидный токен из ссылки или клиентская сессия владельца заказа.
+  if (!(await canAccessOrderDocument(orderId, docToken, order.customer_phone))) {
     notFound();
   }
 
@@ -131,7 +139,11 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
           ) : null}
           <a
             className="inline-flex min-h-10 items-center justify-center rounded-btn border border-coral bg-coral px-4 py-2 text-sm font-bold text-white transition hover:bg-coral-hover"
-            href={`/documents/invoice/${order.id}/xlsx`}
+            href={
+              docToken
+                ? withDocToken(`/documents/invoice/${order.id}/xlsx`, docToken)
+                : `/documents/invoice/${order.id}/xlsx`
+            }
           >
             Скачать Excel
           </a>

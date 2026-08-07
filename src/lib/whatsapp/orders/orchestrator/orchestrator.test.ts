@@ -114,7 +114,7 @@ function setup(opts: { transcript?: string; newClient?: boolean } = {}) {
     consent: { has: async () => false, record: async () => {} },
     lead: { upsertDraft: async (d) => { drafts.push(d as Record<string, unknown>); } },
     notifyManager: async (t) => { managerNotes.push(t); },
-    send: async (_c, t) => { sent.push(t); },
+    send: async (_c, t) => { sent.push(t); return "sent"; },
   };
 
   return {
@@ -202,6 +202,28 @@ test("полный happy path до заявки", async () => {
   assert.equal(t.state(), "order_submitted");
   assert.match(t.lastSent(), /DCB-2026-000001/);
   assert.equal(t.items().length, 0);
+});
+
+test("критичный шаг: подтверждение заказа не доставлено → эскалация менеджеру", async () => {
+  const t = setup();
+  // Green API молчит даже после ретрая — отправка всегда возвращает null.
+  t.deps.send = async () => null;
+  const m = (id: string, text: string) => msg({ messageId: id, text });
+
+  t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 2, operation: "add" }], showCart: true }));
+  await handleIncomingMessage(m("e1", "2 медовика"), t.deps);
+  t.setAgent(agentOut({ intent: "checkout", reply: "Оформляем." }));
+  await handleIncomingMessage(m("e2", "да, оформляй"), t.deps);
+  await handleIncomingMessage(m("e3", "г. Алматы, ул. Абая 10"), t.deps);
+  await handleIncomingMessage(m("e4", "да, верно"), t.deps);
+  await handleIncomingMessage(m("e5", "утро"), t.deps);
+  await handleIncomingMessage(m("e6", "да, оформляй"), t.deps);
+
+  assert.equal(t.orders.length, 1);
+  assert.ok(
+    t.managerNotes.some((n) => /не доставлено/i.test(n)),
+    "менеджер должен получить эскалацию о недоставленном подтверждении заказа",
+  );
 });
 
 test("идемпотентность: повторный webhook игнорируется", async () => {

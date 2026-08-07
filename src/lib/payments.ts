@@ -26,12 +26,20 @@ export function isDemoPaymentMode() {
 }
 
 function getDemoPaymentSecret() {
-  return (
+  const secret =
     process.env.DEMO_PAYMENT_SECRET ||
     process.env.PAYMENT_WEBHOOK_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    "dc-bakery-local-demo"
-  );
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  // БЕЗ захардкоженного фолбэка: с публично известным секретом демо-токен оплаты подделываем.
+  // Демо-режим (PAYMENT_MODE=demo) без своего секрета — ошибка конфигурации, а не тихий
+  // небезопасный дефолт. Вызывается только в демо-режиме, поэтому обычный флоу не затрагивает.
+  if (!secret) {
+    throw new Error(
+      "PAYMENT_MODE=demo, но секрет демо-платежей не задан — установите DEMO_PAYMENT_SECRET",
+    );
+  }
+  return secret;
 }
 
 export async function createDemoPaymentToken(orderId: string, paymentId: string) {

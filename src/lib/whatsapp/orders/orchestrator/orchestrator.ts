@@ -125,7 +125,8 @@ export type OrchestratorDeps = {
     }): Promise<void>;
   };
   notifyManager(text: string): Promise<void>;
-  send(chatId: string, text: string): Promise<void>;
+  /** Отправка сообщения клиенту. Возвращает id сообщения при успехе или null (для эскалации). */
+  send(chatId: string, text: string): Promise<string | null>;
 };
 
 function tomorrowDate(nowMs: number): string {
@@ -806,7 +807,16 @@ export async function handleIncomingMessage(
 
       await deps.cart.clear(msg.chatId).catch(() => {});
       await persist("order_submitted", {});
-      await reply(M.formatOrderCreated(created.orderNumber));
+      const confirmSent = await reply(M.formatOrderCreated(created.orderNumber));
+      if (!confirmSent) {
+        // Критичный шаг: заказ СОЗДАН, но подтверждение НЕ доставлено клиенту (Green API молчит
+        // даже после ретрая). Эскалируем менеджеру — иначе заказ висит, а клиент об этом не знает.
+        await deps
+          .notifyManager(
+            `⚠️ Заказ ${created.orderNumber} создан, но подтверждение НЕ доставлено клиенту (чат ${msg.chatId}). Свяжитесь вручную.`,
+          )
+          .catch(() => {});
+      }
 
       // Новый клиент (профиль не заполнен) — одноразовая ссылка для дозаполнения на сайте.
       const isNewClient = !profile?.companyName || profile.companyName === "WhatsApp клиент";

@@ -9,6 +9,7 @@ import {
 import { fetchAdminProducts } from "@/src/lib/catalog";
 import { buildInvoiceWorkbook, type InvoiceSection } from "@/src/lib/xlsx-docs";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
+import { canAccessOrderDocument } from "@/src/lib/documents/access";
 
 // Скачивание счёта на оплату настоящим Excel-файлом.
 // Условия выдачи и разбиение по цехам — те же, что у печатной страницы счёта.
@@ -25,7 +26,7 @@ function getValidDays() {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
   const { orderId } = await params;
@@ -41,6 +42,12 @@ export async function GET(
   ]);
 
   if (!order) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Авторизация ДО выдачи данных: валидный токен из ссылки или клиентская сессия владельца.
+  const docToken = new URL(request.url).searchParams.get("t");
+  if (!(await canAccessOrderDocument(orderId, docToken, order.customer_phone))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -101,6 +108,7 @@ export async function GET(
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="schet-${order.order_number}.xlsx"`,
       "Cache-Control": "no-store",
+      "Referrer-Policy": "no-referrer",
     },
   });
 }

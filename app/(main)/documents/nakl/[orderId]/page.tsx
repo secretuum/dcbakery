@@ -12,10 +12,11 @@ import { formatPrice } from "@/src/lib/format";
 import { nomenclatureCode } from "@/src/data/nomenclature-1c";
 import { pluralRu, quantityInWords, tengeInWords } from "@/src/lib/number-to-words";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
+import { canAccessOrderDocument, withDocToken } from "@/src/lib/documents/access";
 
 type NaklPageProps = {
   params: Promise<{ orderId: string }>;
-  searchParams: Promise<{ split?: string }>;
+  searchParams: Promise<{ split?: string; t?: string }>;
 };
 
 export const metadata: Metadata = {
@@ -33,7 +34,7 @@ function formatDate(value: string) {
 }
 
 export default async function NaklPage({ params, searchParams }: NaklPageProps) {
-  const [{ orderId }, { split }] = await Promise.all([params, searchParams]);
+  const [{ orderId }, { split, t: docToken }] = await Promise.all([params, searchParams]);
 
   if (!isUuid(orderId)) {
     notFound();
@@ -48,6 +49,13 @@ export default async function NaklPage({ params, searchParams }: NaklPageProps) 
   if (!order) {
     notFound();
   }
+
+  // Авторизация: валидный токен из ссылки или клиентская сессия владельца заказа.
+  if (!(await canAccessOrderDocument(orderId, docToken, order.customer_phone))) {
+    notFound();
+  }
+  // Токен прокидываем во внутренние ссылки страницы (если пришли по токену, а не по сессии).
+  const docHref = (path: string) => (docToken ? withDocToken(path, docToken) : path);
 
   const company = getCompanyDetails();
   // Форма З-2: подписанты. «Ответственный за поставку» и «Главный бухгалтер» —
@@ -101,8 +109,8 @@ export default async function NaklPage({ params, searchParams }: NaklPageProps) 
               className="inline-flex min-h-10 items-center justify-center rounded-btn border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-black/5"
               href={
                 isSplit
-                  ? `/documents/nakl/${order.id}`
-                  : `/documents/nakl/${order.id}?split=1`
+                  ? docHref(`/documents/nakl/${order.id}`)
+                  : docHref(`/documents/nakl/${order.id}?split=1`)
               }
             >
               {isSplit ? "Одна накладная" : "Разделить: Пекарня + Полуфабрикаты"}
@@ -110,7 +118,7 @@ export default async function NaklPage({ params, searchParams }: NaklPageProps) 
           ) : null}
           <a
             className="inline-flex min-h-10 items-center justify-center rounded-btn border border-coral bg-coral px-4 py-2 text-sm font-bold text-white transition hover:bg-coral-hover"
-            href={`/documents/nakl/${order.id}/xlsx${isSplit ? "?split=1" : ""}`}
+            href={docHref(`/documents/nakl/${order.id}/xlsx${isSplit ? "?split=1" : ""}`)}
           >
             Скачать Excel
           </a>

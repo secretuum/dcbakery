@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCompanyDetails, hasCompleteCompanyDetails } from "@/src/lib/company-details";
 import { buildAvrWorkbook } from "@/src/lib/xlsx-docs";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
+import { canAccessOrderDocument } from "@/src/lib/documents/access";
 
 // Скачивание АВР настоящим Excel-файлом (форма Р-1).
 // Условие выдачи — как у печатной страницы: заказ завершён.
@@ -11,7 +12,7 @@ function isUuid(value: string) {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ orderId: string }> },
 ) {
   const { orderId } = await params;
@@ -29,6 +30,12 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // Авторизация ДО выдачи данных: валидный токен из ссылки или клиентская сессия владельца.
+  const docToken = new URL(request.url).searchParams.get("t");
+  if (!(await canAccessOrderDocument(orderId, docToken, order.customer_phone))) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const company = getCompanyDetails();
 
   if (order.status !== "completed" || !hasCompleteCompanyDetails(company)) {
@@ -42,6 +49,7 @@ export async function GET(
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="avr-${order.order_number}.xlsx"`,
       "Cache-Control": "no-store",
+      "Referrer-Policy": "no-referrer",
     },
   });
 }

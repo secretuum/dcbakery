@@ -4,6 +4,7 @@ import { accountGroupLabels, splitItemsByAccount } from "@/src/lib/document-spli
 import { fetchAdminProducts } from "@/src/lib/catalog";
 import { buildNaklWorkbook, type NaklSection } from "@/src/lib/xlsx-docs";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
+import { canAccessOrderDocument } from "@/src/lib/documents/access";
 
 // Скачивание накладной настоящим Excel-файлом (форма З-2).
 // Доступ и условия выдачи — те же, что у печатной страницы накладной.
@@ -29,6 +30,12 @@ export async function GET(
   ]);
 
   if (!order) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Авторизация ДО выдачи данных: валидный токен из ссылки или клиентская сессия владельца.
+  const docToken = new URL(request.url).searchParams.get("t");
+  if (!(await canAccessOrderDocument(orderId, docToken, order.customer_phone))) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -65,6 +72,7 @@ export async function GET(
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="nakladnaya-${order.order_number}.xlsx"`,
       "Cache-Control": "no-store",
+      "Referrer-Policy": "no-referrer",
     },
   });
 }

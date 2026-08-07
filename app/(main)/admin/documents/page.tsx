@@ -3,6 +3,8 @@ import Link from "next/link";
 import { OrderStatusBadge } from "@/src/components/admin/OrderStatusBadge";
 import { fetchAdminOrders } from "@/src/lib/supabase/admin";
 import { formatPrice } from "@/src/lib/format";
+import { signDocumentToken } from "@/src/lib/document-token";
+import { withDocToken } from "@/src/lib/documents/access";
 
 export const metadata: Metadata = {
   title: "Накладные и счета | Админка DC Bakery",
@@ -25,6 +27,10 @@ function toDateInputValue(date: Date) {
 export default async function AdminDocumentsPage() {
   const orders = (await fetchAdminOrders()).filter(
     (order) => !HIDDEN_STATUSES.has(order.status),
+  );
+  // Токен доступа на каждый заказ — ссылки на документы из админки открываются без клиентской сессии.
+  const docTokens = new Map(
+    await Promise.all(orders.map(async (o) => [o.id, await signDocumentToken(o.id)] as const)),
   );
   const today = new Date();
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -139,14 +145,14 @@ export default async function AdminDocumentsPage() {
                       <div className="flex flex-wrap gap-2">
                         <Link
                           className="rounded-btn border border-black/15 bg-white px-3 py-1.5 text-xs font-bold text-dark transition hover:bg-black/5"
-                          href={`/documents/invoice/${order.id}`}
+                          href={withDocToken(`/documents/invoice/${order.id}`, docTokens.get(order.id) ?? "")}
                           target="_blank"
                         >
                           Счёт
                         </Link>
                         <Link
                           className="rounded-btn border border-black/15 bg-white px-3 py-1.5 text-xs font-bold text-dark transition hover:bg-black/5"
-                          href={`/documents/nakl/${order.id}`}
+                          href={withDocToken(`/documents/nakl/${order.id}`, docTokens.get(order.id) ?? "")}
                           target="_blank"
                         >
                           Накладная

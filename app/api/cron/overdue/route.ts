@@ -3,6 +3,7 @@ import { fetchUnpaidWorkOverdue, markOverdueOrders } from "@/src/lib/orders/over
 import { sendMessage } from "@/src/lib/telegram/api";
 import { logAction } from "@/src/lib/audit";
 import { formatPrice } from "@/src/lib/format";
+import { timingSafeCompare } from "@/src/lib/http/timing-safe";
 
 // Ежедневный крон консигнации: заявки confirmed_waiting_payment с прошедшим
 // due_date → 'overdue' + уведомление в общий чат + журнал.
@@ -18,9 +19,9 @@ function authorized(request: Request): boolean {
   if (!secret) return false;
 
   const header = request.headers.get("authorization");
-  if (header === `Bearer ${secret}`) return true;
+  if (timingSafeCompare(header, `Bearer ${secret}`)) return true;
 
-  return new URL(request.url).searchParams.get("secret") === secret;
+  return timingSafeCompare(new URL(request.url).searchParams.get("secret"), secret);
 }
 
 async function handle(request: Request) {

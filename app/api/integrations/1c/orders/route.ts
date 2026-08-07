@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { collectOrders } from "@/src/lib/export-1c";
+import { timingSafeCompare } from "@/src/lib/http/timing-safe";
 
 // Эндпоинт для внешней обработки 1С: отдаёт заказы сайта в JSON.
 // Авторизация: заголовок Authorization: Bearer <ONEC_EXPORT_TOKEN> (env на Render).
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
 
   const provided = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "").trim();
 
-  if (provided !== token) {
+  if (!timingSafeCompare(provided, token)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -154,8 +154,6 @@ export async function buildOrchestratorDeps(provider: WhatsAppProvider): Promise
     lead: { upsertDraft: (input) => upsertLeadDraft(input) },
 
     notifyManager: (text) => notifyManagersText(text),
-    send: async (chatId, text) => {
-      await provider.sendText(chatId, text);
-    },
+    send: (chatId, text) => provider.sendText(chatId, text),
   };
 }

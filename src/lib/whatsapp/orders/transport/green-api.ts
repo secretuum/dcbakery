@@ -30,32 +30,41 @@ export class GreenApiProvider implements WhatsAppProvider {
   async sendText(chatId: string, text: string): Promise<string | null> {
     const cfg = getConfig();
     if (!cfg) return null;
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), TIMEOUTS.supabaseMs);
-    try {
-      const res = await fetch(`${GREEN_BASE}/waInstance${cfg.instanceId}/sendMessage/${cfg.token}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, message: text }),
-        signal: controller.signal,
-        cache: "no-store",
-      });
-      if (!res.ok) {
-        console.error("[whatsapp:nl] sendText failed", res.status, GREEN_BASE);
-        return null;
+
+    // Одна повторная попытка: сеть/таймаут Green API мигают, а без ретрая ответ клиенту
+    // теряется молча, при этом состояние диалога уже ушло вперёд. Постоянные ошибки (4xx)
+    // ретрай не спасёт, но лишний запрос дёшев, а таймаут/5xx часто проходят со второго раза.
+    const MAX_ATTEMPTS = 2;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUTS.supabaseMs);
+      try {
+        const res = await fetch(`${GREEN_BASE}/waInstance${cfg.instanceId}/sendMessage/${cfg.token}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chatId, message: text }),
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (res.ok) {
+          const data = (await res.json()) as { idMessage?: string };
+          return data.idMessage ?? null;
+        }
+        console.error("[whatsapp:nl] sendText failed", res.status, `attempt ${attempt}`, GREEN_BASE);
+      } catch (error) {
+        console.error(
+          "[whatsapp:nl] sendText error",
+          error instanceof Error ? error.message : "unknown",
+          `attempt ${attempt}`,
+          GREEN_BASE,
+        );
+      } finally {
+        clearTimeout(timer);
       }
-      const data = (await res.json()) as { idMessage?: string };
-      return data.idMessage ?? null;
-    } catch (error) {
-      console.error(
-        "[whatsapp:nl] sendText error",
-        error instanceof Error ? error.message : "unknown",
-        GREEN_BASE,
-      );
-      return null;
-    } finally {
-      clearTimeout(timer);
+      // Короткая пауза перед повтором (не после последней попытки).
+      if (attempt < MAX_ATTEMPTS) await new Promise((resolve) => setTimeout(resolve, 400));
     }
+    return null;
   }
 
   async downloadVoice(ref: IncomingVoiceRef): Promise<DownloadedMedia | null> {

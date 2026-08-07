@@ -171,7 +171,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: true });
       }
       const openOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
-      const detail = buildAccountantDetail(order, openOrigin);
+      const detail = await buildAccountantDetail(order, openOrigin);
       if (cb.message) {
         await sendMessage({ chatId: cb.message.chat.id, text: detail.text, replyMarkup: detail.replyMarkup });
       }
@@ -246,7 +246,7 @@ export async function POST(request: Request) {
     // Оплата/снятие оплаты нажата в ЛС бухгалтера — обновляем ЭТО же сообщение:
     // «Оплачено» → «✅ №… — оплачено» (кнопка исчезает), «Снять оплату» → снова карточка с кнопкой.
     if ((action === "paid" || action === "unpaid") && cb.message && outcome.order) {
-      const dm = buildAccountantDetail(outcome.order, origin);
+      const dm = await buildAccountantDetail(outcome.order, origin);
       await editMessageText({
         chatId: cb.message.chat.id,
         messageId: cb.message.message_id,

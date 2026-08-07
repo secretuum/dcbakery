@@ -4,6 +4,7 @@ import {
   cancelOrder,
   clearProductStop,
   confirmAdminOrder,
+  fetchClientById,
   fetchAppSettings,
   fetchAdminOrderByNumber,
   fetchAdminOrderByWhatsAppMessageId,
@@ -14,6 +15,7 @@ import {
 } from "@/src/lib/supabase/admin";
 import { fetchAdminProducts } from "@/src/lib/catalog";
 import { createPaymentLink } from "@/src/lib/payments";
+import { consignmentDueDate } from "@/src/lib/credit";
 import {
   handleWhatsAppCustomerMessage,
   isCustomerWhatsAppChat,
@@ -633,6 +635,11 @@ async function confirmOrderFromWhatsApp(order: Order, request: Request) {
   ).catch(() => ({ messageId: null, registrationRequested: false }));
   const customerMessageId = customerNotification.messageId;
   const now = new Date().toISOString();
+  // Срок оплаты по консигнации — как в каноническом confirmOrder (actions.ts). Без него
+  // крон просрочки (фильтр по due_date) НИКОГДА не пометит подтверждённый через WhatsApp
+  // заказ overdue → кредитный контроль обходился (пеня/блок не срабатывали).
+  const client = order.client_id ? await fetchClientById(order.client_id).catch(() => null) : null;
+  const dueDate = consignmentDueDate(client, now.slice(0, 10));
   const confirmedOrder = await confirmAdminOrder(order.id, {
     confirmed_at: now,
     payment_id: paymentLink.paymentId,
@@ -641,6 +648,7 @@ async function confirmOrderFromWhatsApp(order: Order, request: Request) {
     payment_status: customerMessageId ? "payment_link_sent" : "payment_link_created",
     payment_url: paymentLink.paymentUrl,
     status: "confirmed_waiting_payment",
+    due_date: dueDate,
   });
   const managerMessageId = confirmedOrder
     ? await publishManagerUpdate(confirmedOrder, order.whatsapp_message_id)

@@ -248,59 +248,64 @@ export async function handleIncomingMessage(
   // Менеджерский групповой чат — не наш путь (обрабатывает существующий бот).
   if (msg.isManagerChat) return;
 
-  // 1) Идемпотентность: повторный webhook игнорируем.
-  const fresh = await deps.dedup
-    .markProcessed(msg.messageId, { chatId: msg.chatId, kind: msg.kind })
-    .catch(() => true);
-  if (!fresh) return;
-
   const nowMs = deps.now();
   const nowIso = new Date(nowMs).toISOString();
 
   const existing = await deps.dialog.get(msg.chatId).catch(() => null);
-  let state: DialogState = existing?.state ?? "idle";
-  let context: DialogContext = existing?.context ?? {};
   const phone = msg.phone || existing?.phone || null;
-  const senderName = msg.profileName ?? null;
 
-  // Передан менеджеру — бот молчит.
-  if (isBotSuppressed(state)) {
-    console.info("[whatsapp:nl] suppressed (human_handoff)", { chat: msg.chatId.slice(0, 6) });
-    return;
-  }
-
-  // TTL сессии (60 мин): не продолжаем старое оформление молча.
-  const stale =
-    existing &&
-    nowMs - existing.lastActivityMs > LIMITS.cartSessionTtlMs &&
-    state !== "idle" &&
-    state !== "order_submitted";
-  if (stale) {
-    // Корзину тоже очищаем: иначе после «сессия истекла» старые позиции остаются и
-    // клиент видит несуществующий заказ (рассинхрон TTL диалога и корзины).
-    await deps.cart.clear(msg.chatId).catch(() => {});
-    await deps.dialog.save(msg.chatId, { state: "expired", context: {}, phone }, nowIso).catch(() => {});
-    await deps.send(msg.chatId, M.MSG_EXPIRED);
-    return;
-  }
-
-  // Гарантируем строку для лока (новый чат) и берём лок от параллельных сообщений.
+  // Берём per-chat лок ПЕРВЫМ делом. Порядок критичен: раньше dedup (markProcessed) стоял
+  // ДО лока, и при промахе лока (параллельное сообщение того же чата держит 30-сек lease)
+  // обработчик выходил, а messageId уже был помечен обработанным → ретрай Green API тоже
+  // отсекался, и сообщение клиента терялось навсегда. Теперь dedup помечаем только ПОД локом.
   if (!existing) {
-    await deps.dialog.save(msg.chatId, { state, context, phone }, nowIso).catch(() => {});
+    await deps.dialog.save(msg.chatId, { state: "idle", context: {}, phone }, nowIso).catch(() => {});
   }
   const lockToken = crypto.randomUUID();
   const leaseIso = new Date(nowMs + 30_000).toISOString();
   const locked = await deps.dialog.acquireLock(msg.chatId, lockToken, nowIso, leaseIso).catch(() => false);
-  if (!locked) return; // другое сообщение уже обрабатывается
-
-  const persist = (s: DialogState, c: DialogContext) => {
-    state = s;
-    context = c;
-    return deps.dialog.save(msg.chatId, { state: s, context: c, phone }, nowIso);
-  };
-  const reply = (text: string) => deps.send(msg.chatId, text);
+  if (!locked) return; // другое сообщение уже обрабатывается — dedup НЕ трогаем, ретрай переобработает
 
   try {
+    // 1) Идемпотентность: повторный webhook с тем же messageId игнорируем — но уже ПОД локом,
+    // поэтому промах лока выше не «сжигает» слот dedup.
+    const fresh = await deps.dedup
+      .markProcessed(msg.messageId, { chatId: msg.chatId, kind: msg.kind })
+      .catch(() => true);
+    if (!fresh) return;
+
+    let state: DialogState = existing?.state ?? "idle";
+    let context: DialogContext = existing?.context ?? {};
+    const senderName = msg.profileName ?? null;
+
+    // Передан менеджеру — бот молчит.
+    if (isBotSuppressed(state)) {
+      console.info("[whatsapp:nl] suppressed (human_handoff)", { chat: msg.chatId.slice(0, 6) });
+      return;
+    }
+
+    // TTL сессии (60 мин): не продолжаем старое оформление молча.
+    const stale =
+      existing &&
+      nowMs - existing.lastActivityMs > LIMITS.cartSessionTtlMs &&
+      state !== "idle" &&
+      state !== "order_submitted";
+    if (stale) {
+      // Корзину тоже очищаем: иначе после «сессия истекла» старые позиции остаются и
+      // клиент видит несуществующий заказ (рассинхрон TTL диалога и корзины).
+      await deps.cart.clear(msg.chatId).catch(() => {});
+      await deps.dialog.save(msg.chatId, { state: "expired", context: {}, phone }, nowIso).catch(() => {});
+      await deps.send(msg.chatId, M.MSG_EXPIRED);
+      return;
+    }
+
+    const persist = (s: DialogState, c: DialogContext) => {
+      state = s;
+      context = c;
+      return deps.dialog.save(msg.chatId, { state: s, context: c, phone }, nowIso);
+    };
+    const reply = (text: string) => deps.send(msg.chatId, text);
+
     // 2) Получить текст: голос → guard+transcribe; вложение → отказ; иначе текст.
     let text: string;
     if (msg.kind === "unsupported") {

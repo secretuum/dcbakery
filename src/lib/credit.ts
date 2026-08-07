@@ -109,3 +109,19 @@ export async function canPlaceOrder(client: Client, orderSum: number): Promise<O
   }
   return { allowed: true, requiresPrepay: false };
 }
+
+/**
+ * Срок оплаты по консигнации: индивидуальный срок клиента, иначе CONSIGNMENT_DAYS (7).
+ * Отсчитывается от переданной даты (обычно — даты подтверждения). Единый источник для
+ * канонического confirmOrder и подтверждения заказа через WhatsApp — чтобы они не
+ * расходились (иначе WhatsApp-путь оставлял due_date=NULL и заказ не становился overdue).
+ */
+export function consignmentDueDate(
+  client: Pick<Client, "payment_terms_days"> | null | undefined,
+  fromDateIso: string,
+): string {
+  const termDays = client?.payment_terms_days ?? Number(process.env.CONSIGNMENT_DAYS ?? 7);
+  const d = new Date(fromDateIso);
+  d.setDate(d.getDate() + termDays);
+  return d.toISOString().slice(0, 10);
+}

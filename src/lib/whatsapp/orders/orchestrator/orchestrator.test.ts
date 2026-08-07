@@ -213,6 +213,19 @@ test("идемпотентность: повторный webhook игнорир�
   assert.equal(t.sent.length, after);
 });
 
+test("гонка лока: промах лока не «сжигает» dedup — ретрай переобрабатывается", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ reply: "Здравствуйте!" }));
+  // Первый заход: лок занят параллельным сообщением того же чата → выходим, ничего не шлём.
+  t.deps.dialog.acquireLock = async () => false;
+  await handleIncomingMessage(msg({ messageId: "race1", text: "привет" }), t.deps);
+  assert.equal(t.sent.length, 0);
+  // Ретрай ТОГО ЖЕ messageId, лок свободен → сообщение обязано обработаться (dedup не сгорел).
+  t.deps.dialog.acquireLock = async () => true;
+  await handleIncomingMessage(msg({ messageId: "race1", text: "привет" }), t.deps);
+  assert.match(t.lastSent(), /Здравствуйте/);
+});
+
 test("абьюз/жалоба → менеджеру ДО агента", async () => {
   const t = setup();
   t.setAgent(agentOut({ reply: "не должно вызваться" }));

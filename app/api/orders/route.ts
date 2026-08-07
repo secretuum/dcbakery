@@ -268,6 +268,8 @@ export async function POST(request: Request) {
     );
   }
 
+  let requiresPrepay = false;
+  let prepayReason: string | null = null;
   if (client) {
     const creditCheck = await canPlaceOrder(client, orderSum);
     if (!creditCheck.allowed) {
@@ -275,6 +277,16 @@ export async function POST(request: Request) {
         { errors: [creditCheck.reason ?? "Заказ не может быть принят"] },
         { status: 409 },
       );
+    }
+    // allowed:true + requiresPrepay:true — клиент с отсрочкой (credit_limit>0), временно
+    // превысивший лимит или с просрочкой в пределах grace. Раньше флаг МОЛЧА игнорировался
+    // → заказ уходил в обычную консигнацию, и превышение лимита не всплывало. Жёсткого
+    // стопа тут не ставим (шлюз отгрузки shipmentBlockedForPrepay намеренно ключует на
+    // статичный credit_limit во избежание циркулярности) — вместо этого явно помечаем заказ
+    // для менеджера и возвращаем флаг клиенту.
+    if (creditCheck.requiresPrepay) {
+      requiresPrepay = true;
+      prepayReason = creditCheck.reason ?? "превышен лимит или есть просрочка";
     }
   }
 
@@ -307,7 +319,15 @@ export async function POST(request: Request) {
     delivery_time: body.delivery_time || null,
     payment_method: body.payment_method || null,
     request_avr: body.request_avr === true,
-    comment: body.comment || null,
+    comment:
+      [
+        requiresPrepay
+          ? `⚠️ Требуется предоплата (${prepayReason}). Не отгружать в консигнацию до оплаты.`
+          : null,
+        body.comment || null,
+      ]
+        .filter(Boolean)
+        .join("\n") || null,
     client_id: client?.id ?? null,
     status: "pending_manager_confirmation",
     total_amount: totalAmount,
@@ -402,5 +422,6 @@ export async function POST(request: Request) {
     orderNumber,
     whatsappMessageId,
     telegramMessageId,
+    requiresPrepay,
   });
 }

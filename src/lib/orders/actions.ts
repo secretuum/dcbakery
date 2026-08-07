@@ -29,6 +29,7 @@ import { fetchWhatsAppClientByChatId } from "@/src/lib/whatsapp-client-store";
 import { canonicalOrderStatuses } from "@/src/lib/order-status";
 import { exportOrderWriteoffToIiko } from "@/src/lib/orders/iiko-export";
 import { shipmentBlockedForPrepay } from "@/src/lib/account/tier";
+import { consignmentDueDate } from "@/src/lib/credit";
 
 // Единая логика действий над заказом (подтверждение / оплата / статусы / отмена).
 // Раньше жила по одной копии в каждом admin-роуте; теперь и админка, и Telegram-бот
@@ -45,12 +46,6 @@ export type OrderActor =
 export type ActionError = { ok: false; status: number; error: string };
 
 const allowedStatuses: readonly OrderStatus[] = canonicalOrderStatuses;
-
-function addDays(isoDate: string, days: number): string {
-  const d = new Date(isoDate);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
 
 // Общий «хвост» всех действий: перерисовать карточку заказа у менеджера в WhatsApp
 // и сохранить новый message_id. Ошибки глотаем — это не должно ронять действие.
@@ -131,8 +126,7 @@ export async function confirmOrder(
   const now = new Date().toISOString();
   // Консигнация: срок оплаты отсчитывается от ПОДТВЕРЖДЕНИЯ (не от отгрузки).
   // Индивидуальный срок клиента в приоритете, иначе — CONSIGNMENT_DAYS (по умолчанию 7).
-  const termDays = client?.payment_terms_days ?? Number(process.env.CONSIGNMENT_DAYS ?? 7);
-  const dueDate = addDays(now.slice(0, 10), termDays);
+  const dueDate = consignmentDueDate(client, now.slice(0, 10));
   const paymentLink = createPaymentLink(order, undefined, origin);
   // Разовая рассылка клиенту при подтверждении: заказ + ссылка на счёт/оплату.
   // Отдельный флаг WHATSAPP_CLIENT_NOTIFY (не общий whatsappEnabled), поэтому

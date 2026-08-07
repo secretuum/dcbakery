@@ -13,6 +13,7 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const montserrat = Montserrat({
@@ -109,12 +110,38 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  // Origin Supabase Storage (фото товаров) для раннего соединения. try/catch — на случай
+  // некорректного значения env, чтобы не уронить рендер layout.
+  let supabaseOrigin: string | null = null;
+  try {
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      supabaseOrigin = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin;
+    }
+  } catch {
+    supabaseOrigin = null;
+  }
 
   return (
     <html
       lang={locale}
       className={`${geistSans.variable} ${montserrat.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
+      <head>
+        {/* Ранние соединения к сторонним хостам: экономят DNS+TCP+TLS до первого обращения
+            (аналитика, фото товаров из Supabase). Условно по env — без ключей ничего не добавляем. */}
+        {supabaseOrigin ? (
+          <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
+        ) : null}
+        {process.env.NEXT_PUBLIC_GA_ID ? (
+          <>
+            <link rel="preconnect" href="https://www.googletagmanager.com" />
+            <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+          </>
+        ) : null}
+        {process.env.NEXT_PUBLIC_YANDEX_METRICA_ID ? (
+          <link rel="preconnect" href="https://mc.yandex.ru" crossOrigin="anonymous" />
+        ) : null}
+      </head>
       <body className="flex min-h-full flex-col">
         <Analytics />
         <RouteTracker />

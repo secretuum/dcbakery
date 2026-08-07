@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { getSiteContent } from "@/src/lib/site-content";
 import { getLocale, getT } from "@/src/i18n/server";
@@ -128,8 +129,7 @@ export default async function Home() {
                 </div>
                 {/* плавающий тег */}
                 <div className="absolute flex items-center gap-3 rounded-full border border-white/80 bg-white/[0.86] py-2.5 pl-2.5 pr-4 shadow-md backdrop-blur-lg" style={{ right: "4%", bottom: "6%" }}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/products/pelmeni-s-govyadinoy.webp" alt="" className="size-10 rounded-full object-cover" />
+                  <Image src="/products/pelmeni-s-govyadinoy.webp" alt="" width={40} height={40} className="size-10 rounded-full object-cover" />
                   <span className="leading-tight">
                     <b className="block text-sm font-bold text-dark"><EditableText field="home.hero.tagCount" fallback={t("53 позиции")} /></b>
                     <span className="block text-[11px] text-muted"><EditableText field="home.hero.tagKinds" fallback={t("десерты · полуфабрикаты · мясо")} /></span>

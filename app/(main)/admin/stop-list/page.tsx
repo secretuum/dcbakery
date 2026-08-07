@@ -19,10 +19,10 @@ function formatDate(value?: string | null) {
 }
 
 export default async function AdminStopListPage() {
-  const [activeEvents, events] = await Promise.all([
-    fetchProductStopEvents({ activeOnly: true }),
-    fetchProductStopEvents(),
-  ]);
+  // Активные события — подмножество полного списка (ended_at is null). Берём полный список
+  // ОДНИМ запросом и фильтруем активные в памяти, а не делаем второй запрос к Supabase.
+  const events = await fetchProductStopEvents();
+  const activeEvents = events.filter((e) => e.ended_at == null);
 
   return (
     <div>

@@ -13,9 +13,11 @@ import type { Product } from "@/src/types";
 
 type ProductCardProps = {
   product: Product;
+  /** Приоритетная загрузка фото — для первых карточек первого экрана (ускоряет LCP каталога). */
+  priority?: boolean;
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, priority }: ProductCardProps) {
   const t = useT();
   const locale = useLocale();
   const localized = localizeProduct(product, locale);
@@ -82,6 +84,7 @@ export function ProductCard({ product }: ProductCardProps) {
           categoryId={product.category_id}
           categorySlug={product.category?.slug}
           fill
+          priority={priority}
           sizes="(max-width: 640px) 50vw, (max-width: 1280px) 25vw, 20vw"
           className={`object-cover transition-transform duration-500 ease-out hover:scale-[1.045] ${
             !isInStock ? "opacity-50 grayscale" : ""

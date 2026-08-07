@@ -388,6 +388,32 @@ export async function fetchAppSettings() {
   }
 }
 
+/**
+ * Узкий запрос одной настройки по ключу — вместо `SELECT *` всей таблицы `app_settings`.
+ * Для горячих читателей одного ключа (напр. site_content): не тянем крупный `home_layout`
+ * и прочие строки при каждой ревалидации кэша (экономия egress).
+ */
+export async function fetchAppSetting(key: string): Promise<string | null> {
+  if (getSupabaseAdminConfigError()) {
+    return null;
+  }
+
+  try {
+    const params = new URLSearchParams({ select: "value", key: `eq.${key}`, limit: "1" });
+    const rows = await supabaseGet<Array<{ value: string | null }>>(
+      "app_settings",
+      params.toString(),
+    );
+    return rows[0]?.value ?? null;
+  } catch (error) {
+    if (isAppSettingsMigrationMissing(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
 export async function upsertAppSetting(key: string, value: string) {
   const [setting] = await supabaseUpsert<AppSetting[]>(
     "app_settings",

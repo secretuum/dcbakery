@@ -1,6 +1,6 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
-import { fetchAppSettings } from "@/src/lib/supabase/admin";
+import { fetchAppSetting } from "@/src/lib/supabase/admin";
 
 // Редактируемый контент сайта. Хранится одной JSON-строкой в app_settings
 // под ключом site_content (таблица уже существует — миграций не требуется).
@@ -123,15 +123,14 @@ function sanitize(raw: unknown): Partial<SiteContent> {
 /** Тег кэша контента сайта — сбрасывается при сохранении в /api/admin/settings. */
 export const SITE_CONTENT_CACHE_TAG = "site-content";
 
-// Контент сайта читается в layout НА КАЖДЫЙ рендер. Без кэша это `SELECT *` из
-// app_settings (вместе с крупным home_layout) на любой заход/краулер → огромный
-// egress Supabase. Кэшируем на весь инстанс: реально в БД ходим не чаще раза в
-// revalidate-окно, а правки суперадмина мгновенно видны через revalidateTag.
+// Контент сайта читается в layout НА КАЖДЫЙ рендер. Кэшируем на весь инстанс: реально в БД
+// ходим не чаще раза в revalidate-окно, а правки суперадмина мгновенно видны через
+// revalidateTag. На чтении берём УЗКИМ запросом только строку site_content (fetchAppSetting),
+// а не `SELECT *` всей app_settings с крупным home_layout — меньше egress на ревалидации.
 const loadSiteContent = unstable_cache(
   async (): Promise<SiteContent> => {
     try {
-      const settings = await fetchAppSettings();
-      const raw = settings.find((setting) => setting.key === SITE_CONTENT_KEY)?.value;
+      const raw = await fetchAppSetting(SITE_CONTENT_KEY);
 
       if (!raw) {
         return defaultSiteContent;

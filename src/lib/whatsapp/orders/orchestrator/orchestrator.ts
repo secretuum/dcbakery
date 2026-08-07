@@ -310,7 +310,15 @@ export async function handleIncomingMessage(
     // 2) Получить текст: голос → guard+transcribe; вложение → отказ; иначе текст.
     let text: string;
     if (msg.kind === "unsupported") {
+      // B2B часто присылает заявку файлом/фото. Прочитать не можем, но заказ НЕ теряем:
+      // заводим лид и зовём менеджера обработать вложение вручную (иначе — тихий отказ).
       await reply(M.MSG_ATTACHMENT);
+      await createLead("unsupported_attachment", "[вложение]");
+      await deps
+        .notifyManager(
+          `📎 Клиент прислал вложение (фото/файл), бот его не читает. Чат: ${msg.chatId}. Обработайте заявку вручную.`,
+        )
+        .catch(() => {});
       return;
     }
     if (msg.kind === "voice") {
@@ -397,6 +405,16 @@ export async function handleIncomingMessage(
     const scan = scanForInjection(text);
     if (scan.labels.length > 0) {
       console.info("[whatsapp:nl] suspicious input", { chat: msg.chatId.slice(0, 6), labels: scan.labels });
+    }
+    if (scan.hardInjection) {
+      // Явная prompt-injection (не «бесплатная доставка» и не ссылка-карта в адресе). Бот
+      // продолжает отвечать штатно (цена/остаток серверные, JSON-схема strict) — но зовём
+      // менеджера присмотреть, чтобы LLM не выдал некорректных обещаний от лица бренда.
+      await deps
+        .notifyManager(
+          `🛡️ Похоже на prompt-injection в чате ${msg.chatId} (метки: ${scan.labels.join(", ")}). Бот ответил штатно — проверьте при необходимости.`,
+        )
+        .catch(() => {});
     }
 
     // 3) Структурированная фаза оформления (адрес/интервал/подтверждение) — детерминированно.

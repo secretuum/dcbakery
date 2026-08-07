@@ -26,8 +26,9 @@ const PRICE_PAYMENT_PATTERNS: readonly RegExp[] = [
   /обнул[а-я]*\s*(цен|сумм|счет)/,
 ];
 
-// Классические prompt-injection формулировки.
-const INJECTION_PATTERNS: readonly RegExp[] = [
+// Жёсткие prompt-injection формулировки — почти никогда не встречаются в реальном B2B-заказе,
+// поэтому по ним можно ЭСКАЛИРОВАТЬ менеджеру (см. hardInjection ниже), не рискуя ложными.
+const HARD_INJECTION_PATTERNS: readonly RegExp[] = [
   /ignore\s+(all\s+)?(previous|prior|above)\s+instructions/,
   /игнорир[а-я]*\s+(все\s+)?(предыдущ|прошл|выше|инструкц)/,
   /disregard\s+(the\s+)?(system|previous)/,
@@ -44,20 +45,29 @@ const INJECTION_PATTERNS: readonly RegExp[] = [
   /выполни\s+(sql|запрос|команд)/,
   /отправь\s+(базу|таблиц|клиент|данные|дамп)/,
   /send\s+(the\s+)?(database|table|dump|customers)/,
-  /(скачай|перейди|открой)\s+(по\s+)?ссылк/,
-  /(download|fetch|open|visit)\s+(the\s+)?(url|link|file)/,
   /вызови\s+(инструмент|функц|tool)/,
   /call\s+(the\s+)?(tool|function)/,
-  /curl|wget|http:\/\/|https:\/\//,
   /<script|onerror=|javascript:/,
   /\.\.\/|\.\.\\|\/etc\/passwd/,
 ];
+
+// Ссылки/загрузки: ЧАСТО ложные (клиент присылает ссылку-карту на адрес доставки) — только
+// журнал, НЕ эскалируем, чтобы не спамить менеджера на легитимных сообщениях.
+const SOFT_LINK_PATTERNS: readonly RegExp[] = [
+  /(скачай|перейди|открой)\s+(по\s+)?ссылк/,
+  /(download|fetch|open|visit)\s+(the\s+)?(url|link|file)/,
+  /curl|wget|http:\/\/|https:\/\//,
+];
+
+const INJECTION_PATTERNS: readonly RegExp[] = [...HARD_INJECTION_PATTERNS, ...SOFT_LINK_PATTERNS];
 
 export type InjectionScan = {
   /** Найдена манипуляция ценой/оплатой (для журнала; поведение не меняем). */
   priceManipulation: boolean;
   /** Найдена prompt-injection / попытка выполнить действие (для журнала). */
   injection: boolean;
+  /** Жёсткая инъекция (без ссылок/загрузок — низкий процент ложных): достойна эскалации менеджеру. */
+  hardInjection: boolean;
   /** Короткие метки сработавших паттернов (без сырого пользовательского текста в логах). */
   labels: string[];
 };
@@ -70,10 +80,11 @@ export function scanForInjection(rawText: string): InjectionScan {
   const priceManipulation = PRICE_PAYMENT_PATTERNS.some((re) => re.test(text));
   if (priceManipulation) labels.push("price_payment");
 
-  const injection = INJECTION_PATTERNS.some((re) => re.test(text));
+  const hardInjection = HARD_INJECTION_PATTERNS.some((re) => re.test(text));
+  const injection = hardInjection || SOFT_LINK_PATTERNS.some((re) => re.test(text));
   if (injection) labels.push("prompt_injection");
 
-  return { priceManipulation, injection, labels };
+  return { priceManipulation, injection, hardInjection, labels };
 }
 
 /** true, если «позиция» на самом деле является манипулятивной фразой, а не товаром. */

@@ -756,7 +756,6 @@ export async function POST(request: Request) {
   const chatId = extractChatId(payload);
   const expectedChatId = process.env.GREEN_API_CHAT_ID;
   const text = extractText(payload);
-  const featureFlags = await getWhatsAppFeatureFlags();
 
   console.info("[whatsapp:webhook] received", {
     chat: formatChatForLog(chatId),
@@ -787,6 +786,11 @@ export async function POST(request: Request) {
   if (chatId.endsWith("@g.us") && chatId !== expectedChatId) {
     return respondWithIgnored("Foreign group chat ignored");
   }
+
+  // Флаги из БД читаем ТОЛЬКО после дешёвых синхронных отсевов (тип вебхука, чужие @g.us-группы,
+  // пустой chatId) — иначе каждый игнорируемый вебхук из чужих «Касса …» групп жёг лишний
+  // запрос в Supabase (egress).
+  const featureFlags = await getWhatsAppFeatureFlags();
 
   if (!featureFlags.botEnabled) {
     return respondWithIgnored("WhatsApp bot disabled");

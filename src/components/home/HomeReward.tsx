@@ -114,16 +114,25 @@ export function HomeReward({ giftProducts, collected: collectedProp }: HomeRewar
 
                   {/* nodes */}
                   <div className="pointer-events-none absolute inset-0 flex items-center">
-                    {MILESTONES.map((m) => {
+                    {MILESTONES.map((m, i) => {
                       const at = (m.value / THRESHOLD) * 100;
                       const reached = pct >= at;
+                      // Крайние узлы прижимаем к краям трека: без этого центрирующий
+                      // -translate-x-1/2 выносил половину кружка за шкалу (на 100 000 — вправо).
+                      const isFirst = i === 0;
+                      const isLast = i === MILESTONES.length - 1;
+                      const nodeTransform = isFirst
+                        ? "translateX(0)"
+                        : isLast
+                          ? "translateX(-100%)"
+                          : "translateX(-50%)";
                       return (
                         <span
                           key={m.value}
-                          className={`absolute grid h-8 w-8 -translate-x-1/2 place-items-center rounded-full shadow-sm ${
+                          className={`absolute grid h-8 w-8 place-items-center rounded-full shadow-sm ${
                             reached ? "bg-accent-700 text-white" : "bg-white text-muted-light"
                           }`}
-                          style={{ left: `${at}%` }}
+                          style={{ left: `${at}%`, transform: nodeTransform }}
                         >
                           {reached ? (
                             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

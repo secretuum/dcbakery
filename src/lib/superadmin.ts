@@ -3,9 +3,19 @@ import { cookies } from "next/headers";
 import { ADMIN_ACCESS_COOKIE } from "@/src/lib/supabase/auth";
 import { isAdminIdentity, type AdminIdentity } from "@/src/lib/admin-access";
 
-// Доступ к редактированию контента сайта (фото, главная, настройки) прямо со
-// страниц. По просьбе открыт ВСЕМ админам-менеджерам. Раньше сужался до
-// SUPERADMIN_EMAILS — теперь любой авторизованный админ может редактировать.
+// Доступ к редактированию контента сайта (фото, главная, настройки) прямо со страниц.
+// Ограничен списком SUPERADMIN_EMAILS: обычные админы (напр. торговые представители,
+// которые оформляют заявки) в него НЕ входят и правку сайта не получают. Пустой/незаданный
+// список = все админы (обратная совместимость, чтобы не заблокировать себя до настройки env).
+
+function getSuperAdminEmails(): Set<string> {
+  return new Set(
+    (process.env.SUPERADMIN_EMAILS ?? "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
 
 async function fetchIdentity(token: string): Promise<AdminIdentity | null> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -43,7 +53,17 @@ export async function getIsSuperAdmin(): Promise<boolean> {
   }
 
   const identity = await fetchIdentity(token);
+  if (!identity || !isAdminIdentity(identity)) {
+    return false;
+  }
 
-  // Редактирование контента открыто всем админам (менеджерам).
-  return Boolean(identity && isAdminIdentity(identity));
+  // Правку сайта получают только суперадмины из SUPERADMIN_EMAILS. Пустой список = все
+  // админы (обратная совместимость). Задайте SUPERADMIN_EMAILS=ваш@email, чтобы новые
+  // админы-торгпреды имели доступ к админке/заявкам, но НЕ к редактированию контента.
+  const superAdmins = getSuperAdminEmails();
+  if (superAdmins.size === 0) {
+    return true;
+  }
+  const email = identity.email?.trim().toLowerCase();
+  return Boolean(email && superAdmins.has(email));
 }

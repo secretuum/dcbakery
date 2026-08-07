@@ -85,14 +85,30 @@ export function formatShortDeliveryDays(days: number[], t?: Translator) {
     .join(" · ");
 }
 
+// Не все рантаймы (лёгкий ICU в Node/браузере) содержат казахский CLDR: тогда
+// Intl.DateTimeFormat('kk-KZ', {month:'short'}) откатывается к root-локали и выдаёт «M08»
+// вместо месяца, а дни недели — АНГЛИЙСКИЕ. Пробуем формат и при «M08»-подобном выводе
+// берём ru-RU (казахскому читателю ближе русского, чем сломанный английский root-фолбэк).
+function pickSafeIntlLocale(intlLocale: string): string {
+  try {
+    const probe = new Intl.DateTimeFormat(intlLocale, { month: "short" }).format(
+      new Date(Date.UTC(2020, 7, 1)),
+    );
+    return /^M\d\d$/i.test(probe) ? INTL_LOCALES.ru : intlLocale;
+  } catch {
+    return INTL_LOCALES.ru;
+  }
+}
+
 // Доставка в день X возможна, если заявка успевает до отсечки накануне:
 // сегодня минимум за 2 дня до X, либо ровно накануне и сейчас раньше cutoffHour.
 function getDeliveryDateOptions(
   schedule: DeliverySchedule,
   intlLocale: string = INTL_LOCALES.ru,
 ): DeliveryDateOption[] {
-  const weekdayFormat = new Intl.DateTimeFormat(intlLocale, { weekday: "short" });
-  const dayFormat = new Intl.DateTimeFormat(intlLocale, { day: "numeric", month: "short" });
+  const safeLocale = pickSafeIntlLocale(intlLocale);
+  const weekdayFormat = new Intl.DateTimeFormat(safeLocale, { weekday: "short" });
+  const dayFormat = new Intl.DateTimeFormat(safeLocale, { day: "numeric", month: "short" });
   const now = new Date();
   const start = new Date(now);
   start.setDate(start.getDate() + 1);

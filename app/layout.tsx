@@ -5,6 +5,7 @@ import { ToastProvider } from "@/src/contexts/ToastContext";
 import { LocaleProvider } from "@/src/i18n/client";
 import { LOCALES, OG_LOCALE } from "@/src/i18n/config";
 import { getLocale, getT } from "@/src/i18n/server";
+import { getDictionary } from "@/src/i18n/translate";
 import { SITE_URL } from "@/src/lib/site-url";
 import { Analytics } from "@/src/components/analytics/Analytics";
 import { RouteTracker } from "@/src/components/analytics/RouteTracker";
@@ -110,6 +111,9 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  // Активный словарь передаём пропом в LocaleProvider: на клиент уходит ТОЛЬКО он (ru → null),
+  // а не оба словаря целиком в бандле. Layout не перемонтируется → отправляется один раз.
+  const dictionary = getDictionary(locale);
   // Origin Supabase Storage (фото товаров) для раннего соединения. try/catch — на случай
   // некорректного значения env, чтобы не уронить рендер layout.
   let supabaseOrigin: string | null = null;
@@ -145,7 +149,7 @@ export default async function RootLayout({
       <body className="flex min-h-full flex-col">
         <Analytics />
         <RouteTracker />
-        <LocaleProvider locale={locale}>
+        <LocaleProvider locale={locale} dictionary={dictionary}>
           <CartProvider>
             <ToastProvider>
               {children}

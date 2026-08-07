@@ -14,7 +14,7 @@ import { gaItem, trackEvent } from "@/src/lib/analytics";
 import { isValidKzMobile } from "@/src/lib/phone";
 import { useLocale, useT } from "@/src/i18n/client";
 import type { Locale } from "@/src/i18n/config";
-import type { TranslateVars, Translator } from "@/src/i18n/translate";
+import type { TranslateVars, Translator } from "@/src/i18n/translate-core";
 import { withLocale } from "@/src/i18n/routing";
 import { CheckoutAuthGate } from "@/src/components/checkout/CheckoutAuthGate";
 

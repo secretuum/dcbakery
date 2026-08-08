@@ -45,6 +45,15 @@ export default async function Home() {
     acc[p.category_id] = (acc[p.category_id] ?? 0) + 1;
     return acc;
   }, {});
+  // Репрезентативное фото категории — первое реальное фото товара из неё (плитки на главной).
+  // Нет фото → HomeCategoryCards откатывается на иконку-заглушку, как раньше (без регресса).
+  const categoryImages = allProducts.reduce<Record<string, string>>((acc, p) => {
+    const img = p.images?.[0];
+    if (img && p.category_id && !acc[p.category_id]) {
+      acc[p.category_id] = img;
+    }
+    return acc;
+  }, {});
   const dessertGifts = allProducts
     .filter((p) => (p.category?.name ?? "").toLowerCase().includes("десерт"))
     .slice(0, 5);
@@ -160,7 +169,7 @@ export default async function Home() {
         <HomePopularPosters products={popularProducts} />
 
         {/* ─── Разделы каталога ─── */}
-        <HomeCategoryCards categories={categories} counts={categoryCounts} />
+        <HomeCategoryCards categories={categories} counts={categoryCounts} images={categoryImages} />
 
         {/* ─── Ленты товаров ─── */}
         <HomeCatalogTabs categories={categories} products={allProducts} />

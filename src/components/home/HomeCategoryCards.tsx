@@ -10,6 +10,8 @@ type Category = { id: string; slug: string; name: string };
 type HomeCategoryCardsProps = {
   categories: Category[];
   counts?: Record<string, number>;
+  /** Репрезентативное фото по category.id; нет — рендерим иконку-заглушку. */
+  images?: Record<string, string>;
 };
 
 function plural(n: number, forms: [string, string, string]): string {
@@ -21,7 +23,7 @@ function plural(n: number, forms: [string, string, string]): string {
   return forms[2];
 }
 
-export function HomeCategoryCards({ categories, counts }: HomeCategoryCardsProps) {
+export function HomeCategoryCards({ categories, counts, images }: HomeCategoryCardsProps) {
   const t = useT();
 
   if (!categories || categories.length === 0) return null;
@@ -70,11 +72,11 @@ export function HomeCategoryCards({ categories, counts }: HomeCategoryCardsProps
                 <span className="relative z-[1] grid h-[52px] w-[52px] place-items-center overflow-hidden rounded-md bg-accent-50 p-2.5">
                   <span className="relative block h-full w-full">
                     <FallbackImage
-                      src={undefined}
+                      src={images?.[category.id]}
                       alt=""
                       fill
                       sizes="52px"
-                      className="object-contain"
+                      className={images?.[category.id] ? "object-cover" : "object-contain"}
                       categoryId={category.id}
                       categorySlug={category.slug}
                     />

@@ -2,13 +2,15 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useToast } from "@/src/contexts/ToastContext";
-import { useT } from "@/src/i18n/client";
+import { useLocale, useT } from "@/src/i18n/client";
+import { formatMediumDate } from "@/src/i18n/date-labels";
+import type { Locale } from "@/src/i18n/config";
 
 type Comment = { id: string; authorName: string; body: string; createdAt: string };
 
-function formatDate(iso: string) {
+function formatDate(iso: string, locale: Locale) {
   try {
-    return new Intl.DateTimeFormat("ru-RU", { dateStyle: "medium" }).format(new Date(iso));
+    return formatMediumDate(new Date(iso), locale);
   } catch {
     return "";
   }
@@ -16,6 +18,7 @@ function formatDate(iso: string) {
 
 export function ProductComments({ slug }: { slug: string }) {
   const t = useT();
+  const locale = useLocale();
   const { showToast } = useToast();
   const [comments, setComments] = useState<Comment[]>([]);
   const [authed, setAuthed] = useState<boolean | null>(null);
@@ -72,7 +75,7 @@ export function ProductComments({ slug }: { slug: string }) {
             <li key={comment.id} className="rounded-md bg-cream px-3 py-2.5">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-[13.5px] font-semibold text-dark">{comment.authorName}</span>
-                <span className="shrink-0 text-[11px] text-muted">{formatDate(comment.createdAt)}</span>
+                <span className="shrink-0 text-[11px] text-muted">{formatDate(comment.createdAt, locale)}</span>
               </div>
               <p className="mt-1 whitespace-pre-line text-[13.5px] leading-relaxed text-muted">{comment.body}</p>
             </li>

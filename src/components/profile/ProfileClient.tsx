@@ -15,6 +15,8 @@ import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { useLocale, useT } from "@/src/i18n/client";
 import { withLocale } from "@/src/i18n/routing";
+import { formatMediumDate } from "@/src/i18n/date-labels";
+import type { Locale } from "@/src/i18n/config";
 import type { ClientOrderSummary, CreditState, OrderItemSummary, Product } from "@/src/types";
 
 type AdminSession = {
@@ -57,14 +59,12 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-function formatDate(value?: string | null) {
+function formatDate(value: string | null | undefined, locale: Locale) {
   if (!value) {
     return "не указано";
   }
 
-  return new Intl.DateTimeFormat("ru-RU", {
-    dateStyle: "medium",
-  }).format(new Date(value));
+  return formatMediumDate(new Date(value), locale);
 }
 
 function formatMmss(totalSeconds: number) {
@@ -1000,6 +1000,7 @@ function AdminDashboard({
 
 function CreditBlock({ state }: { state: CreditState }) {
   const t = useT();
+  const locale = useLocale();
   const inTimePct =
     state.limit > 0
       ? Math.min(100, ((state.used - state.overdue) / state.limit) * 100)
@@ -1064,7 +1065,7 @@ function CreditBlock({ state }: { state: CreditState }) {
               state.overdueDays > 0 ? "text-danger" : ""
             }`}
           >
-            {state.nextDueDate ? formatDate(state.nextDueDate) : "—"}
+            {state.nextDueDate ? formatDate(state.nextDueDate, locale) : "—"}
           </p>
           {state.overdueDays > 0 ? (
             <p className="mt-2 text-[11px] font-semibold text-danger">
@@ -1181,6 +1182,7 @@ function useReorder() {
 
 function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
   const t = useT();
+  const locale = useLocale();
   const { reorder, reorderingId } = useReorder();
   const orderStatus =
     t(clientOrderStatusLabels[order.status] ?? orderStatusLabels[order.status] ?? order.status);
@@ -1232,13 +1234,13 @@ function ClientOrderCard({ order }: { order: ClientOrderSummary }) {
       {/* Meta row */}
       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 border-t border-black/5 pt-3 text-xs text-muted">
         {order.delivery_date ? (
-          <span>{t("Отгрузка")}{" "}<b className="font-data font-medium text-dark">{formatDate(order.delivery_date)}</b></span>
+          <span>{t("Отгрузка")}{" "}<b className="font-data font-medium text-dark">{formatDate(order.delivery_date, locale)}</b></span>
         ) : null}
         {order.order_items?.length ? (
           <span>{t("Позиций")}{" "}<b className="font-data font-medium text-dark">{order.order_items.length}</b></span>
         ) : null}
         {order.due_date ? (
-          <span className={isOverdue ? "font-semibold text-danger" : ""}>{t("Оплата до")}{" "}<b className="font-data font-medium">{formatDate(order.due_date)}</b>
+          <span className={isOverdue ? "font-semibold text-danger" : ""}>{t("Оплата до")}{" "}<b className="font-data font-medium">{formatDate(order.due_date, locale)}</b>
             {isOverdue ? ` · просрочка ${overdueDays} дн.` : ""}
           </span>
         ) : null}
@@ -1390,12 +1392,13 @@ function KvRow({ label, value }: { label: string; value: string }) {
 
 function ConditionsBox({ state }: { state: CreditState }) {
   const t = useT();
+  const locale = useLocale();
   return (
     <SidebarBox title={t("Условия")}>
       <KvRow label={t("Лимит")} value={formatCurrency(state.limit)} />
       <KvRow label={t("Статус")} value={t(creditStatusLabels[state.status])} />
       {state.nextDueDate ? (
-        <KvRow label={t("Ближайший платёж")} value={formatDate(state.nextDueDate)} />
+        <KvRow label={t("Ближайший платёж")} value={formatDate(state.nextDueDate, locale)} />
       ) : null}
       <button
         type="button"

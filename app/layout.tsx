@@ -24,11 +24,16 @@ const montserrat = Montserrat({
   display: "swap",
 });
 
+// IBM Plex Mono — только «цифровой» акцент (цены, номера заказов, IBAN, даты), не
+// критичный LCP-текст. preload:false убирает авто-генерируемый <link rel=preload> с
+// каждой страницы, чтобы моно-шрифт не конкурировал за критический путь с Geist и
+// LCP-картинкой. Шрифт всё равно самохостится и подгружается по требованию (display:swap).
 const ibmPlexMono = IBM_Plex_Mono({
   variable: "--font-ibm-plex-mono",
   subsets: ["latin", "cyrillic"],
   weight: ["400", "500", "600"],
   display: "swap",
+  preload: false,
 });
 
 

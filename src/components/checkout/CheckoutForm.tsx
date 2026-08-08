@@ -15,6 +15,7 @@ import { isValidKzMobile } from "@/src/lib/phone";
 import { useLocale, useT } from "@/src/i18n/client";
 import type { Locale } from "@/src/i18n/config";
 import type { TranslateVars, Translator } from "@/src/i18n/translate-core";
+import { getDateLabelFormatter } from "@/src/i18n/date-labels";
 import { withLocale } from "@/src/i18n/routing";
 import { CheckoutAuthGate } from "@/src/components/checkout/CheckoutAuthGate";
 
@@ -63,13 +64,6 @@ type DeliveryDateOption = {
   dayLabel: string;
 };
 
-// Формат дат календаря зависит от языка интерфейса, а не от исходного русского
-const INTL_LOCALES: Record<Locale, string> = {
-  kk: "kk-KZ",
-  ru: "ru-RU",
-  en: "en-US",
-};
-
 // Ключи словаря — русские сокращения; без переводчика отдаём оригинал
 const shortDayLabels = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
 
@@ -85,30 +79,13 @@ export function formatShortDeliveryDays(days: number[], t?: Translator) {
     .join(" · ");
 }
 
-// Не все рантаймы (лёгкий ICU в Node/браузере) содержат казахский CLDR: тогда
-// Intl.DateTimeFormat('kk-KZ', {month:'short'}) откатывается к root-локали и выдаёт «M08»
-// вместо месяца, а дни недели — АНГЛИЙСКИЕ. Пробуем формат и при «M08»-подобном выводе
-// берём ru-RU (казахскому читателю ближе русского, чем сломанный английский root-фолбэк).
-function pickSafeIntlLocale(intlLocale: string): string {
-  try {
-    const probe = new Intl.DateTimeFormat(intlLocale, { month: "short" }).format(
-      new Date(Date.UTC(2020, 7, 1)),
-    );
-    return /^M\d\d$/i.test(probe) ? INTL_LOCALES.ru : intlLocale;
-  } catch {
-    return INTL_LOCALES.ru;
-  }
-}
-
 // Доставка в день X возможна, если заявка успевает до отсечки накануне:
 // сегодня минимум за 2 дня до X, либо ровно накануне и сейчас раньше cutoffHour.
 function getDeliveryDateOptions(
   schedule: DeliverySchedule,
-  intlLocale: string = INTL_LOCALES.ru,
+  locale: Locale = "ru",
 ): DeliveryDateOption[] {
-  const safeLocale = pickSafeIntlLocale(intlLocale);
-  const weekdayFormat = new Intl.DateTimeFormat(safeLocale, { weekday: "short" });
-  const dayFormat = new Intl.DateTimeFormat(safeLocale, { day: "numeric", month: "short" });
+  const labels = getDateLabelFormatter(locale);
   const now = new Date();
   const start = new Date(now);
   start.setDate(start.getDate() + 1);
@@ -128,8 +105,8 @@ function getDeliveryDateOptions(
         : !beforeCutoff
           ? "Приём заявок на эту дату закрыт в ${schedule.cutoffHour}:00"
           : undefined,
-      weekdayLabel: weekdayFormat.format(date),
-      dayLabel: dayFormat.format(date).replace(".", ""),
+      weekdayLabel: labels.weekday(date),
+      dayLabel: labels.day(date),
     };
   });
 }
@@ -262,10 +239,9 @@ export function CheckoutForm({
   // Даты считаем только на клиенте: страница пререндерится статически, и дата из билда
   // не совпала бы с датой клиента при гидрации
   const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
-  const intlLocale = INTL_LOCALES[locale] ?? INTL_LOCALES.ru;
   const deliveryOptions = useMemo(
-    () => (isMounted ? getDeliveryDateOptions(schedule, intlLocale) : null),
-    [isMounted, schedule, intlLocale],
+    () => (isMounted ? getDeliveryDateOptions(schedule, locale) : null),
+    [isMounted, schedule, locale],
   );
   const firstAvailableDate = deliveryOptions?.find((option) => !option.disabled)?.value ?? "";
   const hasQuoteItems = items.some((item) => item.product.price <= 0);

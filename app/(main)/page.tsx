@@ -120,21 +120,21 @@ export default async function Home() {
                   className="absolute"
                   style={{ inset: "1% 4% 3% 4%", filter: "drop-shadow(0 18px 22px rgba(86,34,13,0.16))" }}
                 >
-                  <EditableImage field="home.hero.imgMain" fallbackSrc="/products/tort-medovik.webp" alt="" className="h-full w-full object-contain object-center" />
+                  <EditableImage field="home.hero.imgMain" fallbackSrc="/products/tort-medovik.webp" alt="" className="h-full w-full object-contain object-center" priority sizes="(max-width: 1024px) 92vw, 600px" />
                 </div>
                 {/* фото A — акцент справа сверху, лёгкий наклон */}
                 <div
                   className="absolute"
                   style={{ width: "36%", aspectRatio: "3 / 4", right: "-3%", top: "3%", rotate: "5deg", filter: "drop-shadow(0 14px 18px rgba(86,34,13,0.18))" }}
                 >
-                  <EditableImage field="home.hero.imgA" fallbackSrc="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-contain" />
+                  <EditableImage field="home.hero.imgA" fallbackSrc="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-contain" sizes="(max-width: 1024px) 34vw, 220px" />
                 </div>
                 {/* фото B — акцент слева снизу */}
                 <div
                   className="absolute"
                   style={{ width: "34%", aspectRatio: "4 / 3", left: "-4%", bottom: "7%", rotate: "-5deg", filter: "drop-shadow(0 12px 16px rgba(86,34,13,0.16))" }}
                 >
-                  <EditableImage field="home.hero.imgB" fallbackSrc="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-contain" />
+                  <EditableImage field="home.hero.imgB" fallbackSrc="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-contain" sizes="(max-width: 1024px) 33vw, 210px" />
                 </div>
                 {/* плавающий тег */}
                 <div className="absolute flex items-center gap-3 rounded-full border border-white/80 bg-white/[0.86] py-2.5 pl-2.5 pr-4 shadow-md backdrop-blur-lg" style={{ right: "4%", bottom: "6%" }}>
@@ -218,14 +218,14 @@ export default async function Home() {
 
             {/* фото-коллаж */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="col-span-2 aspect-[16/10] overflow-hidden rounded-2xl bg-cream">
-                <EditableImage field="home.about.img1" fallbackSrc="/products/tort-medovik.webp" alt="" className="h-full w-full object-cover" />
+              <div className="relative col-span-2 aspect-[16/10] overflow-hidden rounded-2xl bg-cream">
+                <EditableImage field="home.about.img1" fallbackSrc="/products/tort-medovik.webp" alt="" className="h-full w-full object-cover" sizes="(max-width: 1024px) 92vw, 600px" />
               </div>
-              <div className="aspect-square overflow-hidden rounded-2xl bg-cream">
-                <EditableImage field="home.about.img2" fallbackSrc="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-cover" />
+              <div className="relative aspect-square overflow-hidden rounded-2xl bg-cream">
+                <EditableImage field="home.about.img2" fallbackSrc="/products/ispanskiy-chizkeyk.webp" alt="" className="h-full w-full object-cover" sizes="(max-width: 1024px) 45vw, 300px" />
               </div>
-              <div className="aspect-square overflow-hidden rounded-2xl bg-cream">
-                <EditableImage field="home.about.img3" fallbackSrc="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-cover" />
+              <div className="relative aspect-square overflow-hidden rounded-2xl bg-cream">
+                <EditableImage field="home.about.img3" fallbackSrc="/products/shu-yagodnyy.webp" alt="" className="h-full w-full object-cover" sizes="(max-width: 1024px) 45vw, 300px" />
               </div>
             </div>
           </div>

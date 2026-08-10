@@ -23,10 +23,15 @@ function optional(value?: string | null) {
 }
 
 function formatDate(value: string) {
+  const date = new Date(value);
+  // Битая/пустая дата не должна ронять весь серверный рендер страницы клиента.
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
   return new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(value));
+  }).format(date);
 }
 
 export async function generateMetadata({ params }: AdminClientPageProps): Promise<Metadata> {
@@ -47,12 +52,15 @@ export default async function AdminClientPage({ params }: AdminClientPageProps) 
     notFound();
   }
 
+  // Сбой загрузки заказов/кредита не должен ронять всю страницу — деградируем мягко.
   const [orders, creditClient] = await Promise.all([
     fetchClientOrderSummaries({
       email: client.customerEmail ?? undefined,
       phone: client.customerPhone ?? undefined,
-    }),
-    client.customerPhone ? fetchClientByPhone(client.customerPhone) : Promise.resolve(null),
+    }).catch(() => []),
+    client.customerPhone
+      ? fetchClientByPhone(client.customerPhone).catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   return (

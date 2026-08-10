@@ -71,7 +71,9 @@ async function getTokenRole(token: string): Promise<AdminRole | null> {
 // (не префикс!): иначе "/api/admin/clients" открыл бы и "/api/admin/clients/credit"
 // (установка кредита) — этого торгпреду нельзя.
 // - "/api/admin/clients" — создать клиента вручную без OTP (стадия 2).
-const MANAGER_ALLOWED_MUTATIONS: string[] = ["/api/admin/clients"];
+// - "/api/admin/orders"  — оформить заявку от имени клиента (стадия 3). Приём заявки
+//   (confirm/mark-paid и т.п.) сюда НЕ входит — остаётся только полному админу.
+const MANAGER_ALLOWED_MUTATIONS: string[] = ["/api/admin/clients", "/api/admin/orders"];
 
 // Гейт торгпреда: в админке он видит всё (GET), но любые мутации (POST/PATCH/PUT/DELETE),
 // включая server actions (POST на /admin/*), доступны только полному админу — кроме

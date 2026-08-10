@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_ACCESS_COOKIE, ADMIN_REFRESH_COOKIE } from "@/src/lib/supabase/auth";
 import { getAdminRole, type AdminIdentity, type AdminRole } from "@/src/lib/admin-access";
+import { isManagerMutationAllowed } from "@/src/lib/admin-role";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "@/src/i18n/config";
 
 type RefreshedAdminToken = {
@@ -76,10 +77,7 @@ const MANAGER_ALLOWED_MUTATIONS: string[] = ["/api/admin/clients"];
 // включая server actions (POST на /admin/*), доступны только полному админу — кроме
 // точного белого списка выше. Возвращает 403, если действие запрещено, иначе null.
 function managerMutationBlock(request: NextRequest): NextResponse | null {
-  if (["GET", "HEAD", "OPTIONS"].includes(request.method)) {
-    return null;
-  }
-  if (MANAGER_ALLOWED_MUTATIONS.includes(request.nextUrl.pathname)) {
+  if (isManagerMutationAllowed(request.method, request.nextUrl.pathname, MANAGER_ALLOWED_MUTATIONS)) {
     return null;
   }
   return NextResponse.json(

@@ -7,32 +7,56 @@ export type AdminIdentity = {
   email?: string;
 };
 
-function getAdminEmails() {
+/** Роль в админке: "admin" — полный доступ; "manager" — торгпред (ограничен, гейтит proxy). */
+export type AdminRole = "admin" | "manager";
+
+function getEmailSet(envValue: string | undefined): Set<string> {
   return new Set(
-    (process.env.ADMIN_EMAILS ?? "")
+    (envValue ?? "")
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
   );
 }
 
-export function isAdminIdentity(user: AdminIdentity | null | undefined) {
+/**
+ * Роль текущего идентити или null (не сотрудник).
+ * Источник роли — Supabase `app_metadata.role` (пользователь сам её не меняет) ИЛИ
+ * env-списки ADMIN_EMAILS / MANAGER_EMAILS (быстрое назначение без дашборда).
+ * ⚠️ Роль в app_metadata, НЕ user_metadata — иначе клиент выпишет её себе сам.
+ */
+export function getAdminRole(user: AdminIdentity | null | undefined): AdminRole | null {
   if (!user) {
-    return false;
+    return null;
   }
 
-  if (user.app_metadata?.role === "admin") {
-    return true;
-  }
-
-  const adminEmails = getAdminEmails();
   const email = user.email?.trim().toLowerCase();
+  const metaRole = user.app_metadata?.role;
 
-  if (email && adminEmails.has(email)) {
-    return true;
+  // Полный админ.
+  if (metaRole === "admin") {
+    return "admin";
+  }
+  if (email && getEmailSet(process.env.ADMIN_EMAILS).has(email)) {
+    return "admin";
   }
 
-  // Backward compatibility for existing Supabase projects. Setting ADMIN_EMAILS
-  // or app_metadata.role=admin enables strict admin-only access.
-  return false;
+  // Торговый представитель (менеджер) — видит всё, но опасные операции блокирует proxy.
+  if (metaRole === "manager") {
+    return "manager";
+  }
+  if (email && getEmailSet(process.env.MANAGER_EMAILS).has(email)) {
+    return "manager";
+  }
+
+  return null;
+}
+
+/**
+ * true, если это сотрудник с доступом в админку (админ ИЛИ торгпред). Разграничение
+ * прав между ними — в proxy.ts (мутации в админке доступны только полному админу).
+ * Backward compatibility: без ADMIN_EMAILS/MANAGER_EMAILS и без app_metadata.role — доступа нет.
+ */
+export function isAdminIdentity(user: AdminIdentity | null | undefined) {
+  return getAdminRole(user) !== null;
 }

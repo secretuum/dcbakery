@@ -15,12 +15,20 @@ const adminNavItems = [
   { href: "/admin/settings", label: "Настройки" },
 ];
 
-export function AdminShell({ children }: { children: ReactNode }) {
+export function AdminShell({
+  children,
+  role,
+}: {
+  children: ReactNode;
+  role?: "admin" | "manager" | null;
+}) {
   const pathname = usePathname();
 
   if (pathname === "/admin/login") {
     return <>{children}</>;
   }
+
+  const isManager = role === "manager";
 
   return (
     <main className="min-h-screen bg-cream text-dark lg:grid lg:grid-cols-[240px_1fr]">
@@ -33,6 +41,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <span>
               <span className="block font-display text-base font-bold uppercase tracking-[.08em] text-white">DC Bakery</span>
               <span className="block text-xs font-semibold uppercase tracking-[.12em] text-white/40">admin</span>
+              {isManager ? (
+                <span className="mt-1 inline-block rounded bg-amber-400/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                  менеджер · только просмотр
+                </span>
+              ) : null}
             </span>
           </Link>
         </div>

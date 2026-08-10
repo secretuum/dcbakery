@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ADMIN_ACCESS_COOKIE, ADMIN_REFRESH_COOKIE } from "@/src/lib/supabase/auth";
-import { isAdminIdentity, type AdminIdentity } from "@/src/lib/admin-access";
+import { getAdminRole, type AdminIdentity, type AdminRole } from "@/src/lib/admin-access";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "@/src/i18n/config";
 
 type RefreshedAdminToken = {
@@ -39,11 +39,12 @@ function clearAdminCookies(response: NextResponse) {
   return response;
 }
 
-async function isValidAdminToken(token: string) {
+// Роль по access-токену: "admin" | "manager" | null (null = токен не сотрудника/протух).
+async function getTokenRole(token: string): Promise<AdminRole | null> {
   const config = getSupabaseAuthConfig();
 
   if (!config) {
-    return false;
+    return null;
   }
 
   try {
@@ -56,13 +57,37 @@ async function isValidAdminToken(token: string) {
     });
 
     if (!response.ok) {
-      return false;
+      return null;
     }
 
-    return isAdminIdentity((await response.json()) as AdminIdentity);
+    return getAdminRole((await response.json()) as AdminIdentity);
   } catch {
-    return false;
+    return null;
   }
+}
+
+// Что торгпреду (роль manager) РАЗРЕШЕНО мутировать в админке. Стадия 1 — пусто
+// (только чтение). Стадии 2–3 добавят сюда, напр. "/api/admin/clients" (создать клиента).
+const MANAGER_ALLOWED_MUTATIONS: string[] = [];
+
+// Гейт торгпреда: в админке он видит всё (GET), но любые мутации (POST/PATCH/PUT/DELETE),
+// включая server actions (POST на /admin/*), доступны только полному админу — кроме
+// белого списка выше. Возвращает 403, если действие запрещено, иначе null.
+function managerMutationBlock(request: NextRequest): NextResponse | null {
+  if (["GET", "HEAD", "OPTIONS"].includes(request.method)) {
+    return null;
+  }
+  const { pathname } = request.nextUrl;
+  const allowed = MANAGER_ALLOWED_MUTATIONS.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+  if (allowed) {
+    return null;
+  }
+  return NextResponse.json(
+    { error: "Недостаточно прав: это действие доступно только администратору." },
+    { status: 403 },
+  );
 }
 
 async function refreshAdminToken(refreshToken: string): Promise<RefreshedAdminToken | null> {
@@ -144,17 +169,29 @@ async function adminProxy(request: NextRequest) {
   const token = request.cookies.get(ADMIN_ACCESS_COOKIE)?.value;
   const refreshToken = request.cookies.get(ADMIN_REFRESH_COOKIE)?.value;
 
-  if (token && (await isValidAdminToken(token))) {
-    return NextResponse.next();
+  // Роль по текущему токену, а если протух — по обновлённому (refresh).
+  let role: AdminRole | null = token ? await getTokenRole(token) : null;
+  let refreshed: RefreshedAdminToken | null = null;
+
+  if (!role && refreshToken) {
+    refreshed = await refreshAdminToken(refreshToken);
+    if (refreshed) {
+      role = await getTokenRole(refreshed.access_token);
+    }
   }
 
-  if (refreshToken) {
-    const refreshed = await refreshAdminToken(refreshToken);
+  if (role) {
+    // Торгпред (manager) видит всё, но опасные мутации блокируем (стадия 1).
+    if (role === "manager") {
+      const blocked = managerMutationBlock(request);
+      if (blocked) {
+        return blocked;
+      }
+    }
 
+    const response = NextResponse.next();
     if (refreshed) {
-      const response = NextResponse.next();
       const secureCookies = shouldUseSecureCookies(request);
-
       response.cookies.set(ADMIN_ACCESS_COOKIE, refreshed.access_token, {
         httpOnly: true,
         maxAge: refreshed.expires_in,
@@ -169,9 +206,8 @@ async function adminProxy(request: NextRequest) {
         sameSite: "lax",
         secure: secureCookies,
       });
-
-      return response;
     }
+    return response;
   }
 
   if (isAdminApi) {

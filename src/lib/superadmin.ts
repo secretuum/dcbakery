@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { ADMIN_ACCESS_COOKIE } from "@/src/lib/supabase/auth";
-import { isAdminIdentity, type AdminIdentity } from "@/src/lib/admin-access";
+import { getAdminRole, type AdminIdentity, type AdminRole } from "@/src/lib/admin-access";
 
 // Доступ к редактированию контента сайта (фото, главная, настройки) прямо со страниц.
 // Ограничен списком SUPERADMIN_EMAILS: обычные админы (напр. торговые представители,
@@ -53,17 +53,29 @@ export async function getIsSuperAdmin(): Promise<boolean> {
   }
 
   const identity = await fetchIdentity(token);
-  if (!identity || !isAdminIdentity(identity)) {
+  // Только ПОЛНЫЙ админ может быть суперадмином. Торгпред (manager) правку сайта не
+  // получает НИКОГДА — даже при пустом SUPERADMIN_EMAILS (иначе торгпред стал бы
+  // суперадмином по «обратной совместимости»).
+  if (getAdminRole(identity) !== "admin") {
     return false;
   }
 
   // Правку сайта получают только суперадмины из SUPERADMIN_EMAILS. Пустой список = все
-  // админы (обратная совместимость). Задайте SUPERADMIN_EMAILS=ваш@email, чтобы новые
-  // админы-торгпреды имели доступ к админке/заявкам, но НЕ к редактированию контента.
+  // ПОЛНЫЕ админы (обратная совместимость). Задайте SUPERADMIN_EMAILS=ваш@email, чтобы
+  // новые админы-торгпреды имели доступ к админке/заявкам, но НЕ к редактированию контента.
   const superAdmins = getSuperAdminEmails();
   if (superAdmins.size === 0) {
     return true;
   }
-  const email = identity.email?.trim().toLowerCase();
+  const email = identity?.email?.trim().toLowerCase();
   return Boolean(email && superAdmins.has(email));
+}
+
+/** Роль текущего запроса в админке ("admin" | "manager" | null) — для UI (бейдж/скрытие). */
+export async function getCurrentAdminRole(): Promise<AdminRole | null> {
+  const token = (await cookies()).get(ADMIN_ACCESS_COOKIE)?.value;
+  if (!token) {
+    return null;
+  }
+  return getAdminRole(await fetchIdentity(token));
 }

@@ -35,12 +35,20 @@ export default async function AdminClientsPage() {
 
   return (
     <div>
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Админка</p>
-        <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">Клиенты</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-          Профили клиентов из WhatsApp: реквизиты, адреса и быстрый переход к истории заказов.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Админка</p>
+          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">Клиенты</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+            Профили клиентов из WhatsApp: реквизиты, адреса и быстрый переход к истории заказов.
+          </p>
+        </div>
+        <Link
+          href="/admin/clients/new"
+          className="shrink-0 rounded border border-coral bg-coral px-4 py-2.5 text-sm font-bold text-white transition hover:bg-coral-hover"
+        >
+          + Новый клиент
+        </Link>
       </div>
 
       <div className="mt-6 overflow-hidden rounded-card border border-black/10 bg-white">

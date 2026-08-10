@@ -66,22 +66,20 @@ async function getTokenRole(token: string): Promise<AdminRole | null> {
   }
 }
 
-// Что торгпреду (роль manager) РАЗРЕШЕНО мутировать в админке. Стадия 1 — пусто
-// (только чтение). Стадии 2–3 добавят сюда, напр. "/api/admin/clients" (создать клиента).
-const MANAGER_ALLOWED_MUTATIONS: string[] = [];
+// Что торгпреду (роль manager) РАЗРЕШЕНО мутировать в админке. ТОЧНОЕ совпадение пути
+// (не префикс!): иначе "/api/admin/clients" открыл бы и "/api/admin/clients/credit"
+// (установка кредита) — этого торгпреду нельзя.
+// - "/api/admin/clients" — создать клиента вручную без OTP (стадия 2).
+const MANAGER_ALLOWED_MUTATIONS: string[] = ["/api/admin/clients"];
 
 // Гейт торгпреда: в админке он видит всё (GET), но любые мутации (POST/PATCH/PUT/DELETE),
 // включая server actions (POST на /admin/*), доступны только полному админу — кроме
-// белого списка выше. Возвращает 403, если действие запрещено, иначе null.
+// точного белого списка выше. Возвращает 403, если действие запрещено, иначе null.
 function managerMutationBlock(request: NextRequest): NextResponse | null {
   if (["GET", "HEAD", "OPTIONS"].includes(request.method)) {
     return null;
   }
-  const { pathname } = request.nextUrl;
-  const allowed = MANAGER_ALLOWED_MUTATIONS.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`),
-  );
-  if (allowed) {
+  if (MANAGER_ALLOWED_MUTATIONS.includes(request.nextUrl.pathname)) {
     return null;
   }
   return NextResponse.json(

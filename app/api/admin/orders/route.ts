@@ -10,6 +10,8 @@ import {
   insertOrderWithItems,
 } from "@/src/lib/supabase/admin";
 import { decrementProductStock } from "@/src/lib/orders/stock";
+import { canPlaceOrder } from "@/src/lib/credit";
+import { setOrderCreatedBy } from "@/src/lib/orders/order-created-by";
 import { getAdminEmail } from "@/src/lib/admin-identity";
 import { fetchWhatsAppClientByChatId } from "@/src/lib/whatsapp-client-store";
 import { sendWhatsAppNotification } from "@/src/lib/whatsapp";
@@ -131,6 +133,24 @@ export async function POST(request: Request) {
   const normalizedPhone = digits ? `+${digits}` : null;
   const client = normalizedPhone ? await fetchClientByPhone(normalizedPhone) : null;
 
+  // Кредит-гейт: торгпред НЕ может завести заявку клиенту-должнику (блокировка/просрочка).
+  // Клиент с отсрочкой (credit_limit>0), временно превысивший лимит, — не жёсткий стоп,
+  // а пометка предоплаты в комментарии (как в клиентском флоу; жёсткий стоп только у blocked).
+  let prepayNote: string | null = null;
+  if (client) {
+    const orderSum = totalAmount + deliveryFee(totalAmount);
+    const creditCheck = await canPlaceOrder(client, orderSum);
+    if (!creditCheck.allowed) {
+      return NextResponse.json(
+        { errors: [creditCheck.reason ?? "Клиенту нельзя оформить заявку: блокировка или просрочка."] },
+        { status: 409 },
+      );
+    }
+    if (creditCheck.requiresPrepay) {
+      prepayNote = `⚠️ Требуется предоплата (${creditCheck.reason ?? "превышен лимит или есть просрочка"}). Не отгружать в консигнацию до оплаты.`;
+    }
+  }
+
   const orderId = crypto.randomUUID();
   const orderNumber = generateOrderNumber();
   const orderItems: OrderItem[] = bodyItems.map((item) => ({
@@ -159,8 +179,9 @@ export async function POST(request: Request) {
     delivery_time: deliveryTime || null,
     payment_method: paymentMethod,
     request_avr: requestAvr,
-    // Атрибуция v1: кто оформил — первой строкой комментария (видно админу).
-    comment: [`Оформил (торгпред): ${actorEmail}`, comment || null].filter(Boolean).join("\n"),
+    // Атрибуция: кто оформил — первой строкой комментария (видно админу) + отдельно
+    // в колонке created_by_email (пост-инсертом ниже). + пометка предоплаты, если есть.
+    comment: [`Оформил (торгпред): ${actorEmail}`, prepayNote, comment || null].filter(Boolean).join("\n"),
     client_id: client?.id ?? null,
     status: "pending_manager_confirmation",
     total_amount: totalAmount,
@@ -177,6 +198,11 @@ export async function POST(request: Request) {
     reportError(error, { where: "admin:orders:insert", extra: { orderNumber } });
     return NextResponse.json({ error: "Не удалось сохранить заказ" }, { status: 500 });
   }
+
+  // v2-атрибуция: «кто оформил» в колонку created_by_email (best-effort; бэкап — в комментарии).
+  await setOrderCreatedBy(orderId, actorEmail).catch((error) =>
+    reportError(error, { where: "admin:orders:created-by", extra: { orderNumber } }),
+  );
 
   // Списываем остатки (как в клиентском флоу) — best-effort, заказ не рушим.
   try {

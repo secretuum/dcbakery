@@ -163,6 +163,8 @@ export type Order = {
   canceled_at?: string | null;
   oferta_accepted_at?: string | null;
   oferta_version?: string | null;
+  /** Email сотрудника, оформившего заявку вручную (торгпред/админ). null у клиентских/бот-заказов. */
+  created_by_email?: string | null;
   created_at: string;
   updated_at?: string;
 };

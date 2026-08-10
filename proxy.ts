@@ -275,6 +275,13 @@ function maintenanceResponse(): NextResponse {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // [B3-проба, ВРЕМЕННО] пропускаем /{locale}/__rptest БЕЗ rewrite, чтобы реальный
+  // сегмент app/[locale] получил параметр и можно было проверить next/root-params.
+  // Удалить вместе с app/[locale]/__rptest после проверки.
+  if (/^\/(kk|ru|en)\/__rptest(\/|$)/.test(pathname)) {
+    return NextResponse.next();
+  }
+
   // 1) Админка — прежняя авторизация (без языковых префиксов).
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
     return adminProxy(request);

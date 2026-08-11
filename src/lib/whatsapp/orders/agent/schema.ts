@@ -27,6 +27,12 @@ export type AgentOutput = {
   clearCart: boolean;
   /** chat — обычный диалог; checkout — клиент готов оформлять; и т.д. */
   intent: AgentIntent;
+  /** Оценка настроения клиента ОДНИМ словом (доволен/нейтрально/сомневается/
+   * недоволен/раздражён). Служебное — клиенту НЕ показывается, идёт в эскалацию. */
+  mood: string;
+  /** Когда intent='handoff' — короткая причина, ПОЧЕМУ бот не решил сам (для менеджера).
+   * В остальных случаях пустая строка. */
+  handoffReason: string;
 };
 
 /**
@@ -39,7 +45,9 @@ export type AgentResponse = AgentOutput & { degraded?: boolean };
 export const AGENT_JSON_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["reply", "cartActions", "showCart", "clearCart", "intent"],
+  // OpenAI strict-режим требует, чтобы ВСЕ свойства были в required. mood/handoffReason
+  // модель обязана вернуть всегда (handoffReason — пустой, когда intent≠handoff).
+  required: ["reply", "cartActions", "showCart", "clearCart", "intent", "mood", "handoffReason"],
   properties: {
     reply: { type: "string" },
     cartActions: {
@@ -58,6 +66,8 @@ export const AGENT_JSON_SCHEMA = {
     showCart: { type: "boolean" },
     clearCart: { type: "boolean" },
     intent: { type: "string", enum: [...AGENT_INTENTS] },
+    mood: { type: "string" },
+    handoffReason: { type: "string" },
   },
 } as const;
 
@@ -84,6 +94,10 @@ export function parseAgentOutput(raw: unknown, validProductIds: Set<string>): Ag
   const showCart = raw.showCart === true;
   const clearCart = raw.clearCart === true;
 
+  // Служебные поля эскалации. mood — одно слово (жёсткий кап), handoffReason — фраза.
+  const mood = typeof raw.mood === "string" ? raw.mood.trim().slice(0, 40) : "";
+  const handoffReason = typeof raw.handoffReason === "string" ? raw.handoffReason.trim().slice(0, 300) : "";
+
   const rawActions = Array.isArray(raw.cartActions) ? raw.cartActions : [];
   const cartActions: AgentCartAction[] = [];
   for (const entry of rawActions) {
@@ -102,5 +116,5 @@ export function parseAgentOutput(raw: unknown, validProductIds: Set<string>): Ag
     cartActions.push({ productId, quantity, operation });
   }
 
-  return { ok: true, output: { reply, cartActions, showCart, clearCart, intent } };
+  return { ok: true, output: { reply, cartActions, showCart, clearCart, intent, mood, handoffReason } };
 }

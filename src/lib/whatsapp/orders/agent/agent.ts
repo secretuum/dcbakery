@@ -5,8 +5,10 @@ import "server-only";
 import { openaiChatJson } from "../ai/openai";
 import { AGENT_JSON_SCHEMA, parseAgentOutput, type AgentResponse } from "./schema";
 import { AGENT_SYSTEM_PROMPT } from "./prompt";
+import { buildBusinessContext } from "./business-context";
 import { TIMEOUTS, LIMITS } from "../config";
 import { describeDeliveryTariff } from "@/app/constants";
+import { getSiteContent } from "@/src/lib/site-content";
 
 const AGENT_MODEL = process.env.WHATSAPP_AGENT_MODEL ?? "gpt-4o-mini";
 
@@ -21,6 +23,8 @@ const DEGRADED_FALLBACK: AgentResponse = {
   showCart: false,
   clearCart: false,
   intent: "chat",
+  mood: "",
+  handoffReason: "",
   degraded: true,
 };
 
@@ -39,11 +43,21 @@ export interface OrderAgent {
 
 export class OpenAiOrderAgent implements OrderAgent {
   async respond(input: AgentInput): Promise<AgentResponse> {
+    // Живые факты (часы/дни доставки/контакты) — из контента сайта (кэш 3600с).
+    // getSiteContent сам гасит ошибки и отдаёт дефолты; на всякий случай ещё и здесь.
+    let businessContext = "";
+    try {
+      businessContext = buildBusinessContext(await getSiteContent());
+    } catch {
+      businessContext = "";
+    }
+
     const userContent = [
       input.shouldGreet
         ? "(Это первый контакт за 6+ часов — поздоровайся и представься.)"
         : "(Диалог продолжается — не здоровайся, сразу по делу.)",
       "",
+      ...(businessContext ? [businessContext, ""] : []),
       "КАТАЛОГ (только эти товары; цены отсюда):",
       input.catalogContext,
       "",

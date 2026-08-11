@@ -86,7 +86,11 @@ export async function parseCatalogWorkbook(
   buffer: ArrayBuffer,
 ): Promise<{ rows: CatalogFileRow[]; warnings: string[] }> {
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(buffer);
+  try {
+    await wb.xlsx.load(buffer);
+  } catch {
+    return { rows: [], warnings: ["Не удалось прочитать файл. Нужен .xlsx из «Выгрузить каталог»."] };
+  }
   const ws = wb.getWorksheet("Каталог") ?? wb.worksheets[0];
   const warnings: string[] = [];
   if (!ws) {
@@ -131,23 +135,26 @@ export function rowPatch(row: CatalogFileRow, product: Product): FieldChange[] {
     changes.push({ field, label, from, to });
   };
 
-  if (row.price !== null && row.price >= 0 && Math.round(row.price) !== Math.round(product.price)) {
-    push("price", "Цена", product.price, Math.round(row.price));
+  // Цена: капим до 20000 (как ручной редактор) — импорт не должен обходить лимит.
+  if (row.price !== null && row.price >= 0) {
+    const price = Math.round(Math.min(row.price, 20000));
+    if (price !== Math.round(product.price)) push("price", "Цена", product.price, price);
   }
-  if (row.composition !== null && norm(row.composition) !== norm(product.composition)) {
+  // Текст: ПУСТУЮ ячейку НЕ применяем (иначе можно случайно стереть состав/описание).
+  // Очистить состав/описание — только вручную в карточке товара.
+  if (row.composition !== null && norm(row.composition) !== "" && norm(row.composition) !== norm(product.composition)) {
     push("composition", "Состав", product.composition ?? "", row.composition);
   }
-  if (row.description !== null && norm(row.description) !== norm(product.description)) {
+  if (row.description !== null && norm(row.description) !== "" && norm(row.description) !== norm(product.description)) {
     push("description", "Описание", product.description ?? "", row.description);
   }
-  if (row.stock_qty !== null && row.stock_qty >= 0 && Math.round(row.stock_qty) !== Math.round(product.stock_qty)) {
-    push("stock_qty", "Остаток", product.stock_qty, Math.round(row.stock_qty));
+  // Остаток: капим до 100 (как ручной редактор).
+  if (row.stock_qty !== null && row.stock_qty >= 0) {
+    const stock = Math.round(Math.min(row.stock_qty, 100));
+    if (stock !== Math.round(product.stock_qty)) push("stock_qty", "Остаток", product.stock_qty, stock);
   }
   if (row.min_qty !== null && row.min_qty >= 1 && Math.round(row.min_qty) !== Math.round(product.min_qty)) {
     push("min_qty", "Мин. кол-во", product.min_qty, Math.round(row.min_qty));
-  }
-  if (row.step_qty !== null && row.step_qty >= 1 && Math.round(row.step_qty) !== Math.round(product.step_qty)) {
-    push("step_qty", "Шаг", product.step_qty, Math.round(row.step_qty));
   }
   if (row.is_archived !== null && row.is_archived !== Boolean(product.isArchived)) {
     push("is_archived", "Архив", Boolean(product.isArchived), row.is_archived);

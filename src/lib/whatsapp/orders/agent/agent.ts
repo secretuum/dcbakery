@@ -23,6 +23,8 @@ const DEGRADED_FALLBACK: AgentResponse = {
   showCart: false,
   clearCart: false,
   intent: "chat",
+  mood: "",
+  handoffReason: "",
   degraded: true,
 };
 

@@ -10,6 +10,7 @@ import type { NormalizedIncomingMessage, IncomingVoiceRef } from "../transport/t
 import type { DialogState } from "../state/machine";
 import { isBotSuppressed } from "../state/machine";
 import { detectEscalation } from "../policy/escalation";
+import { buildEscalationMessage, describeLeadReason, urgencyFromText } from "../policy/escalation-context";
 import { scanForInjection } from "../policy/injection";
 import { buildCatalogContext, catalogProductIds } from "../agent/catalog-context";
 import type { AgentResponse } from "../agent/schema";
@@ -313,12 +314,9 @@ export async function handleIncomingMessage(
       // B2B часто присылает заявку файлом/фото. Прочитать не можем, но заказ НЕ теряем:
       // заводим лид и зовём менеджера обработать вложение вручную (иначе — тихий отказ).
       await reply(M.MSG_ATTACHMENT);
+      // createLead сам зовёт менеджера богатым сообщением (причина = вложение); отдельный
+      // 📎-пинг убран, чтобы не было дубля уведомления на один и тот же случай.
       await createLead("unsupported_attachment", "[вложение]");
-      await deps
-        .notifyManager(
-          `📎 Клиент прислал вложение (фото/файл), бот его не читает. Чат: ${msg.chatId}. Обработайте заявку вручную.`,
-        )
-        .catch(() => {});
       return;
     }
     if (msg.kind === "voice") {
@@ -462,7 +460,11 @@ export async function handleIncomingMessage(
 
     // ——— вложенные хелперы (замыкание на deps/persist/reply/context) ———
 
-    async function createLead(reason: string, lastText: string) {
+    async function createLead(
+      reason: string,
+      lastText: string,
+      extra?: { botAnswered?: string | null; mood?: string | null; why?: string | null; urgent?: boolean },
+    ) {
       const items = await deps.cart.getItems(msg.chatId).catch(() => [] as CartItemQty[]);
       await deps.lead
         .upsertDraft({
@@ -476,7 +478,21 @@ export async function handleIncomingMessage(
           transcript: msg.kind === "voice" ? lastText : null,
         })
         .catch(() => {});
-      await deps.notifyManager(`Нужна помощь менеджера (WhatsApp). Причина: ${reason}. Чат: ${msg.chatId}`).catch(() => {});
+      // Богатое уведомление менеджеру: номер клиента, что хотел, что ответил бот, почему
+      // не решилось, настроение одним словом и флаг «горит». Значения от LLM (extra) в
+      // приоритете над дефолтами по причине (describeLeadReason).
+      const d = describeLeadReason(reason);
+      const message = buildEscalationMessage({
+        chatId: msg.chatId,
+        clientPhone: phone,
+        clientWanted: lastText,
+        botAnswered: extra?.botAnswered ?? null,
+        reason,
+        whyUnresolved: extra?.why || d.why,
+        mood: extra?.mood ?? d.mood,
+        urgent: extra?.urgent ?? d.urgent,
+      });
+      await deps.notifyManager(message).catch(() => {});
     }
 
     // Выход из шага оформления обратно в диалог: корзину сохраняем, адрес/интервал сбрасываем,
@@ -526,7 +542,12 @@ export async function handleIncomingMessage(
         return;
       }
       if (out.intent === "handoff") {
-        await createLead("agent_handoff", userText);
+        await createLead("agent_handoff", userText, {
+          botAnswered: out.reply || null,
+          mood: out.mood || null,
+          why: out.handoffReason || null,
+          urgent: urgencyFromText(userText),
+        });
         await persist("human_handoff", { ...context, history: appendExchange(history, userText, out.reply || M.MSG_HANDOFF) });
         await reply(out.reply || M.MSG_HANDOFF);
         return;

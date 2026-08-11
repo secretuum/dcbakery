@@ -26,7 +26,7 @@ const PRODUCTS: Product[] = [
 const OGG = Uint8Array.from([0x4f, 0x67, 0x67, 0x53, 1, 2, 3, 4]);
 
 function agentOut(p: Partial<AgentResponse>): AgentResponse {
-  return { reply: "", cartActions: [], showCart: false, clearCart: false, intent: "chat", ...p };
+  return { reply: "", cartActions: [], showCart: false, clearCart: false, intent: "chat", mood: "", handoffReason: "", ...p };
 }
 
 type AgentInput = Parameters<OrchestratorDeps["agent"]["respond"]>[0];
@@ -256,6 +256,10 @@ test("абьюз/жалоба → менеджеру ДО агента", async (
   assert.equal(t.drafts.length, 1);
   assert.equal(t.managerNotes.length, 1);
   assert.equal(t.orders.length, 0);
+  // Эскалация уходит менеджеру КОНТЕКСТОМ, а не голым текстом: что хотел, настроение, «горит».
+  assert.match(t.managerNotes[0], /ГОРИТ/);
+  assert.match(t.managerNotes[0], /мошенники, верните деньги/);
+  assert.match(t.managerNotes[0], /Настроение: недоволен/);
 });
 
 test("отмена (агент) → корзина очищена", async () => {

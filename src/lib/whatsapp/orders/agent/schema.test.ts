@@ -57,3 +57,21 @@ test("не-объект отбраковывается", () => {
   assert.equal(parseAgentOutput(null, IDS).ok, false);
   assert.equal(parseAgentOutput("текст", IDS).ok, false);
 });
+
+test("mood/handoffReason: извлекаются, дефолт — пустая строка", () => {
+  const r = parseAgentOutput(
+    { reply: "Передаю менеджеру.", cartActions: [], showCart: false, intent: "handoff", mood: "недоволен", handoffReason: "просит индивидуальную цену" },
+    IDS,
+  );
+  assert.ok(r.ok);
+  if (!r.ok) return;
+  assert.equal(r.output.mood, "недоволен");
+  assert.equal(r.output.handoffReason, "просит индивидуальную цену");
+
+  // Поля отсутствуют в выводе модели → пустые строки (не падаем).
+  const r2 = parseAgentOutput({ reply: "ок", cartActions: [], showCart: false, intent: "chat" }, IDS);
+  assert.ok(r2.ok);
+  if (!r2.ok) return;
+  assert.equal(r2.output.mood, "");
+  assert.equal(r2.output.handoffReason, "");
+});

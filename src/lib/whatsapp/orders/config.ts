@@ -12,6 +12,10 @@ export const WHATSAPP_NL_ORDERS_FLAG = "whatsapp_nl_orders_enabled";
 /** Ключ редактируемого списка розничных позиций del Cappuccino в app_settings. */
 export const RETAIL_KEYWORDS_SETTING = "whatsapp_retail_keywords";
 
+/** Ключ живой (редактируемой маркетологом) базы знаний бота в app_settings.
+ * JSON-список записей {text, author, at}; накладывается поверх статической knowledge.ts. */
+export const BOT_KNOWLEDGE_SETTING = "whatsapp_bot_knowledge";
+
 export const LIMITS = {
   /** Максимальная длина входящего текста, отдаваемого в AI (анти-флуд, стоимость). */
   maxInboundTextLength: 2000,

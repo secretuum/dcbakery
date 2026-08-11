@@ -6,6 +6,8 @@ import { openaiChatJson } from "../ai/openai";
 import { AGENT_JSON_SCHEMA, parseAgentOutput, type AgentResponse } from "./schema";
 import { AGENT_SYSTEM_PROMPT } from "./prompt";
 import { buildBusinessContext } from "./business-context";
+import { renderKnowledge } from "./knowledge-store";
+import { getBotKnowledgeEntries } from "./knowledge-store-io";
 import { TIMEOUTS, LIMITS } from "../config";
 import { describeDeliveryTariff } from "@/app/constants";
 import { getSiteContent } from "@/src/lib/site-content";
@@ -52,12 +54,22 @@ export class OpenAiOrderAgent implements OrderAgent {
       businessContext = "";
     }
 
+    // Живая база знаний: оперативные правки от маркетолога (app_settings, кэш).
+    // Дополняет статический промпт; ошибка чтения — просто без неё (бот на статике).
+    let liveKnowledge = "";
+    try {
+      liveKnowledge = renderKnowledge(await getBotKnowledgeEntries());
+    } catch {
+      liveKnowledge = "";
+    }
+
     const userContent = [
       input.shouldGreet
         ? "(Это первый контакт за 6+ часов — поздоровайся и представься.)"
         : "(Диалог продолжается — не здоровайся, сразу по делу.)",
       "",
       ...(businessContext ? [businessContext, ""] : []),
+      ...(liveKnowledge ? [liveKnowledge, ""] : []),
       "КАТАЛОГ (только эти товары; цены отсюда):",
       input.catalogContext,
       "",

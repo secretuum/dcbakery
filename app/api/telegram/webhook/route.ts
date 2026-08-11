@@ -13,6 +13,12 @@ import {
   notifyAccountantsAwaitingPayment,
 } from "@/src/lib/telegram/accountant";
 import { fetchAwaitingPaymentOrders, fetchPaidOrders } from "@/src/lib/orders/awaiting-payment";
+import {
+  getBotKnowledgeEntries,
+  appendBotKnowledgeEntry,
+  clearBotKnowledge,
+} from "@/src/lib/whatsapp/orders/agent/knowledge-store-io";
+import { formatKnowledgeList } from "@/src/lib/whatsapp/orders/agent/knowledge-store";
 import { logAction } from "@/src/lib/audit";
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import {
@@ -279,14 +285,48 @@ export async function POST(request: Request) {
       const roleLine = role
         ? `Ваша роль: ${roleLabels[role]}. Доступ есть.`
         : "Доступа пока нет. Передайте свой ID администратору — он добавит вас в переменные.";
+      // Маркетологу в личке подсказываем, как редактировать базу знаний бота.
+      const marketerHint =
+        role === "marketer"
+          ? "\n\nПросто присылайте сюда факты, акции и уточнения — я добавлю их в базу знаний бота. Команды: /база — показать, /очистить — стереть."
+          : "";
       // Бухгалтеру/админу в личке даём постоянную кнопку «Заказы».
       const withKeyboard = isPrivate && (role === "accountant" || role === "admin");
 
       await sendMessage({
         chatId: message.chat.id,
-        text: `Привет${name ? `, ${name}` : ""}!\nВаш Telegram ID: ${from.id}\n${roleLine}`,
+        text: `Привет${name ? `, ${name}` : ""}!\nВаш Telegram ID: ${from.id}\n${roleLine}${marketerHint}`,
         replyMarkup: withKeyboard ? accountantKeyboard() : undefined,
       });
+    } else if (isPrivate && role === "marketer") {
+      // Маркетолог редактирует живую базу знаний бота прямо сообщениями в ЛС (максимально
+      // просто: любой текст = добавить факт). Пишется в app_settings, применяется на лету.
+      const lower = trimmed.toLowerCase();
+      if (lower === "/база" || lower === "/знания" || lower === "/base") {
+        const entries = await getBotKnowledgeEntries();
+        await sendMessage({
+          chatId: message.chat.id,
+          text: `База знаний бота — записей: ${entries.length}\n\n${formatKnowledgeList(entries)}`,
+        });
+      } else if (lower === "/очистить" || lower === "/сброс" || lower === "/clear") {
+        await clearBotKnowledge();
+        await sendMessage({
+          chatId: message.chat.id,
+          text: "База знаний очищена. Бот снова работает только на базовых правилах.",
+        });
+      } else if (trimmed.startsWith("/")) {
+        await sendMessage({
+          chatId: message.chat.id,
+          text: "Просто пришлите текст — добавлю его в базу знаний бота. Команды: /база — показать, /очистить — стереть.",
+        });
+      } else {
+        const author = [from.first_name, from.last_name].filter(Boolean).join(" ") || from.username || String(from.id);
+        const count = await appendBotKnowledgeEntry(trimmed, author, new Date().toISOString());
+        await sendMessage({
+          chatId: message.chat.id,
+          text: `Добавил в базу знаний бота (всего записей: ${count}):\n«${trimmed.slice(0, 200)}»\n\nПоказать всё — /база, стереть — /очистить.`,
+        });
+      }
     } else if (isPrivate && (isAwaitingCommand(trimmed) || isPaidCommand(trimmed))) {
       // Разделы «Ждут оплаты» / «Оплаченные» — только бухгалтеру/админу и только в ЛС.
       if (role === "accountant" || role === "admin") {

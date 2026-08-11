@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { MAX_CREDIT_LIMIT } from "@/app/constants";
 import { upsertClient } from "@/src/lib/supabase/admin";
 import type { Client } from "@/src/types";
 
@@ -36,7 +37,11 @@ export async function POST(request: Request) {
     name: String(body.name).trim(),
     phone: typeof body.phone === "string" ? body.phone.trim() || null : null,
     email: typeof body.email === "string" ? body.email.trim() || null : null,
-    credit_limit: typeof body.credit_limit === "number" ? body.credit_limit : 0,
+    // Потолок 50к: больше не сохраняем (обрезаем), меньше 0 — тоже.
+    credit_limit:
+      typeof body.credit_limit === "number"
+        ? Math.max(0, Math.min(MAX_CREDIT_LIMIT, body.credit_limit))
+        : 0,
     payment_terms_days: typeof body.payment_terms_days === "number" ? body.payment_terms_days : 7,
     grace_days: typeof body.grace_days === "number" ? body.grace_days : 3,
     price_list_id: typeof body.price_list_id === "string" ? body.price_list_id || null : null,

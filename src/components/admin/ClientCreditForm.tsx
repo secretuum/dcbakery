@@ -83,12 +83,13 @@ export function ClientCreditForm({ client, defaultPhone, defaultName }: Props) {
 
       <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
         <label className="block">
-          <span className="text-sm font-semibold text-dark">Кредитный лимит (₸)</span>
+          <span className="text-sm font-semibold text-dark">Кредитный лимит (₸, макс. 50 000)</span>
           <Input
             className="mt-2"
             inputMode="numeric"
             type="number"
             min="0"
+            max="50000"
             step="1000"
             value={creditLimit}
             onChange={(e) => setCreditLimit(e.currentTarget.value)}

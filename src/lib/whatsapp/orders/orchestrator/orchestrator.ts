@@ -203,6 +203,11 @@ function isConfirmation(text: string): boolean {
 
 const GREET_GAP_MS = 6 * 60 * 60 * 1000;
 
+// После передачи менеджеру бот молчит, но НЕ вечно: через час авто-возобновляет ответы
+// (владелец Q84). Отсчёт — от lastActivityMs (момент хендофа): в режиме молчания входящие
+// выходят раньше сохранения, поэтому lastActivityMs остаётся временем передачи.
+const HANDOFF_RESUME_MS = 60 * 60 * 1000;
+
 // Память диалога: сколько ходов и по сколько символов держим в context (анти-раздувание JSONB/токенов).
 const HISTORY_MAX_TURNS = 12;
 const HISTORY_TEXT_CAP = 400;
@@ -280,10 +285,18 @@ export async function handleIncomingMessage(
     let context: DialogContext = existing?.context ?? {};
     const senderName = msg.profileName ?? null;
 
-    // Передан менеджеру — бот молчит.
+    // Передан менеджеру — бот молчит. Но не вечно: через час авто-возобновляем ответы (Q84).
     if (isBotSuppressed(state)) {
-      console.info("[whatsapp:nl] suppressed (human_handoff)", { chat: msg.chatId.slice(0, 6) });
-      return;
+      const sinceHandoffMs = nowMs - (existing?.lastActivityMs ?? 0);
+      if (sinceHandoffMs < HANDOFF_RESUME_MS) {
+        console.info("[whatsapp:nl] suppressed (human_handoff)", { chat: msg.chatId.slice(0, 6) });
+        return;
+      }
+      // Час прошёл — снова отвечаем: сбрасываем в idle и обрабатываем сообщение штатно
+      // (корзину/память НЕ трогаем — клиент может продолжить с того же места).
+      console.info("[whatsapp:nl] handoff auto-resume", { chat: msg.chatId.slice(0, 6) });
+      state = "idle";
+      await deps.dialog.save(msg.chatId, { state: "idle", context, phone }, nowIso).catch(() => {});
     }
 
     // TTL сессии (60 мин): не продолжаем старое оформление молча.

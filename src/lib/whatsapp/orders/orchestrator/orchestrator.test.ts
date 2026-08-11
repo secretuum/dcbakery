@@ -280,6 +280,27 @@ test("агент просит менеджера (handoff)", async () => {
   assert.equal(t.drafts.length, 1);
 });
 
+test("хендофф → бот молчит, а через час авто-возобновляет ответы (Q84)", async () => {
+  const t = setup();
+  t.setAgent(agentOut({ intent: "handoff", reply: "Передаю менеджеру." }));
+  await handleIncomingMessage(msg({ messageId: "r1", text: "позовите человека" }), t.deps);
+  assert.equal(t.state(), "human_handoff");
+
+  // Меньше часа: новое сообщение — бот молчит (ничего не отправлено, состояние держится).
+  const sentBefore = t.sent.length;
+  t.setAgent(agentOut({ reply: "не должно ответить" }));
+  await handleIncomingMessage(msg({ messageId: "r2", text: "ну что там?" }), t.deps);
+  assert.equal(t.sent.length, sentBefore);
+  assert.equal(t.state(), "human_handoff");
+
+  // Прошёл час (>60 мин с момента хендофа) → бот снова отвечает.
+  t.staleDialog();
+  t.setAgent(agentOut({ reply: "Снова на связи, чем помочь?" }));
+  await handleIncomingMessage(msg({ messageId: "r3", text: "здравствуйте" }), t.deps);
+  assert.match(t.lastSent(), /Снова на связи/);
+  assert.notEqual(t.state(), "human_handoff");
+});
+
 test("голосовое → расшифровка → агент", async () => {
   const t = setup({ transcript: "два медовика" });
   t.setAgent(agentOut({ cartActions: [{ productId: "medovik", quantity: 2, operation: "add" }], showCart: true }));

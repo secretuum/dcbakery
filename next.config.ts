@@ -40,6 +40,15 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Ограничиваем число воркеров СБОРКИ (генерация статических страниц). Next по
+  // умолчанию поднимает по воркеру на каждое CPU-ядро; на инстансе с ограниченной RAM
+  // (билд Render) при выросшем каталоге это упирается в память и падает с out-of-memory
+  // (exit 134) на «Generating static pages». Ограничение до 2 воркеров укладывается в
+  // память. Влияет ТОЛЬКО на сборку (билд чуть медленнее), рантайм не затрагивает.
+  // Если билд Render всё равно падает по памяти — снизить до 1.
+  experimental: {
+    cpus: 2,
+  },
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",

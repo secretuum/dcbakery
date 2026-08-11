@@ -49,10 +49,11 @@ test("buildEscalationMessage: все поля, флаг «горит»", () => {
   assert.match(msg, /🔥 ГОРИТ/);
   assert.match(msg, /Клиент: 77001234567/);
   assert.match(msg, /Настроение: сомневается/);
-  assert.match(msg, /Хотел: хочу скидку 30%/);
-  assert.match(msg, /Ответ бота: Скидку подтвердит менеджер\./);
+  assert.match(msg, /Что хотел: хочу скидку 30%/);
+  assert.match(msg, /Что ответил бот: Скидку подтвердит менеджер\./);
   assert.match(msg, /Почему не решилось: клиент просит индивидуальную цену/);
-  assert.match(msg, /Чат: 7700000@c\.us/);
+  // Кликабельная ссылка на чат (из номера клиента), а не технический chatId.
+  assert.match(msg, /Открыть чат: https:\/\/wa\.me\/77001234567/);
 });
 
 test("buildEscalationMessage: без настроения/ответа/номера и без «горит»", () => {
@@ -69,6 +70,8 @@ test("buildEscalationMessage: без настроения/ответа/номе�
   assert.doesNotMatch(msg, /ГОРИТ/);
   assert.doesNotMatch(msg, /Настроение:/); // mood=null → строка опущена
   assert.match(msg, /Клиент: номер неизвестен/);
-  assert.match(msg, /Хотел: —/);
-  assert.match(msg, /Ответ бота: —/);
+  assert.match(msg, /Что хотел: —/);
+  assert.match(msg, /Что ответил бот: —/);
+  // chatId "c1" не даёт валидного номера → остаётся текстовая метка чата.
+  assert.match(msg, /Чат: c1/);
 });

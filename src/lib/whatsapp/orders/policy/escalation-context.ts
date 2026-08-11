@@ -89,16 +89,30 @@ function clip(value: string, max: number): string {
   return v.length > max ? `${v.slice(0, max - 1)}…` : v;
 }
 
-/** Готовое текстовое сообщение об эскалации для Telegram-группы менеджеров. */
+/** Кликабельная ссылка на чат клиента в WhatsApp: цифры номера из phone или chatId
+ * (WhatsApp chatId вида "77051234567@c.us"). Открывается в один тап из Telegram. */
+function chatLink(clientPhone: string | null, chatId: string): string | null {
+  const digits = (clientPhone ?? chatId).replace(/\D/g, "");
+  return digits.length >= 10 ? `https://wa.me/${digits}` : null;
+}
+
+/**
+ * Готовое сообщение об эскалации для Telegram-группы менеджеров — человеческим языком,
+ * с понятными подписями и кликабельной ссылкой на чат (без технических меток вроде
+ * "escalation:profanity"). Менеджер сразу видит: кто, с каким настроением, что хотел,
+ * что ответил бот, почему не решилось и как открыть чат.
+ */
 export function buildEscalationMessage(ctx: EscalationContext): string {
+  const link = chatLink(ctx.clientPhone, ctx.chatId);
   const lines = [
-    ctx.urgent ? "🔥 ГОРИТ — нужен менеджер (WhatsApp)" : "Нужен менеджер (WhatsApp)",
+    ctx.urgent ? "🔥 ГОРИТ — срочно нужен менеджер" : "Нужен менеджер (WhatsApp)",
+    "",
     `Клиент: ${ctx.clientPhone ?? "номер неизвестен"}`,
     ctx.mood ? `Настроение: ${ctx.mood}` : null,
-    `Хотел: ${clip(ctx.clientWanted || "—", 800)}`,
-    `Ответ бота: ${ctx.botAnswered ? clip(ctx.botAnswered, 600) : "—"}`,
+    `Что хотел: ${clip(ctx.clientWanted || "—", 800)}`,
+    `Что ответил бот: ${ctx.botAnswered ? clip(ctx.botAnswered, 600) : "—"}`,
     `Почему не решилось: ${clip(ctx.whyUnresolved || ctx.reason, 400)}`,
-    `Чат: ${ctx.chatId}`,
+    link ? `Открыть чат: ${link}` : `Чат: ${ctx.chatId}`,
   ];
   return lines.filter((l): l is string => Boolean(l)).join("\n");
 }

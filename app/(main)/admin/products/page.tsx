@@ -127,6 +127,12 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
           >
             Выгрузить каталог
           </a>
+          <Link
+            href="/admin/products/import"
+            className="inline-flex min-h-11 items-center justify-center rounded-btn border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-black/5"
+          >
+            Загрузить каталог
+          </Link>
         </div>
       </div>
 

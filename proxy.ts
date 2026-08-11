@@ -253,6 +253,25 @@ function pickLocale(request: NextRequest): Locale {
   return DEFAULT_LOCALE;
 }
 
+// Заглушка на время техобслуживания (env MAINTENANCE_MODE=1). Самодостаточный HTML
+// (без внешних ассетов) — отдаётся прямо из middleware. 503 + Retry-After: краулерам
+// это сигнал «временно», выдача не пострадает.
+function maintenanceResponse(): NextResponse {
+  const support = (process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT ?? "").replace(/\D/g, "");
+  const waLink = support
+    ? `<a href="https://wa.me/${support}" style="color:#e5573f;font-weight:700;text-decoration:none">Написать в WhatsApp</a>`
+    : "";
+  const html = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Технические работы — DC Bakery</title><style>*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#fbf7f2;color:#2a1a12;padding:24px}.card{max-width:480px;text-align:center}.logo{display:inline-flex;width:56px;height:56px;align-items:center;justify-content:center;border-radius:12px;background:#e5573f;color:#fff;font-weight:800;font-size:20px;letter-spacing:.04em;margin-bottom:20px}h1{font-size:26px;margin:0 0 12px;font-weight:800}p{font-size:16px;line-height:1.6;color:#6b5b52;margin:0 0 8px}</style></head><body><div class="card"><div class="logo">DC</div><h1>Ведём технические работы</h1><p>Скоро вернёмся — сайт временно недоступен.</p><p>${waLink || "Спасибо за терпение."}</p></div></body></html>`;
+  return new NextResponse(html, {
+    status: 503,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Retry-After": "3600",
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -270,6 +289,12 @@ export async function proxy(request: NextRequest) {
     RESERVED_FIRST_SEGMENT.some((r) => firstSegment === r || firstSegment.startsWith(`${r}-`))
   ) {
     return NextResponse.next();
+  }
+
+  // 2.5) Техобслуживание (env MAINTENANCE_MODE=1): сюда доходят ТОЛЬКО публичные
+  //      страницы (админка/api/оплата/документы уже пропущены выше) → отдаём заглушку.
+  if (process.env.MAINTENANCE_MODE === "1") {
+    return maintenanceResponse();
   }
 
   // 3) Путь уже с языковым префиксом → rewrite: снимаем префикс и кладём язык в

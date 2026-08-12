@@ -21,6 +21,7 @@ import { insertVoiceMessage } from "../repo/voice-repo";
 import { applyCartOps, loadCartView, setCartItems, getCartItems, clearCart } from "../cart/cart-service";
 import { OpenAiOrderAgent } from "../agent/agent";
 import { OpenAiWhisperTranscriber } from "../ai/transcriber";
+import { DefaultMediaReader } from "../ai/media-reader";
 import { AlmatyHeuristicAddressProvider } from "../address/provider";
 import { createOrderFromWhatsApp } from "../order/create-order";
 import { createRegistrationLink } from "../registration/reg-link";
@@ -36,6 +37,7 @@ export async function buildOrchestratorDeps(provider: WhatsAppProvider): Promise
   const retailKeywords = await getRetailKeywords();
   const agent = new OpenAiOrderAgent();
   const transcriber = new OpenAiWhisperTranscriber();
+  const mediaReader = new DefaultMediaReader();
   const address = new AlmatyHeuristicAddressProvider();
 
   return {
@@ -102,6 +104,11 @@ export async function buildOrchestratorDeps(provider: WhatsAppProvider): Promise
           rejectReason: input.rejectReason ?? null,
         }).catch(() => {});
       },
+    },
+
+    media: {
+      download: (ref) => provider.downloadMedia(ref),
+      read: (input) => mediaReader.read(input),
     },
 
     order: {

@@ -49,12 +49,42 @@ test("голосовое (audioMessage) с downloadUrl", () => {
   assert.equal(r?.voice?.mimeType, "audio/ogg");
 });
 
-test("изображение/прочее → unsupported", () => {
+test("изображение (imageMessage) → image + media с подписью", () => {
   const r = normalizeGreenWebhook({
     typeWebhook: "incomingMessageReceived",
     idMessage: "I1",
     senderData: { chatId: "77051234567@c.us" },
-    messageData: { typeMessage: "imageMessage", fileMessageData: { downloadUrl: "https://x/y.jpg" } },
+    messageData: {
+      typeMessage: "imageMessage",
+      fileMessageData: { downloadUrl: "https://7105.media.greenapi.com/y.jpg", mimeType: "image/jpeg", caption: "вот заказ" },
+    },
+  });
+  assert.equal(r?.kind, "image");
+  assert.equal(r?.media?.downloadUrl, "https://7105.media.greenapi.com/y.jpg");
+  assert.equal(r?.media?.mimeType, "image/jpeg");
+  assert.equal(r?.media?.caption, "вот заказ");
+});
+
+test("документ (documentMessage) → document + имя файла", () => {
+  const r = normalizeGreenWebhook({
+    typeWebhook: "incomingMessageReceived",
+    idMessage: "D1",
+    senderData: { chatId: "77051234567@c.us" },
+    messageData: {
+      typeMessage: "documentMessage",
+      fileMessageData: { downloadUrl: "https://7105.media.greenapi.com/z.xlsx", fileName: "заказ.xlsx" },
+    },
+  });
+  assert.equal(r?.kind, "document");
+  assert.equal(r?.media?.fileName, "заказ.xlsx");
+});
+
+test("видео/стикер → unsupported", () => {
+  const r = normalizeGreenWebhook({
+    typeWebhook: "incomingMessageReceived",
+    idMessage: "VID1",
+    senderData: { chatId: "77051234567@c.us" },
+    messageData: { typeMessage: "videoMessage", fileMessageData: { downloadUrl: "https://x/y.mp4" } },
   });
   assert.equal(r?.kind, "unsupported");
 });

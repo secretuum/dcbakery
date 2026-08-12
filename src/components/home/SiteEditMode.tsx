@@ -82,7 +82,6 @@ export const SiteEditContext = createContext<SiteEditContextValue | null>(null);
 const NOOP_PERSIST = async () => false;
 
 type ProviderProps = {
-  isSuperAdmin: boolean;
   content: Record<string, unknown>;
   children: ReactNode;
 };
@@ -102,10 +101,34 @@ function applyOverlay(base: Record<string, unknown>, overlay: ContentOverlay) {
   return merged;
 }
 
-export function SiteEditProvider({ isSuperAdmin, content: initialContent, children }: ProviderProps) {
+export function SiteEditProvider({ content: initialContent, children }: ProviderProps) {
   const router = useRouter();
-  // Режим включается в Админке → Настройки; здесь только читаем флаг из localStorage
-  const editMode = useSiteEditFlag() && isSuperAdmin;
+  // Режим включается в Админке → Настройки (флаг в localStorage).
+  const editFlag = useSiteEditFlag();
+  // B3: статус суперадмина дочитываем НА КЛИЕНТЕ (а не в серверном layout по cookie —
+  // это форсило динамику всех публичных страниц). Fetch делаем ТОЛЬКО когда включён
+  // флаг правки: обычные посетители/краулеры запрос не шлют, страница остаётся статикой.
+  // Проверка авторитетна на сервере; клиентское true лишь показывает карандашики,
+  // а сохранение всё равно требует админ-авторизации (/api/admin/settings).
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  useEffect(() => {
+    // Правка выключена — не проверяем (и не трогаем state синхронно): editMode всё
+    // равно гасится по editFlag ниже, стухший isSuperAdmin роли не играет.
+    if (!editFlag) return;
+    let cancelled = false;
+    fetch("/api/admin/superadmin", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled) setIsSuperAdmin(Boolean((d as { isSuperAdmin?: unknown } | null)?.isSuperAdmin));
+      })
+      .catch(() => {
+        if (!cancelled) setIsSuperAdmin(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [editFlag]);
+  const editMode = editFlag && isSuperAdmin;
   const [error, setError] = useState<string | null>(null);
 
   // Храним не копию контента, а ТОЛЬКО свои правки поверх серверного значения. Так
@@ -140,7 +163,7 @@ export function SiteEditProvider({ isSuperAdmin, content: initialContent, childr
 
   const content = applyOverlay(initialContent, overlay);
 
-  if (!isSuperAdmin) {
+  if (!editMode) {
     // Гости и обычные посетители: read-only контекст, чтобы на реальной странице
     // отображались СОХРАНЁННЫЕ суперадмином оверрайды (текст, картинки, их
     // положение/масштаб). Режим редактирования выключен, save/reset — заглушки

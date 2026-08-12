@@ -297,16 +297,12 @@ export async function proxy(request: NextRequest) {
     return maintenanceResponse();
   }
 
-  // 3) Путь уже с языковым префиксом → rewrite: снимаем префикс и кладём язык в
-  //    заголовок x-locale на ЗАПРОСЕ (только так его прочитает getLocale в RSC).
+  // 3) Путь уже с языковым префиксом → пропускаем КАК ЕСТЬ. B3: [locale] теперь реальный
+  //    сегмент, Next сам отдаёт язык через root-params — rewrite/x-locale больше не нужны.
+  //    Кладём cookie NEXT_LOCALE для не-[locale] потребителей (getLocale-фолбэк на
+  //    /pay, /documents, route handlers).
   if (isLocale(firstSegment)) {
-    const url = request.nextUrl.clone();
-    url.pathname = pathname.slice(firstSegment.length + 1) || "/";
-
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set("x-locale", firstSegment);
-
-    const response = NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+    const response = NextResponse.next();
     response.cookies.set(LOCALE_COOKIE, firstSegment, {
       path: "/",
       maxAge: 60 * 60 * 24 * 365,

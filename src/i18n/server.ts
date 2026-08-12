@@ -1,15 +1,20 @@
 import "server-only";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
+import { locale as rootLocale } from "next/root-params";
 import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "@/src/i18n/config";
 import { translate, type Translator } from "@/src/i18n/translate";
 
 export async function getLocale(): Promise<Locale> {
-  // Источник истины — префикс URL: middleware (proxy.ts) снимает /ru|/kk|/en и
-  // кладёт язык в заголовок x-locale. Так getT() остаётся без параметра, а страницы
-  // не нужно переписывать.
-  const fromHeader = (await headers()).get("x-locale");
-  if (isLocale(fromHeader)) return fromHeader;
-  // Фолбэк для путей без языкового префикса (напр. /pay, где язык из ?lang/cookie).
+  // Источник истины под сегментом [locale] — корневой параметр через next/root-params.
+  // В отличие от headers()/cookies() он НЕ форсит динамику → страницы становятся
+  // static/ISR-совместимыми. Значение резолвит компилятор Next из реального сегмента.
+  try {
+    const value = await rootLocale();
+    if (isLocale(value)) return value;
+  } catch {
+    // Вне [locale] (route handlers, /pay, /documents) root-params недоступен — падаем
+    // в cookie-фолбэк (NEXT_LOCALE кладёт middleware при заходе с языковым префиксом).
+  }
   const value = (await cookies()).get(LOCALE_COOKIE)?.value;
   return isLocale(value) ? value : DEFAULT_LOCALE;
 }

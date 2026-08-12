@@ -27,7 +27,7 @@ const ROOT = process.cwd(); // npm test всегда стартует из ко�
 const SITE_CONTENT = "src/lib/site-content.ts";
 
 /** Юридические страницы: реквизиты в них литеральные и меняются только новой редакцией. */
-const LEGAL_PAGES = ["app/(main)/oferta/page.tsx", "app/(main)/privacy/page.tsx"];
+const LEGAL_PAGES = ["app/[locale]/(main)/oferta/page.tsx", "app/[locale]/(main)/privacy/page.tsx"];
 
 function read(rel: string) {
   return fs.readFileSync(path.join(ROOT, rel), "utf8");

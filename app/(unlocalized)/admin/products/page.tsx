@@ -3,7 +3,7 @@ import Link from "next/link";
 import {
   bulkUpdateCatalogProductsAction,
   updateCatalogProductAction,
-} from "@/app/(main)/admin/products/actions";
+} from "@/app/(unlocalized)/admin/products/actions";
 import { ProductImageUpload } from "@/src/components/admin/ProductImageUpload";
 import { Badge } from "@/src/components/ui/Badge";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
@@ -121,6 +121,10 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
           >
             Открыть каталог
           </Link>
+          {/* Ссылка на скачивание файла (xlsx через route handler), а не навигация по
+              странице: нужен полноценный запрос браузера, чтобы сработала загрузка;
+              next/link здесь неуместен. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/api/admin/products/export"
             className="inline-flex min-h-11 items-center justify-center rounded-btn border border-black/15 bg-white px-4 py-2 text-sm font-semibold text-dark transition hover:bg-black/5"

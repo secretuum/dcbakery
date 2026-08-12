@@ -90,6 +90,23 @@ export function normalizeGreenWebhook(
     };
   }
 
-  // Изображения, видео, документы, стикеры, контакты и т.п. — не обрабатываем.
+  // Фото и документы — читаем (OCR для фото/PDF, exceljs для Excel). У обоих типов
+  // файл лежит в fileMessageData (downloadUrl/mimeType/fileName/caption).
+  if (typeMessage === "imageMessage" || typeMessage === "documentMessage") {
+    const file = asRecord(messageData.fileMessageData);
+    return {
+      ...base,
+      kind: typeMessage === "imageMessage" ? "image" : "document",
+      media: {
+        downloadUrl: asString(file.downloadUrl) || null,
+        mimeType: asString(file.mimeType) || null,
+        fileName: asString(file.fileName) || null,
+        caption: asString(file.caption) || null,
+        sizeBytes: null,
+      },
+    };
+  }
+
+  // Видео, стикеры, контакты, гео и т.п. — не обрабатываем.
   return { ...base, kind: "unsupported" };
 }

@@ -72,6 +72,8 @@ export function describeLeadReason(reason: string): { why: string; mood: string 
       return { why: "бот не смог решить сам (просьба менеджера или вопрос вне данных)", mood: null, urgent: false };
     case "unsupported_attachment":
       return { why: "клиент прислал вложение (фото/файл), бот его не читает — обработайте вручную", mood: null, urgent: false };
+    case "unreadable_media":
+      return { why: "клиент прислал фото/документ, бот не смог его прочитать — обработайте вручную", mood: null, urgent: false };
     case "delivery_outside_almaty":
       return { why: "адрес вне зоны доставки (доставляем только по Алматы)", mood: null, urgent: false };
     case "missing_phone":

@@ -6,7 +6,7 @@
 // импортируется как type (стирается — server-only не подтягивается).
 
 import type { Product } from "@/src/types";
-import type { NormalizedIncomingMessage, IncomingVoiceRef } from "../transport/types";
+import type { NormalizedIncomingMessage, IncomingVoiceRef, IncomingMediaRef } from "../transport/types";
 import type { DialogState } from "../state/machine";
 import { isBotSuppressed } from "../state/machine";
 import { detectEscalation } from "../policy/escalation";
@@ -16,6 +16,7 @@ import { buildCatalogContext, catalogProductIds } from "../agent/catalog-context
 import type { AgentResponse } from "../agent/schema";
 import type { CartView, CartItemQty, CartOp, CartAdjustment } from "../cart/cart-math";
 import { guardAudio } from "../ai/audio-guard";
+import { guardMedia } from "../ai/media-guard";
 import type { CreateOrderInput } from "../order/create-order";
 import { LIMITS, CONSENT_VERSION } from "../config";
 import * as M from "./messages";
@@ -95,6 +96,14 @@ export type OrchestratorDeps = {
       status: string;
       rejectReason?: string;
     }): Promise<void>;
+  };
+  media: {
+    download(ref: IncomingMediaRef): Promise<{ bytes: Uint8Array; mimeType: string | null } | null>;
+    read(input: {
+      bytes: Uint8Array;
+      mimeType: string | null;
+      fileName: string | null;
+    }): Promise<{ text: string }>;
   };
   order: { create(input: CreateOrderInput): Promise<{ orderId: string; orderNumber: string }> };
   /** Опционально: одноразовая ссылка регистрации (дозаполнение профиля на сайте). */
@@ -391,6 +400,35 @@ export async function handleIncomingMessage(
         })
         .catch(() => {});
       text = tr.text;
+    } else if (msg.kind === "image" || msg.kind === "document") {
+      // Фото/документ: скачиваем доверенно → проверяем формат/размер → читаем (OCR/exceljs).
+      // Не смогли — не теряем заказ: зовём менеджера (как с нечитаемым голосовым/вложением).
+      const media = await deps.media.download(msg.media ?? {}).catch(() => null);
+      const guard = media
+        ? guardMedia({
+            bytes: media.bytes,
+            mimeType: msg.media?.mimeType ?? media.mimeType,
+            fileName: msg.media?.fileName ?? null,
+            maxBytes: LIMITS.maxMediaBytes,
+          })
+        : ({ ok: false, reason: "download_failed" } as const);
+      if (!guard.ok) {
+        await reply(M.MSG_MEDIA_BAD);
+        await createLead("unreadable_media", "[файл]");
+        return;
+      }
+      const read = await deps.media
+        .read({ bytes: media!.bytes, mimeType: media!.mimeType, fileName: msg.media?.fileName ?? null })
+        .catch(() => null);
+      const extracted = read?.text.trim() ?? "";
+      if (!extracted) {
+        await reply(M.MSG_MEDIA_BAD);
+        await createLead("unreadable_media", "[файл]");
+        return;
+      }
+      // Подпись клиента к файлу (если есть) + распознанный текст — вместе идут агенту.
+      const caption = msg.media?.caption?.trim();
+      text = caption ? `${caption}\n${extracted}` : extracted;
     } else {
       text = msg.text ?? "";
     }

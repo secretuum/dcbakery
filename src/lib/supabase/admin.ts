@@ -298,6 +298,34 @@ async function deleteSupabaseOrder(orderId: string) {
   }
 }
 
+/**
+ * Best-effort установка типа клиента (customer_type) на уже созданный заказ. Отделено
+ * от insertOrderWithItems, чтобы деплой кода до применения миграции (колонки нет) не
+ * ломал создание заказа — вызывающий оборачивает в .catch(). См. app/api/orders/route.ts.
+ */
+export async function updateOrderCustomerType(orderId: string, customerType: string) {
+  const url = getSupabaseRestUrl("orders");
+
+  if (!url || !serviceRoleKey) {
+    throw new Error(getSupabaseAdminConfigError() ?? "Supabase is not configured");
+  }
+
+  const response = await fetch(`${url}?id=eq.${encodeURIComponent(orderId)}`, {
+    method: "PATCH",
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: `Bearer ${serviceRoleKey}`,
+      "Content-Type": "application/json",
+      Prefer: "return=minimal",
+    },
+    body: JSON.stringify({ customer_type: customerType }),
+  });
+
+  if (!response.ok) {
+    throw new Error(await parseSupabaseError(response));
+  }
+}
+
 export async function updateOrderTelegramMessageId(orderId: string, telegramMessageId: string) {
   const url = getSupabaseRestUrl("orders");
 

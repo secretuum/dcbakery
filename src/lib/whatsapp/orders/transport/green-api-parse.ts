@@ -90,6 +90,21 @@ export function normalizeGreenWebhook(
     };
   }
 
+  // Геометка клиента: координаты + (если подписал) название/адрес.
+  if (typeMessage === "locationMessage") {
+    const loc = asRecord(messageData.locationMessageData);
+    return {
+      ...base,
+      kind: "location",
+      location: {
+        latitude: Number(loc.latitude),
+        longitude: Number(loc.longitude),
+        name: asString(loc.nameLocation) || null,
+        address: asString(loc.address) || null,
+      },
+    };
+  }
+
   // Фото и документы — читаем (OCR для фото/PDF, exceljs для Excel). У обоих типов
   // файл лежит в fileMessageData (downloadUrl/mimeType/fileName/caption).
   if (typeMessage === "imageMessage" || typeMessage === "documentMessage") {

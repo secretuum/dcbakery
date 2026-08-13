@@ -1,6 +1,7 @@
 import type { Order, OrderItem, OrderStatus } from "@/src/types";
 import { formatPrice } from "@/src/lib/format";
 import { orderStatusLabels } from "@/src/lib/order-status";
+import { build2gisSearchLink } from "@/src/lib/whatsapp/orders/geo/gis";
 
 // Карточка заявки для общего чата: текст + кнопки под текущий статус.
 // callback_data кнопки = "<действие>:<orderId>" (укладывается в лимит 64 байта).
@@ -55,6 +56,12 @@ export function buildOrderCard(order: Order, items: OrderItem[]) {
     })
     .join("\n");
 
+  // Адрес показываем ВСЕГДА отдельной строкой (раньше при наличии даты он не выводился).
+  // 2ГИС-ссылка: поиск по текстовому адресу (для геометки точка-ссылка лежит в комментарии,
+  // а адрес = «Геолокация…», по которому искать бессмысленно — такую ссылку не строим).
+  const address = order.delivery_address?.trim() ?? "";
+  const gisSearch = address && !address.startsWith("Геолокация") ? build2gisSearchLink(address) : null;
+
   const text = [
     `🧾 Заявка ${order.order_number}`,
     `Статус: ${orderStatusLabels[order.status] ?? order.status}`,
@@ -63,7 +70,9 @@ export function buildOrderCard(order: Order, items: OrderItem[]) {
     `Контакт: ${order.customer_name} / ${order.customer_phone}`,
     order.delivery_date
       ? `Доставка: ${order.delivery_date}${order.delivery_time ? ` ${order.delivery_time}` : ""}`
-      : `Доставка: ${optional(order.delivery_address)}`,
+      : null,
+    address ? `📍 Адрес: ${address}` : `📍 Адрес: ${optional(order.delivery_address)}`,
+    gisSearch ? `🗺 2ГИС: ${gisSearch}` : null,
     "————————",
     lines,
     "————————",

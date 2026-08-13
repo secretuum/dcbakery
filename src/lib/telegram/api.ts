@@ -46,6 +46,48 @@ export async function sendMessage(opts: SendMessageOptions): Promise<number | nu
   }
 }
 
+/**
+ * Скачать файл, присланный в бот (getFile → download). Хост — api.telegram.org (доверенный,
+ * URL строим из file_path + нашего токена, без пользовательского URL → без SSRF). Лимит
+ * размера — ранний отсев по file_size и повторно по факту. null при любой ошибке/превышении.
+ */
+export async function downloadTelegramFile(
+  fileId: string,
+  maxBytes: number,
+): Promise<{ bytes: Uint8Array; mimeType: string | null } | null> {
+  const token = botToken();
+  if (!token || !fileId) return null;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const metaRes = await fetch(`${API_BASE}/bot${token}/getFile?file_id=${encodeURIComponent(fileId)}`, {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    if (!metaRes.ok) return null;
+    const meta = (await metaRes.json()) as { result?: { file_path?: string; file_size?: number } };
+    const filePath = meta.result?.file_path;
+    if (!filePath) return null;
+    if (meta.result?.file_size && meta.result.file_size > maxBytes) return null; // ранний отсев
+
+    const fileRes = await fetch(`${API_BASE}/file/bot${token}/${filePath}`, {
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    if (!fileRes.ok) return null;
+    const declared = Number(fileRes.headers.get("content-length") ?? "0");
+    if (declared && declared > maxBytes) return null;
+    const buf = new Uint8Array(await fileRes.arrayBuffer());
+    if (buf.byteLength > maxBytes) return null;
+    return { bytes: buf, mimeType: fileRes.headers.get("content-type") };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Ответить на нажатие кнопки (убирает «часики» у кнопки, можно показать всплывашку). */
 export async function answerCallbackQuery(callbackQueryId: string, text?: string): Promise<void> {
   const token = botToken();

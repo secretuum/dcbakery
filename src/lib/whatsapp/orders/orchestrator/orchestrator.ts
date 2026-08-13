@@ -83,7 +83,7 @@ export type OrchestratorDeps = {
   };
   transcribe(input: { bytes: Uint8Array; mimeType: string }): Promise<{ text: string; lang?: string }>;
   address: {
-    validate(text: string): Promise<{ status: "in_almaty" | "outside_almaty" | "uncertain"; normalized: string; reason?: string }>;
+    validate(text: string): Promise<{ status: "in_almaty" | "outside_almaty" | "uncertain"; normalized: string; reason?: string; lat?: number; lon?: number }>;
   };
   voice: {
     download(ref: IncomingVoiceRef): Promise<{ bytes: Uint8Array; mimeType: string | null } | null>;
@@ -807,7 +807,12 @@ export async function handleIncomingMessage(
         await reply(M.confirmAddress(almatyAddr));
         return;
       }
-      await persist("awaiting_address_confirmation", { ...context, address: res.normalized });
+      // Координаты от геокодера (если есть) → точная 2ГИС-точка в заявке даже для текстового адреса.
+      const geo =
+        res.lat != null && res.lon != null
+          ? { lat: res.lat, lng: res.lon, label: res.normalized }
+          : context.geo;
+      await persist("awaiting_address_confirmation", { ...context, address: res.normalized, geo });
       await reply(M.confirmAddress(res.normalized));
     }
 

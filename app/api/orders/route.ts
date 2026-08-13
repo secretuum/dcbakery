@@ -30,7 +30,16 @@ import {
   saveWhatsAppClientProfile,
 } from "@/src/lib/whatsapp-client-store";
 import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
-import type { Order } from "@/src/types";
+import { updateOrderCustomerType } from "@/src/lib/supabase/admin";
+import type { CustomerType, Order } from "@/src/types";
+
+const CUSTOMER_TYPES: readonly CustomerType[] = ["legal", "ip", "individual"];
+
+function asCustomerType(value: unknown): CustomerType | null {
+  return typeof value === "string" && CUSTOMER_TYPES.includes(value as CustomerType)
+    ? (value as CustomerType)
+    : null;
+}
 
 const OFERTA_VERSION = "2026-07-14";
 
@@ -46,6 +55,7 @@ type IncomingItem = {
 type IncomingOrderBody = {
   comment?: string;
   customer_bin?: string;
+  customer_type?: CustomerType | null;
   company_name?: string;
   customer_email?: string;
   customer_name?: string;
@@ -122,6 +132,7 @@ function parseBody(value: unknown): IncomingOrderBody {
     comment: asString(value.comment),
     company_name: asString(value.company_name),
     customer_bin: asString(value.customer_bin),
+    customer_type: asCustomerType(value.customer_type),
     customer_email: asString(value.customer_email),
     customer_name: asString(value.customer_name),
     customer_phone: asString(value.customer_phone),
@@ -309,6 +320,7 @@ export async function POST(request: Request) {
     source: "website",
     company_name: body.company_name ?? "",
     customer_bin: body.customer_bin || null,
+    customer_type: body.customer_type ?? null,
     customer_name: body.customer_name ?? "",
     // Храним номер в нормализованном виде (+7XXXXXXXXXX) — чтобы кабинет находил
     // заказ по телефону, а не по человекочитаемой строке с пробелами/скобками.
@@ -350,6 +362,13 @@ export async function POST(request: Request) {
       },
       { status: 500 },
     );
+  }
+
+  // Тип клиента (customer_type) — ОТДЕЛЬНЫМ best-effort апдейтом, а не в основной вставке.
+  // Так деплой кода ДО применения миграции (колонки ещё нет) не ломает создание заказа:
+  // апдейт тихо не удастся, заказ уже сохранён. После миграции колонка заполняется штатно.
+  if (order.customer_type) {
+    await updateOrderCustomerType(orderId, order.customer_type).catch(() => {});
   }
 
   // Списываем остаток по каждой позиции АТОМАРНО через RPC decrement_product_stock

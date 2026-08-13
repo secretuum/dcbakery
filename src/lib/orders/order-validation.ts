@@ -2,10 +2,13 @@
 // чтобы денежный путь был покрыт тестами. Роут делегирует сюда: логика та же.
 
 import { B2B_PAYMENT_METHODS, MIN_ORDER_AMOUNT } from "@/app/constants";
-import type { Product } from "@/src/types";
+import type { CustomerType, Product } from "@/src/types";
+import { isValidBin } from "@/src/lib/antifraud/company-check";
 
 export type OrderValidationBody = {
   company_name?: string;
+  customer_bin?: string | null;
+  customer_type?: CustomerType | null;
   customer_name?: string;
   customer_phone?: string;
   delivery_date?: string;
@@ -35,6 +38,16 @@ export function validateOrderFields(
 
   if (!body.company_name) {
     errors.push("company_name is required");
+  }
+
+  // Юрлицо/ИП обязаны указать БИН (12 цифр) — для антифрод-сверки с госреестром.
+  // Физлицо (самозанятый) БИН не имеет. Тип не задан (старый клиент/прямой POST) →
+  // требование не навязываем (обратная совместимость; антифрод остаётся мягким).
+  if (
+    (body.customer_type === "legal" || body.customer_type === "ip") &&
+    !isValidBin(body.customer_bin)
+  ) {
+    errors.push("customer_bin is required for legal/ip");
   }
 
   if (!body.customer_name) {

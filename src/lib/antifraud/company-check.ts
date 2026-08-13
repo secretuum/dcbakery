@@ -4,8 +4,8 @@
 // сборка вердикта для менеджера. Решение владельца: МЯГКИЙ сигнал, НЕ блок заказа.
 // План и обоснование источника — docs/antifraud/bin-name-check-plan.md.
 
-/** Тип B2B-клиента. legal=юрлицо (ТОО/АО), ip=ИП, individual=физлицо (самозанятый). */
-export type CustomerType = "legal" | "ip" | "individual";
+import type { CustomerType } from "@/src/types";
+export type { CustomerType };
 
 /** Требуется ли БИН/ИИН для сверки. Физлицо БИН не имеет — проверку пропускаем. */
 export function requiresBin(type: CustomerType): boolean {

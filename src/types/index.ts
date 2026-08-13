@@ -76,6 +76,9 @@ export type OrderStatus =
 
 export type OrderSource = "website" | "whatsapp" | "admin";
 
+/** Тип B2B-клиента: legal=юрлицо (ТОО/АО), ip=ИП, individual=физлицо (самозанятый). */
+export type CustomerType = "legal" | "ip" | "individual";
+
 export type PaymentStatus =
   | "unpaid"
   | "payment_link_created"
@@ -126,6 +129,8 @@ export type Order = {
   source?: OrderSource;
   company_name: string;
   customer_bin?: string | null;
+  /** Самоназванный тип клиента (юрлицо/ИП/физлицо). Опционально: старые заказы — null. */
+  customer_type?: CustomerType | null;
   customer_name: string;
   customer_phone: string;
   customer_email?: string | null;

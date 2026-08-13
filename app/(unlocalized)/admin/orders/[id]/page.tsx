@@ -39,6 +39,13 @@ function optional(value?: string | null) {
   return value?.trim() ? value : "не указано";
 }
 
+function customerTypeLabel(type?: string | null) {
+  if (type === "legal") return "Юрлицо (ТОО/АО)";
+  if (type === "ip") return "ИП";
+  if (type === "individual") return "Физлицо (самозанятый)";
+  return "не указан";
+}
+
 export async function generateMetadata({ params }: AdminOrderPageProps): Promise<Metadata> {
   const { id } = await params;
   const order = await fetchAdminOrder(id);
@@ -113,7 +120,8 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
             <dl className="mt-5 grid gap-4 sm:grid-cols-2">
               {[
                 ["Компания", order.company_name],
-                ["БИН / ИП", optional(order.customer_bin)],
+                ["Тип клиента", customerTypeLabel(order.customer_type)],
+                ["БИН / ИИН", optional(order.customer_bin)],
                 ["Контакт", order.customer_name],
                 ["Телефон", order.customer_phone],
                 ["Email", optional(order.customer_email)],

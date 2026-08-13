@@ -27,6 +27,8 @@ export type Product = {
   category_id: string;
   category?: Category;
   price: number;
+  /** Базовая цена до акции (перечёркивается на витрине). Ставится только при активной акции. */
+  oldPrice?: number;
   unit: string;
   weight?: string;
   weightLabel?: string;

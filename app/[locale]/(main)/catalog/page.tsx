@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CategoryNavBar } from "@/src/components/catalog/CategoryNavBar";
 import { CatalogFilters } from "@/src/components/catalog/CatalogFilters";
+import { PromoBanner } from "@/src/components/catalog/PromoBanner";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { fetchProductOrderCounts } from "@/src/lib/supabase/popularity";
 import { getLocale, getT } from "@/src/i18n/server";
@@ -35,6 +36,7 @@ export default async function CatalogPage() {
 
   return (
     <main className="min-h-screen bg-cream text-dark">
+      <PromoBanner />
       <CategoryNavBar categories={categories} popularCount={popularProducts.length} />
       <CatalogFilters
         categories={categories}

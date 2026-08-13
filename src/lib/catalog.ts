@@ -22,6 +22,8 @@ type LocalizedOverride = CatalogProductOverride & {
 import { fetchProductOrderCounts } from "@/src/lib/supabase/popularity";
 import { unstable_cache } from "next/cache";
 import type { Category, Product } from "@/src/types";
+import { applyCatalogPromo, almatyToday } from "@/src/lib/catalog-promo";
+import { getCatalogPromo } from "@/src/lib/catalog-promo.server";
 
 /** Тег кэша каталога — сбрасывать при правке товаров/остатков в админке. */
 export const CATALOG_CACHE_TAG = "catalog";
@@ -285,10 +287,14 @@ async function getCatalogProducts({
   includeArchived = false,
   includeInactive = false,
   includeZeroPrice = false,
+  withPromo = true,
 }: {
   includeArchived?: boolean;
   includeInactive?: boolean;
   includeZeroPrice?: boolean;
+  /** Наложить акцию (промо-цены/oldPrice). Публичная витрина — да; админка — нет
+   *  (импорт-diff и редактор должны видеть БАЗОВЫЕ цены). */
+  withPromo?: boolean;
 } = {}) {
   const categories = getActiveCategories();
   const activeCategoryIds = new Set(categories.map((category) => category.id));
@@ -310,12 +316,23 @@ async function getCatalogProducts({
     .map((override, index) => toCustomProduct(override, index, categories))
     .filter((product): product is Product => Boolean(product));
 
-  const products = [
+  const merged = [
     ...sourceCatalog.map((product) =>
       applyOverride(product, overridesByProductId.get(product.id), categories),
     ),
     ...customProducts,
   ];
+
+  // Акция накладывается ПОСЛЕ мерджа оверрайдов: промо-цена (ниже базовой) становится
+  // текущей, базовая уезжает в oldPrice. Best-effort — сбой конфига не должен ронять каталог.
+  let products = merged;
+  if (withPromo) {
+    try {
+      products = applyCatalogPromo(merged, await getCatalogPromo(), almatyToday());
+    } catch (error) {
+      console.warn("[catalog] Failed to apply promo, using base prices:", error);
+    }
+  }
 
   return products
     .filter((product) => {
@@ -354,7 +371,12 @@ export async function fetchAdminProducts({
 }: {
   includeArchived?: boolean;
 } = {}): Promise<Product[]> {
-  return getCatalogProducts({ includeArchived, includeInactive: true, includeZeroPrice: true });
+  return getCatalogProducts({
+    includeArchived,
+    includeInactive: true,
+    includeZeroPrice: true,
+    withPromo: false,
+  });
 }
 
 export async function fetchPopularProducts(limit = 4): Promise<Product[]> {

@@ -79,6 +79,23 @@ test("документ (documentMessage) → document + имя файла", () =
   assert.equal(r?.media?.fileName, "заказ.xlsx");
 });
 
+test("геолокация (locationMessage) → location с координатами", () => {
+  const r = normalizeGreenWebhook({
+    typeWebhook: "incomingMessageReceived",
+    idMessage: "L1",
+    senderData: { chatId: "77051234567@c.us" },
+    messageData: {
+      typeMessage: "locationMessage",
+      locationMessageData: { latitude: 43.238, longitude: 76.945, nameLocation: "Дом", address: "Абая 10" },
+    },
+  });
+  assert.equal(r?.kind, "location");
+  assert.equal(r?.location?.latitude, 43.238);
+  assert.equal(r?.location?.longitude, 76.945);
+  assert.equal(r?.location?.name, "Дом");
+  assert.equal(r?.location?.address, "Абая 10");
+});
+
 test("видео/стикер → unsupported", () => {
   const r = normalizeGreenWebhook({
     typeWebhook: "incomingMessageReceived",

@@ -15,6 +15,8 @@ import { formatPrice } from "@/src/lib/format";
 import { orderTotalWithDelivery } from "@/app/constants";
 import { signDocumentToken } from "@/src/lib/document-token";
 import { withDocToken } from "@/src/lib/documents/access";
+import { buildBinVerdict, isValidBin } from "@/src/lib/antifraud/company-check";
+import { lookupCompanyByBin } from "@/src/lib/antifraud/company-registry";
 
 type AdminOrderPageProps = {
   params: Promise<{
@@ -57,6 +59,19 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
   if (!order) {
     notFound();
   }
+
+  // Антифрод по БИН (мягкий сигнал менеджеру, заказ не блокируется). Best-effort:
+  // реестр недоступен → record=null → «не проверено». Тип клиента берём из реестра
+  // (isIndividual), чтобы для ИП не флагать несовпадение вывески с «ИП ФИО».
+  const hasBin = isValidBin(order.customer_bin);
+  const registryRecord = hasBin ? await lookupCompanyByBin(order.customer_bin) : null;
+  const binVerdict = hasBin
+    ? buildBinVerdict({
+        customerType: registryRecord?.isIndividual ? "ip" : "legal",
+        enteredName: order.company_name,
+        record: registryRecord,
+      })
+    : null;
 
   const docToken = await signDocumentToken(order.id);
   const isLocked =
@@ -113,6 +128,45 @@ export default async function AdminOrderPage({ params }: AdminOrderPageProps) {
                 </div>
               ))}
             </dl>
+
+            {binVerdict ? (
+              <div
+                className={`mt-4 rounded-btn px-4 py-3 ${
+                  binVerdict.redFlags.length ? "bg-coral-light" : "border border-black/5 bg-cream"
+                }`}
+              >
+                <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">
+                  Проверка по БИН · госреестр
+                </p>
+                {!binVerdict.checked ? (
+                  <p className="mt-1 text-sm font-semibold leading-6 text-muted">{binVerdict.summary}</p>
+                ) : binVerdict.notFound ? (
+                  <p className="mt-1 text-sm font-semibold leading-6 text-burgundy">
+                    🔴 БИН не найден в госреестре — проверьте номер.
+                  </p>
+                ) : (
+                  <>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-dark">
+                      Официально: «{binVerdict.officialName}»
+                      {binVerdict.nameMatch === "match"
+                        ? " · название совпадает"
+                        : binVerdict.nameMatch === "fuzzy"
+                          ? " · название похоже"
+                          : ""}
+                    </p>
+                    {binVerdict.redFlags.length ? (
+                      <ul className="mt-2 space-y-1 text-sm font-semibold text-burgundy">
+                        {binVerdict.redFlags.map((flag) => (
+                          <li key={flag}>{flag}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="mt-1 text-sm font-semibold text-muted">Замечаний нет.</p>
+                    )}
+                  </>
+                )}
+              </div>
+            ) : null}
 
             {order.comment ? (
               <div className="mt-4 rounded-btn bg-coral-light px-4 py-3">

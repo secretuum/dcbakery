@@ -19,6 +19,8 @@ export function requiresBin(type: CustomerType): boolean {
 export type CompanyRecord = {
   /** false, если БИН в реестре не найден (у провайдера titleRu=null/isDeleted). */
   found: boolean;
+  /** true у ИП/физлица (реестр: isIndividual) — для ИП сверку имени не флагуем. */
+  isIndividual: boolean;
   titleRu: string | null;
   titleKz: string | null;
   /** «Активен» / «Бездействующий» / … (человекочитаемо, как отдаёт реестр). */

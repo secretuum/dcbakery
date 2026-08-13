@@ -15,6 +15,7 @@ import {
 function record(over: Partial<CompanyRecord> = {}): CompanyRecord {
   return {
     found: true,
+    isIndividual: false,
     titleRu: 'ТОО "РОМАШКА"',
     titleKz: null,
     status: "Активен",

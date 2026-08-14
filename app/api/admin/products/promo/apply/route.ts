@@ -38,9 +38,12 @@ export async function POST(request: Request) {
 
   const file = form.get("file");
   if (file instanceof File && file.size > 0) {
-    const { rows } = await parseCatalogWorkbook(await file.arrayBuffer());
+    const { rows, warnings } = await parseCatalogWorkbook(await file.arrayBuffer());
     if (rows.length === 0) {
-      return NextResponse.json({ error: "Файл пустой или не распознан (нужен .xlsx из «Выгрузить каталог»)" }, { status: 400 });
+      return NextResponse.json(
+        { error: warnings[0] ?? "Файл пустой или не распознан (нужен .xlsx из «Выгрузить каталог»)" },
+        { status: 400 },
+      );
     }
     // Берём БАЗОВЫЕ цены (без промо) — чтобы хранить только реальные скидки ниже базовой.
     const products = await fetchAdminProducts();

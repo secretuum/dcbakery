@@ -4,10 +4,29 @@ import { CATALOG_CACHE_TAG, fetchAdminProducts } from "@/src/lib/catalog";
 import { parseCatalogWorkbook } from "@/src/lib/catalog-import";
 import { getCatalogPromo, writeCatalogPromo } from "@/src/lib/catalog-promo.server";
 
-// Акция каталога — загрузка/настройка промо-цен. Формат файла ТОТ ЖЕ, что у обычного
-// импорта (колонки id + price из «Выгрузить каталог»), но колонка price здесь = АКЦИОННАЯ
-// цена. Базовый каталог НЕ трогаем — цены живут в app_settings['catalog_promo'] (обратимо).
-// Мутация → только полный админ (proxy: промо-роут не в MANAGER_ALLOWED_MUTATIONS).
+// Акция каталога — сохранение промо-цен. Источник цен:
+//   • file      — .xlsx как «Выгрузить каталог» (колонка price = акционная), ИЛИ
+//   • pricesJson — {id: цена} из «умной загрузки» (после ИИ-предпросмотра).
+// В акцию идут ТОЛЬКО цены НИЖЕ текущей базовой (промо = скидка). Базовый каталог НЕ трогаем —
+// цены в app_settings['catalog_promo'] (обратимо). Полный админ (не в MANAGER_ALLOWED_MUTATIONS).
+
+type Candidate = { id: string; price: number };
+
+/** Разложить кандидатов по базовым ценам: что применить (ниже базы) и почему пропущено. */
+function classify(candidates: Candidate[], basePrice: Map<string, number>) {
+  const prices: Record<string, number> = {};
+  let applied = 0, unchanged = 0, higher = 0, notFound = 0;
+  for (const c of candidates) {
+    const base = basePrice.get(c.id);
+    if (base === undefined) { notFound++; continue; }
+    if (!Number.isFinite(c.price) || c.price <= 0) { notFound++; continue; }
+    if (c.price < base) { prices[c.id] = Math.round(c.price); applied++; }
+    else if (c.price === base) unchanged++;
+    else higher++;
+  }
+  return { prices, applied, unchanged, higher, notFound };
+}
+
 export async function POST(request: Request) {
   const form = await request.formData().catch(() => null);
   if (!form) {
@@ -31,13 +50,22 @@ export async function POST(request: Request) {
   const activeUntilRaw = String(form.get("activeUntil") ?? "").trim();
   const activeUntil = /^\d{4}-\d{2}-\d{2}$/.test(activeUntilRaw) ? activeUntilRaw : null;
 
-  // По умолчанию сохраняем прежние цены; файл (если пришёл) — пере-задаёт их целиком.
-  let prices = { ...current.prices };
-  let uploaded = 0;
-  let skipped = 0;
+  // Собираем кандидатов из файла ИЛИ из pricesJson (умная загрузка). Нет ни того, ни
+  // другого → меняем только текст/дату/вкл-выкл, прежние цены сохраняем.
+  let candidates: Candidate[] | null = null;
 
+  const pricesJson = form.get("pricesJson");
   const file = form.get("file");
-  if (file instanceof File && file.size > 0) {
+
+  if (typeof pricesJson === "string" && pricesJson.trim()) {
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(pricesJson) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json({ error: "Битый список цен" }, { status: 400 });
+    }
+    candidates = Object.entries(parsed).map(([id, price]) => ({ id, price: Number(price) }));
+  } else if (file instanceof File && file.size > 0) {
     const { rows, warnings } = await parseCatalogWorkbook(await file.arrayBuffer());
     if (rows.length === 0) {
       return NextResponse.json(
@@ -45,19 +73,18 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    // Берём БАЗОВЫЕ цены (без промо) — чтобы хранить только реальные скидки ниже базовой.
-    const products = await fetchAdminProducts();
-    const basePrice = new Map(products.map((product) => [product.id, product.price]));
-    prices = {};
-    for (const row of rows) {
-      const base = basePrice.get(row.id);
-      if (base !== undefined && typeof row.price === "number" && row.price > 0 && row.price < base) {
-        prices[row.id] = Math.round(row.price);
-        uploaded++;
-      } else {
-        skipped++; // нет такого id, или цена не ниже базовой, или пустая
-      }
-    }
+    candidates = rows.map((r) => ({ id: r.id, price: Number(r.price) }));
+  }
+
+  let stats = { applied: 0, unchanged: 0, higher: 0, notFound: 0 };
+  let prices = { ...current.prices };
+
+  if (candidates) {
+    const products = await fetchAdminProducts(); // базовые цены (без промо)
+    const basePrice = new Map(products.map((p) => [p.id, p.price]));
+    const result = classify(candidates, basePrice);
+    prices = result.prices; // файл/список ПЕРЕ-задаёт цены целиком
+    stats = { applied: result.applied, unchanged: result.unchanged, higher: result.higher, notFound: result.notFound };
   }
 
   const saved = await writeCatalogPromo({ enabled, label, activeUntil, prices });
@@ -69,7 +96,6 @@ export async function POST(request: Request) {
     ok: true,
     enabled: saved.enabled,
     count: Object.keys(saved.prices).length,
-    uploaded,
-    skipped,
+    ...stats,
   });
 }

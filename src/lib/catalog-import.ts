@@ -136,14 +136,15 @@ function unescapeXml(s: string): string {
 }
 
 /**
- * Fallback: некоторые редакторы/генераторы сохраняют .xlsx, который ExcelJS НЕ читает
- * (x:-префиксы, отсутствие docProps, GUID-rel'ы). Файл при этом — валидный OOXML-zip.
- * Разбираем вручную через jszip: sharedStrings + первый лист. Регэксп-парс оправдан —
- * это запасной путь по well-formed OOXML, а не универсальный XML.
+ * Разбор OOXML-таблицы вручную через jszip (sharedStrings + первый лист) → ячейки по
+ * буквам колонок для каждой строки. Нужен как fallback: некоторые редакторы/генераторы
+ * сохраняют .xlsx, который ExcelJS НЕ читает (x:-префиксы, нет docProps, GUID-rel'ы),
+ * хотя файл — валидный OOXML-zip. Регэксп-парс оправдан: well-formed OOXML, не общий XML.
+ * Экспортируется для «умной загрузки» (там нужен весь грид без привязки к колонке id).
  */
-async function parseManualOoxml(
+export async function readOoxmlCells(
   buffer: ArrayBuffer,
-): Promise<{ rows: CatalogFileRow[]; warnings: string[] }> {
+): Promise<Array<{ n: number; cells: Record<string, string> }>> {
   const zip = await JSZip.loadAsync(buffer);
   const T = /<(?:\w+:)?t\b[^>]*>([\s\S]*?)<\/(?:\w+:)?t>/g;
 
@@ -161,7 +162,7 @@ async function parseManualOoxml(
       .filter((n) => /^xl\/worksheets\/sheet\d+\.xml$/i.test(n))
       .sort()[0] ??
     Object.keys(zip.files).find((n) => /^xl\/worksheets\/.+\.xml$/i.test(n));
-  if (!sheetName) return { rows: [], warnings: ["В файле нет листа с данными."] };
+  if (!sheetName) return [];
   const sheetXml = (await zip.file(sheetName)!.async("string")) ?? "";
 
   const colOf = (ref: string) => ref.replace(/\d+/g, "");
@@ -180,6 +181,18 @@ async function parseManualOoxml(
     }
     parsed.push({ n: Number(rm[1]), cells });
   }
+  return parsed;
+}
+
+/**
+ * Fallback-разбор каталога: читает OOXML вручную (readOoxmlCells) и мапит колонки по
+ * заголовку — для файлов, которые не читает ExcelJS.
+ */
+async function parseManualOoxml(
+  buffer: ArrayBuffer,
+): Promise<{ rows: CatalogFileRow[]; warnings: string[] }> {
+  const parsed = await readOoxmlCells(buffer);
+  if (parsed.length === 0) return { rows: [], warnings: ["В файле нет листа с данными."] };
 
   const header = parsed.find((r) => r.n === 1)?.cells ?? {};
   const HEADER_MATCH: [string, RegExp][] = [

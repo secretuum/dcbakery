@@ -2,7 +2,10 @@ export type Category = {
   id: string;
   name: string;
   slug: string;
+  /** Короткое описание — для meta description (≤160 симв.). */
   description?: string;
+  /** SEO-интро на страницу категории (прямой ответ + ключи, 40–60 слов). */
+  intro?: string;
   image?: string;
   parent_id?: string | null;
   sort_order: number;

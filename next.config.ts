@@ -66,6 +66,14 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // Наш фавикон — app/icon.png (отдаётся как /icon.png). Легаси-клиенты, старые
+      // закладки и краулеры дёргают /favicon.ico напрямую → раньше был 404. Редиректим
+      // на актуальную иконку (middleware сюда не заходит — matcher исключает файлы с точкой).
+      { source: "/favicon.ico", destination: "/icon.png", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

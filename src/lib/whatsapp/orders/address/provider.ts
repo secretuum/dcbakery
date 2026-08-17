@@ -16,6 +16,9 @@ export type AddressValidationResult = {
   matchedCity?: string;
   /** Причина для журнала/менеджера (без сырого адреса). */
   reason: string;
+  /** Координаты от геокодера (если удалось) — для точной 2ГИС-ссылки в заявке. */
+  lat?: number;
+  lon?: number;
 };
 
 export interface AddressValidationProvider {

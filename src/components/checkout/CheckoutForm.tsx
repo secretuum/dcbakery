@@ -348,6 +348,32 @@ export function CheckoutForm({
     }
   }
 
+  // Антифрод адреса: тот же контур, что у WhatsApp-бота (эвристика + бесплатный OSM-геокодер
+  // на сервере). Возвращает вердикт города. Сеть/ошибка → uncertain (не блокируем, менеджер сверит).
+  async function checkAddressCity(address: string): Promise<"in_almaty" | "outside_almaty" | "uncertain"> {
+    try {
+      const r = await fetch("/api/geo/verify-address", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address }),
+      });
+      const d = (await r.json().catch(() => ({}))) as { status?: string };
+      if (d.status === "outside_almaty") return "outside_almaty";
+      if (d.status === "in_almaty") return "in_almaty";
+      return "uncertain";
+    } catch {
+      return "uncertain";
+    }
+  }
+
+  // Ранняя подсказка на blur поля адреса: вне Алматы → ошибка под полем (submit добьёт).
+  async function verifyAddressField(address: string) {
+    if (address.trim().length < 4) return;
+    if ((await checkAddressCity(address)) === "outside_almaty") {
+      setErrors((e) => ({ ...e, delivery_address: "Мы доставляем только по Алматы. Укажите адрес в Алматы." }));
+    }
+  }
+
   // Отправка заказа — логика запроса не менялась; patch добирает поля,
   // заполненные в гейте регистрации (email/БИН).
   async function submitOrder(patch?: Partial<CheckoutFormState>) {
@@ -410,6 +436,16 @@ export function CheckoutForm({
       setErrors(nextErrors);
       showToast(t("Проверьте обязательные поля"), "error");
       return;
+    }
+
+    // Антифрод адреса: доставка только по Алматы. Проверяем, если адрес указан;
+    // outside_almaty блокирует оформление, uncertain/ошибка — пропускаем (менеджер сверит).
+    if (submission.delivery_address.trim()) {
+      if ((await checkAddressCity(submission.delivery_address)) === "outside_almaty") {
+        setErrors((e) => ({ ...e, delivery_address: "Мы доставляем только по Алматы. Укажите адрес в Алматы." }));
+        showToast(t("Доставка только по Алматы — укажите адрес в Алматы"), "error");
+        return;
+      }
     }
 
     if (!canCheckout) {
@@ -604,8 +640,10 @@ export function CheckoutForm({
                   <Input
                     value={form.delivery_address}
                     onChange={(event) => updateField("delivery_address", event.currentTarget.value)}
+                    onBlur={(event) => void verifyAddressField(event.currentTarget.value)}
                     placeholder={t("Город, улица, дом, точка")}
                   />
+                  <FieldError>{errors.delivery_address}</FieldError>
                 </label>
 
                 <div className="min-w-0 sm:col-span-2">

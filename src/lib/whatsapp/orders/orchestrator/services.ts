@@ -22,7 +22,7 @@ import { applyCartOps, loadCartView, setCartItems, getCartItems, clearCart } fro
 import { OpenAiOrderAgent } from "../agent/agent";
 import { OpenAiWhisperTranscriber } from "../ai/transcriber";
 import { DefaultMediaReader } from "../ai/media-reader";
-import { AlmatyHeuristicAddressProvider } from "../address/provider";
+import { GeocodingAddressProvider } from "../address/geocoder-provider";
 import { createOrderFromWhatsApp } from "../order/create-order";
 import { createRegistrationLink } from "../registration/reg-link";
 import { notifyManagersText } from "../notify/telegram-notify";
@@ -38,7 +38,7 @@ export async function buildOrchestratorDeps(provider: WhatsAppProvider): Promise
   const agent = new OpenAiOrderAgent();
   const transcriber = new OpenAiWhisperTranscriber();
   const mediaReader = new DefaultMediaReader();
-  const address = new AlmatyHeuristicAddressProvider();
+  const address = new GeocodingAddressProvider();
 
   return {
     now: () => Date.now(),

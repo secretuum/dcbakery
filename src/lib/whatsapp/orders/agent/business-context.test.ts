@@ -16,7 +16,7 @@ test("buildBusinessContext: часы, дни/отсечка, тариф, кон�
   assert.match(ctx, /Пн–Пт 9:00–19:00/);
   assert.match(ctx, /вторник, четверг, суббота/); // отсортированные дни доставки
   assert.match(ctx, /до 18:00/);
-  assert.match(ctx, /бесплатно/); // строка тарифа из describeDeliveryTariff
+  assert.match(ctx, /бесплатн/); // строка тарифа из describeDeliveryTariff (доставка бесплатная)
   assert.match(ctx, /\+7 747 694 0766/);
   assert.match(ctx, /Жамбыла 154/);
 });

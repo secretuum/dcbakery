@@ -2,6 +2,7 @@
 // единый стиль. Тон — как у существующего бота: коротко, по делу, с итогом и вопросом.
 
 import type { CartView, CartAdjustment } from "../cart/cart-math";
+import { MIN_ORDER_AMOUNT } from "@/app/constants";
 
 function tenge(amount: number): string {
   const rounded = Math.round(amount);
@@ -29,6 +30,15 @@ export function formatCart(view: CartView): string {
     `Итого: ${tenge(view.grandTotal)}`,
     "",
     "Всё как надо? Напишите «да» — и оформим. Или добавьте/уберите что-нибудь — как вам удобно.",
+  ].join("\n");
+}
+
+/** Сообщение, когда сумма корзины ниже минимальной — оформление не пускаем. */
+export function belowMinimum(itemsTotal: number): string {
+  const missing = Math.max(MIN_ORDER_AMOUNT - itemsTotal, 0);
+  return [
+    `Минимальная сумма заказа — ${tenge(MIN_ORDER_AMOUNT)}.`,
+    `Сейчас в корзине ${tenge(itemsTotal)} — добавьте ещё ${tenge(missing)}, и оформим. Доставка по Алматы бесплатная.`,
   ].join("\n");
 }
 

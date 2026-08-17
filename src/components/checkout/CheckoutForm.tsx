@@ -258,6 +258,10 @@ export function CheckoutForm({
   const [showAuthGate, setShowAuthGate] = useState(false);
   // Тир аккаунта: null пока грузится. Управляет нотисом предоплаты и клиентским потолком.
   const [tier, setTier] = useState<"lite" | "full" | null>(null);
+  // Live-проверка БИН по госреестру (только название для сверки; фрод-профиль — менеджеру).
+  const [binCheck, setBinCheck] = useState<{ status: string; name: string | null } | null>(null);
+  const [binChecking, setBinChecking] = useState(false);
+  const lastCheckedBinRef = useRef("");
   const isNavigatingRef = useRef(false);
   const [form, setForm] = useState<CheckoutFormState>({
     customer_type: "legal",
@@ -299,6 +303,39 @@ export function CheckoutForm({
   ) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
     setErrors((currentErrors) => ({ ...currentErrors, [field]: undefined }));
+  }
+
+  // По уходу фокуса с поля БИН — тянем официальное название компании из госреестра,
+  // чтобы клиент сверил, что не ошибся в номере. Флаги/долги/чёрные списки клиенту
+  // НЕ показываем (это в карточке менеджера). Best-effort: ошибка/недоступность — молча.
+  async function verifyBin() {
+    if (form.customer_type === "individual") return;
+    const bin = form.customer_bin.replace(/\D/g, "");
+    if (!/^\d{12}$/.test(bin)) {
+      setBinCheck(null);
+      lastCheckedBinRef.current = "";
+      return;
+    }
+    if (bin === lastCheckedBinRef.current) return; // этот БИН уже проверяли
+    lastCheckedBinRef.current = bin;
+    setBinChecking(true);
+    try {
+      const response = await fetch("/api/antifraud/verify-bin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bin }),
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { status?: string; name?: string | null }
+        | null;
+      // Пока шёл запрос, БИН мог смениться — не перезаписываем свежую подсказку старым ответом.
+      if (lastCheckedBinRef.current !== bin) return;
+      setBinCheck(data?.status ? { status: data.status, name: data.name ?? null } : null);
+    } catch {
+      setBinCheck(null);
+    } finally {
+      setBinChecking(false);
+    }
   }
 
   async function isClientAuthed() {
@@ -491,13 +528,30 @@ export function CheckoutForm({
                     <Input
                       inputMode="numeric"
                       value={form.customer_bin}
-                      onChange={(event) => updateField("customer_bin", event.currentTarget.value)}
+                      onChange={(event) => {
+                        updateField("customer_bin", event.currentTarget.value);
+                        setBinCheck(null);
+                        lastCheckedBinRef.current = ""; // содержимое изменилось — по blur перепроверим
+                      }}
+                      onBlur={verifyBin}
                       placeholder={t("Например, 123456789012")}
                     />
                     <FieldError>{errors.customer_bin}</FieldError>
-                    <p className="mt-1.5 text-xs text-muted">
-                      {t("БИН проверяется автоматически по госреестру")}
-                    </p>
+                    {binChecking ? (
+                      <p className="mt-1.5 text-xs text-muted">{t("Проверяем БИН…")}</p>
+                    ) : binCheck?.status === "ok" && binCheck.name ? (
+                      <p className="mt-1.5 text-xs font-semibold text-dark/70">
+                        {t("По реестру")}: {binCheck.name}
+                      </p>
+                    ) : binCheck?.status === "not_found" ? (
+                      <p className="mt-1.5 text-xs font-semibold text-coral">
+                        {t("БИН не найден в реестре — проверьте номер")}
+                      </p>
+                    ) : (
+                      <p className="mt-1.5 text-xs text-muted">
+                        {t("БИН проверяется автоматически по госреестру")}
+                      </p>
+                    )}
                   </label>
                 ) : null}
 

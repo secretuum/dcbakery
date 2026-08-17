@@ -1,6 +1,6 @@
 "use client";
 
-import { FREE_DELIVERY_THRESHOLD, deliveryFee } from "@/app/constants";
+import { MIN_ORDER_AMOUNT, deliveryFee } from "@/app/constants";
 import { useRouter } from "next/navigation";
 import { Button } from "@/src/components/ui/Button";
 import { useCart } from "@/src/contexts/CartContext";
@@ -13,13 +13,15 @@ export function CartSummary() {
   const locale = useLocale();
   const { items, totalAmount, totalItems } = useCart();
   const router = useRouter();
-  const delivery = deliveryFee(totalAmount);
+  const delivery = deliveryFee(totalAmount); // всегда 0 — доставка бесплатная
   const grandTotal = totalAmount + delivery;
   const freeDelivery = delivery === 0;
-  const progress = Math.min(100, Math.round((totalAmount / FREE_DELIVERY_THRESHOLD) * 100));
-  const missingToFree = Math.max(FREE_DELIVERY_THRESHOLD - totalAmount, 0);
-  const canCheckout = items.length > 0;
+  const reachedMin = totalAmount >= MIN_ORDER_AMOUNT;
+  const progress = Math.min(100, Math.round((totalAmount / MIN_ORDER_AMOUNT) * 100));
+  const missingToMin = Math.max(MIN_ORDER_AMOUNT - totalAmount, 0);
   const hasQuoteItems = items.some((item) => item.product.price <= 0);
+  // Жёсткий блок заказа ниже минимальной суммы (как и на чекауте).
+  const canCheckout = items.length > 0 && reachedMin;
 
   return (
     <aside className="rounded-2xl bg-white p-5 shadow-sm lg:sticky lg:top-28">
@@ -53,20 +55,20 @@ export function CartSummary() {
         </div>
       </div>
 
-      {/* free-delivery progress (minbar) */}
+      {/* minimum-order progress */}
       <div className="mt-5 rounded-md bg-cream-deep p-4">
         <div className="flex items-center justify-between gap-3 text-[11px] font-bold uppercase tracking-[.12em] text-ink-soft">
-          <span>{t("Бесплатная доставка")}</span>
-          <span className="font-data tracking-normal">{formatPrice(FREE_DELIVERY_THRESHOLD)}</span>
+          <span>{t("Минимальный заказ")}</span>
+          <span className="font-data tracking-normal">{formatPrice(MIN_ORDER_AMOUNT)}</span>
         </div>
         <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-white">
           <div className="h-full rounded-full bg-coral transition-all" style={{ width: `${progress}%` }} />
         </div>
         <p className="mt-3 text-[13.5px] leading-6 text-ink-soft">
-          {freeDelivery
-            ? t("Доставка бесплатная — сумма достаточна.")
-            : t("Добавьте ещё ${amount} — и доставка станет бесплатной.", {
-                amount: formatPrice(missingToFree),
+          {reachedMin
+            ? t("Минимальная сумма набрана. Доставка бесплатная.")
+            : t("Добавьте ещё ${amount} до минимальной суммы заказа.", {
+                amount: formatPrice(missingToMin),
               })}
         </p>
         {hasQuoteItems ? (

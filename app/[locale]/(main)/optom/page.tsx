@@ -32,7 +32,7 @@ export default async function OptomPage() {
     {
       q: t("Есть ли минимальный заказ?"),
       a: t(
-        "Жёсткого минимального заказа нет — заказать можно на любую сумму. Действуют тарифы доставки: от 15 000 ₸ доставка бесплатная, при заказе 10 000–15 000 ₸ — 1 500 ₸, дешевле 10 000 ₸ — 3 000 ₸.",
+        "Да, минимальная сумма заказа — 15 000 ₸. Доставка по Алматы бесплатная на все заказы.",
       ),
     },
     {
@@ -142,26 +142,16 @@ export default async function OptomPage() {
         {/* Доставка и тарифы — реальные пороги из constants */}
         <div className="rounded-card border border-black/10 bg-white p-8 sm:p-10">
           <h2 className="font-display text-xl font-semibold">{t("Сколько стоит доставка?")}</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-bold text-success">{t("Бесплатно")}</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("от 15 000 ₸")}</p>
-            </div>
-            <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-bold text-coral">1 500 ₸</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("10 000–15 000 ₸")}</p>
-            </div>
-            <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-bold text-coral">3 000 ₸</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("до 10 000 ₸")}</p>
-            </div>
+          <div className="mt-5 rounded-card border border-black/5 bg-cream p-6 text-center">
+            <p className="font-data text-2xl font-bold text-success">{t("Бесплатно")}</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("на любой заказ по Алматы")}</p>
           </div>
           <p className="mt-5 text-sm leading-7 text-dark/80">
             <EditableText
               field="optom.delivery"
               multiline
               fallback={t(
-                "Минимального заказа нет — заказать можно на любую сумму, действуют тарифы доставки выше. Доставка по Алматы; точную дату и способ (доставка или самовывоз) менеджер согласует при подтверждении заказа.",
+                "Минимальный заказ — 15 000 ₸. Доставка по Алматы бесплатная на все заказы; точную дату и способ (доставка или самовывоз) менеджер согласует при подтверждении заказа.",
               )}
             />
           </p>

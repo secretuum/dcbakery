@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t("Оплата и доставка — DC Bakery"),
     description: t(
-      "Способы оплаты, условия доставки и возврата для B2B-клиентов DC Bakery. Бесплатная доставка от 15 000 тенге.",
+      "Способы оплаты, условия доставки и возврата для B2B-клиентов DC Bakery. Доставка по Алматы бесплатная, минимальный заказ 15 000 тенге.",
     ),
     alternates: buildAlternates("/oplata-i-dostavka", locale),
   };
@@ -66,23 +66,13 @@ export default async function OplataIDostavkaPage() {
         {/* Доставка */}
         <div className="rounded-card border border-black/10 bg-white p-8 sm:p-10">
           <h2 className="font-display text-xl font-semibold">{t("Доставка")}</h2>
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-bold text-success">{t("Бесплатно")}</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("от 15 000 ₸")}</p>
-            </div>
-            <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-bold text-coral">1 500 ₸</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("10 000–15 000 ₸")}</p>
-            </div>
-            <div className="rounded-card border border-black/5 bg-cream p-5 text-center">
-              <p className="font-data text-2xl font-bold text-coral">3 000 ₸</p>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("до 10 000 ₸")}</p>
-            </div>
+          <div className="mt-5 rounded-card border border-black/5 bg-cream p-6 text-center">
+            <p className="font-data text-2xl font-bold text-success">{t("Бесплатно")}</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[.08em] text-muted">{t("на любой заказ по Алматы")}</p>
           </div>
           <div className="mt-5 space-y-3 text-sm leading-7 text-dark/80">
-            <p>{t("При заказе дороже 15 000 ₸ доставка бесплатная.")}</p>
-            <p>{t("Заказ 10 000–15 000 ₸ — доставка 1 500 ₸; дешевле 10 000 ₸ — 3 000 ₸.")}</p>
+            <p>{t("Доставка по Алматы бесплатная на все заказы.")}</p>
+            <p>{t("Минимальная сумма заказа — 15 000 ₸.")}</p>
             <p>{t("Способ (доставка или самовывоз) и точные сроки согласуются при подтверждении заказа менеджером.")}</p>
           </div>
         </div>

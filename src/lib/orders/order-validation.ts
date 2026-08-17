@@ -77,8 +77,8 @@ export function validateOrderFields(
     errors.push("payment_method is invalid");
   }
 
-  // Жёсткого минимума нет (MIN_ORDER_AMOUNT=0 — минимум реализован тарифами доставки),
-  // но нулевую сумму (только quote-позиции по 0 ₸) не создаём.
+  // Минимальная сумма заказа = MIN_ORDER_AMOUNT (15 000 ₸): ниже — блок. Нулевую сумму
+  // (только quote-позиции по 0 ₸) тоже не создаём.
   if (totalAmount <= 0) {
     errors.push("order total must be greater than zero");
   } else if (totalAmount < MIN_ORDER_AMOUNT) {

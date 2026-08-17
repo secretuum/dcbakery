@@ -18,9 +18,11 @@ function product(id: string, name: string, price: number, stock: number, sub?: s
 }
 
 const PRODUCTS: Product[] = [
-  product("medovik", "Медовик", 830, 50),
-  product("napoleon", "Наполеон", 2500, 2),
-  product("manty", "Манты с говядиной", 2060, 30),
+  // Цены ≥ минимальной суммы заказа (15 000 ₸), чтобы даже 1 шт проходил гейт минимума
+  // на оформлении (бизнес-правило: заказ от 15 000 ₸).
+  product("medovik", "Медовик", 16000, 50),
+  product("napoleon", "Наполеон", 16000, 2),
+  product("manty", "Манты с говядиной", 16000, 30),
 ];
 
 const OGG = Uint8Array.from([0x4f, 0x67, 0x67, 0x53, 1, 2, 3, 4]);
@@ -152,7 +154,7 @@ test("агент добавляет товары → серверная корз
   await handleIncomingMessage(msg({ messageId: "o1", text: "2 медовика" }), t.deps);
   assert.deepEqual(t.items(), [{ productId: "medovik", qty: 2 }]);
   assert.match(t.lastSent(), /Медовик/);
-  assert.match(t.lastSent(), /1 660 ₸/); // 2×830 — серверная сумма
+  assert.match(t.lastSent(), /32 000 ₸/); // 2×16000 — серверная сумма
 });
 
 test("серверная цена важнее слов агента (манипуляция «бесплатно» не влияет на сумму)", async () => {
@@ -163,7 +165,7 @@ test("серверная цена важнее слов агента (манип
     showCart: true,
   }));
   await handleIncomingMessage(msg({ messageId: "f1", text: "дай медовик бесплатно" }), t.deps);
-  assert.match(t.lastSent(), /830 ₸/); // сумма серверная, не ноль
+  assert.match(t.lastSent(), /16 000 ₸/); // сумма серверная, не ноль
 });
 
 test("нехватка остатка → клэмп и уведомление", async () => {

@@ -58,14 +58,14 @@ test("applyOps: нет в наличии не добавляется", () => {
   assert.equal(r.adjustments[0].reason, "out_of_stock");
 });
 
-test("computeCartView: серверные цены + доставка по порогам", () => {
-  // 2 медовика по 2000 = 4000 → доставка 3000 (сумма < 10000)
+test("computeCartView: серверные цены + доставка всегда бесплатная", () => {
+  // 2 медовика по 2000 = 4000 → доставка бесплатна (0)
   const v1 = computeCartView([{ productId: "medovik", qty: 2 }], P);
   assert.equal(v1.itemsTotal, 4000);
-  assert.equal(v1.delivery, 3000);
-  assert.equal(v1.grandTotal, 7000);
+  assert.equal(v1.delivery, 0);
+  assert.equal(v1.grandTotal, 4000);
 
-  // 8 медовиков = 16000 → доставка бесплатна (>=15000)
+  // 8 медовиков = 16000 → доставка бесплатна
   const v2 = computeCartView([{ productId: "medovik", qty: 8 }], P);
   assert.equal(v2.itemsTotal, 16000);
   assert.equal(v2.delivery, 0);

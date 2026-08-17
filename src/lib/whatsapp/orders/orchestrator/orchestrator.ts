@@ -6,6 +6,7 @@
 // импортируется как type (стирается — server-only не подтягивается).
 
 import type { Product } from "@/src/types";
+import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import type { NormalizedIncomingMessage, IncomingVoiceRef, IncomingMediaRef, IncomingLocationRef } from "../transport/types";
 import { build2gisPointLink, isValidLatLng } from "../geo/gis";
 import type { DialogState } from "../state/machine";
@@ -714,6 +715,12 @@ export async function handleIncomingMessage(
       if (view.lines.length === 0) {
         await persist("building_cart", context);
         await reply(M.MSG_EMPTY_AFTER_POLICY);
+        return;
+      }
+      // Гейт минимальной суммы заказа: ниже минимума в оформление не пускаем — просим добрать.
+      if (view.itemsTotal < MIN_ORDER_AMOUNT) {
+        await persist("building_cart", context);
+        await reply(M.belowMinimum(view.itemsTotal));
         return;
       }
       // Существующий клиент с сохранёнными адресами — предлагаем выбрать номером.

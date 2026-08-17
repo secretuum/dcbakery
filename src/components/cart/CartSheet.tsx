@@ -7,7 +7,7 @@ import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { lockBodyScroll, unlockBodyScroll } from "@/src/lib/scroll-lock";
 import { useCart } from "@/src/contexts/CartContext";
 import { formatPrice } from "@/src/lib/format";
-import { FREE_DELIVERY_THRESHOLD } from "@/app/constants";
+import { MIN_ORDER_AMOUNT } from "@/app/constants";
 import { useLocale, useT } from "@/src/i18n/client";
 import { localizeProduct } from "@/src/i18n/product";
 import type { Locale } from "@/src/i18n/config";
@@ -39,10 +39,11 @@ export default function CartSheet() {
   const [popular, setPopular] = useState<Product[]>([]);
   const hasLoadedPopular = useRef(false);
 
-  // Прогресс до бесплатной доставки (минимума заказа больше нет).
-  const progress = Math.min((totalAmount / FREE_DELIVERY_THRESHOLD) * 100, 100);
-  const freeDeliveryReached = totalAmount >= FREE_DELIVERY_THRESHOLD;
-  const canCheckout = totalItems > 0;
+  // Прогресс до минимальной суммы заказа (доставка теперь всегда бесплатная).
+  const progress = Math.min((totalAmount / MIN_ORDER_AMOUNT) * 100, 100);
+  const reachedMin = totalAmount >= MIN_ORDER_AMOUNT;
+  // Жёсткий блок заказа ниже минимальной суммы (как и на чекауте).
+  const canCheckout = totalItems > 0 && reachedMin;
 
   // Fetch popular products once on first open
   useEffect(() => {
@@ -89,7 +90,7 @@ export default function CartSheet() {
           type="button"
           onClick={() => setIsOpen(true)}
           className="fixed left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-full border border-white/70 bg-white/90 py-2 pl-5 pr-2 shadow-lg backdrop-blur-xl transition hover:shadow-xl bottom-[calc(76px_+_env(safe-area-inset-bottom))] lg:bottom-[calc(20px_+_env(safe-area-inset-bottom))]"
-          aria-label={`Открыть корзину, товаров: ${totalItems}, набрано ${Math.round(progress)}% до бесплатной доставки`}
+          aria-label={`Открыть корзину, товаров: ${totalItems}, набрано ${Math.round(progress)}% от минимальной суммы`}
         >
           <span className="flex min-w-0 flex-col text-left">
             <span className="whitespace-nowrap font-data text-sm font-bold tabular-nums text-dark">
@@ -210,19 +211,19 @@ export default function CartSheet() {
             {items.length > 0 && (
               <div className="rounded-lg bg-white p-4 shadow-xs">
                 <div className="mb-3 flex items-center gap-3">
-                  <span className={`text-[13.5px] font-semibold ${freeDeliveryReached ? "text-success" : "text-dark"}`}>
-                    {freeDeliveryReached
-                      ? t("Бесплатная доставка")
-                      : `${t("До бесплатной доставки")} ${formatPrice(FREE_DELIVERY_THRESHOLD - totalAmount)}`}
+                  <span className={`text-[13.5px] font-semibold ${reachedMin ? "text-success" : "text-dark"}`}>
+                    {reachedMin
+                      ? t("Минимальная сумма набрана")
+                      : `${t("До минимума")} ${formatPrice(MIN_ORDER_AMOUNT - totalAmount)}`}
                   </span>
                   <span className="ml-auto whitespace-nowrap font-data text-[13.5px] font-bold tabular-nums text-dark">
-                    {formatPrice(totalAmount)} / {formatPrice(FREE_DELIVERY_THRESHOLD)}
+                    {formatPrice(totalAmount)} / {formatPrice(MIN_ORDER_AMOUNT)}
                   </span>
                 </div>
                 <div className="h-2.5 overflow-hidden rounded-full bg-cream-warm">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      freeDeliveryReached ? "bg-gradient-to-r from-success to-success" : "bg-gradient-to-r from-accent-400 to-coral"
+                      reachedMin ? "bg-gradient-to-r from-success to-success" : "bg-gradient-to-r from-accent-400 to-coral"
                     }`}
                     style={{ width: `${progress}%` }}
                   />
@@ -346,13 +347,17 @@ export default function CartSheet() {
                 {formatPrice(totalAmount)}
               </span>
             </div>
-            {canCheckout && (
+            {canCheckout ? (
               <Link
                 href="/checkout"
                 onClick={() => setIsOpen(false)}
                 className="block w-full rounded-full bg-coral py-3.5 text-center text-[15px] font-bold text-white shadow-accent transition-colors hover:bg-coral-hover"
               >{t("Оформить заказ")}</Link>
-            )}
+            ) : totalItems > 0 ? (
+              <p className="text-center text-[13px] font-semibold text-muted">
+                {t("Минимальный заказ ${amount}", { amount: formatPrice(MIN_ORDER_AMOUNT) })}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>

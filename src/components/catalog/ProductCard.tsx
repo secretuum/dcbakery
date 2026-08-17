@@ -22,13 +22,16 @@ export function ProductCard({ product, priority }: ProductCardProps) {
   const t = useT();
   const locale = useLocale();
   const localized = localizeProduct(product, locale);
-  const { add, remove, updateQty, isReady, items } = useCart();
+  const { add, remove, updateQty, items } = useCart();
   const { showToast } = useToast();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
   const imageSrc = product.images[0] ?? "/product-placeholder.png";
-  // Товар заказуем, только если остатка хватает на его минимальный заказ (мин. 1 шт).
-  const isInStock = isReady && product.stock_qty >= Math.max(product.min_qty, 1);
+  // Наличие — серверные данные (остатка хватает на мин. заказ, мин. 1 шт). НЕ гейтим на
+  // isReady: иначе SSR/краулеры/первый кадр видят ВСЁ «нет в наличии». Корзинная часть
+  // (степпер по cartQty) и так безопасна — items стартует пустым, SSR и первый клиентский
+  // рендер совпадают, mismatch'а нет; количество из корзины дорисуется после гидратации.
+  const isInStock = product.stock_qty >= Math.max(product.min_qty, 1);
   const priceText = formatProductPrice(product.price);
   const hasPromo = typeof product.oldPrice === "number" && product.oldPrice > product.price;
   const oldPriceText = hasPromo ? formatProductPrice(product.oldPrice!) : null;

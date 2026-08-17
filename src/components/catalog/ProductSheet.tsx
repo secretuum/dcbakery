@@ -9,6 +9,7 @@ import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { gaItem, trackEvent } from "@/src/lib/analytics";
 import { formatPrice, formatProductPrice } from "@/src/lib/format";
+import { discountPercent } from "@/src/lib/catalog-promo";
 import { useLocale, useT } from "@/src/i18n/client";
 import { localizeMeasure, localizeProduct } from "@/src/i18n/product";
 import type { Product } from "@/src/types";
@@ -25,6 +26,8 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
   const { add, remove, updateQty, isReady, items } = useCart();
   const { showToast } = useToast();
   const imageSrc = product.images[0] ?? "/product-placeholder.png";
+  const hasPromo = typeof product.oldPrice === "number" && product.oldPrice > product.price;
+  const promoDiscount = hasPromo ? discountPercent(product.oldPrice!, product.price) : 0;
   // Товар заказуем, только если остатка хватает на его минимальный заказ (мин. 1 шт).
   const isInStock = isReady && product.stock_qty >= Math.max(product.min_qty, 1);
   const cartItem = items.find((item) => item.product.id === product.id);
@@ -222,12 +225,22 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
 
             {/* Price */}
             <div className="mt-4 flex items-baseline gap-3">
+              {hasPromo && product.oldPrice ? (
+                <span className="font-sans text-[16px] font-semibold text-muted line-through">
+                  {formatProductPrice(product.oldPrice)}
+                </span>
+              ) : null}
               <span
-                className="font-display font-extrabold tabular-nums text-dark"
+                className={`font-display font-extrabold tabular-nums ${hasPromo ? "text-coral" : "text-dark"}`}
                 style={{ fontSize: "clamp(26px,3.4vw,34px)" }}
               >
                 {formatProductPrice(product.price)}
               </span>
+              {hasPromo && promoDiscount > 0 ? (
+                <span className="rounded-full bg-coral px-2 py-0.5 text-[12px] font-bold leading-none text-white">
+                  −{promoDiscount}%
+                </span>
+              ) : null}
               {weightChip ? (
                 <span className="text-[13.5px] font-medium text-muted">
                   {t("за")} {weightChip}

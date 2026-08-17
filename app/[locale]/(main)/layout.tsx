@@ -5,18 +5,18 @@ import { BottomNav } from "@/src/components/layout/BottomNav";
 import { SiteEditProvider } from "@/src/components/home/SiteEditMode";
 import { OrganizationJsonLd } from "@/src/components/seo/OrganizationJsonLd";
 import { getSiteContent } from "@/src/lib/site-content";
-import { getIsSuperAdmin } from "@/src/lib/superadmin";
 
 export default async function MainLayout({ children }: { children: React.ReactNode }) {
   // Один провайдер редактирования на весь сайт: у суперадмина — карандашики и
   // перетаскивание фото, у остальных — read-only контекст, чтобы на реальной странице
   // отображались СОХРАНЁННЫЕ оверрайды (текст по id + картинки и их положение/масштаб).
-  // Перевод при этом не страдает: текстовые правки лежат под ключом `<id>@<локаль>`,
-  // а типизированные поля (heroTitle и т.п.) приходят в fallback уже через t().
-  const [content, isSuperAdmin] = await Promise.all([getSiteContent(), getIsSuperAdmin()]);
+  // B3/ISR: статус суперадмина здесь БОЛЬШЕ НЕ читаем (cookie форсил динамику) — редактор
+  // дочитывает его на клиенте. getSiteContent кэширован (unstable_cache), динамику не
+  // форсит, поэтому страницы становятся статическими/ISR.
+  const content = await getSiteContent();
 
   return (
-    <SiteEditProvider isSuperAdmin={isSuperAdmin} content={content}>
+    <SiteEditProvider content={content}>
       <OrganizationJsonLd />
       <Header />
       <div className="flex-1">{children}</div>

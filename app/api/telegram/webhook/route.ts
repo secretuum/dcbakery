@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Order } from "@/src/types";
 import { getRole, roleLabels, canDo } from "@/src/lib/telegram/roles";
-import { sendMessage, answerCallbackQuery, editMessageText } from "@/src/lib/telegram/api";
+import { sendMessage, answerCallbackQuery, editMessageText, downloadTelegramFile } from "@/src/lib/telegram/api";
 import { buildOrderCard } from "@/src/lib/telegram/order-card";
 import {
   accountantKeyboard,
@@ -21,7 +21,14 @@ import {
 import { formatKnowledgeList } from "@/src/lib/whatsapp/orders/agent/knowledge-store";
 import { getBotStats } from "@/src/lib/whatsapp/orders/stats/bot-stats";
 import { formatBotStats } from "@/src/lib/whatsapp/orders/stats/bot-stats-format";
+import { guardMedia } from "@/src/lib/whatsapp/orders/ai/media-guard";
+import { DefaultMediaReader } from "@/src/lib/whatsapp/orders/ai/media-reader";
+import { scanForInjection } from "@/src/lib/whatsapp/orders/policy/injection";
+import { LIMITS } from "@/src/lib/whatsapp/orders/config";
 import { logAction } from "@/src/lib/audit";
+
+// Читатель файлов маркетолога (фото/PDF → OCR, Excel → exceljs) — тот же, что у клиента.
+const marketerFileReader = new DefaultMediaReader();
 import { fetchAdminOrder, fetchAdminOrderItems } from "@/src/lib/supabase/admin";
 import {
   cancelOrderAction,
@@ -78,11 +85,17 @@ type TgUser = {
   username?: string;
 };
 
+type TgDocument = { file_id: string; file_name?: string; mime_type?: string; file_size?: number };
+type TgPhotoSize = { file_id: string; file_size?: number; width?: number; height?: number };
+
 type TgUpdate = {
   message?: {
     chat: { id: number };
     from?: TgUser;
     text?: string;
+    caption?: string;
+    document?: TgDocument;
+    photo?: TgPhotoSize[];
   };
   callback_query?: {
     id: string;
@@ -340,6 +353,47 @@ export async function POST(request: Request) {
         await sendMessage({ chatId: message.chat.id, text: list.text, replyMarkup: list.replyMarkup });
       } else {
         await sendMessage({ chatId: message.chat.id, text: "Доступа нет." });
+      }
+    }
+  }
+
+  // Маркетолог прислал ФАЙЛ (фото/PDF/Excel) для базы знаний бота. Проверки по порядку:
+  // приватный чат → роль marketer → скачать (доверенный хост Telegram) → guard (формат по
+  // magic-bytes + размер) → прочитать (OCR/exceljs) → анти-инъекция (знания идут в СИСТЕМНЫЙ
+  // промпт, поэтому файл с попыткой подмены инструкций НЕ принимаем) → добавить в базу.
+  const fileMsg = update.message;
+  const fileFrom = fileMsg?.from;
+  const doc = fileMsg?.document;
+  const photo = fileMsg?.photo;
+  if (fileMsg && fileFrom && !fileMsg.text && (doc || (photo && photo.length > 0))) {
+    const role = getRole(fileFrom.id);
+    const isPrivate = fileMsg.chat.id === fileFrom.id;
+    if (isPrivate && role === "marketer") {
+      const fileId = doc?.file_id ?? (photo && photo.length > 0 ? photo[photo.length - 1].file_id : undefined);
+      const fileName = doc?.file_name ?? null;
+      const declaredMime = doc?.mime_type ?? null;
+      const media = fileId ? await downloadTelegramFile(fileId, LIMITS.maxMediaBytes) : null;
+      if (!media) {
+        await sendMessage({ chatId: fileMsg.chat.id, text: "Не смог скачать файл. Попробуйте ещё раз или пришлите текстом." });
+      } else if (!guardMedia({ bytes: media.bytes, mimeType: declaredMime ?? media.mimeType, fileName, maxBytes: LIMITS.maxMediaBytes }).ok) {
+        await sendMessage({ chatId: fileMsg.chat.id, text: "Такой файл не читаю. Пришлите фото, PDF или Excel (.xlsx) — либо текстом." });
+      } else {
+        const read = await marketerFileReader.read({ bytes: media.bytes, mimeType: media.mimeType, fileName }).catch(() => null);
+        const extracted = read?.text.trim() ?? "";
+        if (!extracted) {
+          await sendMessage({ chatId: fileMsg.chat.id, text: "Не удалось прочитать содержимое файла. Пришлите почётче или текстом." });
+        } else if (scanForInjection(extracted).hardInjection) {
+          await sendMessage({ chatId: fileMsg.chat.id, text: "В файле есть подозрительный текст (похоже на попытку сменить инструкции бота). Не добавил — проверьте файл." });
+        } else {
+          const author = [fileFrom.first_name, fileFrom.last_name].filter(Boolean).join(" ") || fileFrom.username || String(fileFrom.id);
+          const caption = fileMsg.caption?.trim();
+          const entryText = caption ? `${caption}\n${extracted}` : extracted;
+          const count = await appendBotKnowledgeEntry(entryText, author, new Date().toISOString());
+          await sendMessage({
+            chatId: fileMsg.chat.id,
+            text: `Прочитал файл и добавил в базу знаний (всего записей: ${count}):\n«${entryText.slice(0, 200)}»\n\nПоказать — /база, стереть — /очистить.`,
+          });
+        }
       }
     }
   }

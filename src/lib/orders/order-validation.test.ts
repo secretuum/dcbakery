@@ -33,6 +33,23 @@ test("validateOrderFields: обязательные поля", () => {
   assert.ok(validateOrderFields(body({ oferta_accepted: false }), DELIVERY_DAYS, TOMORROW).errors.includes("oferta must be accepted"));
 });
 
+test("validateOrderFields: БИН обязателен для юрлица/ИП", () => {
+  const BIN_ERR = "customer_bin is required for legal/ip";
+  // Юрлицо без БИН — ошибка; с валидным БИН — нет.
+  assert.ok(validateOrderFields(body({ customer_type: "legal" }), DELIVERY_DAYS, TOMORROW).errors.includes(BIN_ERR));
+  assert.ok(
+    !validateOrderFields(body({ customer_type: "legal", customer_bin: "971240001315" }), DELIVERY_DAYS, TOMORROW).errors.includes(BIN_ERR),
+  );
+  // ИП без БИН — ошибка.
+  assert.ok(validateOrderFields(body({ customer_type: "ip" }), DELIVERY_DAYS, TOMORROW).errors.includes(BIN_ERR));
+  // Физлицо — БИН не требуется.
+  assert.ok(!validateOrderFields(body({ customer_type: "individual" }), DELIVERY_DAYS, TOMORROW).errors.includes(BIN_ERR));
+  // Тип не задан (старый клиент) — требование не навязываем.
+  assert.ok(!validateOrderFields(body(), DELIVERY_DAYS, TOMORROW).errors.includes(BIN_ERR));
+  // Невалидный БИН (не 12 цифр) у юрлица — ошибка.
+  assert.ok(validateOrderFields(body({ customer_type: "legal", customer_bin: "12345" }), DELIVERY_DAYS, TOMORROW).errors.includes(BIN_ERR));
+});
+
 test("validateOrderFields: короткий телефон", () => {
   const { errors } = validateOrderFields(body({ customer_phone: "+7 747 12" }), DELIVERY_DAYS, TOMORROW);
   assert.ok(errors.includes("customer_phone is invalid"));

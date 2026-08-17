@@ -1,47 +1,39 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Montserrat, IBM_Plex_Mono } from "next/font/google";
+import { notFound } from "next/navigation";
 import { CartProvider } from "@/src/contexts/CartContext";
 import { ToastProvider } from "@/src/contexts/ToastContext";
 import { LocaleProvider } from "@/src/i18n/client";
-import { LOCALES, OG_LOCALE } from "@/src/i18n/config";
-import { getLocale, getT } from "@/src/i18n/server";
+import { LOCALES, OG_LOCALE, DEFAULT_LOCALE, isLocale, type Locale } from "@/src/i18n/config";
+import { getT } from "@/src/i18n/server";
 import { getDictionary } from "@/src/i18n/translate";
 import { SITE_URL } from "@/src/lib/site-url";
 import { Analytics } from "@/src/components/analytics/Analytics";
 import { RouteTracker } from "@/src/components/analytics/RouteTracker";
-import "./globals.css";
+import { fontVariables } from "@/app/fonts";
+import "@/app/globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin", "cyrillic"],
-  weight: ["500", "600", "700"],
-  display: "swap",
-});
-
-// IBM Plex Mono — только «цифровой» акцент (цены, номера заказов, IBAN, даты), не
-// критичный LCP-текст. preload:false убирает авто-генерируемый <link rel=preload> с
-// каждой страницы, чтобы моно-шрифт не конкурировал за критический путь с Geist и
-// LCP-картинкой. Шрифт всё равно самохостится и подгружается по требованию (display:swap).
-const ibmPlexMono = IBM_Plex_Mono({
-  variable: "--font-ibm-plex-mono",
-  subsets: ["latin", "cyrillic"],
-  weight: ["400", "500", "600"],
-  display: "swap",
-  preload: false,
-});
-
+// Корень локализованных страниц. B3: [locale] — реальный корневой сегмент, поэтому
+// getLocale() читает язык через next/root-params (без headers → без форс-динамики),
+// а <html lang> и generateMetadata берут его прямо из params. Не-локализованные роуты
+// (/admin, /pay, /documents) живут под своим корнем app/(unlocalized).
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
 };
+
+// SSG: заранее генерим три локали; неизвестная локаль → 404 (dynamicParams=false).
+export function generateStaticParams() {
+  return LOCALES.map((locale) => ({ locale }));
+}
+export const dynamicParams = false;
+
+// ISR: публичные страницы отдаются статикой и фоново обновляются раз в час. Правки
+// каталога/контента применяются мгновенно через revalidateTag (админка/оформление),
+// это — бэкстоп. Страницы, читающие cookie (профиль/корзина/оформление), остаются
+// динамическими сами по себе — revalidate на них не влияет.
+export const revalidate = 3600;
 
 const SITE_TITLE = "DC Bakery — B2B кондитерская и полуфабрикаты, Алматы";
 const SITE_DESCRIPTION =
@@ -54,13 +46,16 @@ if (process.env.GOOGLE_SITE_VERIFICATION) verification.google = process.env.GOOG
 if (process.env.YANDEX_VERIFICATION) verification.yandex = process.env.YANDEX_VERIFICATION;
 if (process.env.BING_VERIFICATION) verification.other = { "msvalidate.01": process.env.BING_VERIFICATION };
 
-// Метаданные СЧИТАЮТСЯ НА ЗАПРОС, а не статически: заголовок, описание и og:locale
-// обязаны совпадать с языком страницы. Раньше здесь был `export const metadata` с
-// русскими строками и жёстким og:locale="kk_KZ" — то есть на /kk и /en в выдачу
-// уходил русский заголовок, а на /ru Open Graph объявлял себя казахским.
-export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getLocale();
-  const t = await getT();
+// Метаданные СЧИТАЮТСЯ ПОД [locale]: заголовок/описание/og:locale соответствуют языку
+// страницы. Язык берём из params (гарантированно валиден при dynamicParams=false).
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale: raw } = await params;
+  const locale: Locale = isLocale(raw) ? raw : DEFAULT_LOCALE;
+  const t = await getT(locale);
   const title = t(SITE_TITLE);
   const description = t(SITE_DESCRIPTION);
 
@@ -101,21 +96,30 @@ export async function generateMetadata(): Promise<Metadata> {
       url: `${SITE_URL}/${locale}`,
       locale: OG_LOCALE[locale],
       alternateLocale: LOCALES.filter((l) => l !== locale).map((l) => OG_LOCALE[l]),
+      // Явно указываем OG-картинку: при заданном openGraph в layout файловый
+      // opengraph-image автоматически НЕ подхватывается → превью в мессенджерах/соцсетях
+      // было без изображения. Товарные страницы переопределяют своим фото.
+      images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: "DC Bakery" }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [`${SITE_URL}/opengraph-image`],
     },
   };
 }
 
-export default async function RootLayout({
+export default async function LocaleLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }>) {
-  const locale = await getLocale();
+  const { locale: raw } = await params;
+  if (!isLocale(raw)) notFound();
+  const locale = raw;
   // Активный словарь передаём пропом в LocaleProvider: на клиент уходит ТОЛЬКО он (ru → null),
   // а не оба словаря целиком в бандле. Layout не перемонтируется → отправляется один раз.
   const dictionary = getDictionary(locale);
@@ -131,10 +135,7 @@ export default async function RootLayout({
   }
 
   return (
-    <html
-      lang={locale}
-      className={`${geistSans.variable} ${montserrat.variable} ${ibmPlexMono.variable} h-full antialiased`}
-    >
+    <html lang={locale} className={`${fontVariables} h-full antialiased`}>
       <head>
         {/* Ранние соединения к сторонним хостам: экономят DNS+TCP+TLS до первого обращения
             (аналитика, фото товаров из Supabase). Условно по env — без ключей ничего не добавляем. */}
@@ -156,9 +157,7 @@ export default async function RootLayout({
         <RouteTracker />
         <LocaleProvider locale={locale} dictionary={dictionary}>
           <CartProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
+            <ToastProvider>{children}</ToastProvider>
           </CartProvider>
         </LocaleProvider>
       </body>

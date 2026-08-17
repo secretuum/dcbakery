@@ -4,7 +4,16 @@
 // Чистый модуль (без "server-only"): типы стираются, реализации живут отдельно.
 
 /** Тип входящего сообщения после нормализации провайдером. */
-export type IncomingMessageKind = "text" | "voice" | "unsupported";
+export type IncomingMessageKind = "text" | "voice" | "image" | "document" | "location" | "unsupported";
+
+/** Геометка клиента (WhatsApp location). Координаты — НЕДОВЕРЕННЫЕ данные (валидируем). */
+export type IncomingLocationRef = {
+  latitude: number;
+  longitude: number;
+  /** Название точки/адрес из мессенджера (если клиент подписал), опционально. */
+  name?: string | null;
+  address?: string | null;
+};
 
 /** Дескриптор голосового — файл ещё НЕ скачан (скачивание только доверенным путём). */
 export type IncomingVoiceRef = {
@@ -13,6 +22,17 @@ export type IncomingVoiceRef = {
   mimeType?: string | null;
   sizeBytes?: number | null;
   durationSeconds?: number | null;
+};
+
+/** Дескриптор фото/документа — файл ещё НЕ скачан (скачивание только доверенным путём). */
+export type IncomingMediaRef = {
+  downloadUrl?: string | null;
+  mimeType?: string | null;
+  /** Имя файла (для документов) — помогает определить формат (.xlsx/.pdf). */
+  fileName?: string | null;
+  /** Подпись к фото/документу (клиент часто пишет заказ в подписи). */
+  caption?: string | null;
+  sizeBytes?: number | null;
 };
 
 /** Нормализованное входящее сообщение — единый вид для любого провайдера. */
@@ -28,6 +48,10 @@ export type NormalizedIncomingMessage = {
   text?: string;
   /** Дескриптор голосового (для kind==='voice'). */
   voice?: IncomingVoiceRef;
+  /** Дескриптор фото/документа (для kind==='image'|'document'). */
+  media?: IncomingMediaRef;
+  /** Геометка (для kind==='location'). */
+  location?: IncomingLocationRef;
   /** Имя профиля WhatsApp — только как необязательная подпись, НЕ достоверное ФИО. */
   profileName?: string | null;
   /** Идентификаторы связанных сообщений (ответ/цитата), если есть. */
@@ -57,4 +81,6 @@ export interface WhatsAppProvider {
   sendChoices?(chatId: string, header: string, rows: OutgoingListRow[]): Promise<string | null>;
   /** Скачать голосовой файл ТОЛЬКО по доверенному дескриптору. null при отказе. */
   downloadVoice(ref: IncomingVoiceRef): Promise<DownloadedMedia | null>;
+  /** Скачать фото/документ ТОЛЬКО по доверенному дескриптору. null при отказе. */
+  downloadMedia(ref: IncomingMediaRef): Promise<DownloadedMedia | null>;
 }

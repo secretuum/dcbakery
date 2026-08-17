@@ -91,9 +91,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
               {t(currentCategory.name)}
             </h1>
-            {currentCategory.description ? (
+            {currentCategory.intro ?? currentCategory.description ? (
               <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-muted">
-                {t(currentCategory.description)}
+                {t((currentCategory.intro ?? currentCategory.description) as string)}
               </p>
             ) : null}
           </div>

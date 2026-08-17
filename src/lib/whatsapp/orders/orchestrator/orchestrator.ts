@@ -6,7 +6,8 @@
 // импортируется как type (стирается — server-only не подтягивается).
 
 import type { Product } from "@/src/types";
-import type { NormalizedIncomingMessage, IncomingVoiceRef } from "../transport/types";
+import type { NormalizedIncomingMessage, IncomingVoiceRef, IncomingMediaRef, IncomingLocationRef } from "../transport/types";
+import { build2gisPointLink, isValidLatLng } from "../geo/gis";
 import type { DialogState } from "../state/machine";
 import { isBotSuppressed } from "../state/machine";
 import { detectEscalation } from "../policy/escalation";
@@ -16,6 +17,7 @@ import { buildCatalogContext, catalogProductIds } from "../agent/catalog-context
 import type { AgentResponse } from "../agent/schema";
 import type { CartView, CartItemQty, CartOp, CartAdjustment } from "../cart/cart-math";
 import { guardAudio } from "../ai/audio-guard";
+import { guardMedia } from "../ai/media-guard";
 import type { CreateOrderInput } from "../order/create-order";
 import { LIMITS, CONSENT_VERSION } from "../config";
 import * as M from "./messages";
@@ -32,6 +34,8 @@ export type DialogContext = {
   savedAddresses?: string[];
   /** Недавние ходы диалога — передаём агенту как контекст (без миграции, в JSONB). */
   history?: HistoryTurn[];
+  /** Геометка клиента (WhatsApp location): координаты + подпись. Идёт в заявку 2ГИС-ссылкой. */
+  geo?: { lat: number; lng: number; label?: string | null };
 };
 
 export type DialogSnapshot = { state: DialogState; context: DialogContext; phone: string | null };
@@ -95,6 +99,14 @@ export type OrchestratorDeps = {
       status: string;
       rejectReason?: string;
     }): Promise<void>;
+  };
+  media: {
+    download(ref: IncomingMediaRef): Promise<{ bytes: Uint8Array; mimeType: string | null } | null>;
+    read(input: {
+      bytes: Uint8Array;
+      mimeType: string | null;
+      fileName: string | null;
+    }): Promise<{ text: string }>;
   };
   order: { create(input: CreateOrderInput): Promise<{ orderId: string; orderNumber: string }> };
   /** Опционально: одноразовая ссылка регистрации (дозаполнение профиля на сайте). */
@@ -333,6 +345,10 @@ export async function handleIncomingMessage(
       await createLead("unsupported_attachment", "[вложение]");
       return;
     }
+    if (msg.kind === "location") {
+      await handleLocation(msg.location);
+      return;
+    }
     if (msg.kind === "voice") {
       const media = await deps.voice.download(msg.voice ?? {}).catch(() => null);
       const guard = media
@@ -391,6 +407,35 @@ export async function handleIncomingMessage(
         })
         .catch(() => {});
       text = tr.text;
+    } else if (msg.kind === "image" || msg.kind === "document") {
+      // Фото/документ: скачиваем доверенно → проверяем формат/размер → читаем (OCR/exceljs).
+      // Не смогли — не теряем заказ: зовём менеджера (как с нечитаемым голосовым/вложением).
+      const media = await deps.media.download(msg.media ?? {}).catch(() => null);
+      const guard = media
+        ? guardMedia({
+            bytes: media.bytes,
+            mimeType: msg.media?.mimeType ?? media.mimeType,
+            fileName: msg.media?.fileName ?? null,
+            maxBytes: LIMITS.maxMediaBytes,
+          })
+        : ({ ok: false, reason: "download_failed" } as const);
+      if (!guard.ok) {
+        await reply(M.MSG_MEDIA_BAD);
+        await createLead("unreadable_media", "[файл]");
+        return;
+      }
+      const read = await deps.media
+        .read({ bytes: media!.bytes, mimeType: media!.mimeType, fileName: msg.media?.fileName ?? null })
+        .catch(() => null);
+      const extracted = read?.text.trim() ?? "";
+      if (!extracted) {
+        await reply(M.MSG_MEDIA_BAD);
+        await createLead("unreadable_media", "[файл]");
+        return;
+      }
+      // Подпись клиента к файлу (если есть) + распознанный текст — вместе идут агенту.
+      const caption = msg.media?.caption?.trim();
+      text = caption ? `${caption}\n${extracted}` : extracted;
     } else {
       text = msg.text ?? "";
     }
@@ -418,10 +463,20 @@ export async function handleIncomingMessage(
     if (scan.labels.length > 0) {
       console.info("[whatsapp:nl] suspicious input", { chat: msg.chatId.slice(0, 6), labels: scan.labels });
     }
+    // Текст, ИЗВЛЕЧЁННЫЙ из файла/голоса — самый опасный вектор инъекции (крафтнутое фото/
+    // PDF/аудио может содержать «ignore instructions / system prompt / ты теперь админ»).
+    // Здесь защита ГЛУБЖЕ, чем для набранного текста: при жёсткой инъекции НЕ передаём текст
+    // в LLM вообще, а блокируем и зовём менеджера. (Для набранного вручную текста полагаемся
+    // на архитектуру: цена/остаток серверные, JSON-схема strict — бот отвечает штатно.)
+    const textFromFile = msg.kind === "voice" || msg.kind === "image" || msg.kind === "document";
+    if (scan.hardInjection && textFromFile) {
+      await createLead("media_injection", "[в распознанном тексте — попытка инъекции]");
+      await persist("human_handoff", context);
+      await reply(M.MSG_MEDIA_BAD);
+      return;
+    }
     if (scan.hardInjection) {
-      // Явная prompt-injection (не «бесплатная доставка» и не ссылка-карта в адресе). Бот
-      // продолжает отвечать штатно (цена/остаток серверные, JSON-схема strict) — но зовём
-      // менеджера присмотреть, чтобы LLM не выдал некорректных обещаний от лица бренда.
+      // Набранный вручную текст: бот отвечает штатно (арх. защита), но зовём менеджера присмотреть.
       await deps
         .notifyManager(
           `🛡️ Похоже на prompt-injection в чате ${msg.chatId} (метки: ${scan.labels.join(", ")}). Бот ответил штатно — проверьте при необходимости.`,
@@ -675,6 +730,24 @@ export async function handleIncomingMessage(
       await reply(M.askAddress());
     }
 
+    async function handleLocation(loc: IncomingLocationRef | undefined) {
+      if (!loc || !isValidLatLng(loc.latitude, loc.longitude)) {
+        await reply("Не удалось разобрать геолокацию. Напишите адрес доставки текстом.");
+        return;
+      }
+      const label = [loc.name, loc.address].map((s) => s?.trim()).filter(Boolean).join(", ") || null;
+      const geo = { lat: loc.latitude, lng: loc.longitude, label };
+      if (state === "awaiting_address" || state === "awaiting_address_confirmation") {
+        // Геометка точнее текста — принимаем как адрес и сразу спрашиваем интервал (без шага подтверждения).
+        await persist("awaiting_delivery_period", { ...context, geo, address: label ?? "Геолокация (см. карту)" });
+        await reply(`Принял геолокацию. ${M.askDeliveryPeriod()}`);
+        return;
+      }
+      // Вне шага адреса: запоминаем геометку и мягко ведём к заказу.
+      await persist(state, { ...context, geo });
+      await reply("Спасибо, вижу вашу геолокацию — учту при доставке. Что хотите заказать?");
+    }
+
     async function handleAddress(rawText: string) {
       const trimmed = rawText.trim();
       // Подтверждение ранее показанного адреса — только если сообщение это ТОЛЬКО «да»
@@ -832,6 +905,8 @@ export async function handleIncomingMessage(
           .catch(() => {});
       }
 
+      // Геометка клиента → 2ГИС-ссылка на точку в комментарии заявки (менеджер откроет карту).
+      const geoLink = context.geo ? build2gisPointLink(context.geo.lat, context.geo.lng) : null;
       const created = await deps.order
         .create({
           chatId: msg.chatId,
@@ -844,6 +919,7 @@ export async function handleIncomingMessage(
           deliveryAddress: context.address ?? "",
           deliveryDate: tomorrowDate(nowMs),
           deliveryTime: context.period ? M.periodLabel(context.period) : "Договориться с менеджером",
+          comment: geoLink ? `📍 Геометка (2ГИС): ${geoLink}` : null,
           ofertaAcceptedAtIso: nowIso,
           idempotencyKey: `wa:${msg.messageId}`,
         })

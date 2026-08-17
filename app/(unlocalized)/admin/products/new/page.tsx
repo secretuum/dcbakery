@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { createCatalogProductAction } from "@/app/(main)/admin/products/actions";
+import { createCatalogProductAction } from "@/app/(unlocalized)/admin/products/actions";
 import { ProductImageUpload } from "@/src/components/admin/ProductImageUpload";
 import { fetchAdminCategories } from "@/src/lib/catalog";
 

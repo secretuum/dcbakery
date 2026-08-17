@@ -7,6 +7,7 @@ import type {
   WhatsAppProvider,
   NormalizedIncomingMessage,
   IncomingVoiceRef,
+  IncomingMediaRef,
   DownloadedMedia,
 } from "./types";
 import { TIMEOUTS, LIMITS } from "../config";
@@ -67,9 +68,13 @@ export class GreenApiProvider implements WhatsAppProvider {
     return null;
   }
 
-  async downloadVoice(ref: IncomingVoiceRef): Promise<DownloadedMedia | null> {
-    const url = ref.downloadUrl;
-    // Скачиваем ТОЛЬКО с доверенного хоста Green API (анти-SSRF), не произвольный URL.
+  // Скачивание ТОЛЬКО с доверенного хоста Green API (анти-SSRF), не с произвольного URL.
+  // Общий примитив для голоса и медиа; лимит размера задаётся вызывающим.
+  private async downloadTrusted(
+    url: string | null | undefined,
+    mimeHint: string | null | undefined,
+    maxBytes: number,
+  ): Promise<DownloadedMedia | null> {
     if (!url || !isTrustedGreenHost(url)) return null;
 
     const controller = new AbortController();
@@ -79,16 +84,24 @@ export class GreenApiProvider implements WhatsAppProvider {
       if (!res.ok) return null;
 
       const declaredLen = Number(res.headers.get("content-length") ?? "0");
-      if (declaredLen && declaredLen > LIMITS.maxVoiceBytes) return null; // ранний отсев
+      if (declaredLen && declaredLen > maxBytes) return null; // ранний отсев по заголовку
 
       const buf = new Uint8Array(await res.arrayBuffer());
-      if (buf.byteLength > LIMITS.maxVoiceBytes) return null;
+      if (buf.byteLength > maxBytes) return null;
 
-      return { bytes: buf, mimeType: ref.mimeType ?? res.headers.get("content-type") };
+      return { bytes: buf, mimeType: mimeHint ?? res.headers.get("content-type") };
     } catch {
       return null;
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  async downloadVoice(ref: IncomingVoiceRef): Promise<DownloadedMedia | null> {
+    return this.downloadTrusted(ref.downloadUrl, ref.mimeType, LIMITS.maxVoiceBytes);
+  }
+
+  async downloadMedia(ref: IncomingMediaRef): Promise<DownloadedMedia | null> {
+    return this.downloadTrusted(ref.downloadUrl, ref.mimeType, LIMITS.maxMediaBytes);
   }
 }

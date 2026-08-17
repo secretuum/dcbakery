@@ -22,6 +22,8 @@ type LocalizedOverride = CatalogProductOverride & {
 import { fetchProductOrderCounts } from "@/src/lib/supabase/popularity";
 import { unstable_cache } from "next/cache";
 import type { Category, Product } from "@/src/types";
+import { applyCatalogPromo, almatyToday } from "@/src/lib/catalog-promo";
+import { getCatalogPromo } from "@/src/lib/catalog-promo.server";
 
 /** Тег кэша каталога — сбрасывать при правке товаров/остатков в админке. */
 export const CATALOG_CACHE_TAG = "catalog";
@@ -44,12 +46,14 @@ function bySortOrder<T extends { sort_order: number }>(a: T, b: T) {
 
 const categoryDetails: Record<
   SourceProductCategory,
-  Pick<Category, "id" | "slug" | "description" | "image" | "sort_order" | "is_active">
+  Pick<Category, "id" | "slug" | "description" | "intro" | "image" | "sort_order" | "is_active">
 > = {
   Десерты: {
     id: "cat-desserts",
     slug: "deserty",
     description: "Порционные десерты, торты и позиции для витрины кофеен, ресторанов и магазинов.",
+    intro:
+      "Оптовые десерты в Алматы для кофеен, ресторанов, отелей и магазинов: медовик, наполеон, чизкейки, порционные пирожные и торты для витрины. Стабильное качество под HoReCa, оптовые цены и доставка по городу, заказ от коробки. Оформите B2B-заявку онлайн и получите поставку к нужной дате.",
     image: "/product-placeholder.png",
     sort_order: 10,
     is_active: true,
@@ -58,6 +62,8 @@ const categoryDetails: Record<
     id: "cat-semi",
     slug: "polufabrikaty",
     description: "Заморозка и заготовки для стабильной кухни, быстрых завтраков и витрин.",
+    intro:
+      "Замороженные полуфабрикаты оптом в Алматы: пельмени, вареники, манты, котлеты и сырники для кухни кафе, столовых, ресторанов и магазинов. Стабильные заготовки для завтраков, бизнес-ланчей и витрины — оптовые цены, доставка по городу, заказ от коробки. Оформите B2B-заявку онлайн.",
     image: "/product-placeholder.png",
     sort_order: 20,
     is_active: true,
@@ -66,6 +72,8 @@ const categoryDetails: Record<
     id: "cat-meat",
     slug: "myaso",
     description: "Мясные позиции для меню, доставки, бизнес-ланчей и продуктовой полки.",
+    intro:
+      "Мясо оптом в Алматы для кафе, ресторанов, служб доставки и продуктовых магазинов: мякоть говядины, фарш и мясные позиции для меню, бизнес-ланчей и полки. Поставки под HoReCa со стабильным качеством, оптовыми ценами и доставкой по городу. Оформите B2B-заявку онлайн.",
     image: "/product-placeholder.png",
     sort_order: 30,
     is_active: true,
@@ -74,6 +82,8 @@ const categoryDetails: Record<
     id: "cat-lunch",
     slug: "gotovye-obedy",
     description: "Готовые обеды и ланч-боксы для офисов, магазинов и заведений без кухни.",
+    intro:
+      "Готовые обеды и ланч-боксы оптом в Алматы для офисов, магазинов и заведений без кухни. Порционные комплексы стабильного качества для корпоративного питания и витрины — доставка по городу, оптовые цены, заказ от коробки. Оформите B2B-заявку онлайн и организуйте питание сотрудников или продажу готовых блюд.",
     image: "/product-placeholder.png",
     sort_order: 40,
     is_active: READY_MEALS_ENABLED,
@@ -82,6 +92,8 @@ const categoryDetails: Record<
     id: "cat-banquet",
     slug: "banketnye-deserty",
     description: "Порционные банкетные форматы тортов для мероприятий и фуршетов, цена за 1 шт.",
+    intro:
+      "Банкетные десерты оптом в Алматы: порционные форматы тортов для мероприятий, фуршетов и кейтеринга, цена за 1 штуку. Готовые к подаче позиции для ресторанов, отелей и организаторов событий — стабильное качество, оптовые цены и доставка по городу. Оформите B2B-заявку под нужную дату банкета.",
     image: "/product-placeholder.png",
     sort_order: 50,
     is_active: BANQUET_DESSERTS_ENABLED,
@@ -285,10 +297,14 @@ async function getCatalogProducts({
   includeArchived = false,
   includeInactive = false,
   includeZeroPrice = false,
+  withPromo = true,
 }: {
   includeArchived?: boolean;
   includeInactive?: boolean;
   includeZeroPrice?: boolean;
+  /** Наложить акцию (промо-цены/oldPrice). Публичная витрина — да; админка — нет
+   *  (импорт-diff и редактор должны видеть БАЗОВЫЕ цены). */
+  withPromo?: boolean;
 } = {}) {
   const categories = getActiveCategories();
   const activeCategoryIds = new Set(categories.map((category) => category.id));
@@ -310,12 +326,23 @@ async function getCatalogProducts({
     .map((override, index) => toCustomProduct(override, index, categories))
     .filter((product): product is Product => Boolean(product));
 
-  const products = [
+  const merged = [
     ...sourceCatalog.map((product) =>
       applyOverride(product, overridesByProductId.get(product.id), categories),
     ),
     ...customProducts,
   ];
+
+  // Акция накладывается ПОСЛЕ мерджа оверрайдов: промо-цена (ниже базовой) становится
+  // текущей, базовая уезжает в oldPrice. Best-effort — сбой конфига не должен ронять каталог.
+  let products = merged;
+  if (withPromo) {
+    try {
+      products = applyCatalogPromo(merged, await getCatalogPromo(), almatyToday());
+    } catch (error) {
+      console.warn("[catalog] Failed to apply promo, using base prices:", error);
+    }
+  }
 
   return products
     .filter((product) => {
@@ -354,7 +381,12 @@ export async function fetchAdminProducts({
 }: {
   includeArchived?: boolean;
 } = {}): Promise<Product[]> {
-  return getCatalogProducts({ includeArchived, includeInactive: true, includeZeroPrice: true });
+  return getCatalogProducts({
+    includeArchived,
+    includeInactive: true,
+    includeZeroPrice: true,
+    withPromo: false,
+  });
 }
 
 export async function fetchPopularProducts(limit = 4): Promise<Product[]> {

@@ -2,7 +2,10 @@ export type Category = {
   id: string;
   name: string;
   slug: string;
+  /** Короткое описание — для meta description (≤160 симв.). */
   description?: string;
+  /** SEO-интро на страницу категории (прямой ответ + ключи, 40–60 слов). */
+  intro?: string;
   image?: string;
   parent_id?: string | null;
   sort_order: number;
@@ -27,6 +30,8 @@ export type Product = {
   category_id: string;
   category?: Category;
   price: number;
+  /** Базовая цена до акции (перечёркивается на витрине). Ставится только при активной акции. */
+  oldPrice?: number;
   unit: string;
   weight?: string;
   weightLabel?: string;
@@ -75,6 +80,9 @@ export type OrderStatus =
   | "cancelled";
 
 export type OrderSource = "website" | "whatsapp" | "admin";
+
+/** Тип B2B-клиента: legal=юрлицо (ТОО/АО), ip=ИП, individual=физлицо (самозанятый). */
+export type CustomerType = "legal" | "ip" | "individual";
 
 export type PaymentStatus =
   | "unpaid"
@@ -126,6 +134,8 @@ export type Order = {
   source?: OrderSource;
   company_name: string;
   customer_bin?: string | null;
+  /** Самоназванный тип клиента (юрлицо/ИП/физлицо). Опционально: старые заказы — null. */
+  customer_type?: CustomerType | null;
   customer_name: string;
   customer_phone: string;
   customer_email?: string | null;

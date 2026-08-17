@@ -1,4 +1,7 @@
 {
+ "Проверяем БИН…": "Checking BIN…",
+ "По реестру": "Registry",
+ "БИН не найден в реестре — проверьте номер": "BIN not found in the registry — check the number",
  "Мы используем файлы cookie, чтобы сайт работал корректно и был удобнее. Продолжая пользоваться сайтом, вы соглашаетесь с их использованием.": "We use cookies to make the site work correctly and more convenient. By continuing to use the site, you agree to their use.",
  "Принять": "Accept",
  "Уведомление о cookie": "Cookie notice",

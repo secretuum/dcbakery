@@ -137,6 +137,12 @@ export default async function AdminProductsPage({ searchParams }: AdminProductsP
           >
             Загрузить каталог
           </Link>
+          <Link
+            href="/admin/products/promo"
+            className="inline-flex min-h-11 items-center justify-center rounded-btn border border-coral bg-coral px-4 py-2 text-sm font-bold text-white transition hover:bg-coral-hover"
+          >
+            Загрузка промо цен
+          </Link>
         </div>
       </div>
 

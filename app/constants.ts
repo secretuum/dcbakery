@@ -51,6 +51,14 @@ export function orderTotalWithDelivery(order: {
 
 export const B2B_PAYMENT_METHODS = ["Выставить счет", "Безналичный расчет"] as const;
 
+// Тип клиента для формы заказа/регистрации. БИН обязателен для legal/ip (у физлица
+// БИН нет). Значения совпадают с типом CustomerType в src/types.
+export const CUSTOMER_TYPE_OPTIONS = [
+  { value: "legal", label: "Юрлицо (ТОО/АО)", requiresBin: true },
+  { value: "ip", label: "ИП", requiresBin: true },
+  { value: "individual", label: "Физлицо", requiresBin: false },
+] as const;
+
 export const WHATSAPP_SUPPORT_NUMBER =
   process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT ?? "77477272650";
 

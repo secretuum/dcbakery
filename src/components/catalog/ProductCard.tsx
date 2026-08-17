@@ -7,6 +7,7 @@ import { ProductSheet } from "@/src/components/catalog/ProductSheet";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { formatProductPrice } from "@/src/lib/format";
+import { discountPercent } from "@/src/lib/catalog-promo";
 import { useLocale, useT } from "@/src/i18n/client";
 import { localizeMeasure, localizeProduct } from "@/src/i18n/product";
 import type { Product } from "@/src/types";
@@ -29,6 +30,9 @@ export function ProductCard({ product, priority }: ProductCardProps) {
   // Товар заказуем, только если остатка хватает на его минимальный заказ (мин. 1 шт).
   const isInStock = isReady && product.stock_qty >= Math.max(product.min_qty, 1);
   const priceText = formatProductPrice(product.price);
+  const hasPromo = typeof product.oldPrice === "number" && product.oldPrice > product.price;
+  const oldPriceText = hasPromo ? formatProductPrice(product.oldPrice!) : null;
+  const discount = hasPromo ? discountPercent(product.oldPrice!, product.price) : 0;
   const cartItem = items.find((item) => item.product.id === product.id);
   const cartQty = cartItem?.qty ?? 0;
   const inCart = cartQty > 0;
@@ -138,12 +142,22 @@ export function ProductCard({ product, priority }: ProductCardProps) {
         {/* foot: price + control */}
         <div className="mt-auto flex items-center gap-3 pt-3">
           <div className="min-w-0">
+            {hasPromo && oldPriceText ? (
+              <span className="block whitespace-nowrap font-sans text-[12px] font-semibold text-muted line-through">
+                {oldPriceText}
+              </span>
+            ) : null}
             <p
               className={`whitespace-nowrap font-display text-[17px] font-bold tabular-nums tracking-[-0.02em] ${
-                isInStock ? "text-dark" : "text-muted"
+                !isInStock ? "text-muted" : hasPromo ? "text-coral" : "text-dark"
               }`}
             >
               {priceText}
+              {hasPromo && discount > 0 ? (
+                <span className="ml-2 inline-block align-middle rounded-full bg-coral px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
+                  −{discount}%
+                </span>
+              ) : null}
             </p>
             <small className="block font-sans text-[11px] text-muted">{t("за упаковку")}</small>
           </div>

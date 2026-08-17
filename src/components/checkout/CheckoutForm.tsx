@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { LocaleLink as Link } from "@/src/i18n/LocaleLink";
 import { useRouter } from "next/navigation";
-import { MIN_ORDER_AMOUNT, deliveryFee } from "@/app/constants";
+import { MIN_ORDER_AMOUNT, deliveryFee, CUSTOMER_TYPE_OPTIONS } from "@/app/constants";
+import type { CustomerType } from "@/src/types";
 import { isOverLiteCap, LITE_ORDER_CAP } from "@/src/lib/account/tier";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
@@ -20,6 +21,7 @@ import { withLocale } from "@/src/i18n/routing";
 import { CheckoutAuthGate } from "@/src/components/checkout/CheckoutAuthGate";
 
 type CheckoutFormState = {
+  customer_type: CustomerType;
   company_name: string;
   customer_bin: string;
   customer_email: string;
@@ -165,6 +167,11 @@ function validateForm(form: CheckoutFormState, schedule: DeliverySchedule) {
     errors.company_name = "Укажите название компании или заведения";
   }
 
+  // БИН обязателен для юрлица/ИП (для сверки с госреестром). Физлицо — не требуется.
+  if (form.customer_type !== "individual" && !/^\d{12}$/.test(form.customer_bin.replace(/\D/g, ""))) {
+    errors.customer_bin = "Укажите БИН/ИИН — 12 цифр";
+  }
+
   if (!form.customer_name.trim()) {
     errors.customer_name = "Укажите контактное лицо";
   }
@@ -253,6 +260,7 @@ export function CheckoutForm({
   const [tier, setTier] = useState<"lite" | "full" | null>(null);
   const isNavigatingRef = useRef(false);
   const [form, setForm] = useState<CheckoutFormState>({
+    customer_type: "legal",
     company_name: "",
     customer_bin: "",
     customer_email: "",
@@ -479,6 +487,26 @@ export function CheckoutForm({
             <div className="pb-6">
               <p className="mb-4 text-[11px] font-bold uppercase tracking-[.12em] text-coral">{t("Контакты")}</p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="block sm:col-span-2">
+                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">{t("Тип клиента")}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {CUSTOMER_TYPE_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => updateField("customer_type", option.value)}
+                        className={`min-h-[44px] rounded-md border-[1.5px] px-4 py-2 text-[14px] font-semibold transition ${
+                          form.customer_type === option.value
+                            ? "border-coral bg-coral/10 text-dark"
+                            : "border-black/10 bg-white text-muted hover:border-black/[.16]"
+                        }`}
+                      >
+                        {t(option.label)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <label className="block sm:col-span-2">
                   <span className="mb-2 block text-[13.5px] font-semibold text-dark">
                     {t("Название компании / заведения")} <span className="text-coral">*</span>
@@ -491,14 +519,23 @@ export function CheckoutForm({
                   <FieldError>{errors.company_name}</FieldError>
                 </label>
 
-                <label className="block sm:col-span-2">
-                  <span className="mb-2 block text-[13.5px] font-semibold text-dark">{t("БИН / ИП")}</span>
-                  <Input
-                    value={form.customer_bin}
-                    onChange={(event) => updateField("customer_bin", event.currentTarget.value)}
-                    placeholder={t("Например, 123456789012")}
-                  />
-                </label>
+                {form.customer_type !== "individual" ? (
+                  <label className="block sm:col-span-2">
+                    <span className="mb-2 block text-[13.5px] font-semibold text-dark">
+                      {t("БИН / ИИН")} <span className="text-coral">*</span>
+                    </span>
+                    <Input
+                      inputMode="numeric"
+                      value={form.customer_bin}
+                      onChange={(event) => updateField("customer_bin", event.currentTarget.value)}
+                      placeholder={t("Например, 123456789012")}
+                    />
+                    <FieldError>{errors.customer_bin}</FieldError>
+                    <p className="mt-1.5 text-xs text-muted">
+                      {t("БИН проверяется автоматически по госреестру")}
+                    </p>
+                  </label>
+                ) : null}
 
                 <label className="block">
                   <span className="mb-2 block text-[13.5px] font-semibold text-dark">

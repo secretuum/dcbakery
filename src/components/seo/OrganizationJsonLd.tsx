@@ -69,9 +69,10 @@ export async function OrganizationJsonLd() {
       addressLocality: "Алматы",
       addressRegion: "Алматы",
       addressCountry: "KZ",
-      // TODO(владелец): geo-координаты (широта/долгота) НЕ добавлены намеренно —
-      // решение по точным координатам склада/производства пока не принято.
     },
+    // Точные координаты точки бизнеса — усиливают локальный поиск и совпадение с
+    // карточкой в 2ГИС/Google (единый NAP+гео). Значения из карточки в 2ГИС.
+    geo: { "@type": "GeoCoordinates", latitude: 43.220416, longitude: 76.885263 },
     sameAs: [
       "https://www.instagram.com/bakery.dc",
       ...(whatsapp ? [`https://wa.me/${whatsapp}`] : []),

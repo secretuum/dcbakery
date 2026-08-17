@@ -19,6 +19,8 @@ import {
   clearBotKnowledge,
 } from "@/src/lib/whatsapp/orders/agent/knowledge-store-io";
 import { formatKnowledgeList } from "@/src/lib/whatsapp/orders/agent/knowledge-store";
+import { getBotStats } from "@/src/lib/whatsapp/orders/stats/bot-stats";
+import { formatBotStats } from "@/src/lib/whatsapp/orders/stats/bot-stats-format";
 import { guardMedia } from "@/src/lib/whatsapp/orders/ai/media-guard";
 import { DefaultMediaReader } from "@/src/lib/whatsapp/orders/ai/media-reader";
 import { scanForInjection } from "@/src/lib/whatsapp/orders/policy/injection";
@@ -301,7 +303,7 @@ export async function POST(request: Request) {
       // Маркетологу в личке подсказываем, как редактировать базу знаний бота.
       const marketerHint =
         role === "marketer"
-          ? "\n\nПросто присылайте сюда факты, акции и уточнения — я добавлю их в базу знаний бота. Команды: /база — показать, /очистить — стереть."
+          ? "\n\nПросто присылайте сюда факты, акции и уточнения — я добавлю их в базу знаний бота. Команды: /база — показать, /очистить — стереть, /статистика — цифры бота."
           : "";
       // Бухгалтеру/админу в личке даём постоянную кнопку «Заказы».
       const withKeyboard = isPrivate && (role === "accountant" || role === "admin");
@@ -327,10 +329,12 @@ export async function POST(request: Request) {
           chatId: message.chat.id,
           text: "База знаний очищена. Бот снова работает только на базовых правилах.",
         });
+      } else if (lower === "/статистика" || lower === "/стата" || lower === "/stats") {
+        await sendMessage({ chatId: message.chat.id, text: formatBotStats(await getBotStats(Date.now())) });
       } else if (trimmed.startsWith("/")) {
         await sendMessage({
           chatId: message.chat.id,
-          text: "Просто пришлите текст — добавлю его в базу знаний бота. Команды: /база — показать, /очистить — стереть.",
+          text: "Просто пришлите текст — добавлю его в базу знаний бота. Команды: /база — показать, /очистить — стереть, /статистика — цифры бота.",
         });
       } else {
         const author = [from.first_name, from.last_name].filter(Boolean).join(" ") || from.username || String(from.id);

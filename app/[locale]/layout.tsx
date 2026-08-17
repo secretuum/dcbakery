@@ -96,16 +96,15 @@ export async function generateMetadata({
       url: `${SITE_URL}/${locale}`,
       locale: OG_LOCALE[locale],
       alternateLocale: LOCALES.filter((l) => l !== locale).map((l) => OG_LOCALE[l]),
-      // Явно указываем OG-картинку: при заданном openGraph в layout файловый
-      // opengraph-image автоматически НЕ подхватывается → превью в мессенджерах/соцсетях
-      // было без изображения. Товарные страницы переопределяют своим фото.
-      images: [{ url: `${SITE_URL}/opengraph-image`, width: 1200, height: 630, alt: "DC Bakery" }],
+      // Брендовая OG-картинка (логотип DC Bakery) — превью при отправке ссылки в
+      // WhatsApp/Telegram/соцсети. Товарные страницы переопределяют своим фото.
+      images: [{ url: `${SITE_URL}/brand/og-cover.png`, width: 1200, height: 630, alt: "DC Bakery" }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [`${SITE_URL}/opengraph-image`],
+      images: [`${SITE_URL}/brand/og-cover.png`],
     },
   };
 }

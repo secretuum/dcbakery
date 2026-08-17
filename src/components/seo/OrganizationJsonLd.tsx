@@ -49,10 +49,9 @@ export async function OrganizationJsonLd() {
     name: "DC Bakery",
     legalName: "ИП Кошкаров Асылбек Касымбекович",
     url: SITE_URL,
-    // TODO(владелец): image/logo сейчас указывают на общий OG-баннер. Нужен реальный
-    // логотип-ассет (квадратный PNG/SVG на прозрачном фоне) — заменить оба URL.
-    image: `${SITE_URL}/opengraph-image`,
-    logo: `${SITE_URL}/opengraph-image`,
+    // Брендовая OG-картинка для превью и квадратный логотип для карточки в поиске.
+    image: `${SITE_URL}/brand/og-cover.png`,
+    logo: `${SITE_URL}/brand/dc-bakery_logo_1.png`,
     description: t(
       "B2B-поставщик десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые цены, доставка по Алматы.",
     ),
@@ -70,9 +69,10 @@ export async function OrganizationJsonLd() {
       addressLocality: "Алматы",
       addressRegion: "Алматы",
       addressCountry: "KZ",
-      // TODO(владелец): geo-координаты (широта/долгота) НЕ добавлены намеренно —
-      // решение по точным координатам склада/производства пока не принято.
     },
+    // Точные координаты точки бизнеса — усиливают локальный поиск и совпадение с
+    // карточкой в 2ГИС/Google (единый NAP+гео). Значения из карточки в 2ГИС.
+    geo: { "@type": "GeoCoordinates", latitude: 43.220416, longitude: 76.885263 },
     sameAs: [
       "https://www.instagram.com/bakery.dc",
       ...(whatsapp ? [`https://wa.me/${whatsapp}`] : []),

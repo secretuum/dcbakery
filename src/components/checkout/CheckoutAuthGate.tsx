@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
 import { isValidBin } from "@/src/lib/bin";
@@ -32,6 +32,10 @@ export function CheckoutAuthGate({ prefill, onClose, onAuthenticated }: Props) {
   // Регистрация (email/БИН редактируемы — в чекауте они необязательны)
   const [email, setEmail] = useState(prefill.email);
   const [bin, setBin] = useState(prefill.bin);
+  // Live-проверка БИН по госреестру (та же, что на чекауте): название компании для сверки.
+  const [binCheck, setBinCheck] = useState<{ status: string; name: string | null } | null>(null);
+  const [binChecking, setBinChecking] = useState(false);
+  const lastCheckedBinRef = useRef("");
   const [password, setPassword] = useState("");
   const [regStep, setRegStep] = useState<"form" | "submitting" | "otp" | "verifying">("form");
   const [otpCode, setOtpCode] = useState("");
@@ -50,6 +54,36 @@ export function CheckoutAuthGate({ prefill, onClose, onAuthenticated }: Props) {
     const id = window.setInterval(() => setOtpSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
     return () => window.clearInterval(id);
   }, [regStep]);
+
+  // По уходу фокуса с поля БИН — тянем официальное название из реестра для сверки.
+  // Только название (фрод-профиль клиенту не показываем). Best-effort: ошибка — молча.
+  async function verifyBin() {
+    const digits = bin.replace(/\D/g, "");
+    if (!/^\d{12}$/.test(digits)) {
+      setBinCheck(null);
+      lastCheckedBinRef.current = "";
+      return;
+    }
+    if (digits === lastCheckedBinRef.current) return;
+    lastCheckedBinRef.current = digits;
+    setBinChecking(true);
+    try {
+      const response = await fetch("/api/antifraud/verify-bin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bin: digits }),
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { status?: string; name?: string | null }
+        | null;
+      if (lastCheckedBinRef.current !== digits) return; // БИН сменился, пока шёл запрос
+      setBinCheck(data?.status ? { status: data.status, name: data.name ?? null } : null);
+    } catch {
+      setBinCheck(null);
+    } finally {
+      setBinChecking(false);
+    }
+  }
 
   async function handleRegister() {
     if (!email.includes("@")) {
@@ -356,9 +390,25 @@ export function CheckoutAuthGate({ prefill, onClose, onAuthenticated }: Props) {
               <Input
                 inputMode="numeric"
                 value={bin}
-                onChange={(e) => setBin(e.currentTarget.value)}
+                onChange={(e) => {
+                  setBin(e.currentTarget.value);
+                  setBinCheck(null);
+                  lastCheckedBinRef.current = "";
+                }}
+                onBlur={verifyBin}
                 placeholder={t("12 цифр")}
               />
+              {binChecking ? (
+                <p className="mt-1.5 text-xs text-muted">{t("Проверяем БИН…")}</p>
+              ) : binCheck?.status === "ok" && binCheck.name ? (
+                <p className="mt-1.5 text-xs font-semibold text-dark/70">
+                  {t("По реестру")}: {binCheck.name}
+                </p>
+              ) : binCheck?.status === "not_found" ? (
+                <p className="mt-1.5 text-xs font-semibold text-coral">
+                  {t("БИН не найден в реестре — проверьте номер")}
+                </p>
+              ) : null}
             </label>
             <label className="mt-4 block">
               <span className="mb-2 block text-[13.5px] font-semibold text-dark">{t("Пароль для кабинета")}</span>

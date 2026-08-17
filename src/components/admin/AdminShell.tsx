@@ -49,6 +49,17 @@ export function AdminShell({
               ) : null}
             </span>
           </Link>
+          {/* Выход из админки на публичный сайт — в новой вкладке, чтобы админка осталась
+              открытой. Логотип намеренно ведёт на дашборд, а не на сайт. */}
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Открыть публичный сайт в новой вкладке"
+            className="inline-flex shrink-0 items-center gap-1 rounded px-2.5 py-1.5 text-xs font-bold text-white/70 transition hover:bg-white/10 hover:text-white lg:mt-4"
+          >
+            На сайт ↗
+          </a>
         </div>
 
         <nav className="mt-8 flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">

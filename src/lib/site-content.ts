@@ -37,7 +37,7 @@ export function siteText(content: Record<string, unknown>, id: string, fallback:
 
 export const defaultSiteContent: SiteContent = {
   contactWhatsapp: "+7 747 727 2650",
-  contactPhone: "+7 747 694 0766",
+  contactPhone: "+7 747 727 2650",
   address: "г. Алматы, ул. Жамбыла 154",
   workHours: "Пн–Пт 9:00–19:00",
   deliveryDays: [2, 4, 6],

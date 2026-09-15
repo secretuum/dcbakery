@@ -4,7 +4,7 @@ import { buildBusinessContext, type BusinessFacts } from "./business-context";
 
 const FACTS: BusinessFacts = {
   workHours: "Пн–Пт 9:00–19:00",
-  contactPhone: "+7 747 694 0766",
+  contactPhone: "+7 747 727 2650",
   contactWhatsapp: "+7 747 727 2650",
   address: "г. Алматы, ул. Жамбыла 154",
   deliveryDays: [2, 4, 6],
@@ -17,7 +17,7 @@ test("buildBusinessContext: часы, дни/отсечка, тариф, кон�
   assert.match(ctx, /вторник, четверг, суббота/); // отсортированные дни доставки
   assert.match(ctx, /до 18:00/);
   assert.match(ctx, /бесплатно/); // строка тарифа из describeDeliveryTariff
-  assert.match(ctx, /\+7 747 694 0766/);
+  assert.match(ctx, /\+7 747 727 2650/);
   assert.match(ctx, /Жамбыла 154/);
 });
 

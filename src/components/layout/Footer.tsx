@@ -27,13 +27,18 @@ export async function Footer() {
       icon: WhatsAppIcon,
       person: t("Менеджер"),
     },
-    {
-      label: t("Телефон"),
-      value: content.contactPhone,
-      href: `tel:+${digits(content.contactPhone)}`,
-      icon: WhatsAppIcon,
-      person: "Евгений",
-    },
+    // Отдельный телефон — только если он отличается от WhatsApp (иначе дубль строки).
+    ...(digits(content.contactPhone) && digits(content.contactPhone) !== digits(content.contactWhatsapp)
+      ? [
+          {
+            label: t("Телефон"),
+            value: content.contactPhone,
+            href: `tel:+${digits(content.contactPhone)}`,
+            icon: WhatsAppIcon,
+            person: "Евгений",
+          },
+        ]
+      : []),
     {
       label: "Instagram",
       value: "@bakery.dc",

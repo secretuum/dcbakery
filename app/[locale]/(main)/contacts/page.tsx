@@ -62,14 +62,18 @@ export default async function ContactsPage() {
                 {content.contactWhatsapp}
               </a>
               <p className="ml-6 text-xs text-muted">{t("Менеджер")}</p>
-              <a
-                href={`tel:+${phoneDigits}`}
-                className="mt-2 flex items-center gap-2 text-sm font-semibold text-dark hover:text-coral"
-              >
-                <WhatsAppIcon className="h-4 w-4 shrink-0 text-coral" />
-                {content.contactPhone}
-              </a>
-              <p className="ml-6 text-xs text-muted">Евгений</p>
+              {phoneDigits && phoneDigits !== whatsappDigits ? (
+                <>
+                  <a
+                    href={`tel:+${phoneDigits}`}
+                    className="mt-2 flex items-center gap-2 text-sm font-semibold text-dark hover:text-coral"
+                  >
+                    <WhatsAppIcon className="h-4 w-4 shrink-0 text-coral" />
+                    {content.contactPhone}
+                  </a>
+                  <p className="ml-6 text-xs text-muted">Евгений</p>
+                </>
+              ) : null}
             </div>
             <div className="rounded-card border border-black/5 bg-cream p-5">
               <p className="text-xs font-semibold uppercase tracking-[.08em] text-muted">Instagram</p>

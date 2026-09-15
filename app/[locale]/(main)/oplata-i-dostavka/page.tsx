@@ -106,10 +106,14 @@ export default async function OplataIDostavkaPage() {
               <a href={`tel:+${whatsappDigits}`} className="font-bold text-coral hover:underline">
                 {content.contactWhatsapp}
               </a>
-              {" "}{t("или")}{" "}
-              <a href={`tel:+${phoneDigits}`} className="font-bold text-coral hover:underline">
-                {content.contactPhone}
-              </a>
+              {phoneDigits && phoneDigits !== whatsappDigits ? (
+                <>
+                  {" "}{t("или")}{" "}
+                  <a href={`tel:+${phoneDigits}`} className="font-bold text-coral hover:underline">
+                    {content.contactPhone}
+                  </a>
+                </>
+              ) : null}
               .
             </p>
           </div>

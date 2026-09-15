@@ -125,10 +125,6 @@ export default async function PrivacyPage() {
                 {t("; тел.:")}{" "}
                 <a href="tel:+77477272650" className="font-bold text-coral hover:underline">
                   +7 747 727 2650
-                </a>
-                ,{" "}
-                <a href="tel:+77476940766" className="font-bold text-coral hover:underline">
-                  +7 747 694 0766
                 </a>{t("; сайт: dc-bakery.kz.")}</p>
             </div>
           </div>

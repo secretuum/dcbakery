@@ -72,6 +72,21 @@ export const READY_MEALS_ENABLED =
 export const BANQUET_DESSERTS_ENABLED =
   process.env.NEXT_PUBLIC_BANQUET_DESSERTS === "1";
 
+// Самостоятельная регистрация клиентов закрыта (сайт в разработке): формы на сайте,
+// роуты /api/profile/register(-lite) и ссылка регистрации из WhatsApp-бота. Вход
+// существующих клиентов и заведение клиентов менеджером в админке работают.
+// Открыть: NEXT_PUBLIC_REGISTRATION_OPEN=1 в env + пересборка.
+export const REGISTRATION_OPEN =
+  process.env.NEXT_PUBLIC_REGISTRATION_OPEN === "1";
+
+export const REGISTRATION_CLOSED_MESSAGE =
+  "Регистрация новых клиентов временно закрыта. Напишите нам в WhatsApp — подключим вручную.";
+
+// Плашка «Сайт в разработке» над шапкой публичного сайта.
+// Убрать: NEXT_PUBLIC_DEV_BANNER=0 в env + пересборка.
+export const DEV_BANNER_ENABLED =
+  process.env.NEXT_PUBLIC_DEV_BANNER !== "0";
+
 export type B2BPaymentMethod = (typeof B2B_PAYMENT_METHODS)[number];
 
 export function normalizeB2BPaymentMethod(value?: string | null): B2BPaymentMethod {

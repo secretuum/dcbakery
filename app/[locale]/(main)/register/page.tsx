@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { peekRegistrationToken } from "@/src/lib/registration/reg-link";
 import { RegisterFromLinkForm } from "@/src/components/profile/RegisterFromLinkForm";
+import { REGISTRATION_CLOSED_MESSAGE, REGISTRATION_OPEN, WHATSAPP_SUPPORT_NUMBER } from "@/app/constants";
 
 // Регистрация по одноразовой ссылке из WhatsApp. Токен ЧИТАЕМ (peek), но НЕ гасим на
 // рендере — гашение при отправке формы (чтобы префетч не сжёг ссылку). Всегда динамика.
@@ -17,6 +18,26 @@ export default async function RegisterPage({
 }: {
   searchParams: Promise<{ rt?: string }>;
 }) {
+  if (!REGISTRATION_OPEN) {
+    return (
+      <main className="min-h-screen bg-cream px-5 py-16 text-dark">
+        <section className="mx-auto max-w-md rounded-card border border-black/10 bg-white p-8 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[.15em] text-muted">Регистрация</p>
+          <h1 className="mt-3 text-2xl font-bold">Регистрация закрыта</h1>
+          <p className="mt-4 text-sm leading-6 text-muted">{REGISTRATION_CLOSED_MESSAGE}</p>
+          <a
+            className="mt-6 inline-flex font-bold text-coral"
+            href={`https://wa.me/${WHATSAPP_SUPPORT_NUMBER}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Написать в WhatsApp
+          </a>
+        </section>
+      </main>
+    );
+  }
+
   const rt = (await searchParams)?.rt ?? "";
   const peek = rt ? await peekRegistrationToken(rt, new Date().toISOString()) : null;
 

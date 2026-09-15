@@ -3,6 +3,7 @@ import { checkRateLimit, getRequestIdentifier } from "@/src/lib/rate-limit";
 import { createMagicLinkToken, fetchWhatsAppClientByEmail } from "@/src/lib/magic-link-store";
 import { sendGreenApiTextMessage, getWhatsAppChatIdFromPhone } from "@/src/lib/whatsapp";
 import { fetchWhatsAppClientByChatId, saveWhatsAppClientProfile } from "@/src/lib/whatsapp-client-store";
+import { REGISTRATION_CLOSED_MESSAGE, REGISTRATION_OPEN } from "@/app/constants";
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
 const TOKEN_TTL_MS = 15 * 60 * 1000;
@@ -65,6 +66,10 @@ export async function POST(request: Request) {
     tokenEmail = storedEmail;
   } else {
     // Номер не найден (или профиль без почты) — нужна регистрация с email
+    if (!REGISTRATION_OPEN) {
+      return NextResponse.json({ error: REGISTRATION_CLOSED_MESSAGE }, { status: 403 });
+    }
+
     if (!email) {
       // Tell the UI to show the registration form
       return NextResponse.json({ needsRegistration: true });

@@ -25,6 +25,7 @@ import { DefaultMediaReader } from "../ai/media-reader";
 import { GeocodingAddressProvider } from "../address/geocoder-provider";
 import { createOrderFromWhatsApp } from "../order/create-order";
 import { createRegistrationLink } from "../registration/reg-link";
+import { REGISTRATION_OPEN } from "@/app/constants";
 import { notifyManagersText } from "../notify/telegram-notify";
 import { getRetailKeywords } from "../settings";
 
@@ -118,7 +119,10 @@ export async function buildOrchestratorDeps(provider: WhatsAppProvider): Promise
       },
     },
 
-    registration: { createLink: (phone, nowMs) => createRegistrationLink(phone, nowMs) },
+    // Регистрация закрыта — бот не шлёт ссылку дозаполнения профиля (заказы принимает как раньше).
+    registration: REGISTRATION_OPEN
+      ? { createLink: (phone, nowMs) => createRegistrationLink(phone, nowMs) }
+      : undefined,
 
     history: {
       lastOrderItems: async (phone) => {

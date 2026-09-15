@@ -1,4 +1,9 @@
 {
+ "Сайт в разработке.": "The site is under development.",
+ "Регистрация новых клиентов временно закрыта.": "New client registration is temporarily closed.",
+ "Регистрация новых клиентов временно закрыта. Напишите нам в WhatsApp — подключим вручную.": "New client registration is temporarily closed. Message us on WhatsApp and we will set up your account manually.",
+ "Такой аккаунт не найден.": "Account not found.",
+ "Нет пароля? Войдите по коду из WhatsApp в кабинете": "No password? Sign in to your account with a WhatsApp code",
  "Проверяем БИН…": "Checking BIN…",
  "По реестру": "Registry",
  "БИН не найден в реестре — проверьте номер": "BIN not found in the registry — check the number",

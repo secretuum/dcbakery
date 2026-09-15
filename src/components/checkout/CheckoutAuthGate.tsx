@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { REGISTRATION_CLOSED_MESSAGE, REGISTRATION_OPEN, WHATSAPP_SUPPORT_NUMBER } from "@/app/constants";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
+import { LocaleLink } from "@/src/i18n/LocaleLink";
 import { isValidBin } from "@/src/lib/bin";
 import { isValidKzMobile } from "@/src/lib/phone";
 import { useT } from "@/src/i18n/client";
@@ -27,7 +29,8 @@ function formatMmss(totalSeconds: number) {
 
 export function CheckoutAuthGate({ prefill, onClose, onAuthenticated }: Props) {
   const t = useT();
-  const [mode, setMode] = useState<"register" | "login">("register");
+  // Регистрация закрыта — гейт открывается сразу на входе.
+  const [mode, setMode] = useState<"register" | "login">(REGISTRATION_OPEN ? "register" : "login");
 
   // Регистрация (email/БИН редактируемы — в чекауте они необязательны)
   const [email, setEmail] = useState(prefill.email);
@@ -236,6 +239,10 @@ export function CheckoutAuthGate({ prefill, onClose, onAuthenticated }: Props) {
       };
 
       if (response.ok && data.notRegistered) {
+        if (!REGISTRATION_OPEN) {
+          setError(t("Такой аккаунт не найден."));
+          return;
+        }
         setError(t("Аккаунт не найден — зарегистрируйтесь."));
         setMode("register");
         return;
@@ -357,14 +364,35 @@ export function CheckoutAuthGate({ prefill, onClose, onAuthenticated }: Props) {
             <Button type="button" className="mt-5 w-full" disabled={signing} onClick={() => void handleLogin()}>
               {signing ? t("Входим...") : t("Войти и оформить")}
             </Button>
-            <button
-              type="button"
-              className="mt-4 text-[13.5px] font-semibold text-muted underline-offset-2 transition hover:text-dark hover:underline"
-              onClick={() => {
-                setMode("register");
-                setError("");
-              }}
-            >{t("Нет аккаунта? Зарегистрироваться")}</button>
+            {REGISTRATION_OPEN ? (
+              <button
+                type="button"
+                className="mt-4 text-[13.5px] font-semibold text-muted underline-offset-2 transition hover:text-dark hover:underline"
+                onClick={() => {
+                  setMode("register");
+                  setError("");
+                }}
+              >{t("Нет аккаунта? Зарегистрироваться")}</button>
+            ) : (
+              <div className="mt-4 space-y-2 rounded-md bg-cream px-4 py-3 text-xs font-semibold leading-5 text-muted">
+                <p>
+                  {t(REGISTRATION_CLOSED_MESSAGE)}{" "}
+                  <a
+                    href={`https://wa.me/${WHATSAPP_SUPPORT_NUMBER}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="whitespace-nowrap text-coral underline underline-offset-2"
+                  >
+                    {t("Написать в WhatsApp")}
+                  </a>
+                </p>
+                <p>
+                  <LocaleLink href="/profile" className="text-coral underline underline-offset-2">
+                    {t("Нет пароля? Войдите по коду из WhatsApp в кабинете")}
+                  </LocaleLink>
+                </p>
+              </div>
+            )}
           </>
         ) : (
           <>

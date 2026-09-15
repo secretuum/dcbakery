@@ -8,6 +8,7 @@ import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { Input } from "@/src/components/ui/Input";
 import { isValidBin } from "@/src/lib/bin";
 import { isValidKzMobile } from "@/src/lib/phone";
+import { REGISTRATION_CLOSED_MESSAGE, REGISTRATION_OPEN, WHATSAPP_SUPPORT_NUMBER } from "@/app/constants";
 import { clientOrderStatusLabels, creditStatusLabels, orderStatusLabels } from "@/src/lib/order-status";
 import { HomeReward } from "@/src/components/home/HomeReward";
 import { weeklyPromoCollected } from "@/src/lib/promo";
@@ -173,6 +174,11 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       };
 
       if (response.ok && data.notRegistered) {
+        if (!REGISTRATION_OPEN) {
+          setClientError(t("Такой аккаунт не найден."));
+          setClientStep("idle");
+          return;
+        }
         // Аккаунта нет в базе — не пропускаем и переводим на регистрацию
         setClientNotice(t("Такой аккаунт не найден. Заполните регистрацию — и сразу попадёте в кабинет."));
         openRegistration(clientLogin);
@@ -225,6 +231,11 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
       };
 
       if (response.ok && data.notRegistered) {
+        if (!REGISTRATION_OPEN) {
+          setClientError(t("Такой аккаунт не найден."));
+          setClientStep("idle");
+          return;
+        }
         setClientNotice(t("Такой аккаунт не найден. Заполните регистрацию — и сразу попадёте в кабинет."));
         openRegistration(value);
         return;
@@ -840,12 +851,14 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
               >
                 {clientStep === "signing_in" ? t("Проверяем...") : t("Войти")}
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => openRegistration()}
-              >{t("Зарегистрироваться")}</Button>
+              {REGISTRATION_OPEN ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => openRegistration()}
+                >{t("Зарегистрироваться")}</Button>
+              ) : null}
             </div>
             <div className="mt-3">
               <Button
@@ -858,6 +871,19 @@ function LoginPanel({ onLogin }: { onLogin: (session: ProfileSession) => void })
                 {t("Войти по коду из WhatsApp")}
               </Button>
             </div>
+            {REGISTRATION_OPEN ? null : (
+              <div className="mt-4 rounded-md border border-coral/20 bg-accent-50 px-4 py-3 text-center">
+                <p className="text-sm font-semibold text-dark/80">{t(REGISTRATION_CLOSED_MESSAGE)}</p>
+                <a
+                  href={`https://wa.me/${WHATSAPP_SUPPORT_NUMBER}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex text-sm font-bold text-coral hover:underline"
+                >
+                  {t("Написать в WhatsApp")}
+                </a>
+              </div>
+            )}
             <div className="mt-6 border-t border-black/10 pt-5 text-center">
               <button
                 type="button"

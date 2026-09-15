@@ -3,6 +3,7 @@ import { Footer } from "@/src/components/layout/Footer";
 import { Header } from "@/src/components/layout/Header";
 import { BottomNav } from "@/src/components/layout/BottomNav";
 import { CookieConsent } from "@/src/components/layout/CookieConsent";
+import { DevBanner } from "@/src/components/layout/DevBanner";
 import { SiteEditProvider } from "@/src/components/home/SiteEditMode";
 import { OrganizationJsonLd } from "@/src/components/seo/OrganizationJsonLd";
 import { getSiteContent } from "@/src/lib/site-content";
@@ -19,6 +20,7 @@ export default async function MainLayout({ children }: { children: React.ReactNo
   return (
     <SiteEditProvider content={content}>
       <OrganizationJsonLd />
+      <DevBanner />
       <Header />
       <div className="flex-1">{children}</div>
       <Footer />

@@ -29,6 +29,7 @@ import {
   type ClientSessionPayload,
 } from "@/src/lib/client-session";
 import { ensureClientRecord } from "@/src/lib/account/ensure-client";
+import { REGISTRATION_CLOSED_MESSAGE, REGISTRATION_OPEN } from "@/app/constants";
 
 const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -38,6 +39,10 @@ function asString(v: unknown): string {
 }
 
 export async function POST(request: Request) {
+  if (!REGISTRATION_OPEN) {
+    return NextResponse.json({ error: REGISTRATION_CLOSED_MESSAGE }, { status: 403 });
+  }
+
   const limited = await checkRateLimit({
     identifier: getRequestIdentifier(request),
     limit: 4,

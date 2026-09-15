@@ -20,6 +20,7 @@ import {
   OTP_TTL_MS,
 } from "@/src/lib/otp";
 import { ensureClientRecord } from "@/src/lib/account/ensure-client";
+import { REGISTRATION_CLOSED_MESSAGE, REGISTRATION_OPEN } from "@/app/constants";
 
 // Лёгкая регистрация по телефону: номер + название компании + WhatsApp-код.
 // Без email/пароля. Создаёт «облегчённый» аккаунт (профиль whatsapp_clients +
@@ -32,6 +33,10 @@ function asString(v: unknown): string {
 }
 
 export async function POST(request: Request) {
+  if (!REGISTRATION_OPEN) {
+    return NextResponse.json({ error: REGISTRATION_CLOSED_MESSAGE }, { status: 403 });
+  }
+
   const limited = await checkRateLimit({
     identifier: getRequestIdentifier(request),
     limit: 4,

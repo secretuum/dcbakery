@@ -59,8 +59,9 @@ export const CUSTOMER_TYPE_OPTIONS = [
   { value: "individual", label: "Физлицо", requiresBin: false },
 ] as const;
 
+// Только цифры: wa.me не открывает номер с «+» (в env он записан как +7…).
 export const WHATSAPP_SUPPORT_NUMBER =
-  process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT ?? "77477272650";
+  (process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT ?? "77477272650").replace(/\D/g, "");
 
 // Категория «Готовые обеды» подготовлена, но скрыта на витрине до запуска.
 // Включение: NEXT_PUBLIC_READY_MEALS=1 в env (или поменять фолбэк на true).

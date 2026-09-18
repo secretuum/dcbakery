@@ -15,13 +15,23 @@ const supabaseHost = (() => {
   }
 })();
 
-const remotePatterns: RemotePattern[] = [
-  { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
-];
-// На случай кастомного домена Supabase (не *.supabase.co) — добавляем точный хост из env.
-if (supabaseHost && !supabaseHost.endsWith(".supabase.co")) {
-  remotePatterns.push({ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" });
-}
+// ТОЛЬКО точный хост нашего проекта, взятый из NEXT_PUBLIC_SUPABASE_URL. Подходит и для
+// обычного <ref>.supabase.co, и для кастомного домена — отдельная ветка им не нужна.
+//
+// НИКОГДА не возвращать сюда шаблон вида "*.supabase.co". Next сверяет hostname через
+// picomatch (next/dist/shared/lib/match-remote-pattern.js), а "*" там — ЛЮБОЙ
+// одноуровневый поддомен, то есть под шаблон подходит и <чужой-проект>.supabase.co.
+// Эндпоинт /_next/image публичный: matcher middleware в proxy.ts исключает _next/, прав
+// там никто не проверяет. С шаблоном любой желающий заводит собственный проект Supabase,
+// кладёт туда файл и заставляет НАШ сервер скачать его и разобрать нативным декодером
+// (libvips/libheif внутри sharp) — известный путь к RCE/DoS в оптимизаторе картинок,
+// без аккаунта и без админки.
+//
+// Если переменной окружения нет — список остаётся ПУСТЫМ. Пустой список ломает только
+// показ удалённых картинок, шаблон ломает сервер; молча подставлять шаблон нельзя.
+const remotePatterns: RemotePattern[] = supabaseHost
+  ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }]
+  : [];
 
 const securityHeaders = [
   {
@@ -42,11 +52,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // B3: локаль как корневой сегмент [locale] → getLocale() читает её через
   // next/root-params вместо headers(), что снимает форс-динамику и открывает ISR.
+  // Флага experimental.rootParams здесь БОЛЬШЕ НЕТ и добавлять его не нужно: с 16.3.x
+  // next/root-params доступен по умолчанию, а из типов ExperimentalConfig свойство
+  // убрано — с ним next build падает на проверке типов (TS2353). Механизм при этом
+  // никуда не делся: сборка на 16.3.5 без флага даёт те же 256 статических страниц и
+  // те же revalidate/expire, что и 16.2.9 с флагом.
   // cpus:2 — ограничение воркеров СБОРКИ: Next поднимает по воркеру на CPU-ядро, а на
   // билд-инстансе Render с ограниченной RAM это упирается в память (out-of-memory, exit
   // 134) на «Generating static pages». Влияет только на сборку, рантайм не трогает.
   experimental: {
-    rootParams: true,
     cpus: 2,
   },
   images: {

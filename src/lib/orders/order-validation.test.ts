@@ -14,7 +14,7 @@ function body(over: Record<string, unknown> = {}) {
     customer_name: "Иван",
     customer_phone: "+7 747 123 45 67", // 11 цифр
     delivery_date: THURSDAY,
-    items: [{ product_id: "medovik", qty: 2, price: 830 }],
+    items: [{ product_id: "medovik", qty: 2, price: 8000 }],
     payment_method: "Выставить счет",
     oferta_accepted: true,
     ...over,
@@ -24,7 +24,7 @@ function body(over: Record<string, unknown> = {}) {
 test("validateOrderFields: валидный заказ — без ошибок, сумма верная", () => {
   const { errors, totalAmount } = validateOrderFields(body(), DELIVERY_DAYS, TOMORROW);
   assert.deepEqual(errors, []);
-  assert.equal(totalAmount, 1660); // 2×830
+  assert.equal(totalAmount, 16000); // 2×8000 (≥ минимума 15 000)
 });
 
 test("validateOrderFields: обязательные поля", () => {

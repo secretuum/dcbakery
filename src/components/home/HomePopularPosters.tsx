@@ -3,6 +3,7 @@
 import { LocaleLink as Link } from "@/src/i18n/LocaleLink";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { EditableText } from "@/src/components/home/SiteEditMode";
+import { productPath } from "@/src/lib/catalog-urls";
 import { formatPrice } from "@/src/lib/format";
 import { useLocale, useT } from "@/src/i18n/client";
 import { localizeProduct } from "@/src/i18n/product";
@@ -54,7 +55,11 @@ export function HomePopularPosters({ products }: Props) {
             return (
               <Link
                 key={product.id}
-                href="/catalog"
+                // Постер ведёт на сам товар, а не на общий каталог: это популярные
+                // позиции с главной, они и должны передавать вес своим страницам.
+                // href уже с языковым префиксом, LocaleLink его не удвоит (withLocale
+                // идемпотентен).
+                href={productPath(product.slug, locale)}
                 className="group relative block aspect-[4/5] min-w-0 snap-start overflow-hidden rounded-2xl bg-cream-deep shadow-sm transition-[box-shadow,translate] duration-300 ease-out hover:-translate-y-[3px] hover:shadow-lg"
               >
                 {/* image */}

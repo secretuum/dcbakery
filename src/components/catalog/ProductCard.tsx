@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
+import Link from "next/link";
 import { Badge } from "@/src/components/ui/Badge";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { ProductSheet } from "@/src/components/catalog/ProductSheet";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
+import { productPath } from "@/src/lib/catalog-urls";
 import { formatProductPrice } from "@/src/lib/format";
 import { discountPercent } from "@/src/lib/catalog-promo";
 import { useLocale, useT } from "@/src/i18n/client";
@@ -40,6 +42,21 @@ export function ProductCard({ product, priority }: ProductCardProps) {
   const cartQty = cartItem?.qty ?? 0;
   const inCart = cartQty > 0;
   const step = product.step_qty;
+  const href = productPath(product.slug, locale);
+
+  // Карточка — НАСТОЯЩАЯ ссылка на страницу товара: без неё страницы товаров были
+  // сиротами (в HTML каталога ноль ссылок на /{locale}/product/…, обход только по
+  // карте сайта). Поведение прежнее оставляем ровно для обычного клика мышью или
+  // пальцем — его перехватываем и открываем быстрый просмотр. Остальное отдаём
+  // браузеру: Enter с клавиатуры (click приходит с detail === 0), Ctrl/Cmd/Shift-клик
+  // и «открыть в новой вкладке» — раньше они не работали вовсе. Средняя кнопка идёт
+  // отдельным событием auxclick и сюда не доходит, отдельной обработки не требует.
+  function handleQuickViewClick(event: MouseEvent<HTMLAnchorElement>) {
+    if (event.defaultPrevented || event.detail === 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    setIsSheetOpen(true);
+  }
 
   function handleAddToCart() {
     if (cartQty >= product.stock_qty) {
@@ -79,10 +96,16 @@ export function ProductCard({ product, priority }: ProductCardProps) {
       } ${!isInStock ? "is-out" : ""}`}
     >
       {/* media */}
-      <button
-        type="button"
-        onClick={() => setIsSheetOpen(true)}
-        className="relative block aspect-square w-full cursor-pointer overflow-hidden bg-cream text-left"
+      <Link
+        href={href}
+        onClick={handleQuickViewClick}
+        // Предзагрузку не просим: обычный клик открывает быстрый просмотр, а не
+        // переходит, а Next по умолчанию тянет статический маршрут целиком, едва
+        // ссылка попала в экран — на каталоге это полсотни запросов впустую.
+        prefetch={false}
+        className="relative block aspect-square w-full cursor-pointer overflow-hidden bg-cream text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2"
+        // Имя ссылке даём явно: у товара без фото FallbackImage рисует декоративную
+        // заглушку с alt="", и без aria-label ссылка осталась бы без имени.
         aria-label={`${t("Подробнее:")} ${localized.name}`}
       >
         <FallbackImage
@@ -109,15 +132,19 @@ export function ProductCard({ product, priority }: ProductCardProps) {
             <Badge variant="amber">{t("Мало")}</Badge>
           ) : null}
         </span>
-      </button>
+      </Link>
 
       {/* body */}
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <h3
-          className="line-clamp-2 min-h-[2.64em] cursor-pointer text-[15px] font-semibold leading-[1.32] tracking-[-0.012em] text-dark"
-          onClick={() => setIsSheetOpen(true)}
-        >
-          {localized.name}
+        <h3 className="line-clamp-2 min-h-[2.64em] text-[15px] font-semibold leading-[1.32] tracking-[-0.012em] text-dark">
+          <Link
+            href={href}
+            onClick={handleQuickViewClick}
+            prefetch={false}
+            className="cursor-pointer transition-colors hover:text-coral focus-visible:text-coral focus-visible:outline-none focus-visible:underline"
+          >
+            {localized.name}
+          </Link>
         </h3>
 
         {/* meta: weight · stock */}

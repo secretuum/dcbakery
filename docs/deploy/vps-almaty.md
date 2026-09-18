@@ -216,6 +216,23 @@ chmod +x /opt/dcbakery/deploy.sh
 /opt/dcbakery/deploy.sh
 ```
 
+### Как есть на самом деле (проверено 18.09.2026)
+
+- Прод: **82.115.43.151**, домен dc-bakery.kz. Отвечает **nginx/1.24.0 (Ubuntu)**, а не Caddy,
+  как написано выше в шаге 7 — сервер собран не в точности по этой инструкции.
+- Скрипт `/opt/dcbakery/deploy.sh` на месте и работает, но **запускать его нужно от root**:
+  под обычным пользователем git падает с `fatal: detected dubious ownership in repository at
+  '/opt/dcbakery'`. То есть: `sudo -i`, затем `cd /opt/dcbakery && ./deploy.sh`.
+  Скрипт печатает в конце `deployed: <коммит>` — сверьте с главной ветккой в GitHub.
+- Проверка после деплоя одной строкой (с любой машины):
+  ```bash
+  curl -s https://dc-bakery.kz/ru/oplata-i-dostavka | grep -oE "бесплатн[^<]{0,60}|1 500|3 000"
+  ```
+- **Откат**: раздел ниже про возврат DNS на Render устарел — Render больше не держит сайт.
+  Практический откат: запишите текущий коммит **до** деплоя (`git rev-parse --short HEAD`),
+  и если сборка встала криво — `cd /opt/dcbakery && git reset --hard <тот коммит> && npm run build
+  && pm2 reload dcbakery`. Логи: `pm2 logs dcbakery`.
+
 ## Если что-то пошло не так (откат)
 
 Пока Render не выключен — 🌐 верните в ps.kz A-запись на прежний IP Render, и сайт снова с

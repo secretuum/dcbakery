@@ -15,13 +15,23 @@ const supabaseHost = (() => {
   }
 })();
 
-const remotePatterns: RemotePattern[] = [
-  { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
-];
-// На случай кастомного домена Supabase (не *.supabase.co) — добавляем точный хост из env.
-if (supabaseHost && !supabaseHost.endsWith(".supabase.co")) {
-  remotePatterns.push({ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" });
-}
+// ТОЛЬКО точный хост нашего проекта, взятый из NEXT_PUBLIC_SUPABASE_URL. Подходит и для
+// обычного <ref>.supabase.co, и для кастомного домена — отдельная ветка им не нужна.
+//
+// НИКОГДА не возвращать сюда шаблон вида "*.supabase.co". Next сверяет hostname через
+// picomatch (next/dist/shared/lib/match-remote-pattern.js), а "*" там — ЛЮБОЙ
+// одноуровневый поддомен, то есть под шаблон подходит и <чужой-проект>.supabase.co.
+// Эндпоинт /_next/image публичный: matcher middleware в proxy.ts исключает _next/, прав
+// там никто не проверяет. С шаблоном любой желающий заводит собственный проект Supabase,
+// кладёт туда файл и заставляет НАШ сервер скачать его и разобрать нативным декодером
+// (libvips/libheif внутри sharp) — известный путь к RCE/DoS в оптимизаторе картинок,
+// без аккаунта и без админки.
+//
+// Если переменной окружения нет — список остаётся ПУСТЫМ. Пустой список ломает только
+// показ удалённых картинок, шаблон ломает сервер; молча подставлять шаблон нельзя.
+const remotePatterns: RemotePattern[] = supabaseHost
+  ? [{ protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/**" }]
+  : [];
 
 const securityHeaders = [
   {

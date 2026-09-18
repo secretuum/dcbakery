@@ -3,16 +3,20 @@ import Link from "next/link";
 import { EditableText } from "@/src/components/home/SiteEditMode";
 import { JsonLd } from "@/src/components/seo/JsonLd";
 import { getLocale, getT } from "@/src/i18n/server";
-import { withLocale, buildAlternates } from "@/src/i18n/routing";
+import { buildPageMetadata } from "@/src/components/seo/page-metadata";
+import { withLocale } from "@/src/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([getT(), getLocale()]);
+  const title = t("Оптовые поставки — DC Bakery");
+  const description = t(
+    "DC Bakery — оптовый B2B-поставщик десертов, тортов, замороженных полуфабрикатов, мяса и банкетных десертов для кофеен, ресторанов, отелей и магазинов в Алматы. Доставка, оплата по счёту, работа с юрлицами.",
+  );
+
   return {
-    title: t("Оптовые поставки — DC Bakery"),
-    description: t(
-      "DC Bakery — оптовый B2B-поставщик десертов, тортов, замороженных полуфабрикатов, мяса и банкетных десертов для кофеен, ресторанов, отелей и магазинов в Алматы. Доставка, оплата по счёту, работа с юрлицами.",
-    ),
-    alternates: buildAlternates("/optom", locale),
+    title,
+    description,
+    ...buildPageMetadata({ path: "/optom", locale, title, description }),
   };
 }
 

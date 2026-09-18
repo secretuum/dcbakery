@@ -9,8 +9,11 @@ import {
   fetchProductsByCategory,
 } from "@/src/lib/catalog";
 import { getLocale, getT } from "@/src/i18n/server";
-import { withLocale, buildAlternates } from "@/src/i18n/routing";
+import { localizeProduct } from "@/src/i18n/product";
+import { withLocale } from "@/src/i18n/routing";
 import { JsonLd } from "@/src/components/seo/JsonLd";
+import { buildItemListJsonLd } from "@/src/components/seo/item-list";
+import { buildPageMetadata, pageUrl } from "@/src/components/seo/page-metadata";
 import { SITE_URL } from "@/src/lib/site-url";
 
 type CategoryPageProps = {
@@ -37,15 +40,27 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
   const locale = await getLocale();
   const categoryName = t(currentCategory.name);
+  const description = currentCategory.description
+    ? t(currentCategory.description)
+    : t("B2B-каталог DC Bakery: раздел ${category}.", {
+        category: categoryName.toLowerCase(),
+      });
+  // Превью ссылки на раздел: фото первого товара раздела. Своей картинки у
+  // категории нет (в каталоге там заглушка), а брендовая обложка одинакова у всех
+  // разделов — по ней в мессенджере не отличить «Десерты» от «Мяса».
+  const products = await fetchProductsByCategory(category);
+  const image = products.find((product) => product.images?.[0])?.images?.[0];
 
   return {
     title: `${categoryName} | ${t("Каталог DC Bakery")}`,
-    description: currentCategory.description
-      ? t(currentCategory.description)
-      : t("B2B-каталог DC Bakery: раздел ${category}.", {
-          category: categoryName.toLowerCase(),
-        }),
-    alternates: buildAlternates(`/catalog/${category}`, locale),
+    description,
+    ...buildPageMetadata({
+      path: `/catalog/${category}`,
+      locale,
+      title: categoryName,
+      description,
+      image,
+    }),
   };
 }
 
@@ -81,9 +96,21 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     ],
   };
 
+  // Перечень позиций раздела: для поиска и ИИ-ассистентов страница раздела —
+  // это список товаров со ссылками, а не просто заголовок с картинками.
+  const itemListJsonLd = buildItemListJsonLd({
+    name: t(currentCategory.name),
+    url: pageUrl(`/catalog/${currentCategory.slug}`, locale),
+    items: products.map((product) => ({
+      name: localizeProduct(product, locale).name,
+      url: `${SITE_URL}/${locale}/product/${product.slug}`,
+    })),
+  });
+
   return (
     <main className="min-h-screen bg-cream text-dark">
       <JsonLd data={breadcrumbJsonLd} />
+      <JsonLd data={itemListJsonLd} />
       <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>

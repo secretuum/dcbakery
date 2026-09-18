@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale, getT } from "@/src/i18n/server";
-import { withLocale, buildAlternates } from "@/src/i18n/routing";
+import { buildPageMetadata } from "@/src/components/seo/page-metadata";
+import { withLocale } from "@/src/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([getT(), getLocale()]);
+  const title = t("Политика конфиденциальности — DC Bakery");
+  const description = t(
+    "Порядок обработки и защиты персональных данных пользователей сайта dc-bakery.kz. Редакция от 10 июля 2026 года.",
+  );
+
   return {
-    title: t("Политика конфиденциальности — DC Bakery"),
-    description: t(
-      "Порядок обработки и защиты персональных данных пользователей сайта dc-bakery.kz. Редакция от 10 июля 2026 года.",
-    ),
-    alternates: buildAlternates("/privacy", locale),
+    title,
+    description,
+    ...buildPageMetadata({ path: "/privacy", locale, title, description }),
   };
 }
 

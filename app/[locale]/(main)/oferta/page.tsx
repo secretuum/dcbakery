@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getLocale, getT } from "@/src/i18n/server";
-import { withLocale, buildAlternates } from "@/src/i18n/routing";
+import { buildPageMetadata } from "@/src/components/seo/page-metadata";
+import { withLocale } from "@/src/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([getT(), getLocale()]);
+  const title = t("Публичная оферта — DC Bakery");
+  const description = t(
+    "Договор поставки продукции DC Bakery для B2B-клиентов. Условия заказа, оплаты, поставки, возврата и товарного кредита. Редакция от 14 июля 2026 года.",
+  );
+
   return {
-    title: t("Публичная оферта — DC Bakery"),
-    description: t(
-      "Договор поставки продукции DC Bakery для B2B-клиентов. Условия заказа, оплаты, поставки, возврата и товарного кредита. Редакция от 14 июля 2026 года.",
-    ),
-    alternates: buildAlternates("/oferta", locale),
+    title,
+    description,
+    ...buildPageMetadata({ path: "/oferta", locale, title, description }),
   };
 }
 

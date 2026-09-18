@@ -2,16 +2,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getSiteContent } from "@/src/lib/site-content";
 import { getLocale, getT } from "@/src/i18n/server";
-import { withLocale, buildAlternates } from "@/src/i18n/routing";
+import { buildPageMetadata } from "@/src/components/seo/page-metadata";
+import { withLocale } from "@/src/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([getT(), getLocale()]);
+  const title = t("Оплата и доставка — DC Bakery");
+  const description = t(
+    "Способы оплаты, условия доставки и возврата для B2B-клиентов DC Bakery. Доставка по Алматы бесплатная, минимальный заказ 15 000 тенге.",
+  );
+
   return {
-    title: t("Оплата и доставка — DC Bakery"),
-    description: t(
-      "Способы оплаты, условия доставки и возврата для B2B-клиентов DC Bakery. Доставка по Алматы бесплатная, минимальный заказ 15 000 тенге.",
-    ),
-    alternates: buildAlternates("/oplata-i-dostavka", locale),
+    title,
+    description,
+    ...buildPageMetadata({ path: "/oplata-i-dostavka", locale, title, description }),
   };
 }
 

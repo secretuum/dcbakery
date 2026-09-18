@@ -3,6 +3,8 @@
 // кодовая база пишет "@/..." и без расширений. Этот hook закрывает оба случая:
 //  - "@/x"        -> <repoRoot>/x(.ts|.tsx|/index.ts)
 //  - "./x"/"../x" -> добавляем .ts/.tsx/index при отсутствии расширения
+//  - "server-only"/"client-only" -> пустой модуль: их алиасит Next при сборке, в
+//    node_modules пакетов нет, а серверные модули пишут `import "server-only"`
 // Тесты гоняются нативным TS-стриппингом Node 24 (никаких новых зависимостей).
 
 import { existsSync, statSync } from "node:fs";
@@ -41,6 +43,11 @@ function resolveWithExt(absNoExt) {
 }
 
 export async function resolve(specifier, context, nextResolve) {
+  if (specifier === "server-only" || specifier === "client-only") {
+    const stub = path.join(root, "scripts", "test-stub-empty.mjs");
+    return { url: pathToFileURL(stub).href, shortCircuit: true };
+  }
+
   if (specifier.startsWith("@/")) {
     const found = resolveWithExt(path.join(root, specifier.slice(2)));
     if (found) return { url: pathToFileURL(found).href, shortCircuit: true };

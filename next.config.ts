@@ -52,11 +52,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // B3: локаль как корневой сегмент [locale] → getLocale() читает её через
   // next/root-params вместо headers(), что снимает форс-динамику и открывает ISR.
+  // Флага experimental.rootParams здесь БОЛЬШЕ НЕТ и добавлять его не нужно: с 16.3.x
+  // next/root-params доступен по умолчанию, а из типов ExperimentalConfig свойство
+  // убрано — с ним next build падает на проверке типов (TS2353). Механизм при этом
+  // никуда не делся: сборка на 16.3.5 без флага даёт те же 256 статических страниц и
+  // те же revalidate/expire, что и 16.2.9 с флагом.
   // cpus:2 — ограничение воркеров СБОРКИ: Next поднимает по воркеру на CPU-ядро, а на
   // билд-инстансе Render с ограниченной RAM это упирается в память (out-of-memory, exit
   // 134) на «Generating static pages». Влияет только на сборку, рантайм не трогает.
   experimental: {
-    rootParams: true,
     cpus: 2,
   },
   images: {

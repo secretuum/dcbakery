@@ -6,7 +6,9 @@ import type { Product } from "@/src/types";
 // Разбор выгруженного каталога (.xlsx из buildCatalogWorkbook) и вычисление diff'а
 // против текущих товаров. НИЧЕГО не пишет — только считает, что изменится. Применение
 // (по подтверждению) — через upsertCatalogProductOverride в API-роуте.
-// Импортируемые поля: цена, состав, описание, остаток, мин.кол-во, шаг, архив.
+// Импортируемые поля: цена, состав, описание, остаток, мин.кол-во, архив.
+// Шаг кратности не импортируется и не выгружается: продажи кратно коробкам нет
+// (решение владельца 18.09.2026), а разбор поля обещал изменение, которого не было.
 // Матчинг строго по id. slug/название/категорию по файлу НЕ меняем.
 
 export type CatalogFileRow = {
@@ -17,7 +19,6 @@ export type CatalogFileRow = {
   description: string | null;
   stock_qty: number | null;
   min_qty: number | null;
-  step_qty: number | null;
   is_archived: boolean | null;
 };
 
@@ -71,7 +72,6 @@ function buildHeaderIndex(headerRow: ExcelJS.Row): Record<string, number> {
     ["description", /описан/],
     ["stock", /остаток/],
     ["min", /мин/],
-    ["step", /шаг/],
     ["archived", /архив/],
   ];
   headerRow.eachCell((cell, col) => {
@@ -93,7 +93,6 @@ function rowsFromValues(records: Array<Record<string, string>>): CatalogFileRow[
     description: r.description === undefined ? null : r.description,
     stock_qty: r.stock === undefined ? null : toNumberOrNull(r.stock),
     min_qty: r.min === undefined ? null : toNumberOrNull(r.min),
-    step_qty: r.step === undefined ? null : toNumberOrNull(r.step),
     is_archived: r.archived === undefined ? null : toBoolOrNull(r.archived),
   }));
 }
@@ -197,7 +196,7 @@ async function parseManualOoxml(
   const header = parsed.find((r) => r.n === 1)?.cells ?? {};
   const HEADER_MATCH: [string, RegExp][] = [
     ["id", /\bid\b/], ["name", /назван/], ["price", /цена/], ["composition", /состав/],
-    ["description", /описан/], ["stock", /остаток/], ["min", /мин/], ["step", /шаг/], ["archived", /архив/],
+    ["description", /описан/], ["stock", /остаток/], ["min", /мин/], ["archived", /архив/],
   ];
   const keyToCol: Record<string, string> = {};
   for (const [colLetter, text] of Object.entries(header)) {

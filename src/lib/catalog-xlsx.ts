@@ -15,7 +15,6 @@ type CatalogRow = {
   price: number;
   unit: string;
   min_qty: number;
-  step_qty: number;
   stock_qty: number;
   composition: string;
   description: string;
@@ -32,7 +31,6 @@ const COLUMNS: CatalogColumn[] = [
   { header: "Цена ₸", key: "price", width: 12 },
   { header: "Ед.", key: "unit", width: 8 },
   { header: "Мин. кол-во", key: "min_qty", width: 12 },
-  { header: "Шаг", key: "step_qty", width: 8 },
   { header: "Остаток", key: "stock_qty", width: 10 },
   { header: "Состав", key: "composition", width: 50 },
   { header: "Описание", key: "description", width: 50 },
@@ -61,7 +59,6 @@ export async function buildCatalogWorkbook(products: Product[]): Promise<ExcelJS
       price: product.price,
       unit: product.unit ?? "шт",
       min_qty: product.min_qty,
-      step_qty: product.step_qty,
       stock_qty: product.stock_qty,
       composition: product.composition ?? "",
       description: product.description ?? "",

@@ -223,7 +223,7 @@ chmod +x /opt/dcbakery/deploy.sh
 - Скрипт `/opt/dcbakery/deploy.sh` на месте и работает, но **запускать его нужно от root**:
   под обычным пользователем git падает с `fatal: detected dubious ownership in repository at
   '/opt/dcbakery'`. То есть: `sudo -i`, затем `cd /opt/dcbakery && ./deploy.sh`.
-  Скрипт печатает в конце `deployed: <коммит>` — сверьте с главной ветккой в GitHub.
+  Скрипт печатает в конце `deployed: <коммит>` — сверьте с главной веткой в GitHub.
 - Проверка после деплоя одной строкой (с любой машины):
   ```bash
   curl -s https://dc-bakery.kz/ru/oplata-i-dostavka | grep -oE "бесплатн[^<]{0,60}|1 500|3 000"

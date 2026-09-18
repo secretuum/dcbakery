@@ -885,5 +885,6 @@
  "Добавлено в корзину": "Added to cart",
  "Добавлено в корзину, часть позиций недоступна": "Added to cart — some items were unavailable",
  "Товары из этого заказа сейчас недоступны": "The products from this order are currently unavailable",
- "Не удалось повторить заказ": "Failed to reorder"
+ "Не удалось повторить заказ": "Failed to reorder",
+ "${name} — оптовая поставка от DC Bakery в Алматы. Раздел «${category}»: B2B-цены, доставка по городу.": "${name} — wholesale supply from DC Bakery in Almaty. ${category} section: B2B prices, delivery across the city."
 }

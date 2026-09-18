@@ -2,11 +2,7 @@ import type { MetadataRoute } from "next";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { SITE_URL } from "@/src/lib/site-url";
 import { HREFLANG, LOCALES } from "@/src/i18n/config";
-
-// Относительный путь картинки → абсолютный URL (Google требует полные URL в <image:loc>).
-function toAbsoluteImageUrl(image: string): string {
-  return image.startsWith("http") ? image : `${SITE_URL}${image}`;
-}
+import { toAbsoluteUrl } from "@/src/components/seo/absolute-url";
 
 // Каждую страницу отдаём ×3 локали (равновесные URL) с hreflang-alternates —
 // чтобы Google индексировал ru/kk/en раздельно и связывал как равные.
@@ -49,13 +45,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   );
 
   const productPages: MetadataRoute.Sitemap = products.flatMap((product) => {
-    const image = product.images?.[0];
+    const imageUrl = toAbsoluteUrl(product.images?.[0]);
 
     return localized(`/product/${product.slug}`, {
       // lastModified только при реальном updated_at — дату не выдумываем (без Date.now).
       ...(product.updated_at ? { lastModified: product.updated_at } : {}),
       // Фото товара абсолютным URL — для image-расширения карты сайта.
-      ...(image ? { images: [toAbsoluteImageUrl(image)] } : {}),
+      ...(imageUrl ? { images: [imageUrl] } : {}),
       changeFrequency: "weekly",
       priority: 0.6,
     });

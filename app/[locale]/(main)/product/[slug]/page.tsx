@@ -7,10 +7,14 @@ import { ProductPurchase } from "@/src/components/product/ProductPurchase";
 import { fetchProductBySlug, fetchProductSlugs } from "@/src/lib/catalog";
 import { formatProductPrice } from "@/src/lib/format";
 import { getLocale, getT } from "@/src/i18n/server";
-import { OG_LOCALE } from "@/src/i18n/config";
-import { withLocale, buildAlternates } from "@/src/i18n/routing";
+import { withLocale } from "@/src/i18n/routing";
 import { localizeMeasure, localizeProduct } from "@/src/i18n/product";
 import { JsonLd } from "@/src/components/seo/JsonLd";
+import { buildPageMetadata } from "@/src/components/seo/page-metadata";
+import { productMetaDescription } from "@/src/components/seo/product-description";
+import { buildProductJsonLd } from "@/src/components/seo/product-jsonld";
+import { getCatalogPromo } from "@/src/lib/catalog-promo.server";
+import { isPromoActive, almatyToday } from "@/src/lib/catalog-promo";
 import { SITE_URL } from "@/src/lib/site-url";
 
 type ProductPageProps = {
@@ -36,25 +40,28 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
 
   const locale = await getLocale();
   const localized = localizeProduct(product, locale);
-  const url = `${SITE_URL}/${locale}/product/${product.slug}`;
-  const image = product.images?.[0] ? `${SITE_URL}${product.images[0]}` : undefined;
+  // Описание с запасным текстом: у части позиций описание в каталоге пустое, и
+  // <meta name="description"> уходил пустым.
+  const description = productMetaDescription({
+    description: localized.description,
+    name: localized.name,
+    category: product.category?.name ? t(product.category.name) : t("Каталог"),
+    t,
+  });
 
   return {
     title: `${localized.name} | DC Bakery`,
-    description: localized.description,
-    alternates: buildAlternates(`/product/${product.slug}`, locale),
-    openGraph: {
-      type: "website",
+    description,
+    // Свой openGraph заменяет родительский ЦЕЛИКОМ (метаданные в Next мержатся
+    // поверхностно), поэтому блок собирается общим сборщиком — он же ставит
+    // og:locale, alternateLocale и twitter-картинку, которые тут терялись.
+    ...buildPageMetadata({
+      path: `/product/${product.slug}`,
+      locale,
       title: localized.name,
-      description: localized.description,
-      url,
-      siteName: "DC Bakery",
-      // Метаданные в Next мержатся ПОВЕРХНОСТНО: свой openGraph заменяет
-      // родительский целиком, поэтому locale приходится указывать здесь заново —
-      // иначе на карточке товара og:locale пропадал вовсе.
-      locale: OG_LOCALE[locale],
-      ...(image ? { images: [{ url: image }] } : {}),
-    },
+      description,
+      image: product.images?.[0],
+    }),
   };
 }
 
@@ -66,7 +73,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const [locale, t] = await Promise.all([getLocale(), getT()]);
+  const [locale, t, promo] = await Promise.all([getLocale(), getT(), getCatalogPromo()]);
   const localized = localizeProduct(product, locale);
   const categoryHref = withLocale(
     product.category ? `/catalog/${product.category.slug}` : "/catalog",
@@ -91,31 +98,24 @@ export default async function ProductPage({ params }: ProductPageProps) {
     ["Упаковка", product.packageType ? t(product.packageType) : t("уточняется")],
   ];
 
-  const productJsonLd: Record<string, unknown> = {
-    "@context": "https://schema.org",
-    "@type": "Product",
+  // Срок действия цены ставим ТОЛЬКО когда цена действительно акционная и у акции
+  // задан последний день: oldPrice появляется у товара ровно при активной акции.
+  const priceValidUntil =
+    product.oldPrice && isPromoActive(promo, almatyToday()) ? promo.activeUntil : null;
+
+  const productJsonLd = buildProductJsonLd({
+    product,
     name: localized.name,
-    description: localized.description,
-    brand: { "@type": "Brand", name: "DC Bakery" },
-    ...(product.images?.[0] ? { image: `${SITE_URL}${product.images[0]}` } : {}),
-    ...(product.category?.name ? { category: categoryName } : {}),
-    ...(product.price > 0
-      ? {
-          offers: {
-            "@type": "Offer",
-            priceCurrency: "KZT",
-            price: product.price,
-            availability:
-              product.stock_qty > 0
-                ? "https://schema.org/InStock"
-                : "https://schema.org/OutOfStock",
-            itemCondition: "https://schema.org/NewCondition",
-            url: `${SITE_URL}/${locale}/product/${product.slug}`,
-            seller: { "@type": "Organization", name: "DC Bakery", url: SITE_URL },
-          },
-        }
-      : {}),
-  };
+    description: productMetaDescription({
+      description: localized.description,
+      name: localized.name,
+      category: categoryName,
+      t,
+    }),
+    categoryName: product.category?.name ? categoryName : undefined,
+    url: `${SITE_URL}/${locale}/product/${product.slug}`,
+    priceValidUntil,
+  });
 
   // «Хлебные крошки» для поиска: Главная → Каталог → Категория → Товар.
   const breadcrumbJsonLd: Record<string, unknown> = {

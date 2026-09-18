@@ -4,7 +4,8 @@ import Image from "next/image";
 import { fetchCategories, fetchProducts } from "@/src/lib/catalog";
 import { getSiteContent } from "@/src/lib/site-content";
 import { getLocale, getT } from "@/src/i18n/server";
-import { withLocale, buildAlternates } from "@/src/i18n/routing";
+import { buildPageMetadata } from "@/src/components/seo/page-metadata";
+import { withLocale } from "@/src/i18n/routing";
 import { RETAIL_SITE_URL } from "@/app/constants";
 import { HomeCatalogTabs } from "@/src/components/home/HomeCatalogTabs";
 import { HomeCatBar } from "@/src/components/home/HomeCatBar";
@@ -16,12 +17,15 @@ import { EditableText, EditableImage } from "@/src/components/home/SiteEditMode"
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([getT(), getLocale()]);
+  const title = t("DC Bakery — B2B поставщик продуктов питания");
+  const description = t(
+    "Поставки десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые B2B-цены, халал сертификаты, натуральные ингредиенты.",
+  );
+
   return {
-    title: t("DC Bakery — B2B поставщик продуктов питания"),
-    description: t(
-      "Поставки десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые B2B-цены, халал сертификаты, натуральные ингредиенты.",
-    ),
-    alternates: buildAlternates("/", locale),
+    title,
+    description,
+    ...buildPageMetadata({ path: "/", locale, title, description }),
   };
 }
 

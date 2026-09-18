@@ -3,16 +3,20 @@ import Link from "next/link";
 import { InstagramIcon, WhatsAppIcon } from "@/src/components/ui/BrandIcons";
 import { getSiteContent } from "@/src/lib/site-content";
 import { getLocale, getT } from "@/src/i18n/server";
-import { withLocale, buildAlternates } from "@/src/i18n/routing";
+import { buildPageMetadata } from "@/src/components/seo/page-metadata";
+import { withLocale } from "@/src/i18n/routing";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [t, locale] = await Promise.all([getT(), getLocale()]);
+  const title = t("Контакты и реквизиты — DC Bakery");
+  const description = t(
+    "Контактная информация и банковские реквизиты DC Bakery. ИП Кошкаров А.К., г. Алматы. Телефон, e-mail, WhatsApp.",
+  );
+
   return {
-    title: t("Контакты и реквизиты — DC Bakery"),
-    description: t(
-      "Контактная информация и банковские реквизиты DC Bakery. ИП Кошкаров А.К., г. Алматы. Телефон, e-mail, WhatsApp.",
-    ),
-    alternates: buildAlternates("/contacts", locale),
+    title,
+    description,
+    ...buildPageMetadata({ path: "/contacts", locale, title, description }),
   };
 }
 

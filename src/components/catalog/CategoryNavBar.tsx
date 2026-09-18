@@ -1,6 +1,9 @@
 "use client";
 
-import { useT } from "@/src/i18n/client";
+import { type MouseEvent } from "react";
+import Link from "next/link";
+import { categoryPath } from "@/src/lib/catalog-urls";
+import { useLocale, useT } from "@/src/i18n/client";
 import type { Category } from "@/src/types";
 
 type Props = {
@@ -10,8 +13,21 @@ type Props = {
 
 export function CategoryNavBar({ categories, popularCount }: Props) {
   const t = useT();
+  const locale = useLocale();
   function scrollTo(slug: string) {
     document.getElementById(`cat-${slug}`)?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  // Разделы каталога — НАСТОЯЩИЕ ссылки на /{locale}/catalog/{slug}: страницы категорий
+  // существуют и лежат в карте сайта, но с витрины на них не вело ничего, и вес с
+  // /catalog до них не доходил. Поведение на самой витрине не меняем: обычный клик
+  // мышью по-прежнему просто прокручивает к разделу. Клавиатура (Enter, click с
+  // detail === 0), Ctrl/Cmd/Shift-клик и средняя кнопка уводят на страницу категории.
+  function handleCategoryClick(event: MouseEvent<HTMLAnchorElement>, slug: string) {
+    if (event.defaultPrevented || event.detail === 0) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    scrollTo(slug);
   }
 
   const itemClass =
@@ -41,14 +57,18 @@ export function CategoryNavBar({ categories, popularCount }: Props) {
             </button>
           ) : null}
           {categories.map((cat) => (
-            <button
+            <Link
               key={cat.id}
-              onClick={() => scrollTo(cat.slug)}
-              className={`${itemClass} text-muted-light hover:text-ink-soft`}
+              href={categoryPath(cat.slug, locale)}
+              onClick={(event) => handleCategoryClick(event, cat.slug)}
+              // Обычный клик прокручивает, а не переходит — предзагружать страницу
+              // категории заранее незачем.
+              prefetch={false}
+              className={`${itemClass} text-muted-light hover:text-ink-soft focus-visible:text-ink-soft focus-visible:outline-none focus-visible:underline`}
               style={{ fontSize: "clamp(20px,3.4vw,26px)", scrollSnapAlign: "start" }}
             >
               {t(cat.name)}
-            </button>
+            </Link>
           ))}
         </nav>
       </div>

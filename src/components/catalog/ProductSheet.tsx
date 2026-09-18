@@ -2,12 +2,14 @@
 
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { FallbackImage } from "@/src/components/ui/FallbackImage";
 import { ProductComments } from "@/src/components/catalog/ProductComments";
 import { lockBodyScroll, unlockBodyScroll } from "@/src/lib/scroll-lock";
 import { useCart } from "@/src/contexts/CartContext";
 import { useToast } from "@/src/contexts/ToastContext";
 import { gaItem, trackEvent } from "@/src/lib/analytics";
+import { productPath } from "@/src/lib/catalog-urls";
 import { formatPrice, formatProductPrice } from "@/src/lib/format";
 import { discountPercent } from "@/src/lib/catalog-promo";
 import { useLocale, useT } from "@/src/i18n/client";
@@ -192,6 +194,17 @@ export function ProductSheet({ product, onClose }: ProductSheetProps) {
             >
               {localized.name}
             </h2>
+
+            {/* Явный выход на полноценную страницу товара: в быстрый просмотр попадают
+                мышью и пальцем, и отсюда должен быть виден путь к описанию, отзывам и
+                ссылке, которой можно поделиться. */}
+            <Link
+              href={productPath(product.slug, locale)}
+              className="mt-2 inline-flex items-center gap-1 text-[13.5px] font-semibold text-coral transition-colors hover:text-coral-hover focus-visible:outline-none focus-visible:underline"
+            >
+              {t("Открыть страницу товара")}
+              <span aria-hidden="true">→</span>
+            </Link>
 
             {/* Chips */}
             <div className="mt-3 flex flex-wrap gap-2">

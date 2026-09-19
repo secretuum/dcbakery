@@ -69,7 +69,12 @@ export function Header() {
 
         {/* Logo */}
         <Link href="/" aria-label="DC Bakery" className="flex items-center gap-2.5 transition hover:opacity-80">
-          <Image src="/brand/dc-bakery_icon_1.png" alt="" width={40} height={40} priority className="size-9 object-contain" />
+          {/* loading="eager", а НЕ priority. priority у next/image кроме отмены lazy печатает
+              ещё и <link rel="preload" as="image"> — и на /ru/catalog этот логотип 48×48 был
+              ЕДИНСТВЕННОЙ предзагруженной картинкой страницы (замер прода 19.09.2026),
+              то есть занимал слот предзагрузки вместо фото первого товара. Логотип и так
+              в первом экране: eager снимает lazy и этого достаточно, preload ему не нужен. */}
+          <Image src="/brand/dc-bakery_icon_1.png" alt="" width={40} height={40} loading="eager" className="size-9 object-contain" />
           <span className="flex flex-col leading-none">
             <span className="font-display text-[15px] font-extrabold uppercase tracking-[.13em] text-dark lg:text-[17px]">
               <EditableText field="brand.wordmark" fallback="DC BAKERY" />

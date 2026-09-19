@@ -15,6 +15,9 @@ type Props = {
 
 type SortMode = "default" | "popular" | "price_asc" | "price_desc";
 
+// Сколько первых карточек первой сетки грузить приоритетно (см. productGrid ниже).
+const LCP_CARDS = 6;
+
 const sortOptions: Array<{ value: SortMode; label: string }> = [
   { value: "default", label: "По умолчанию" },
   { value: "popular", label: "По популярности" },
@@ -184,10 +187,26 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
     </div>
   );
 
-  const productGrid = (products: Product[]) => (
+  // Когда «Популярное» пустое, первой сеткой на экране становится первая непустая
+  // категория — приоритет отдаём ей. Если «Популярное» есть, категориям не даём ничего:
+  // они все ниже сгиба.
+  const firstVisibleCategoryId = useMemo(() => {
+    if (popularProducts.length > 0) return null;
+    return categories.find((c) => products.some((p) => p.category_id === c.id))?.id ?? null;
+  }, [categories, products, popularProducts.length]);
+
+  // priorityCount — сколько ПЕРВЫХ карточек сетки пометить priority (fetchPriority=high,
+  // без lazy, с <link rel=preload>). Замер прода 19.09.2026: на /ru/catalog было ноль
+  // картинок с fetchPriority="high", а единственный preload as=image занимал логотип 48×48
+  // из шапки — фото первого товара, главный кандидат в LCP, стартовало только после вёрстки.
+  // Ненулевым значение передаём ТОЛЬКО первой сетке на экране: пометить первые карточки
+  // каждой категории значило бы предзагрузить два десятка фото ниже сгиба и отобрать полосу
+  // у настоящего LCP. Порог 6 — как на странице раздела (catalog/[category]/page.tsx):
+  // на телефоне 412px карточка идёт в 2 колонки по ~200px, над сгибом помещается ~3 ряда.
+  const productGrid = (products: Product[], priorityCount = 0) => (
     <div className="product-grid grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
-      {products.map((p) => (
-        <ProductCard key={p.id} product={p} />
+      {products.map((p, i) => (
+        <ProductCard key={p.id} product={p} priority={i < priorityCount} />
       ))}
     </div>
   );
@@ -339,7 +358,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
             filtered.length === 0 ? (
               <p className="py-10 text-muted">{t("Ничего не найдено по выбранным фильтрам")}</p>
             ) : (
-              productGrid(filtered)
+              productGrid(filtered, LCP_CARDS)
             )
           ) : (
             <div className="flex flex-col gap-14">
@@ -352,7 +371,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
                   >
                     {t("Популярное")}
                   </h2>
-                  {productGrid(popularProducts)}
+                  {productGrid(popularProducts, LCP_CARDS)}
                 </div>
               )}
               {categories.map((category) => {
@@ -367,7 +386,7 @@ export function CatalogFilters({ categories, products, popularProducts, orderCou
                     >
                       {t(category.name)}
                     </h2>
-                    {productGrid(catProducts)}
+                    {productGrid(catProducts, category.id === firstVisibleCategoryId ? LCP_CARDS : 0)}
                   </div>
                 );
               })}

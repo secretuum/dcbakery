@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/src/components/ui/Badge";
 import { ProductGallery } from "@/src/components/product/ProductGallery";
 import { ProductPurchase } from "@/src/components/product/ProductPurchase";
-import { fetchProductBySlug, fetchProductSlugs } from "@/src/lib/catalog";
+import { SimilarProducts } from "@/src/components/product/SimilarProducts";
+import { fetchProductBySlug, fetchProductSlugs, fetchProductsByCategory } from "@/src/lib/catalog";
+import { pickSimilarProducts } from "@/src/lib/similar-products";
 import { formatProductPrice } from "@/src/lib/format";
 import { getLocale, getT } from "@/src/i18n/server";
 import { withLocale } from "@/src/i18n/routing";
@@ -73,7 +75,18 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
-  const [locale, t, promo] = await Promise.all([getLocale(), getT(), getCatalogPromo()]);
+  // Товары раздела — для блока «Из этого же раздела» внизу страницы. Грузим в той
+  // же пачке, что локаль и акцию: каталог уже в кэше, отдельного похода в базу нет.
+  const [locale, t, promo, categoryProducts] = await Promise.all([
+    getLocale(),
+    getT(),
+    getCatalogPromo(),
+    product.category ? fetchProductsByCategory(product.category.slug) : Promise.resolve([]),
+  ]);
+  const similarProducts = pickSimilarProducts({
+    products: categoryProducts,
+    currentSlug: product.slug,
+  });
   const localized = localizeProduct(product, locale);
   const categoryHref = withLocale(
     product.category ? `/catalog/${product.category.slug}` : "/catalog",
@@ -189,6 +202,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
           </div>
         </div>
       </section>
+
+      <SimilarProducts products={similarProducts} />
     </main>
   );
 }

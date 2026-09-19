@@ -14,8 +14,10 @@ import { SITE_URL } from "@/src/lib/site-url";
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
   const t = await getT();
-  const title = t("Каталог");
-  const description = t("B2B-каталог DC Bakery: десерты, полуфабрикаты и мясо.");
+  const title = t("Каталог оптом, Алматы — десерты, полуфабрикаты");
+  const description = t(
+    "Оптовый каталог DC Bakery: десерты и торты, замороженные полуфабрикаты, мясо с халал-сертификатами. Живые остатки и цены для B2B, бесплатная доставка по Алматы.",
+  );
 
   return {
     // Разделитель «| DC Bakery» держим в коде, а не в ключе словаря

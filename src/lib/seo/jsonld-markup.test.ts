@@ -1,6 +1,7 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
 import { buildProductJsonLd } from "@/src/components/seo/product-jsonld";
+import { serializeJsonLd } from "@/src/components/seo/jsonld-serialize";
 import { SITE_URL } from "@/src/lib/site-url";
 import type { Product } from "@/src/types";
 import { localizedPages } from "./page-sources";
@@ -35,9 +36,16 @@ function product(patch: Partial<Product> = {}): Product {
   };
 }
 
-/** Ровно то, что делает компонент JsonLd: объект -> строка в <script>. */
+/**
+ * Ровно то, что делает компонент JsonLd: объект -> строка в <script>.
+ *
+ * Зовём НАСТОЯЩУЮ сериализацию, а не свою копию JSON.stringify. Копия здесь
+ * однажды уже разъехалась с компонентом: тот стал экранировать «меньше», а
+ * тест продолжал проверять собственный JSON.stringify — зелёный сторож, не
+ * стерегущий ничего. Меняется сериализация в компоненте — меняется и проверка.
+ */
 function asRendered(data: Record<string, unknown>): string {
-  return JSON.stringify(data);
+  return serializeJsonLd(data);
 }
 
 function parsedMarkup(patch: Partial<Product> = {}): Record<string, unknown> {
@@ -91,6 +99,28 @@ test("длинное тире и кавычки в названии не лом�
   // пережить сериализацию, а не оборвать JSON на середине.
   const data = parsedMarkup({ name: 'Торт "Медовик" — 1,5 кг \\ порция' });
   assert.equal(data["@type"], "Product");
+});
+
+test("закрывающий тег скрипта в названии не закрывает тег разметки", () => {
+  // Названия приезжают в том числе загрузкой прайса — из файла, который принёс
+  // кто-то извне. JSON.stringify «</script>» не трогает, и тег закрылся бы
+  // изнутри: разметка невалидна, а хвост строки уезжает в HTML как разметка.
+  // Механика экранирования разобрана в src/components/seo/jsonld-serialize.test.ts,
+  // здесь сторожим слой целиком — от сборки разметки товара до строки в странице.
+  const hostile = 'Торт </script><img src=x> — 1,5 кг';
+  const rendered = asRendered(
+    buildProductJsonLd({
+      product: product({ name: hostile }),
+      name: hostile,
+      description: "Ручная лепка.",
+      categoryName: "Полуфабрикаты",
+      url: `${SITE_URL}/ru/product/pelmeni-s-govyadinoy`,
+    }),
+  );
+
+  assert.doesNotMatch(rendered, /<\/script/i, "тег скрипта закрывается изнутри разметки товара");
+  // И данные при этом целы: экранирование меняет запись, а не текст названия.
+  assert.equal((JSON.parse(rendered) as { name: string }).name, hostile);
 });
 
 // --- Хлебные крошки ----------------------------------------------------------

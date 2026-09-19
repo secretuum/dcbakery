@@ -68,7 +68,7 @@
  "Оплата и доставка": "Payment and delivery",
  "Контакты и реквизиты": "Contacts and details",
  "DC Bakery — B2B поставщик продуктов питания": "DC Bakery - B2B food supplier",
- "Поставки десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые B2B-цены, халал сертификаты, натуральные ингредиенты.": "Supply of desserts, semi-finished products and meat for coffee shops, restaurants, shops and hotels. Wholesale B2B prices, halal certificates, natural ingredients.",
+ "Поставки десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые B2B-цены, халал сертификаты, натуральные ингредиенты.": "Desserts, frozen semi-finished products and meat for cafes, restaurants, shops and hotels. Wholesale B2B prices, halal certificates, natural ingredients.",
  "DC Bakery — B2B кондитерская и полуфабрикаты, Алматы": "DC Bakery — B2B pastry & semi-finished products, Almaty",
  "B2B-каталог десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей.": "B2B catalog of desserts, semi-finished products and meat for coffee shops, restaurants, shops and hotels.",
  "B2B-поставщик десертов, полуфабрикатов и мяса для кофеен, ресторанов, магазинов и отелей. Оптовые цены, доставка по Алматы.": "B2B supplier of desserts, semi-finished products and meat for coffee shops, restaurants, shops and hotels. Wholesale prices, delivery across Almaty.",
@@ -128,7 +128,7 @@
  "Акции DC Bakery": "DC Bakery promotions",
  "Условия": "Terms",
  "Десерты на выбор": "Desserts to choose from",
- "B2B-каталог DC Bakery: десерты, полуфабрикаты и мясо.": "B2B catalog DC Bakery: desserts, semi-finished products and meat.",
+ "Оптовый каталог DC Bakery: десерты и торты, замороженные полуфабрикаты, мясо с халал-сертификатами. Живые остатки и цены для B2B, бесплатная доставка по Алматы.": "DC Bakery wholesale catalog: desserts and cakes, frozen semi-finished products, halal-certified meat. Live stock, B2B prices, free delivery in Almaty.",
  "Категории каталога": "Catalog categories",
  "позиций": "items",
  "Все разделы": "All sections",
@@ -828,7 +828,7 @@
  "Для облегчённого аккаунта лимит заказа ${cap}. Укажите БИН и адрес доставки, чтобы снять потолок.": "For a lite account the order limit is ${cap}. Provide your BIN and delivery address to lift the cap.",
  "Укажите корректный мобильный номер, например +7 705 123 45 67": "Enter a valid mobile number, e.g. +7 705 123 45 67",
  "Оптовые поставки — DC Bakery": "Wholesale supply — DC Bakery",
- "DC Bakery — оптовый B2B-поставщик десертов, тортов, замороженных полуфабрикатов, мяса и банкетных десертов для кофеен, ресторанов, отелей и магазинов в Алматы. Доставка, оплата по счёту, работа с юрлицами.": "DC Bakery is a wholesale B2B supplier of desserts, cakes, frozen semi-finished products, meat and banquet desserts for coffee shops, restaurants, hotels and shops in Almaty. Delivery, payment by invoice, work with legal entities.",
+ "Оптовые поставки десертов, полуфабрикатов и мяса для кофеен, ресторанов и отелей Алматы. Минимальный заказ 15 000 ₸, бесплатная доставка, оплата по счёту.": "Wholesale desserts, semi-finished products and meat for cafes, restaurants and hotels in Almaty. Minimum order 15,000 ₸, free delivery, payment by invoice.",
  "Есть ли минимальный заказ?": "Is there a minimum order?",
  "Жёсткого минимального заказа нет — заказать можно на любую сумму. Действуют тарифы доставки: от 15 000 ₸ доставка бесплатная, при заказе 10 000–15 000 ₸ — 1 500 ₸, дешевле 10 000 ₸ — 3 000 ₸.": "There is no strict minimum order — you can order any amount. Delivery rates apply: from 15,000 ₸ delivery is free, for orders of 10,000–15,000 ₸ — 1,500 ₸, below 10,000 ₸ — 3,000 ₸.",
  "Куда и в какие сроки вы доставляете?": "Where and how soon do you deliver?",
@@ -887,5 +887,6 @@
  "Добавлено в корзину, часть позиций недоступна": "Added to cart — some items were unavailable",
  "Товары из этого заказа сейчас недоступны": "The products from this order are currently unavailable",
  "Не удалось повторить заказ": "Failed to reorder",
- "${name} — оптовая поставка от DC Bakery в Алматы. Раздел «${category}»: B2B-цены, доставка по городу.": "${name} — wholesale supply from DC Bakery in Almaty. ${category} section: B2B prices, delivery across the city."
+ "${name} — оптовая поставка от DC Bakery в Алматы. Раздел «${category}»: B2B-цены, доставка по городу.": "${name} — wholesale supply from DC Bakery in Almaty. ${category} section: B2B prices, delivery across the city.",
+ "Каталог оптом, Алматы — десерты, полуфабрикаты": "Wholesale catalog, Almaty — desserts, meat"
 }

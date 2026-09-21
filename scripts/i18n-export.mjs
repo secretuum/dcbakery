@@ -18,6 +18,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+// Правило пометок пропусков вынесено в src/, чтобы его покрывал npm test.
+import { EN_MISSING_MARK, STATUS_MISSING, STATUS_MISSING_KK, englishCell, gapOf, gapStatus } from "../src/i18n/export-status.ts";
 
 const ROOT = process.cwd();
 const DOCS = path.join(ROOT, "docs", "i18n");
@@ -129,7 +131,7 @@ const inDictionaries = [...new Set([...Object.keys(kk), ...Object.keys(en)])];
 // Строка вызывается через t(), но в словарях её нет: на казахской версии сайта она
 // показывается по-русски, и без этого списка носитель о ней не узнает.
 const untranslated = [...hits.keys()].filter(
-  (s) => hits.get(s).rank === 0 && !(s in kk) && !(s in en) && !excluded.has(s),
+  (s) => hits.get(s).rank === 0 && gapOf(s, kk, en) === "both" && !excluded.has(s),
 );
 const russian = [...inDictionaries.filter((s) => !excluded.has(s)), ...untranslated];
 const stale = [...excluded.keys()].filter((s) => !(s in kk) && !(s in en));
@@ -179,13 +181,14 @@ if (newSince) {
 }
 
 const STATUS_NEW_RECENT = newSinceLabel ? `**НОВОЕ с ${newSinceLabel}**` : "**НОВОЕ**";
-const STATUS_MISSING = "**НЕТ В СЛОВАРЕ — перевода нет**";
 const STATUS_NEW = `новое (после ${previousLabel})`;
 const STATUS_SENT = `было в выгрузке ${previousLabel}`;
 
-const missingSet = new Set(untranslated);
+// Пропуск перевода важнее истории выгрузок: «было в выгрузке» при пустой казахской
+// клетке прячет строку, которую носителю как раз нужно заполнить.
 function statusOf(text) {
-  if (missingSet.has(text)) return STATUS_MISSING;
+  const loud = gapStatus(gapOf(text, kk, en));
+  if (loud) return loud;
   if (sentEarlier.has(text)) return STATUS_SENT;
   return addedRecently.has(text) ? STATUS_NEW_RECENT : STATUS_NEW;
 }
@@ -193,10 +196,13 @@ function statusOf(text) {
 // ── раскладка по разделам и нумерация ────────────────────────────────────────
 const rows = russian.map((text) => {
   const hit = hits.get(text);
+  const gap = gapOf(text, kk, en);
   return {
     ru: text,
     kk: kk[text] ?? "",
     en: en[text] ?? "",
+    enCell: englishCell(gap, en[text] ?? ""),
+    enMissing: gap === "both" || gap === "en",
     status: statusOf(text),
     section: hit ? SECTIONS[hit.section][0] : FALLBACK_SECTION,
     sectionIndex: hit ? hit.section : SECTIONS.length,
@@ -227,6 +233,8 @@ if (args.why) {
 const cell = (s) => String(s ?? "").replace(/\|/g, "\\|").replace(/\r?\n/g, "<br>");
 
 const countMissing = rows.filter((r) => r.status === STATUS_MISSING).length;
+const countMissingKk = rows.filter((r) => r.status === STATUS_MISSING_KK).length;
+const countMissingEn = rows.filter((r) => r.enMissing).length;
 const countNewRecent = rows.filter((r) => r.status === STATUS_NEW_RECENT).length;
 const countNew = rows.filter((r) => r.status === STATUS_NEW).length;
 const countSent = rows.filter((r) => r.status === STATUS_SENT).length;
@@ -257,12 +265,17 @@ function buildMarkdown({ withTranslations }) {
   out.push(
     `- ${STATUS_MISSING} — строка на сайте есть, а перевода нет вообще: казахская версия` +
       ` показывает русский текст. Таких ${countMissing}, колонка «Қазақша» у них пустая.`,
+    `- ${STATUS_MISSING_KK} — английский перевод есть, казахского нет: казахская версия` +
+      ` показывает эту строку по-русски. Таких ${countMissingKk}, колонку «Қазақша» нужно заполнить.`,
     `- ${STATUS_NEW_RECENT} — строки добавлены на сайт последними и носителем ещё не смотрелись.` +
       ` Сейчас таких ${countNewRecent}. Начинать стоит с них.`,
     `- ${STATUS_NEW} — появились на сайте после прошлой выгрузки, перевод машинный.` +
       ` Таких ${countNew}, их тоже никто не проверял.`,
     `- ${STATUS_SENT} — строка входила в прошлый комплект. Таких ${countSent};` +
       " если вы их уже смотрели — перечитывать не нужно.",
+    "",
+    `Отметка ${EN_MISSING_MARK} в колонке «English» значит, что английского перевода нет` +
+      ` (таких строк ${countMissingEn}). Для казахской вычитки это не важно — пропускайте.`,
     "",
   );
   out.push(
@@ -284,7 +297,7 @@ function buildMarkdown({ withTranslations }) {
       out.push("|---|---|---|---|---|");
     }
     const kkCell = withTranslations ? cell(r.kk) : "";
-    const enCell = withTranslations ? cell(r.en) : "";
+    const enCell = withTranslations ? cell(r.enCell) : "";
     out.push(`| ${r.key} | ${cell(r.ru)} | ${kkCell} | ${enCell} | ${r.status} |`);
   }
   out.push("");
@@ -303,6 +316,8 @@ console.log(
     ` Добавлено строк из кода, которых нет в словарях: ${untranslated.length}. В выгрузке: ${rows.length}.`,
 );
 console.log(`Без перевода в словарях (есть в коде): ${countMissing}.`);
+console.log(`Нет казахского перевода (есть английский): ${countMissingKk}. Нет английского: ${countMissingEn}.`);
+for (const r of rows.filter((r) => r.status === STATUS_MISSING_KK)) console.log(`  kk — ${r.key} ${r.ru.slice(0, 80)}`);
 console.log(`Статусы: ${STATUS_NEW_RECENT} — ${countNewRecent}, ${STATUS_NEW} — ${countNew}, ${STATUS_SENT} — ${countSent}.`);
 console.log("Записано:");
 write("ru.json", JSON.stringify(asMap((r) => r.ru), null, 2) + "\n");

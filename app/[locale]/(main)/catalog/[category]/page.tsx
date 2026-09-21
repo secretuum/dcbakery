@@ -15,6 +15,7 @@ import { JsonLd } from "@/src/components/seo/JsonLd";
 import { buildItemListJsonLd } from "@/src/components/seo/item-list";
 import { buildPageMetadata, pageUrl } from "@/src/components/seo/page-metadata";
 import { SITE_URL } from "@/src/lib/site-url";
+import { categoryMetaTitle, categoryTexts } from "@/src/lib/seo/category-texts";
 
 type CategoryPageProps = {
   params: Promise<{
@@ -40,11 +41,19 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
   const locale = await getLocale();
   const categoryName = t(currentCategory.name);
-  const description = currentCategory.description
-    ? t(currentCategory.description)
-    : t("B2B-каталог DC Bakery: раздел ${category}.", {
-        category: categoryName.toLowerCase(),
-      });
+  // Тексты для поиска — из модуля по слагу, там их видят сторожа SEO. Шаблон ниже
+  // остаётся только для разделов, скрытых флагом до запуска (см. category-texts.test.ts).
+  const texts = categoryTexts(category);
+  const title = texts
+    ? categoryMetaTitle(texts, (ru) => t(ru))
+    : `${categoryName} | ${t("Каталог DC Bakery")}`;
+  const description = texts
+    ? t(texts.description)
+    : currentCategory.description
+      ? t(currentCategory.description)
+      : t("B2B-каталог DC Bakery: раздел ${category}.", {
+          category: categoryName.toLowerCase(),
+        });
   // Превью ссылки на раздел: фото первого товара раздела. Своей картинки у
   // категории нет (в каталоге там заглушка), а брендовая обложка одинакова у всех
   // разделов — по ней в мессенджере не отличить «Десерты» от «Мяса».
@@ -52,12 +61,12 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const image = products.find((product) => product.images?.[0])?.images?.[0];
 
   return {
-    title: `${categoryName} | ${t("Каталог DC Bakery")}`,
+    title,
     description,
     ...buildPageMetadata({
       path: `/catalog/${category}`,
       locale,
-      title: categoryName,
+      title: texts ? t(texts.title) : categoryName,
       description,
       image,
     }),
@@ -78,6 +87,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     getT(),
     getLocale(),
   ]);
+  const facts = categoryTexts(category)?.facts ?? [];
 
   // «Хлебные крошки» для поиска: Главная → Каталог → Категория.
   const breadcrumbJsonLd: Record<string, unknown> = {
@@ -122,6 +132,22 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-muted">
                 {t((currentCategory.intro ?? currentCategory.description) as string)}
               </p>
+            ) : null}
+            {facts.length > 0 ? (
+              <dl
+                className="mt-5 flex max-w-2xl flex-wrap gap-2"
+                aria-label={t("Коротко о разделе")}
+              >
+                {facts.map((fact) => (
+                  <div
+                    key={fact.label}
+                    className="rounded-btn bg-white px-3 py-2 text-sm font-semibold shadow-sm"
+                  >
+                    <dt className="inline text-muted">{t(fact.label)}: </dt>
+                    <dd className="inline text-dark">{t(fact.value)}</dd>
+                  </div>
+                ))}
+              </dl>
             ) : null}
           </div>
 

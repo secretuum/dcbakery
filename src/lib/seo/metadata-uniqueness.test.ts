@@ -1,13 +1,16 @@
 import { strict as assert } from "node:assert";
 import { test } from "node:test";
 import {
+  CATEGORY_ROUTE,
   DATA_DRIVEN_TITLES,
   LOCALES,
   WITHOUT_PUBLIC_METADATA,
   assertParsed,
   brandSuffix,
+  categoryPageTexts,
   descriptionKey,
   localizedPages,
+  readsCategoryTexts,
   titleKey,
   translate,
   type Locale,
@@ -25,19 +28,55 @@ import {
 
 const publicPages = localizedPages().filter((page) => !(page.route in WITHOUT_PUBLIC_METADATA));
 
+type TextPage = {
+  file: string;
+  route: string;
+  /** Русские исходники — ключи словаря: по ним видно, что схлопнул перевод. */
+  titleKey: string;
+  descriptionKey: string;
+  bareTitle: (locale: Locale) => string;
+  title: (locale: Locale) => string;
+  description: (locale: Locale) => string;
+};
+
 /** Страницы, чьи тексты лежат в словаре и потому поддаются сверке. */
-const textPages = publicPages
-  .map((page) => ({
-    file: page.file,
-    route: page.route,
-    title: titleKey(page.source),
-    description: descriptionKey(page.source),
-    suffix: brandSuffix(page.source),
-  }))
-  .filter((page) => page.title && page.description);
+const staticPages: TextPage[] = publicPages.flatMap((page) => {
+  const title = titleKey(page.source);
+  const description = descriptionKey(page.source);
+  if (!title || !description) return [];
+  const suffix = brandSuffix(page.source);
+  return [
+    {
+      file: page.file,
+      route: page.route,
+      titleKey: title,
+      descriptionKey: description,
+      bareTitle: (locale: Locale) => translate(locale, title),
+      title: (locale: Locale) => translate(locale, title) + suffix,
+      description: (locale: Locale) => translate(locale, description),
+    },
+  ];
+});
+
+// Раздел каталога — одна страница в файловой системе, но столько страниц в
+// выдаче, сколько разделов. Сверяем каждый раздел отдельно: одинаковые заголовки
+// «Десертов» и «Мяса» — такой же дубль, как у двух разных страниц. В сверку
+// раздел попадает, только если страница правда читает category-texts.ts.
+const categoryPage = publicPages.find((page) => page.route === CATEGORY_ROUTE);
+const categoryPages: TextPage[] =
+  categoryPage && readsCategoryTexts(categoryPage.source)
+    ? categoryPageTexts().map((category) => ({
+        ...category,
+        file: `${categoryPage.file} (${category.slug})`,
+        route: categoryPage.route,
+      }))
+    : [];
+
+const textPages = [...staticPages, ...categoryPages];
 
 test("публичные страницы со своим текстом найдены (разбор не разъехался с кодом)", () => {
-  assertParsed(textPages.length, 7, "страниц со статическими метаданными");
+  assertParsed(staticPages.length, 7, "страниц со статическими метаданными");
+  assertParsed(categoryPages.length, 3, "разделов каталога с текстами из category-texts.ts");
 });
 
 test("из сверки выпали только страницы с текстом из базы", () => {
@@ -89,8 +128,8 @@ for (const locale of LOCALES as readonly Locale[]) {
     const found = duplicates(
       textPages.map((page) => ({
         file: page.file,
-        key: page.title!,
-        text: translate(locale, page.title!) + page.suffix,
+        key: page.titleKey,
+        text: page.title(locale),
       })),
     );
 
@@ -106,8 +145,8 @@ for (const locale of LOCALES as readonly Locale[]) {
     const found = duplicates(
       textPages.map((page) => ({
         file: page.file,
-        key: page.description!,
-        text: translate(locale, page.description!),
+        key: page.descriptionKey,
+        text: page.description(locale),
       })),
     );
 
@@ -124,8 +163,8 @@ test("описание не повторяет заголовок той же с
   // свой сниппет из текста страницы — то есть поле просто пропадает впустую.
   for (const page of textPages) {
     for (const locale of LOCALES as readonly Locale[]) {
-      const title = translate(locale, page.title!);
-      const description = translate(locale, page.description!);
+      const title = page.bareTitle(locale);
+      const description = page.description(locale);
       assert.notEqual(
         description,
         title,

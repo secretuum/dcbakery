@@ -16,6 +16,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { strict as assert } from "node:assert";
 import { LOCALES, type Locale } from "@/src/i18n/config";
+import { CATEGORY_TEXTS, categoryMetaTitle } from "./category-texts";
 
 const ROOT = process.cwd();
 
@@ -154,12 +155,54 @@ export const WITHOUT_PUBLIC_METADATA: Record<string, string> = {
 
 // --- Публичные страницы, у которых заголовок берётся из данных ---------------
 //
-// Заголовок и описание карточки товара и раздела каталога приходят из базы
-// (название товара, название и описание категории), а не из словаря. Проверить
-// их уникальность разбором исходника нельзя — там шаблон, а не текст. Сторожа
-// на уникальность к ним не применяем и говорим об этом вслух, чтобы «страница
-// молча выпала из проверки» не выглядело как «страниц всего семь».
-export const DATA_DRIVEN_TITLES = ["/catalog/[category]", "/product/[slug]"];
+// Заголовок и описание карточки товара приходят из базы (название и описание
+// товара), а не из словаря. Проверить их уникальность разбором исходника нельзя —
+// там шаблон, а не текст. Сторожа на уникальность к ним не применяем и говорим
+// об этом вслух, чтобы «страница молча выпала из проверки» не выглядело как
+// «страниц всего семь». Раздел каталога отсюда ушёл: его тексты лежат в
+// category-texts.ts и проверяются наравне со статическими страницами.
+export const DATA_DRIVEN_TITLES = ["/product/[slug]"];
+
+// --- Разделы каталога ----------------------------------------------------------
+
+export const CATEGORY_ROUTE = "/catalog/[category]";
+
+/**
+ * Страница раздела действительно берёт заголовок и описание из category-texts.ts.
+ * Без этой проверки сторожа мерили бы модуль, которым страница может и не
+ * пользоваться, — и зеленели бы при любом тексте в выдаче.
+ */
+export function readsCategoryTexts(source: string): boolean {
+  return (
+    /categoryTexts\(\s*category\s*\)/.test(source) &&
+    /categoryMetaTitle\(\s*texts\b/.test(source) &&
+    /t\(\s*texts\.description\s*\)/.test(source)
+  );
+}
+
+export type CategoryPageText = {
+  slug: string;
+  /** Русские исходники — они же ключи словаря. */
+  titleKey: string;
+  descriptionKey: string;
+  /** Заголовок без бренда, как в словаре. */
+  bareTitle: (locale: Locale) => string;
+  /** <title> целиком — как отдаёт страница. */
+  title: (locale: Locale) => string;
+  description: (locale: Locale) => string;
+};
+
+/** Тексты всех разделов, у которых они есть, в том виде, в каком их видит поиск. */
+export function categoryPageTexts(): CategoryPageText[] {
+  return Object.entries(CATEGORY_TEXTS).map(([slug, texts]) => ({
+    slug,
+    titleKey: texts.title,
+    descriptionKey: texts.description,
+    bareTitle: (locale) => translate(locale, texts.title),
+    title: (locale) => categoryMetaTitle(texts, (ru) => translate(locale, ru)),
+    description: (locale) => translate(locale, texts.description),
+  }));
+}
 
 // --- Служебные страницы без языкового префикса -------------------------------
 

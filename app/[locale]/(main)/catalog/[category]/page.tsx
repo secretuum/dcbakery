@@ -15,6 +15,7 @@ import { JsonLd } from "@/src/components/seo/JsonLd";
 import { buildItemListJsonLd } from "@/src/components/seo/item-list";
 import { buildPageMetadata, pageUrl } from "@/src/components/seo/page-metadata";
 import { SITE_URL } from "@/src/lib/site-url";
+import { categoryMetaTitle, categoryTexts } from "@/src/lib/seo/category-texts";
 
 type CategoryPageProps = {
   params: Promise<{
@@ -40,11 +41,19 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
   const locale = await getLocale();
   const categoryName = t(currentCategory.name);
-  const description = currentCategory.description
-    ? t(currentCategory.description)
-    : t("B2B-каталог DC Bakery: раздел ${category}.", {
-        category: categoryName.toLowerCase(),
-      });
+  // Тексты для поиска — из модуля по слагу, там их видят сторожа SEO. Шаблон ниже
+  // остаётся только для разделов, скрытых флагом до запуска (см. category-texts.test.ts).
+  const texts = categoryTexts(category);
+  const title = texts
+    ? categoryMetaTitle(texts, (ru) => t(ru))
+    : `${categoryName} | ${t("Каталог DC Bakery")}`;
+  const description = texts
+    ? t(texts.description)
+    : currentCategory.description
+      ? t(currentCategory.description)
+      : t("B2B-каталог DC Bakery: раздел ${category}.", {
+          category: categoryName.toLowerCase(),
+        });
   // Превью ссылки на раздел: фото первого товара раздела. Своей картинки у
   // категории нет (в каталоге там заглушка), а брендовая обложка одинакова у всех
   // разделов — по ней в мессенджере не отличить «Десерты» от «Мяса».
@@ -52,12 +61,12 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const image = products.find((product) => product.images?.[0])?.images?.[0];
 
   return {
-    title: `${categoryName} | ${t("Каталог DC Bakery")}`,
+    title,
     description,
     ...buildPageMetadata({
       path: `/catalog/${category}`,
       locale,
-      title: categoryName,
+      title: texts ? t(texts.title) : categoryName,
       description,
       image,
     }),

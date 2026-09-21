@@ -7,6 +7,7 @@ import {
   englishCell,
   gapOf,
   gapStatus,
+  newSinceBoundary,
 } from "./export-status";
 
 const kk = { Каталог: "Каталог KK", "Собственное производство": "Өз өндірісіміз", Пусто: "  " };
@@ -52,4 +53,14 @@ test("englishCell: тихая отметка вместо пустой клет�
   assert.equal(englishCell("both", ""), EN_MISSING_MARK);
   assert.equal(englishCell("kk", "kg"), "kg");
   assert.equal(englishCell(null, "Catalog"), "Catalog");
+});
+
+test("newSinceBoundary: «2026-09-18» → ровно полночь по Алматы, без привязки к часу запуска", () => {
+  assert.equal(newSinceBoundary("2026-09-18"), "2026-09-18T00:00:00+05:00");
+  assert.equal(Date.parse(newSinceBoundary("2026-09-18")), Date.UTC(2026, 8, 17, 19, 0, 0));
+});
+
+test("newSinceBoundary: не дата → ошибка, а не тихая граница «сейчас»", () => {
+  assert.throws(() => newSinceBoundary("18.09.2026"));
+  assert.throws(() => newSinceBoundary("2026-09-18T12:00"));
 });

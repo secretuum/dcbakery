@@ -44,3 +44,13 @@ export const EN_MISSING_MARK = "_нет в en.json_";
 export function englishCell(gap: Gap, value: string): string {
   return gap === "both" || gap === "en" ? EN_MISSING_MARK : value;
 }
+
+/**
+ * Граница «НОВОЕ с даты» для `git rev-list --before`: начало суток по Алматы (UTC+5).
+ * Голую дату «2026-09-18» git понимает как 18.09 в ТЕКУЩИЙ час запуска — статусы
+ * тогда зависели от времени суток, и два прогона одного коммита расходились.
+ */
+export function newSinceBoundary(date: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`дата ожидается в виде ГГГГ-ММ-ДД, получено «${date}»`);
+  return `${date}T00:00:00+05:00`;
+}

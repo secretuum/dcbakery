@@ -876,5 +876,19 @@
  "Тип клиента": "Client type",
  "БИН проверяется автоматически по госреестру": "The BIN is verified automatically against the state registry",
  "Доставка только по Алматы — укажите адрес в Алматы": "Delivery within Almaty only — enter an address in Almaty",
- "Из этого же раздела": "More from this category"
+ "Из этого же раздела": "More from this category",
+ "Десерты оптом в Алматы для кофеен и HoReCa": "Wholesale desserts in Almaty for cafes & HoReCa",
+ "Десерты оптом в Алматы для кофеен, ресторанов и магазинов: торты, пирожные, чизкейки, рулеты и шу. Все позиции халал, доставка по городу, B2B-заявка онлайн.": "Wholesale desserts in Almaty for cafes, restaurants and shops: cakes, pastries, cheesecakes, rolls and choux. All halal, city-wide delivery, B2B order online.",
+ "Замороженные полуфабрикаты оптом в Алматы": "Wholesale frozen semi-finished foods in Almaty",
+ "Замороженные полуфабрикаты оптом в Алматы: пельмени, вареники, манты, котлеты, сырники, самса. Халал, вакуумная упаковка, −18 °C, срок 6 месяцев. B2B-заявка.": "Wholesale frozen semi-finished foods in Almaty: pelmeni, vareniki, manty, cutlets, syrniki, samsa. Halal, vacuum-packed, −18 °C, 6-month shelf life. B2B order.",
+ "Мясо оптом в Алматы: говядина, фарш, стейки": "Wholesale meat in Almaty: beef, mince, steaks",
+ "Мясо оптом в Алматы для кафе, ресторанов и доставки: мякоть говядины, говяжий фарш, стейки рибай и тибон. Халал, вакуум, −18 °C, срок до 12 месяцев. B2B-заявка.": "Wholesale meat in Almaty for cafes, restaurants and delivery: boneless beef, ground beef, ribeye and T-bone steaks. Halal, vacuum-packed, −18 °C, B2B order.",
+ "у всех позиций раздела": "every item in this category",
+ "коробка или банка": "box or jar",
+ "+2…+8 °C": "+2…+8 °C",
+ "от 72 часов до 10 суток, у части позиций — уточняйте при заказе": "72 hours to 10 days; for some items, please confirm when ordering",
+ "−18 °C": "−18 °C",
+ "6 месяцев": "6 months",
+ "мякоть — 12 месяцев, фарш и стейки — 6 месяцев": "boneless beef 12 months, mince and steaks 6 months",
+ "Коротко о разделе": "Category at a glance"
 }

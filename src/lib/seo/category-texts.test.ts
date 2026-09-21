@@ -2,6 +2,7 @@ import { strict as assert } from "node:assert";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { products } from "@/src/data/products";
 import { CATEGORY_TEXTS } from "./category-texts";
 import {
   CATEGORY_ROUTE,
@@ -124,9 +125,65 @@ for (const category of categories) {
     test(`раздел ${category.slug} [${locale}]: тексты переведены`, () => {
       // Ключ словаря — сам русский текст: поправили русскую строку и забыли
       // словарь — t() молча отдаст русский на казахской/английской странице.
-      for (const key of [category.titleKey, category.descriptionKey]) {
+      const facts = CATEGORY_TEXTS[category.slug].facts.flatMap((fact) => [fact.label, fact.value]);
+      for (const key of [category.titleKey, category.descriptionKey, ...facts]) {
         assert.ok(dictionaries[locale][key], `нет перевода: ${key}`);
       }
     });
   }
+}
+
+// --- Факты раздела против данных товаров --------------------------------------
+//
+// Блок фактов написан руками по src/data/products.ts. Чтобы он не врал после смены
+// ассортимента, фиксируем, на чём он основан: какие значения хранения, срока и
+// упаковки встречаются у товаров раздела. Поменялись данные — тест краснеет и
+// просит перечитать facts в category-texts.ts, а не молча оставляет «−18 °C».
+
+const FACTS_BASIS: Record<
+  string,
+  { category: string; storage: string[]; shelfLife: string[]; packageType: string[] }
+> = {
+  deserty: {
+    category: "Десерты",
+    storage: ["Хранить при +2…+4°C", "Хранить при +2…+8°C"],
+    // «Уточнить» у части позиций — поэтому в фактах вилка с оговоркой.
+    shelfLife: ["10 суток", "3 суток", "5 суток", "72 часа", "Уточнить"],
+    packageType: ["банка", "коробка"],
+  },
+  polufabrikaty: {
+    category: "Полуфабрикаты",
+    storage: ["Хранить при -18°C"],
+    shelfLife: ["6 мес."],
+    packageType: ["вакуум"],
+  },
+  myaso: {
+    category: "Мясо",
+    storage: ["Хранить при -18°C"],
+    shelfLife: ["12 мес.", "6 мес."],
+    packageType: ["вакуум"],
+  },
+};
+
+const distinct = (values: string[]) => [...new Set(values)].sort();
+
+for (const slug of Object.keys(CATEGORY_TEXTS)) {
+  test(`раздел ${slug}: факты сходятся с данными товаров`, () => {
+    const basis = FACTS_BASIS[slug];
+    assert.ok(basis, `для ${slug} не записано, по каким данным составлены факты`);
+
+    const items = products.filter((product) => product.category === basis.category);
+    assert.ok(items.length > 0, `в src/data/products.ts нет товаров раздела «${basis.category}»`);
+
+    const hint = `— данные раздела ${slug} изменились, перечитайте facts в category-texts.ts`;
+    assert.deepEqual(distinct(items.map((p) => p.storage)), distinct(basis.storage), `хранение ${hint}`);
+    assert.deepEqual(distinct(items.map((p) => p.shelfLife)), distinct(basis.shelfLife), `срок ${hint}`);
+    assert.deepEqual(distinct(items.map((p) => p.packageType)), distinct(basis.packageType), `упаковка ${hint}`);
+
+    const claimsHalal = CATEGORY_TEXTS[slug].facts.some((fact) => fact.label === "Халал");
+    if (claimsHalal) {
+      const notHalal = items.filter((product) => !product.isHalal).map((product) => product.slug);
+      assert.deepEqual(notHalal, [], `в фактах «халал у всех позиций», а у этих товаров нет: ${notHalal}`);
+    }
+  });
 }

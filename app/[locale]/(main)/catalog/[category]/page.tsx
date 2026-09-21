@@ -87,6 +87,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     getT(),
     getLocale(),
   ]);
+  const facts = categoryTexts(category)?.facts ?? [];
 
   // «Хлебные крошки» для поиска: Главная → Каталог → Категория.
   const breadcrumbJsonLd: Record<string, unknown> = {
@@ -131,6 +132,22 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
               <p className="mt-4 max-w-2xl text-base font-semibold leading-7 text-muted">
                 {t((currentCategory.intro ?? currentCategory.description) as string)}
               </p>
+            ) : null}
+            {facts.length > 0 ? (
+              <dl
+                className="mt-5 flex max-w-2xl flex-wrap gap-2"
+                aria-label={t("Коротко о разделе")}
+              >
+                {facts.map((fact) => (
+                  <div
+                    key={fact.label}
+                    className="rounded-btn bg-white px-3 py-2 text-sm font-semibold shadow-sm"
+                  >
+                    <dt className="inline text-muted">{t(fact.label)}: </dt>
+                    <dd className="inline text-dark">{t(fact.value)}</dd>
+                  </div>
+                ))}
+              </dl>
             ) : null}
           </div>
 

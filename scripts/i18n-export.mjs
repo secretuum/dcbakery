@@ -19,7 +19,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 // Правило пометок пропусков вынесено в src/, чтобы его покрывал npm test.
-import { EN_MISSING_MARK, STATUS_MISSING, STATUS_MISSING_KK, englishCell, gapOf, gapStatus } from "../src/i18n/export-status.ts";
+import { EN_MISSING_MARK, STATUS_MISSING, STATUS_MISSING_KK, englishCell, gapOf, gapStatus, newSinceBoundary } from "../src/i18n/export-status.ts";
 
 const ROOT = process.cwd();
 const DOCS = path.join(ROOT, "docs", "i18n");
@@ -167,7 +167,7 @@ let addedRecently = new Set();
 let newSinceLabel = "";
 if (newSince) {
   try {
-    const rev = execFileSync("git", ["rev-list", "-1", `--before=${newSince}`, "HEAD"], { cwd: ROOT })
+    const rev = execFileSync("git", ["rev-list", "-1", `--before=${newSinceBoundary(newSince)}`, "HEAD"], { cwd: ROOT })
       .toString()
       .trim();
     if (rev) {

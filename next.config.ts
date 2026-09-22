@@ -64,9 +64,13 @@ const nextConfig: NextConfig = {
     cpus: 2,
   },
   images: {
-    dangerouslyAllowSVG: true,
-    contentDispositionType: "attachment",
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // dangerouslyAllowSVG НЕ включать. SVG в оптимизатор у нас не ходят: заглушки
+    // /products/*.svg перехватывает FallbackImage, иконки категорий — обычный <img>,
+    // загрузка в админке пускает только JPEG/PNG/WebP (magic bytes). А <Image> с src на
+    // .svg без этого флага Next сам отдаёт как есть, мимо /_next/image. С флагом же
+    // публичный /_next/image начинает раздавать SVG (активный контент) с нашего домена.
+    // Вместе с флагом ушли contentDispositionType/contentSecurityPolicy: они касаются
+    // только ответов оптимизатора, а у Next и так те же безопасные значения по умолчанию.
     // Долгий кэш оптимизированных дериватов — сервер не пережимает одну и ту же
     // картинку повторно (меньше нагрузка/egress). 31 день.
     minimumCacheTTL: 2678400,

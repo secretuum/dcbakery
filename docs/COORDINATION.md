@@ -27,6 +27,9 @@
 | `worktree-razdely-katalog-teksty` | `app/[locale]/(main)/catalog/[category]/**`, `src/lib/seo/**`, `src/i18n/*.json` | PR #49 влит 21.09.2026 (`607b795`), зоны свободны |
 | `worktree-vygruzka-obnovlenie` | `scripts/i18n-export.mjs`, `docs/i18n/**`, `src/i18n/export-status*.ts` | PR #48 влит 21.09.2026 (`85d93cd`), зоны свободны |
 | `worktree-vygruzka-peresborka` | `docs/i18n/**`, `scripts/i18n-export.mjs` (граница `new-since`), `src/i18n/export-status*.ts` | PR #50 влит 21.09.2026 (`5a13319`), зоны свободны |
+| `worktree-npm-audit-fix` | `package.json`, `package-lock.json` (свой `node_modules` в копии, не симлинк) | выдана 21.09.2026 |
+| `worktree-svg-flag` | `next.config.ts` + тест к нему | PR #52 влит 22.09.2026 (`1685f4e`), зоны свободны |
+| `worktree-deliveryfee-chistka` | `app/constants.ts`, `app/api/orders/route.ts`, `app/api/admin/orders/route.ts`, `src/lib/whatsapp/orders/**`, `CheckoutForm.tsx`, `CartSummary.tsx`, `product-jsonld.ts` | выдана 21.09.2026; запретные зоны — с личного разрешения владельца, только вычистка `deliveryFee` |
 
 21.09.2026: `overlap.py` — чисто. Словари `src/i18n/*.json` правила только `razdely-katalog-teksty`,
 `docs/i18n/**` — только `vygruzka-obnovlenie`; обе влиты, пересборку выгрузки ведёт `vygruzka-peresborka`.
@@ -169,6 +172,32 @@
   «до него / после него» появится, когда он вернёт первый файл. Дата в шапке — фактическая.
 
 ## Висит на владельце
+
+Пересмотрено 21.09.2026.
+
+- **Внешние карточки** — `docs/seo/chek-list-vladeltsa.md`, 11 шагов, первые пять дают почти всё:
+  карта сайта в вебмастера, Google Business Profile, 2ГИС, Яндекс.Бизнес, Bing Places. Руками владельца.
+- **Выгрузка для носителя** — отдать `docs/i18n/strings-translated.md`, начинать с 42 строк «НОВОЕ с 18.09.2026».
+
+## Решено владельцем 21.09.2026
+
+- **Карточка в справочниках — самостоятельная «DC Bakery»** (вариант А чек-листа), не подразделение
+  Del Cappuccino. Свой телефон +7 747 727 2650, в описании «by Del Cappuccino».
+- **Срок доставки в разметке — не указываем**, оферта не меняется. Пустые `deliveryTime`,
+  `handlingTime`, `transitTime` и поля окна возврата остаются пустыми намеренно (сроки по п. 7.1/7.3
+  согласуются при заказе; возврат по п. 9.1 — `MerchantReturnNotPermitted`). Вопрос закрыт.
+- **`exceljs` + `uuid` в `npm audit`** — не трогаем, ждём исправления выше по течению: единственное
+  «исправление» npm — откат `exceljs` на 3.4.0, он рискованнее самой уязвимости (файлы грузит только админ).
+- **`deliveryFee()`** — вычищаем, с разрешением на запретные зоны только под эту правку
+  (задача `deliveryfee-chistka`).
+- Закрыто как сделанное: деплой (прод на `607b795`, проверено 21.09); `public/llms.txt` и `/optom`
+  больше не обещают «банкетные десерты» и «минимального заказа нет» (`4df49f0`, 19.09).
+- В работе: остаток `npm audit` без смены мажоров (`npm-audit-fix`). Снятие `dangerouslyAllowSVG`
+  (`svg-flag`) влито 22.09.2026, PR #52.
+- 22.09.2026: владелец поручил главному терминалу мержить PR самому; деплой — по-прежнему владелец.
+  В основном чекауте сделан `npm ci` — `node_modules/next` был 16.2.9 при 16.3.5 в `package.json`.
+
+## Архив: висело на владельце до 21.09.2026
 
 - **Деплой** — в главной накопились ссылки на товары и починенные превью ссылок. Прод на
   `79d2e79`, главная на `952e9e6`. Команда прежняя: `sudo -i`, затем

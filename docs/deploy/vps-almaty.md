@@ -229,59 +229,29 @@ chmod +x /opt/dcbakery/deploy.sh
 Новый скрипт сначала откладывает рабочую сборку в сторону, а после сборки проверяет, что сайт
 действительно отвечает. Если что-то пошло не так — сам возвращает прежнюю версию.
 
-💻 Один раз заменить скрипт (от root):
+💻 Скрипт лежит в репозитории — `docs/deploy/deploy.sh`. Ставится на сервер копированием,
+а не вставкой в терминал: длинные строки при вставке обрезаются (проверено 24.09.2026 — так
+испортился текст скрипта прямо в терминале владельца).
 
 ```bash
-cat > /opt/dcbakery/deploy.sh <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
+sudo -i
 cd /opt/dcbakery
-
-PREV="$(git rev-parse --short HEAD)"
-echo "было: $PREV"
-
-rm -rf .next.prev
-if [ -d .next ]; then cp -a .next .next.prev; fi
-
-restore() {
-  trap - ERR
-  echo "ОШИБКА: возвращаю $PREV"
-  git reset --hard "$PREV" >/dev/null
-  npm ci || true
-  rm -rf .next
-  if [ -d .next.prev ]; then mv .next.prev .next; fi
-  pm2 restart dcbakery || true
-  echo "откат выполнен, сайт на $PREV"
-  exit 1
-}
-trap restore ERR INT TERM HUP
-
+cp deploy.sh deploy.sh.old
 git pull --ff-only
-npm ci
-npm run build
-pm2 reload dcbakery
-
-code=""
-for _ in $(seq 1 10); do
-  sleep 3
-  code="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/ping || true)"
-  if [ "$code" = "200" ]; then break; fi
-done
-[ "$code" = "200" ] || restore
-
-trap - ERR
-rm -rf .next.prev
-echo "deployed: $(git rev-parse --short HEAD)"
-EOF
-chmod +x /opt/dcbakery/deploy.sh
+cp docs/deploy/deploy.sh deploy.sh
+chmod +x deploy.sh
+bash -n deploy.sh && echo "скрипт цел"
 ```
 
 💻 Запускать так, чтобы обрыв связи не убивал деплой:
 
 ```bash
 sudo -i
-cd /opt/dcbakery && tmux new -s deploy './deploy.sh 2>&1 | tee /var/log/dcbakery-deploy.log'
+cd /opt/dcbakery && TERM=xterm tmux new -s deploy './deploy.sh 2>&1 | tee /var/log/dcbakery-deploy.log'
 ```
+
+`TERM=xterm` обязателен: на сервере нет описания терминала `xterm-kitty`, без этого tmux
+отвечает «missing or unsuitable terminal».
 
 Отсоединиться, не прерывая работу, — Ctrl+B, затем D. Вернуться — `tmux attach -t deploy`.
 Посмотреть, чем кончилось, — `tail -30 /var/log/dcbakery-deploy.log`. Успех: последняя строка

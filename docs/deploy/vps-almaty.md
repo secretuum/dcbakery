@@ -250,6 +250,15 @@ sudo -i
 cd /opt/dcbakery && TERM=xterm tmux new -s deploy './deploy.sh 2>&1 | tee /var/log/dcbakery-deploy.log'
 ```
 
+Если tmux на сервере не запускается вовсе, тот же результат даёт `nohup` (проверено 24.09.2026,
+рабочий способ владельца):
+
+```bash
+cd /opt/dcbakery
+nohup ./deploy.sh > /var/log/dcbakery-deploy.log 2>&1 &
+tail -f /var/log/dcbakery-deploy.log
+```
+
 `TERM=xterm` обязателен: на сервере нет описания терминала `xterm-kitty`, без этого tmux
 отвечает «missing or unsuitable terminal».
 

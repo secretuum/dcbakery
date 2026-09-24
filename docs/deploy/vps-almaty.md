@@ -197,6 +197,10 @@ crontab -e
 
 ## Обновлять сайт потом (одной командой)
 
+> **Читайте сразу раздел «Безопасный деплой» ниже.** Простой скрипт из этой части 24.09.2026
+> уронил сайт: деплой оборвался посередине, сборка `.next` не доделалась, сайт отдавал 502,
+> пока его не пересобрали руками. Новый скрипт от этого защищён.
+
 💻 Один раз создать скрипт:
 ```bash
 cat > /opt/dcbakery/deploy.sh <<'EOF'
@@ -215,6 +219,83 @@ chmod +x /opt/dcbakery/deploy.sh
 ```bash
 /opt/dcbakery/deploy.sh
 ```
+
+### Безопасный деплой (с 24.09.2026)
+
+Прежний скрипт делал `git pull` → `npm ci` → `npm run build` → `pm2 reload` прямо поверх рабочей
+сборки. Любой обрыв посередине (а связь по ssh с мобильного интернета рвётся регулярно) оставлял
+сайт без папки `.next`, и он падал в 502 — `next start` без сборки не запускается вовсе.
+
+Новый скрипт сначала откладывает рабочую сборку в сторону, а после сборки проверяет, что сайт
+действительно отвечает. Если что-то пошло не так — сам возвращает прежнюю версию.
+
+💻 Один раз заменить скрипт (от root):
+
+```bash
+cat > /opt/dcbakery/deploy.sh <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cd /opt/dcbakery
+
+PREV="$(git rev-parse --short HEAD)"
+echo "было: $PREV"
+
+rm -rf .next.prev
+if [ -d .next ]; then cp -a .next .next.prev; fi
+
+restore() {
+  trap - ERR
+  echo "ОШИБКА: возвращаю $PREV"
+  git reset --hard "$PREV" >/dev/null
+  npm ci || true
+  rm -rf .next
+  if [ -d .next.prev ]; then mv .next.prev .next; fi
+  pm2 restart dcbakery || true
+  echo "откат выполнен, сайт на $PREV"
+  exit 1
+}
+trap restore ERR INT TERM HUP
+
+git pull --ff-only
+npm ci
+npm run build
+pm2 reload dcbakery
+
+code=""
+for _ in $(seq 1 10); do
+  sleep 3
+  code="$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/ping || true)"
+  if [ "$code" = "200" ]; then break; fi
+done
+[ "$code" = "200" ] || restore
+
+trap - ERR
+rm -rf .next.prev
+echo "deployed: $(git rev-parse --short HEAD)"
+EOF
+chmod +x /opt/dcbakery/deploy.sh
+```
+
+💻 Запускать так, чтобы обрыв связи не убивал деплой:
+
+```bash
+sudo -i
+cd /opt/dcbakery && tmux new -s deploy './deploy.sh 2>&1 | tee /var/log/dcbakery-deploy.log'
+```
+
+Отсоединиться, не прерывая работу, — Ctrl+B, затем D. Вернуться — `tmux attach -t deploy`.
+Посмотреть, чем кончилось, — `tail -30 /var/log/dcbakery-deploy.log`. Успех: последняя строка
+`deployed: <коммит>`. Откат: `откат выполнен, сайт на <коммит>`.
+
+Если сайт всё же встал (502 на всех страницах, в `pm2 logs dcbakery` — `Could not find a production
+build in the '.next' directory`), ручное лечение прежнее:
+
+```bash
+cd /opt/dcbakery && pm2 stop dcbakery && npm run build && pm2 restart dcbakery
+```
+
+Резерв памяти: сборка при занятых 4+ ГБ из 8 может не влезть. Тогда
+`NODE_OPTIONS=--max-old-space-size=3072 npm run build`.
 
 ### Как есть на самом деле (проверено 18.09.2026)
 
